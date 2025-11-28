@@ -492,19 +492,24 @@ export type Database = {
       }
       treatment_sessions: {
         Row: {
+          associated_techniques: string | null
           clinical_observations: string | null
           created_at: string
           function_score: number | null
           id: string
           immediate_response: string | null
           improvement_percentage: number | null
+          light_type: string | null
           mobility_score: number | null
           next_session_plan: string | null
           other_techniques_description: string | null
           patient_id: string
+          pharmaceutical_used: string | null
           session_date: string
           session_description: string | null
           session_number: number
+          suspended: boolean | null
+          treatment_time: number | null
           used_epi: boolean | null
           used_infiltration: boolean | null
           used_neuromodulation: boolean | null
@@ -514,19 +519,24 @@ export type Database = {
           vas_on_day: number | null
         }
         Insert: {
+          associated_techniques?: string | null
           clinical_observations?: string | null
           created_at?: string
           function_score?: number | null
           id?: string
           immediate_response?: string | null
           improvement_percentage?: number | null
+          light_type?: string | null
           mobility_score?: number | null
           next_session_plan?: string | null
           other_techniques_description?: string | null
           patient_id: string
+          pharmaceutical_used?: string | null
           session_date: string
           session_description?: string | null
           session_number: number
+          suspended?: boolean | null
+          treatment_time?: number | null
           used_epi?: boolean | null
           used_infiltration?: boolean | null
           used_neuromodulation?: boolean | null
@@ -536,19 +546,24 @@ export type Database = {
           vas_on_day?: number | null
         }
         Update: {
+          associated_techniques?: string | null
           clinical_observations?: string | null
           created_at?: string
           function_score?: number | null
           id?: string
           immediate_response?: string | null
           improvement_percentage?: number | null
+          light_type?: string | null
           mobility_score?: number | null
           next_session_plan?: string | null
           other_techniques_description?: string | null
           patient_id?: string
+          pharmaceutical_used?: string | null
           session_date?: string
           session_description?: string | null
           session_number?: number
+          suspended?: boolean | null
+          treatment_time?: number | null
           used_epi?: boolean | null
           used_infiltration?: boolean | null
           used_neuromodulation?: boolean | null
