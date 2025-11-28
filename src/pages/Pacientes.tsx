@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, User } from "lucide-react";
+import { Plus, User, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Pacientes = () => {
@@ -49,8 +49,7 @@ const Pacientes = () => {
           {patients.map((patient) => (
             <Card
               key={patient.id}
-              className="p-6 hover:shadow-lg transition-shadow cursor-pointer border-border"
-              onClick={() => navigate(`/pacientes/${patient.id}`)}
+              className="p-6 hover:shadow-lg transition-shadow border-border"
             >
               <div className="flex items-start space-x-4">
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -66,7 +65,7 @@ const Pacientes = () => {
                   <p className="text-sm text-muted-foreground mt-1">
                     {patient.treated_region || "Região não especificada"}
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-3 flex gap-2">
                     <span
                       className={`inline-block px-2 py-1 text-xs rounded-full ${
                         patient.status === "active"
@@ -76,6 +75,16 @@ const Pacientes = () => {
                     >
                       {patient.status === "active" ? "Ativo" : "Alta"}
                     </span>
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(`/prontuario/${patient.id}`)}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Ver Prontuário
+                    </Button>
                   </div>
                 </div>
               </div>

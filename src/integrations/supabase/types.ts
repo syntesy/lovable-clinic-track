@@ -14,6 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      blood_tests: {
+        Row: {
+          collection_date: string
+          file_name: string
+          file_path: string
+          id: string
+          observations: string | null
+          patient_id: string
+          test_type: string
+          uploaded_at: string
+        }
+        Insert: {
+          collection_date: string
+          file_name: string
+          file_path: string
+          id?: string
+          observations?: string | null
+          patient_id: string
+          test_type: string
+          uploaded_at?: string
+        }
+        Update: {
+          collection_date?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          observations?: string | null
+          patient_id?: string
+          test_type?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blood_tests_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinical_records: {
+        Row: {
+          anamnesis: string | null
+          created_at: string
+          id: string
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          anamnesis?: string | null
+          created_at?: string
+          id?: string
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          anamnesis?: string | null
+          created_at?: string
+          id?: string
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinical_records_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consent_forms: {
+        Row: {
+          file_name: string
+          file_path: string
+          id: string
+          patient_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          id?: string
+          patient_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          id?: string
+          patient_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_forms_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mac_protocols: {
         Row: {
           accumulated_treatment_time: number | null
@@ -143,6 +248,7 @@ export type Database = {
       }
       patients: {
         Row: {
+          address: string | null
           age: number | null
           birth_date: string | null
           clinical_diagnosis: string | null
@@ -167,6 +273,7 @@ export type Database = {
           phone: string | null
           previous_treatments: string | null
           profession: string | null
+          skin_phototype: string | null
           specific_limitations: string | null
           sport_activity: string | null
           status: string | null
@@ -176,6 +283,7 @@ export type Database = {
           treated_region: string | null
         }
         Insert: {
+          address?: string | null
           age?: number | null
           birth_date?: string | null
           clinical_diagnosis?: string | null
@@ -200,6 +308,7 @@ export type Database = {
           phone?: string | null
           previous_treatments?: string | null
           profession?: string | null
+          skin_phototype?: string | null
           specific_limitations?: string | null
           sport_activity?: string | null
           status?: string | null
@@ -209,6 +318,7 @@ export type Database = {
           treated_region?: string | null
         }
         Update: {
+          address?: string | null
           age?: number | null
           birth_date?: string | null
           clinical_diagnosis?: string | null
@@ -233,6 +343,7 @@ export type Database = {
           phone?: string | null
           previous_treatments?: string | null
           profession?: string | null
+          skin_phototype?: string | null
           specific_limitations?: string | null
           sport_activity?: string | null
           status?: string | null
@@ -338,6 +449,47 @@ export type Database = {
           },
         ]
       }
+      thermography_images: {
+        Row: {
+          evaluated_region: string | null
+          exam_date: string
+          file_name: string
+          file_path: string
+          id: string
+          observations: string | null
+          patient_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          evaluated_region?: string | null
+          exam_date: string
+          file_name: string
+          file_path: string
+          id?: string
+          observations?: string | null
+          patient_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          evaluated_region?: string | null
+          exam_date?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          observations?: string | null
+          patient_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thermography_images_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       treatment_sessions: {
         Row: {
           clinical_observations: string | null
@@ -408,6 +560,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "treatment_sessions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ultrasound_images: {
+        Row: {
+          exam_date: string
+          file_name: string
+          file_path: string
+          id: string
+          image_type: string
+          observations: string | null
+          patient_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          exam_date: string
+          file_name: string
+          file_path: string
+          id?: string
+          image_type: string
+          observations?: string | null
+          patient_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          exam_date?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          image_type?: string
+          observations?: string | null
+          patient_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ultrasound_images_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
