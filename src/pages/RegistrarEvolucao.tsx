@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ArrowLeft, Activity, User, Upload, X } from "lucide-react";
 
@@ -20,7 +21,8 @@ const RegistrarEvolucao = () => {
   const [ultrasoundFiles, setUltrasoundFiles] = useState<File[]>([]);
   const [thermographyFiles, setThermographyFiles] = useState<File[]>([]);
   const [bloodTestFiles, setBloodTestFiles] = useState<File[]>([]);
-  const { register, handleSubmit, watch } = useForm();
+  const [selectedLights, setSelectedLights] = useState<string[]>([]);
+  const { register, handleSubmit, watch, setValue } = useForm();
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patient", id],
@@ -65,8 +67,8 @@ const RegistrarEvolucao = () => {
             session_description: data.session_description,
             clinical_observations: data.clinical_observations,
             immediate_response: data.immediate_response,
-            light_type: data.light_type,
-            treatment_time: data.treatment_time ? parseFloat(data.treatment_time) : null,
+            light_type: selectedLights.join(", "),
+            treatment_time: data.treatment_time_total ? parseFloat(data.treatment_time_total) : null,
             pharmaceutical_used: data.pharmaceutical_used,
             associated_techniques: data.associated_techniques,
           },
@@ -211,38 +213,108 @@ const RegistrarEvolucao = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="light_type">Qual Luz</Label>
-                <Input
-                  id="light_type"
-                  type="text"
-                  {...register("light_type")}
-                  className="border-input"
-                  placeholder="Ex: Vermelho, Infravermelho..."
-                />
+            <div className="space-y-4">
+              <Label>LUZ</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="luz_vermelho"
+                    checked={selectedLights.includes("Vermelho")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedLights([...selectedLights, "Vermelho"]);
+                      } else {
+                        setSelectedLights(selectedLights.filter(l => l !== "Vermelho"));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="luz_vermelho" className="font-normal flex-1">Vermelho</Label>
+                  <Input
+                    type="number"
+                    placeholder="Tempo (s)"
+                    {...register("tempo_vermelho")}
+                    className="w-28 border-input"
+                    disabled={!selectedLights.includes("Vermelho")}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="luz_infravermelho"
+                    checked={selectedLights.includes("Infravermelho")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedLights([...selectedLights, "Infravermelho"]);
+                      } else {
+                        setSelectedLights(selectedLights.filter(l => l !== "Infravermelho"));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="luz_infravermelho" className="font-normal flex-1">Infravermelho</Label>
+                  <Input
+                    type="number"
+                    placeholder="Tempo (s)"
+                    {...register("tempo_infravermelho")}
+                    className="w-28 border-input"
+                    disabled={!selectedLights.includes("Infravermelho")}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="luz_verde"
+                    checked={selectedLights.includes("Verde")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedLights([...selectedLights, "Verde"]);
+                      } else {
+                        setSelectedLights(selectedLights.filter(l => l !== "Verde"));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="luz_verde" className="font-normal flex-1">Verde</Label>
+                  <Input
+                    type="number"
+                    placeholder="Tempo (s)"
+                    {...register("tempo_verde")}
+                    className="w-28 border-input"
+                    disabled={!selectedLights.includes("Verde")}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="luz_ambar"
+                    checked={selectedLights.includes("Âmbar")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedLights([...selectedLights, "Âmbar"]);
+                      } else {
+                        setSelectedLights(selectedLights.filter(l => l !== "Âmbar"));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="luz_ambar" className="font-normal flex-1">Âmbar</Label>
+                  <Input
+                    type="number"
+                    placeholder="Tempo (s)"
+                    {...register("tempo_ambar")}
+                    className="w-28 border-input"
+                    disabled={!selectedLights.includes("Âmbar")}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="treatment_time">Tempo (segundos)</Label>
-                <Input
-                  id="treatment_time"
-                  type="number"
-                  step="1"
-                  min="0"
-                  {...register("treatment_time")}
-                  className="border-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pharmaceutical_used">Fármaco Utilizado</Label>
-                <Input
-                  id="pharmaceutical_used"
-                  type="text"
-                  {...register("pharmaceutical_used")}
-                  className="border-input"
-                  placeholder="Ex: Azul de Metileno..."
-                />
-              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pharmaceutical_used">Fármaco Utilizado</Label>
+              <Input
+                id="pharmaceutical_used"
+                type="text"
+                {...register("pharmaceutical_used")}
+                className="border-input"
+                placeholder="Ex: Azul de Metileno..."
+              />
             </div>
 
             <div className="space-y-2">
