@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import Auth from "./pages/Auth";
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import DetalhePaciente from "./pages/DetalhePaciente";
@@ -24,69 +26,86 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Navigate to="/pacientes" replace />} />
           <Route
             path="/pacientes"
             element={
-              <Layout>
-                <Pacientes />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Pacientes />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/pacientes/novo"
             element={
-              <Layout>
-                <NovoPaciente />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <NovoPaciente />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/pacientes/:id"
             element={
-              <Layout>
-                <DetalhePaciente />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <DetalhePaciente />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/prontuario/:id"
             element={
-              <Layout>
-                <ProntuarioClinico />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <ProntuarioClinico />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/evolucao"
             element={
-              <Layout>
-                <Evolucao />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Evolucao />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/evolucao/:id"
             element={
-              <Layout>
-                <RegistrarEvolucao />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <RegistrarEvolucao />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/protocolos"
             element={
-              <Layout>
-                <Protocolos />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Protocolos />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/relatorios"
             element={
-              <Layout>
-                <Relatorios />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Relatorios />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
