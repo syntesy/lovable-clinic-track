@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import DetalhePaciente from "./pages/DetalhePaciente";
+import ProntuarioClinico from "./pages/ProntuarioClinico";
 import Protocolos from "./pages/Protocolos";
 import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
@@ -50,6 +51,14 @@ const App = () => (
             element={
               <Layout>
                 <DetalhePaciente />
+              </Layout>
+            }
+          />
+          <Route
+            path="/prontuario/:id"
+            element={
+              <Layout>
+                <ProntuarioClinico />
               </Layout>
             }
           />
