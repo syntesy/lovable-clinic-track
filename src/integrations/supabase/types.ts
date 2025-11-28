@@ -623,6 +623,36 @@ export type Database = {
           },
         ]
       }
+      user_profiles: {
+        Row: {
+          address: string | null
+          cpf: string | null
+          created_at: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
