@@ -65,7 +65,6 @@ const RegistrarEvolucao = () => {
             session_description: data.session_description,
             clinical_observations: data.clinical_observations,
             immediate_response: data.immediate_response,
-            suspended: data.suspended || false,
             light_type: data.light_type,
             treatment_time: data.treatment_time ? parseFloat(data.treatment_time) : null,
             pharmaceutical_used: data.pharmaceutical_used,
@@ -210,13 +209,6 @@ const RegistrarEvolucao = () => {
                   className="border-input"
                 />
               </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox id="suspended" {...register("suspended")} />
-              <Label htmlFor="suspended" className="font-normal">
-                Suspenso
-              </Label>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
