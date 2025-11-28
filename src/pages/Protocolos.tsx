@@ -4,13 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const Protocolos = () => {
   const { data: protocols, isLoading } = useQuery({
@@ -25,6 +23,39 @@ const Protocolos = () => {
       return data;
     },
   });
+
+  // Group protocols by category
+  const groupedProtocols = protocols?.reduce((acc, protocol) => {
+    let category = "";
+    
+    if (protocol.protocol_name.includes("Luz Vermelha") || protocol.protocol_name.includes("RED")) {
+      category = "Luz Vermelha (660 nm)";
+    } else if (protocol.protocol_name.includes("Infravermelho") || protocol.protocol_name.includes("INFRARED")) {
+      category = "Infravermelho (850-808 nm)";
+    } else if (protocol.protocol_name.includes("Luz Verde") || protocol.protocol_name.includes("GREEN")) {
+      category = "Luz Verde (530 nm)";
+    } else if (protocol.protocol_name.includes("Luz Âmbar") || protocol.protocol_name.includes("AMBER")) {
+      category = "Luz Âmbar (590 nm)";
+    } else if (protocol.protocol_name.includes("Muscular")) {
+      category = "Lesões Musculares";
+    } else if (protocol.protocol_name.includes("Ligamento") || protocol.protocol_name.includes("Entorse")) {
+      category = "Lesões de Ligamento - Entorse";
+    } else if (protocol.protocol_name.includes("Menisco")) {
+      category = "Lesão de Menisco";
+    } else if (protocol.protocol_name.includes("Tendão")) {
+      category = "Lesões de Tendão";
+    } else if (protocol.protocol_name.includes("Fratura")) {
+      category = "Fraturas";
+    } else {
+      category = "Outros";
+    }
+
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(protocol);
+    return acc;
+  }, {} as Record<string, typeof protocols>);
 
   return (
     <div className="space-y-6">
@@ -48,46 +79,84 @@ const Protocolos = () => {
           Carregando...
         </div>
       ) : protocols && protocols.length > 0 ? (
-        <Card className="border-border">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome do Protocolo</TableHead>
-                    <TableHead>Região</TableHead>
-                    <TableHead>Técnica</TableHead>
-                    <TableHead>λ (nm)</TableHead>
-                    <TableHead>Potência</TableHead>
-                    <TableHead>Energia</TableHead>
-                    <TableHead>Fluência</TableHead>
-                    <TableHead>Tempo</TableHead>
-                    <TableHead>Azul de Metileno</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {protocols.map((protocol) => (
-                    <TableRow key={protocol.id}>
-                      <TableCell className="font-medium">
-                        {protocol.protocol_name}
-                      </TableCell>
-                      <TableCell>{protocol.region}</TableCell>
-                      <TableCell>{protocol.technique}</TableCell>
-                      <TableCell>{protocol.wavelength}</TableCell>
-                      <TableCell>{protocol.power}</TableCell>
-                      <TableCell>{protocol.total_energy}</TableCell>
-                      <TableCell>{protocol.fluence}</TableCell>
-                      <TableCell>{protocol.application_time}</TableCell>
-                      <TableCell>
-                        {protocol.uses_methylene_blue ? "Sim" : "Não"}
-                      </TableCell>
-                    </TableRow>
+        <Accordion type="multiple" className="space-y-4">
+          {Object.entries(groupedProtocols || {}).map(([category, categoryProtocols]) => (
+            <AccordionItem key={category} value={category} className="border border-border rounded-lg bg-card">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {category}
+                  </h3>
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    ({categoryProtocols.length} protocolos)
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <div className="grid gap-4 mt-2">
+                  {categoryProtocols.map((protocol) => (
+                    <Card key={protocol.id} className="border-border/50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-medium text-foreground">
+                          {protocol.protocol_name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Região:</span>
+                            <p className="font-medium text-foreground">{protocol.region}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Técnica:</span>
+                            <p className="font-medium text-foreground">{protocol.technique}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">λ (nm):</span>
+                            <p className="font-medium text-foreground">{protocol.wavelength}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Tempo:</span>
+                            <p className="font-medium text-foreground">{protocol.application_time}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Potência:</span>
+                            <p className="font-medium text-foreground">{protocol.power}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Energia:</span>
+                            <p className="font-medium text-foreground">{protocol.total_energy}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Fluência:</span>
+                            <p className="font-medium text-foreground">{protocol.fluence}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Área:</span>
+                            <p className="font-medium text-foreground">{protocol.irradiated_area}</p>
+                          </div>
+                        </div>
+                        {protocol.indications && (
+                          <div className="pt-2 border-t border-border/50">
+                            <span className="text-muted-foreground text-sm">Indicações:</span>
+                            <p className="text-sm text-foreground mt-1">{protocol.indications}</p>
+                          </div>
+                        )}
+                        {protocol.observations && (
+                          <div className="pt-2 border-t border-border/50">
+                            <span className="text-muted-foreground text-sm">Observações:</span>
+                            <p className="text-sm text-foreground mt-1">{protocol.observations}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       ) : (
         <Card className="p-12 text-center border-border">
           <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
