@@ -12,6 +12,7 @@ import Evolucao from "./pages/Evolucao";
 import RegistrarEvolucao from "./pages/RegistrarEvolucao";
 import Protocolos from "./pages/Protocolos";
 import Relatorios from "./pages/Relatorios";
+import VisualizarRelatorio from "./pages/VisualizarRelatorio";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -87,6 +88,10 @@ const App = () => (
                 <Relatorios />
               </Layout>
             }
+          />
+          <Route
+            path="/relatorios/visualizar/:id"
+            element={<VisualizarRelatorio />}
           />
           <Route path="*" element={<NotFound />} />
         </Routes>

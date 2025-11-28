@@ -97,3 +97,35 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Print Styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide elements that shouldn't appear in print */
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure proper page breaks */
+  .print\\:break-before-page {
+    page-break-before: always;
+  }
+
+  .print\\:break-after-page {
+    page-break-after: always;
+  }
+
+  /* Avoid breaking inside elements */
+  .print\\:break-inside-avoid {
+    page-break-inside: avoid;
+  }
+}
