@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Pencil } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2 } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -16,6 +16,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -34,6 +44,7 @@ const Protocolos = () => {
   const queryClient = useQueryClient();
   const [editingProtocol, setEditingProtocol] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: protocols, isLoading } = useQuery({
     queryKey: ["reference-protocols"],
@@ -88,6 +99,35 @@ const Protocolos = () => {
     },
   });
 
+  const deleteProtocol = useMutation({
+    mutationFn: async (protocolId: string) => {
+      const { error } = await supabase
+        .from("reference_protocols")
+        .delete()
+        .eq("id", protocolId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reference-protocols"] });
+      setIsDeleteDialogOpen(false);
+      setIsEditDialogOpen(false);
+      setEditingProtocol(null);
+      toast({
+        title: "Protocolo excluído",
+        description: "O protocolo foi excluído com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o protocolo.",
+        variant: "destructive",
+      });
+      console.error(error);
+    },
+  });
+
   const handleEditClick = (protocol: any) => {
     setEditingProtocol({ ...protocol });
     setIsEditDialogOpen(true);
@@ -96,6 +136,16 @@ const Protocolos = () => {
   const handleSaveEdit = () => {
     if (editingProtocol) {
       updateProtocol.mutate(editingProtocol);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (editingProtocol) {
+      deleteProtocol.mutate(editingProtocol.id);
     }
   };
 
@@ -408,18 +458,48 @@ const Protocolos = () => {
                     />
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                      Cancelar
+                  <div className="flex justify-between gap-2 pt-4 border-t">
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleDeleteClick}
+                      className="gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Excluir Protocolo
                     </Button>
-                    <Button onClick={handleSaveEdit}>
-                      Salvar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleSaveEdit}>
+                        Salvar
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
             </DialogContent>
           </Dialog>
+
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja excluir este protocolo? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleConfirmDelete}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       ) : (
         <Card className="p-12 text-center border-border">
