@@ -15,6 +15,7 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Pacientes", url: "/pacientes", icon: Users },
+  { title: "Evolução", url: "/evolucao", icon: Activity },
   { title: "Protocolos", url: "/protocolos", icon: FileText },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];

@@ -9,6 +9,8 @@ import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import DetalhePaciente from "./pages/DetalhePaciente";
 import ProntuarioClinico from "./pages/ProntuarioClinico";
+import Evolucao from "./pages/Evolucao";
+import RegistrarEvolucao from "./pages/RegistrarEvolucao";
 import Protocolos from "./pages/Protocolos";
 import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
@@ -59,6 +61,22 @@ const App = () => (
             element={
               <Layout>
                 <ProntuarioClinico />
+              </Layout>
+            }
+          />
+          <Route
+            path="/evolucao"
+            element={
+              <Layout>
+                <Evolucao />
+              </Layout>
+            }
+          />
+          <Route
+            path="/evolucao/:id"
+            element={
+              <Layout>
+                <RegistrarEvolucao />
               </Layout>
             }
           />
