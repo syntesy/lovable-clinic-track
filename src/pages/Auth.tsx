@@ -140,29 +140,14 @@ export default function Auth() {
           backgroundColor: "#DBDDE9" 
         }}
       >
-        <div className="flex flex-col items-center">
-          <img 
-            src={macLogo} 
-            alt="MAC Logo" 
-            style={{ 
-              width: "340px",
-              height: "auto",
-              marginBottom: "18px"
-            }}
-          />
-          <h1
-            className="text-center uppercase"
-            style={{ 
-              color: "#3D4F7C",
-              fontSize: "22px",
-              fontWeight: "300",
-              letterSpacing: "1px",
-              fontFamily: "Inter, sans-serif"
-            }}
-          >
-            MÉTODO DE ACELERAÇÃO CICATRICIAL
-          </h1>
-        </div>
+        <img 
+          src={macLogo} 
+          alt="MAC Logo" 
+          style={{ 
+            width: "480px",
+            height: "auto"
+          }}
+        />
       </div>
 
       {/* Right Column - Login and Signup Forms */}
@@ -187,7 +172,7 @@ export default function Auth() {
             >
               Entrar
             </h2>
-            <form onSubmit={handleLogin} className="space-y-3">
+            <form onSubmit={handleLogin} className="space-y-4">
               <Input
                 id="login-email"
                 type="email"
@@ -199,10 +184,12 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  width: "100%"
+                  height: "68px",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  width: "100%",
+                  paddingLeft: "24px",
+                  paddingRight: "24px"
                 }}
               />
 
@@ -214,22 +201,24 @@ export default function Auth() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
-                  className="border-0 pr-12"
+                  className="border-0 pr-16"
                   style={{ 
                     backgroundColor: "#F5F6FA", 
                     color: "#3A3A45",
-                    height: "48px",
-                    borderRadius: "10px",
-                    fontSize: "15px",
-                    width: "100%"
+                    height: "68px",
+                    borderRadius: "16px",
+                    fontSize: "16px",
+                    width: "100%",
+                    paddingLeft: "24px"
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute right-6 top-1/2 transform -translate-y-1/2"
+                  style={{ color: "#9CA3AF" }}
                 >
-                  {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showLoginPassword ? <EyeOff size={24} /> : <Eye size={24} />}
                 </button>
               </div>
 
@@ -264,11 +253,11 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#2F3F6B", 
                   color: "#FFFFFF",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "16px",
+                  height: "64px",
+                  borderRadius: "16px",
+                  fontSize: "18px",
                   fontWeight: "600",
-                  marginTop: "18px"
+                  marginTop: "24px"
                 }}
               >
                 {loading ? "Entrando..." : "Entrar"}
@@ -288,7 +277,7 @@ export default function Auth() {
             >
               Cadastrar
             </h2>
-            <form onSubmit={handleSignup} className="space-y-3">
+            <form onSubmit={handleSignup} className="space-y-4">
               <Input
                 id="signup-name"
                 type="text"
@@ -302,10 +291,12 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  width: "100%"
+                  height: "68px",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  width: "100%",
+                  paddingLeft: "24px",
+                  paddingRight: "24px"
                 }}
               />
 
@@ -322,10 +313,12 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  width: "100%"
+                  height: "68px",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  width: "100%",
+                  paddingLeft: "24px",
+                  paddingRight: "24px"
                 }}
               />
 
@@ -341,10 +334,12 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  width: "100%"
+                  height: "68px",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  width: "100%",
+                  paddingLeft: "24px",
+                  paddingRight: "24px"
                 }}
               />
 
@@ -360,10 +355,12 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  width: "100%"
+                  height: "68px",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  width: "100%",
+                  paddingLeft: "24px",
+                  paddingRight: "24px"
                 }}
               />
 
@@ -379,10 +376,12 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  width: "100%"
+                  height: "68px",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  width: "100%",
+                  paddingLeft: "24px",
+                  paddingRight: "24px"
                 }}
               />
 
@@ -396,22 +395,24 @@ export default function Auth() {
                     setSignupData({ ...signupData, password: e.target.value })
                   }
                   required
-                  className="border-0 pr-12"
+                  className="border-0 pr-16"
                   style={{ 
                     backgroundColor: "#F5F6FA", 
                     color: "#3A3A45",
-                    height: "48px",
-                    borderRadius: "10px",
-                    fontSize: "15px",
-                    width: "100%"
+                    height: "68px",
+                    borderRadius: "16px",
+                    fontSize: "16px",
+                    width: "100%",
+                    paddingLeft: "24px"
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowSignupPassword(!showSignupPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute right-6 top-1/2 transform -translate-y-1/2"
+                  style={{ color: "#9CA3AF" }}
                 >
-                  {showSignupPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showSignupPassword ? <EyeOff size={24} /> : <Eye size={24} />}
                 </button>
               </div>
 
@@ -425,22 +426,24 @@ export default function Auth() {
                     setSignupData({ ...signupData, confirmPassword: e.target.value })
                   }
                   required
-                  className="border-0 pr-12"
+                  className="border-0 pr-16"
                   style={{ 
                     backgroundColor: "#F5F6FA", 
                     color: "#3A3A45",
-                    height: "48px",
-                    borderRadius: "10px",
-                    fontSize: "15px",
-                    width: "100%"
+                    height: "68px",
+                    borderRadius: "16px",
+                    fontSize: "16px",
+                    width: "100%",
+                    paddingLeft: "24px"
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute right-6 top-1/2 transform -translate-y-1/2"
+                  style={{ color: "#9CA3AF" }}
                 >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showConfirmPassword ? <EyeOff size={24} /> : <Eye size={24} />}
                 </button>
               </div>
 
@@ -451,11 +454,11 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#2F3F6B", 
                   color: "#FFFFFF",
-                  height: "48px",
-                  borderRadius: "10px",
-                  fontSize: "16px",
+                  height: "64px",
+                  borderRadius: "16px",
+                  fontSize: "18px",
                   fontWeight: "600",
-                  marginTop: "18px"
+                  marginTop: "24px"
                 }}
               >
                 {loading ? "Criando conta..." : "Criar Conta"}
