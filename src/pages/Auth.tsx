@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Lock, Mail, Phone, FileText, MapPin, Eye, EyeOff } from "lucide-react";
-import macLogo from "@/assets/mac-logo.png";
+import { Eye, EyeOff } from "lucide-react";
+import macLogo from "@/assets/logo-mac.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -130,27 +130,34 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Column - Logo and Branding */}
+    <div className="flex min-h-screen">
+      {/* Left Column - Logo */}
       <div 
-        className="hidden lg:flex lg:w-1/2 items-center justify-center" 
-        style={{ backgroundColor: "#DBDDE9", padding: "120px" }}
+        className="flex items-center justify-center" 
+        style={{ 
+          width: "720px", 
+          height: "100vh",
+          backgroundColor: "#DBDDE9" 
+        }}
       >
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center">
           <img 
             src={macLogo} 
             alt="MAC Logo" 
-            className="mb-6" 
-            style={{ maxWidth: "280px", width: "100%", height: "auto" }}
+            style={{ 
+              width: "340px",
+              height: "auto",
+              marginBottom: "18px"
+            }}
           />
           <h1
             className="text-center uppercase"
             style={{ 
               color: "#3D4F7C",
-              fontSize: "23px",
+              fontSize: "22px",
               fontWeight: "300",
               letterSpacing: "1px",
-              lineHeight: "1.4"
+              fontFamily: "Inter, sans-serif"
             }}
           >
             MÉTODO DE ACELERAÇÃO CICATRICIAL
@@ -160,66 +167,61 @@ export default function Auth() {
 
       {/* Right Column - Login and Signup Forms */}
       <div
-        className="w-full lg:w-1/2 flex items-center"
-        style={{ backgroundColor: "#3D4F7C", paddingLeft: "80px", paddingRight: "100px" }}
+        className="flex items-center justify-center"
+        style={{ 
+          width: "720px", 
+          height: "100vh",
+          backgroundColor: "#3D4F7C"
+        }}
       >
-        <div className="w-full" style={{ maxWidth: "480px" }}>
+        <div style={{ width: "480px" }}>
           {/* Login Form */}
-          <div className="mb-12">
+          <div className="mb-8">
             <h2 
-              className="mb-5"
               style={{ 
                 color: "#FFFFFF", 
-                fontSize: "32px", 
+                fontSize: "28px", 
                 fontWeight: "600",
                 marginBottom: "18px"
               }}
             >
-              Log in
+              Entrar
             </h2>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="relative">
-                <User 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="Username"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  className="pl-12 border-0"
-                  style={{ 
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
-                  }}
-                />
-              </div>
+            <form onSubmit={handleLogin} className="space-y-3">
+              <Input
+                id="login-email"
+                type="email"
+                placeholder="Email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+                className="border-0"
+                style={{ 
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  height: "48px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  width: "100%"
+                }}
+              />
 
               <div className="relative">
-                <Lock 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
                 <Input
                   id="login-password"
                   type={showLoginPassword ? "text" : "password"}
-                  placeholder="Password"
+                  placeholder="Senha"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
-                  className="pl-12 pr-12 border-0"
+                  className="border-0 pr-12"
                   style={{ 
                     backgroundColor: "#F5F6FA", 
                     color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
+                    height: "48px",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    width: "100%"
                   }}
                 />
                 <button
@@ -231,7 +233,7 @@ export default function Auth() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between" style={{ marginTop: "16px", marginBottom: "28px" }}>
+              <div className="flex items-center justify-between" style={{ marginTop: "12px", marginBottom: "12px" }}>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="remember"
@@ -243,7 +245,7 @@ export default function Auth() {
                     className="text-sm cursor-pointer"
                     style={{ color: "#C5CADF" }}
                   >
-                    Remember Me
+                    Lembrar-me
                   </label>
                 </div>
                 <button
@@ -251,7 +253,7 @@ export default function Auth() {
                   className="text-sm hover:underline"
                   style={{ color: "#C5CADF" }}
                 >
-                  Forgot Password?
+                  Esqueci minha senha
                 </button>
               </div>
 
@@ -262,8 +264,8 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#2F3F6B", 
                   color: "#FFFFFF",
-                  height: "52px",
-                  borderRadius: "12px",
+                  height: "48px",
+                  borderRadius: "10px",
                   fontSize: "16px",
                   fontWeight: "600",
                   marginTop: "18px"
@@ -275,145 +277,116 @@ export default function Auth() {
           </div>
 
           {/* Signup Form */}
-          <div style={{ marginTop: "48px" }}>
+          <div style={{ marginTop: "32px" }}>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
-                fontSize: "28px", 
+                fontSize: "26px", 
                 fontWeight: "600",
                 marginBottom: "18px"
               }}
             >
               Cadastrar
             </h2>
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="relative">
-                <User 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
-                <Input
-                  id="signup-name"
-                  type="text"
-                  placeholder="Nome Completo"
-                  value={signupData.fullName}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, fullName: e.target.value })
-                  }
-                  required
-                  className="pl-12 border-0"
-                  style={{ 
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
-                  }}
-                />
-              </div>
+            <form onSubmit={handleSignup} className="space-y-3">
+              <Input
+                id="signup-name"
+                type="text"
+                placeholder="Nome Completo"
+                value={signupData.fullName}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, fullName: e.target.value })
+                }
+                required
+                className="border-0"
+                style={{ 
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  height: "48px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  width: "100%"
+                }}
+              />
+
+              <Input
+                id="signup-email"
+                type="email"
+                placeholder="Email"
+                value={signupData.email}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, email: e.target.value })
+                }
+                required
+                className="border-0"
+                style={{ 
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  height: "48px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  width: "100%"
+                }}
+              />
+
+              <Input
+                id="signup-phone"
+                type="tel"
+                placeholder="Telefone"
+                value={signupData.phone}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, phone: e.target.value })
+                }
+                className="border-0"
+                style={{ 
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  height: "48px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  width: "100%"
+                }}
+              />
+
+              <Input
+                id="signup-cpf"
+                type="text"
+                placeholder="CPF"
+                value={signupData.cpf}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, cpf: e.target.value })
+                }
+                className="border-0"
+                style={{ 
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  height: "48px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  width: "100%"
+                }}
+              />
+
+              <Input
+                id="signup-address"
+                type="text"
+                placeholder="Endereço Completo"
+                value={signupData.address}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, address: e.target.value })
+                }
+                className="border-0"
+                style={{ 
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  height: "48px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  width: "100%"
+                }}
+              />
 
               <div className="relative">
-                <Mail 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="Email"
-                  value={signupData.email}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, email: e.target.value })
-                  }
-                  required
-                  className="pl-12 border-0"
-                  style={{ 
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
-                  }}
-                />
-              </div>
-
-              <div className="relative">
-                <Phone 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
-                <Input
-                  id="signup-phone"
-                  type="tel"
-                  placeholder="Telefone"
-                  value={signupData.phone}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, phone: e.target.value })
-                  }
-                  className="pl-12 border-0"
-                  style={{ 
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
-                  }}
-                />
-              </div>
-
-              <div className="relative">
-                <FileText 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
-                <Input
-                  id="signup-cpf"
-                  type="text"
-                  placeholder="CPF"
-                  value={signupData.cpf}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, cpf: e.target.value })
-                  }
-                  className="pl-12 border-0"
-                  style={{ 
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
-                  }}
-                />
-              </div>
-
-              <div className="relative">
-                <MapPin 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
-                <Input
-                  id="signup-address"
-                  type="text"
-                  placeholder="Endereço Completo"
-                  value={signupData.address}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, address: e.target.value })
-                  }
-                  className="pl-12 border-0"
-                  style={{ 
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
-                  }}
-                />
-              </div>
-
-              <div className="relative">
-                <Lock 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
                 <Input
                   id="signup-password"
                   type={showSignupPassword ? "text" : "password"}
@@ -423,13 +396,14 @@ export default function Auth() {
                     setSignupData({ ...signupData, password: e.target.value })
                   }
                   required
-                  className="pl-12 pr-12 border-0"
+                  className="border-0 pr-12"
                   style={{ 
                     backgroundColor: "#F5F6FA", 
                     color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
+                    height: "48px",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    width: "100%"
                   }}
                 />
                 <button
@@ -442,10 +416,6 @@ export default function Auth() {
               </div>
 
               <div className="relative">
-                <Lock 
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                  size={20}
-                />
                 <Input
                   id="signup-confirm-password"
                   type={showConfirmPassword ? "text" : "password"}
@@ -455,13 +425,14 @@ export default function Auth() {
                     setSignupData({ ...signupData, confirmPassword: e.target.value })
                   }
                   required
-                  className="pl-12 pr-12 border-0"
+                  className="border-0 pr-12"
                   style={{ 
                     backgroundColor: "#F5F6FA", 
                     color: "#3A3A45",
-                    height: "52px",
-                    borderRadius: "12px",
-                    fontSize: "15px"
+                    height: "48px",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    width: "100%"
                   }}
                 />
                 <button
@@ -480,11 +451,11 @@ export default function Auth() {
                 style={{ 
                   backgroundColor: "#2F3F6B", 
                   color: "#FFFFFF",
-                  height: "52px",
-                  borderRadius: "12px",
+                  height: "48px",
+                  borderRadius: "10px",
                   fontSize: "16px",
                   fontWeight: "600",
-                  marginTop: "22px"
+                  marginTop: "18px"
                 }}
               >
                 {loading ? "Criando conta..." : "Criar Conta"}
