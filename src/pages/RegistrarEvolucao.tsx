@@ -50,9 +50,6 @@ const RegistrarEvolucao = () => {
     },
   });
 
-  const nextSessionNumber = sessions && sessions.length > 0 
-    ? sessions[0].session_number + 1 
-    : 1;
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -62,7 +59,7 @@ const RegistrarEvolucao = () => {
         .insert([
           {
             patient_id: id,
-            session_number: nextSessionNumber,
+            session_number: data.session_number ? parseInt(data.session_number) : 1,
             session_date: data.session_date,
             vas_on_day: data.vas_on_day ? parseFloat(data.vas_on_day) : null,
             session_description: data.session_description,
@@ -148,7 +145,7 @@ const RegistrarEvolucao = () => {
         <div className="flex-1">
           <h2 className="text-3xl font-bold text-foreground">Registrar Evolução</h2>
           <p className="text-muted-foreground">
-            Sessão #{nextSessionNumber} • {patient.full_name}
+            {patient.full_name}
           </p>
         </div>
       </div>
@@ -174,11 +171,23 @@ const RegistrarEvolucao = () => {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Activity className="h-5 w-5 mr-2 text-primary" />
-              Sessão #{nextSessionNumber}
+              Dados da Sessão
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="session_number">Número da Sessão *</Label>
+                <Input
+                  id="session_number"
+                  type="number"
+                  min="1"
+                  {...register("session_number")}
+                  required
+                  className="border-input"
+                  placeholder="Ex: 1, 2, 3..."
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="session_date">Data da Sessão *</Label>
                 <Input
