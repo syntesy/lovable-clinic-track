@@ -2,18 +2,20 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { User, Lock, Mail, Phone, FileText, MapPin, Eye, EyeOff } from "lucide-react";
 import macLogo from "@/assets/mac-logo.png";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -130,12 +132,26 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex">
       {/* Left Column - Logo and Branding */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center" style={{ backgroundColor: "#DBDDE9" }}>
-        <div className="text-center">
-          <img src={macLogo} alt="MAC Logo" className="h-32 mx-auto mb-6" />
+      <div 
+        className="hidden lg:flex lg:w-1/2 items-center justify-center" 
+        style={{ backgroundColor: "#DBDDE9", padding: "120px" }}
+      >
+        <div className="flex flex-col items-center justify-center">
+          <img 
+            src={macLogo} 
+            alt="MAC Logo" 
+            className="mb-6" 
+            style={{ maxWidth: "280px", width: "100%", height: "auto" }}
+          />
           <h1
-            className="text-2xl font-light tracking-[0.3em] uppercase"
-            style={{ color: "#3D4F7C" }}
+            className="text-center uppercase"
+            style={{ 
+              color: "#3D4F7C",
+              fontSize: "23px",
+              fontWeight: "300",
+              letterSpacing: "1px",
+              lineHeight: "1.4"
+            }}
           >
             MÉTODO DE ACELERAÇÃO CICATRICIAL
           </h1>
@@ -144,47 +160,78 @@ export default function Auth() {
 
       {/* Right Column - Login and Signup Forms */}
       <div
-        className="w-full lg:w-1/2 flex items-center justify-center p-8"
-        style={{ backgroundColor: "#3D4F7C" }}
+        className="w-full lg:w-1/2 flex items-center"
+        style={{ backgroundColor: "#3D4F7C", paddingLeft: "80px", paddingRight: "100px" }}
       >
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full" style={{ maxWidth: "480px" }}>
           {/* Login Form */}
-          <div className="space-y-6">
-            <h2 className="text-3xl font-semibold" style={{ color: "#FFFFFF" }}>
-              Entrar
+          <div className="mb-12">
+            <h2 
+              className="mb-5"
+              style={{ 
+                color: "#FFFFFF", 
+                fontSize: "32px", 
+                fontWeight: "600",
+                marginBottom: "18px"
+              }}
+            >
+              Log in
             </h2>
             <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email" style={{ color: "#C5CADF" }}>
-                  Email
-                </Label>
+              <div className="relative">
+                <User 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="Email"
+                  placeholder="Username"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   required
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="login-password" style={{ color: "#C5CADF" }}>
-                  Senha
-                </Label>
+              <div className="relative">
+                <Lock 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="login-password"
-                  type="password"
-                  placeholder="Senha"
+                  type={showLoginPassword ? "text" : "password"}
+                  placeholder="Password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 pr-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                >
+                  {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between" style={{ marginTop: "16px", marginBottom: "28px" }}>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="remember"
@@ -196,7 +243,7 @@ export default function Auth() {
                     className="text-sm cursor-pointer"
                     style={{ color: "#C5CADF" }}
                   >
-                    Lembrar-me
+                    Remember Me
                   </label>
                 </div>
                 <button
@@ -204,15 +251,23 @@ export default function Auth() {
                   className="text-sm hover:underline"
                   style={{ color: "#C5CADF" }}
                 >
-                  Esqueci minha senha
+                  Forgot Password?
                 </button>
               </div>
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full"
-                style={{ backgroundColor: "#2F3F6B", color: "#FFFFFF" }}
+                className="w-full border-0"
+                style={{ 
+                  backgroundColor: "#2F3F6B", 
+                  color: "#FFFFFF",
+                  height: "52px",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  marginTop: "18px"
+                }}
               >
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
@@ -220,15 +275,23 @@ export default function Auth() {
           </div>
 
           {/* Signup Form */}
-          <div className="space-y-6 pt-8 border-t" style={{ borderColor: "#5A6B8F" }}>
-            <h2 className="text-3xl font-semibold" style={{ color: "#FFFFFF" }}>
-              Criar nova conta
+          <div style={{ marginTop: "48px" }}>
+            <h2 
+              style={{ 
+                color: "#FFFFFF", 
+                fontSize: "28px", 
+                fontWeight: "600",
+                marginBottom: "18px"
+              }}
+            >
+              Cadastrar
             </h2>
             <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name" style={{ color: "#C5CADF" }}>
-                  Nome Completo
-                </Label>
+              <div className="relative">
+                <User 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="signup-name"
                   type="text"
@@ -238,14 +301,22 @@ export default function Auth() {
                     setSignupData({ ...signupData, fullName: e.target.value })
                   }
                   required
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="signup-email" style={{ color: "#C5CADF" }}>
-                  Email
-                </Label>
+              <div className="relative">
+                <Mail 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="signup-email"
                   type="email"
@@ -255,14 +326,22 @@ export default function Auth() {
                     setSignupData({ ...signupData, email: e.target.value })
                   }
                   required
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="signup-phone" style={{ color: "#C5CADF" }}>
-                  Telefone
-                </Label>
+              <div className="relative">
+                <Phone 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="signup-phone"
                   type="tel"
@@ -271,14 +350,22 @@ export default function Auth() {
                   onChange={(e) =>
                     setSignupData({ ...signupData, phone: e.target.value })
                   }
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="signup-cpf" style={{ color: "#C5CADF" }}>
-                  CPF
-                </Label>
+              <div className="relative">
+                <FileText 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="signup-cpf"
                   type="text"
@@ -287,14 +374,22 @@ export default function Auth() {
                   onChange={(e) =>
                     setSignupData({ ...signupData, cpf: e.target.value })
                   }
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="signup-address" style={{ color: "#C5CADF" }}>
-                  Endereço Completo
-                </Label>
+              <div className="relative">
+                <MapPin 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="signup-address"
                   type="text"
@@ -303,49 +398,94 @@ export default function Auth() {
                   onChange={(e) =>
                     setSignupData({ ...signupData, address: e.target.value })
                   }
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="signup-password" style={{ color: "#C5CADF" }}>
-                  Senha
-                </Label>
+              <div className="relative">
+                <Lock 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="signup-password"
-                  type="password"
+                  type={showSignupPassword ? "text" : "password"}
                   placeholder="Senha"
                   value={signupData.password}
                   onChange={(e) =>
                     setSignupData({ ...signupData, password: e.target.value })
                   }
                   required
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 pr-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowSignupPassword(!showSignupPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                >
+                  {showSignupPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="signup-confirm-password" style={{ color: "#C5CADF" }}>
-                  Confirmar Senha
-                </Label>
+              <div className="relative">
+                <Lock 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  size={20}
+                />
                 <Input
                   id="signup-confirm-password"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirmar Senha"
                   value={signupData.confirmPassword}
                   onChange={(e) =>
                     setSignupData({ ...signupData, confirmPassword: e.target.value })
                   }
                   required
-                  style={{ backgroundColor: "#F5F6FA", color: "#3A3A45" }}
+                  className="pl-12 pr-12 border-0"
+                  style={{ 
+                    backgroundColor: "#F5F6FA", 
+                    color: "#3A3A45",
+                    height: "52px",
+                    borderRadius: "12px",
+                    fontSize: "15px"
+                  }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full"
-                style={{ backgroundColor: "#2F3F6B", color: "#FFFFFF" }}
+                className="w-full border-0"
+                style={{ 
+                  backgroundColor: "#2F3F6B", 
+                  color: "#FFFFFF",
+                  height: "52px",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  marginTop: "22px"
+                }}
               >
                 {loading ? "Criando conta..." : "Criar Conta"}
               </Button>
