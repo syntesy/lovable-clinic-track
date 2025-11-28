@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: Home },
   { title: "Pacientes", url: "/pacientes", icon: Users },
   { title: "Evolução", url: "/evolucao", icon: Activity },
   { title: "Protocolos", url: "/protocolos", icon: FileText },
