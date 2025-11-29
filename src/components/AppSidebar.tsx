@@ -1,4 +1,4 @@
-import { Home, Users, Activity, FileText, Upload, BarChart3 } from "lucide-react";
+import { Home, Users, Activity, FileText, Upload, BarChart3, Bot } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -17,6 +17,7 @@ const menuItems = [
   { title: "Evolução", url: "/evolucao", icon: Activity },
   { title: "Protocolos", url: "/protocolos", icon: FileText },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+  { title: "Agente MAC", url: "/agente-mac", icon: Bot },
 ];
 
 export function AppSidebar() {
