@@ -197,7 +197,7 @@ const RegistrarEvolucao = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="session_number">Número da Sessão *</Label>
+                <Label htmlFor="session_number">Sessão de Número *</Label>
                 <Input
                   id="session_number"
                   type="number"
