@@ -233,9 +233,11 @@ const RegistrarEvolucao = () => {
             </div>
 
             <div className="space-y-4">
-              <Label>LUZ</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3">
+              <Label style={{ fontSize: '18px', fontWeight: 600, color: '#1F1F1F', marginBottom: '16px', display: 'block' }}>
+                Cluster Utilizado
+              </Label>
+              <div className="grid grid-cols-2 gap-x-20 gap-y-6">
+                <div className="flex items-center gap-6">
                   <Checkbox
                     id="luz_vermelho"
                     checked={selectedLights.includes("Vermelho")}
@@ -247,17 +249,30 @@ const RegistrarEvolucao = () => {
                       }
                     }}
                   />
-                  <Label htmlFor="luz_vermelho" className="font-normal flex-1">Vermelho</Label>
+                  <Label 
+                    htmlFor="luz_vermelho" 
+                    className="font-medium"
+                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
+                  >
+                    Vermelho
+                  </Label>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
                     {...register("tempo_vermelho")}
-                    className="w-28 border-input"
+                    style={{
+                      width: '150px',
+                      backgroundColor: '#F5F6FA',
+                      border: '2px solid #3D4F7C',
+                      borderRadius: '14px',
+                      color: '#1F1F1F'
+                    }}
+                    className="placeholder:text-[#A9AEC6]"
                     disabled={!selectedLights.includes("Vermelho")}
                   />
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-6">
                   <Checkbox
                     id="luz_infravermelho"
                     checked={selectedLights.includes("Infravermelho")}
@@ -269,17 +284,30 @@ const RegistrarEvolucao = () => {
                       }
                     }}
                   />
-                  <Label htmlFor="luz_infravermelho" className="font-normal flex-1">Infravermelho</Label>
+                  <Label 
+                    htmlFor="luz_infravermelho" 
+                    className="font-medium"
+                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
+                  >
+                    Infravermelho
+                  </Label>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
                     {...register("tempo_infravermelho")}
-                    className="w-28 border-input"
+                    style={{
+                      width: '150px',
+                      backgroundColor: '#F5F6FA',
+                      border: '2px solid #3D4F7C',
+                      borderRadius: '14px',
+                      color: '#1F1F1F'
+                    }}
+                    className="placeholder:text-[#A9AEC6]"
                     disabled={!selectedLights.includes("Infravermelho")}
                   />
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-6">
                   <Checkbox
                     id="luz_verde"
                     checked={selectedLights.includes("Verde")}
@@ -291,17 +319,30 @@ const RegistrarEvolucao = () => {
                       }
                     }}
                   />
-                  <Label htmlFor="luz_verde" className="font-normal flex-1">Verde</Label>
+                  <Label 
+                    htmlFor="luz_verde" 
+                    className="font-medium"
+                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
+                  >
+                    Verde
+                  </Label>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
                     {...register("tempo_verde")}
-                    className="w-28 border-input"
+                    style={{
+                      width: '150px',
+                      backgroundColor: '#F5F6FA',
+                      border: '2px solid #3D4F7C',
+                      borderRadius: '14px',
+                      color: '#1F1F1F'
+                    }}
+                    className="placeholder:text-[#A9AEC6]"
                     disabled={!selectedLights.includes("Verde")}
                   />
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-6">
                   <Checkbox
                     id="luz_ambar"
                     checked={selectedLights.includes("Âmbar")}
@@ -313,12 +354,25 @@ const RegistrarEvolucao = () => {
                       }
                     }}
                   />
-                  <Label htmlFor="luz_ambar" className="font-normal flex-1">Âmbar</Label>
+                  <Label 
+                    htmlFor="luz_ambar" 
+                    className="font-medium"
+                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
+                  >
+                    Âmbar
+                  </Label>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
                     {...register("tempo_ambar")}
-                    className="w-28 border-input"
+                    style={{
+                      width: '150px',
+                      backgroundColor: '#F5F6FA',
+                      border: '2px solid #3D4F7C',
+                      borderRadius: '14px',
+                      color: '#1F1F1F'
+                    }}
+                    className="placeholder:text-[#A9AEC6]"
                     disabled={!selectedLights.includes("Âmbar")}
                   />
                 </div>
