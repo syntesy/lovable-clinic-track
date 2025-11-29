@@ -163,7 +163,7 @@ export default function Auth() {
             alt="MAC Logo" 
             style={{ 
               width: "auto",
-              height: "70px",
+              height: "210px",
               marginBottom: "24px"
             }}
           />
