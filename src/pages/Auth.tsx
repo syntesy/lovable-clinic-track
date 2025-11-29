@@ -125,18 +125,19 @@ export default function Auth() {
       style={{ 
         minHeight: "100vh",
         width: "100%",
-        backgroundColor: "#3F5085",
+        backgroundColor: "#364A75",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "0"
+        padding: "20px"
       }}
     >
       {/* Card Central */}
       <div 
         style={{ 
-          width: "70vw",
-          height: "78vh",
+          width: "100%",
+          maxWidth: "1100px",
+          height: "70vh",
           backgroundColor: "#E5E5E6",
           borderRadius: "32px",
           display: "flex",
@@ -146,15 +147,14 @@ export default function Auth() {
         {/* Coluna Esquerda - Formulários */}
         <div 
           style={{ 
-            width: "50%",
-            height: "100vh",
+            width: "55%",
+            height: "100%",
             backgroundColor: "#E5E5E6",
-            padding: "40px 48px",
+            padding: "32px 40px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "flex-start",
-            overflow: "hidden"
+            overflowY: "auto"
           }}
         >
           {/* Logo MAC */}
@@ -162,22 +162,21 @@ export default function Auth() {
             src={macLogo} 
             alt="MAC Logo" 
             style={{ 
-              width: "200px",
-              height: "auto",
-              marginTop: "0px",
-              marginBottom: "18px"
+              width: "auto",
+              height: "70px",
+              marginBottom: "24px"
             }}
           />
 
           {/* Seção Login */}
-          <div style={{ width: "280px", marginBottom: "22px", marginTop: "8px" }}>
+          <div style={{ width: "340px", marginBottom: "24px" }}>
             <h2 
               style={{ 
                 color: "#283A63", 
                 fontSize: "22px", 
                 fontWeight: "600",
                 marginTop: "0px",
-                marginBottom: "8px",
+                marginBottom: "12px",
                 fontFamily: "Inter, sans-serif",
                 textAlign: "left"
               }}
@@ -192,17 +191,17 @@ export default function Auth() {
                 onChange={(e) => setLoginEmail(e.target.value)}
                 required
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
                   padding: "0 20px",
-                  marginBottom: "8px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -214,17 +213,17 @@ export default function Auth() {
                 onChange={(e) => setLoginPassword(e.target.value)}
                 required
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
                   padding: "0 20px",
-                  marginBottom: "8px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
@@ -233,17 +232,16 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "280px",
+                  width: "340px",
                   height: "40px",
                   backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "16px",
+                  borderRadius: "20px",
                   fontSize: "15px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "6px",
                   display: "block",
                   transition: "opacity 0.2s ease",
                   opacity: loading ? 0.6 : 1
@@ -257,14 +255,14 @@ export default function Auth() {
           </div>
 
           {/* Seção Cadastrar */}
-          <div style={{ width: "280px", marginTop: "6px" }}>
+          <div style={{ width: "340px" }}>
             <h2 
               style={{ 
                 color: "#283A63", 
                 fontSize: "22px", 
                 fontWeight: "600",
                 marginTop: "0px",
-                marginBottom: "8px",
+                marginBottom: "12px",
                 fontFamily: "Inter, sans-serif",
                 textAlign: "left"
               }}
@@ -281,11 +279,11 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -305,11 +303,11 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -328,11 +326,11 @@ export default function Auth() {
                   setSignupData({ ...signupData, phone: e.target.value })
                 }
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -351,11 +349,11 @@ export default function Auth() {
                   setSignupData({ ...signupData, cpf: e.target.value })
                 }
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -374,11 +372,11 @@ export default function Auth() {
                   setSignupData({ ...signupData, address: e.target.value })
                 }
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -398,11 +396,11 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -422,17 +420,17 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "34px",
-                  backgroundColor: "#EEF1F8", 
+                  width: "340px",
+                  height: "38px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#2E3350",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
                   padding: "0 20px",
-                  marginBottom: "8px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -441,17 +439,16 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "280px",
+                  width: "340px",
                   height: "40px",
                   backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "16px",
+                  borderRadius: "20px",
                   fontSize: "15px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "12px",
                   display: "block",
                   transition: "opacity 0.2s ease",
                   opacity: loading ? 0.6 : 1
@@ -468,12 +465,12 @@ export default function Auth() {
         {/* Coluna Direita - Imagem */}
         <div 
           style={{ 
-            width: "50%",
+            width: "45%",
+            height: "100%",
             backgroundImage: "url(/images/auth-background.png)",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            borderRadius: "0 32px 32px 0"
+            backgroundRepeat: "no-repeat"
           }}
         />
       </div>
