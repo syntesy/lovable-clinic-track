@@ -28,9 +28,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 sticky top-0 z-10">
             <div className="flex items-center">
               <SidebarTrigger className="mr-4" />
-              <img src={macLogo} alt="MAC Logo" className="h-10 mr-4" />
-              <h1 className="text-xl font-semibold text-foreground">
-                MAC Método de Aceleração Cicatricial
+              <h1 className="font-inter font-semibold" style={{ color: '#3A3A45', fontSize: '20px', fontWeight: 600 }}>
+                Método de Aceleração Cicatricial
               </h1>
             </div>
             <Button
