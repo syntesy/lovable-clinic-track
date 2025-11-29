@@ -2,17 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff } from "lucide-react";
 import macLogo from "@/assets/logo-mac.png";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -96,7 +91,6 @@ export default function Auth() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Update profile with additional data
         const { error: profileError } = await supabase
           .from("user_profiles")
           .update({
@@ -127,37 +121,59 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Left Column - Background Image */}
+    <div 
+      style={{ 
+        minHeight: "100vh",
+        width: "100%",
+        backgroundColor: "#364A75",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "40px 20px"
+      }}
+    >
+      {/* Card Central Branco */}
       <div 
-        className="flex items-center justify-center w-full md:w-[55%] h-[40vh] md:h-screen"
         style={{ 
-          backgroundImage: "url(/images/auth-background.png)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat"
+          width: "70vw",
+          maxWidth: "1200px",
+          minHeight: "70vh",
+          backgroundColor: "#FFFFFF",
+          borderRadius: "40px",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+          display: "flex",
+          overflow: "hidden"
         }}
       >
-      </div>
+        {/* Coluna Esquerda - Formulários */}
+        <div 
+          style={{ 
+            width: "50%",
+            padding: "60px 50px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            overflowY: "auto"
+          }}
+        >
+          {/* Logo MAC */}
+          <img 
+            src={macLogo} 
+            alt="MAC Logo" 
+            style={{ 
+              width: "180px",
+              marginBottom: "40px"
+            }}
+          />
 
-      {/* Right Column - Login and Signup Forms */}
-      <div
-        className="flex items-start justify-center w-full md:w-[45%] min-h-[60vh] md:h-screen overflow-y-auto"
-        style={{ 
-          backgroundColor: "#364A75",
-          padding: "24px",
-          paddingTop: "60px"
-        }}
-      >
-        <div style={{ width: "280px" }}>
-          {/* Login Form */}
-          <div style={{ marginBottom: "40px" }}>
+          {/* Seção Login */}
+          <div style={{ width: "100%", maxWidth: "340px", marginBottom: "30px" }}>
             <h2 
               style={{ 
-                color: "#FFFFFF", 
+                color: "#364A75", 
                 fontSize: "26px", 
                 fontWeight: "600",
-                marginBottom: "16px",
+                marginBottom: "20px",
                 fontFamily: "Inter, sans-serif",
                 textAlign: "left"
               }}
@@ -166,86 +182,59 @@ export default function Auth() {
             </h2>
             <form onSubmit={handleLogin}>
               <input
-                id="login-email"
                 type="email"
-                placeholder="Email"
+                placeholder="Username"
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 required
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
 
               <input
-                id="login-password"
                 type="password"
                 placeholder="Password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 required
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
-
-              <button
-                type="submit"
-                disabled={loading}
-                style={{ 
-                  width: "280px",
-                  height: "42px",
-                  backgroundColor: "#283A63", 
-                  color: "#FFFFFF",
-                  borderRadius: "12px",
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  fontFamily: "Inter, sans-serif",
-                  border: "none",
-                  cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "14px",
-                  display: "block",
-                  transition: "opacity 0.2s ease",
-                  opacity: loading ? 0.6 : 1
-                }}
-                onMouseEnter={(e) => !loading && (e.currentTarget.style.opacity = "0.85")}
-                onMouseLeave={(e) => !loading && (e.currentTarget.style.opacity = "1")}
-              >
-                {loading ? "Entrando..." : "Entrar"}
-              </button>
             </form>
           </div>
 
-          {/* Signup Form */}
-          <div>
+          {/* Seção Cadastrar */}
+          <div style={{ width: "100%", maxWidth: "340px" }}>
             <h2 
               style={{ 
-                color: "#FFFFFF", 
+                color: "#364A75", 
                 fontSize: "26px", 
                 fontWeight: "600",
-                marginBottom: "16px",
+                marginBottom: "20px",
                 fontFamily: "Inter, sans-serif",
                 textAlign: "left"
               }}
@@ -254,7 +243,6 @@ export default function Auth() {
             </h2>
             <form onSubmit={handleSignup}>
               <input
-                id="signup-name"
                 type="text"
                 placeholder="Nome Completo"
                 value={signupData.fullName}
@@ -263,48 +251,46 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
 
               <input
-                id="signup-email"
                 type="email"
-                placeholder="Email"
+                placeholder="email"
                 value={signupData.email}
                 onChange={(e) =>
                   setSignupData({ ...signupData, email: e.target.value })
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
 
               <input
-                id="signup-phone"
                 type="tel"
                 placeholder="Telefone"
                 value={signupData.phone}
@@ -312,23 +298,22 @@ export default function Auth() {
                   setSignupData({ ...signupData, phone: e.target.value })
                 }
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
 
               <input
-                id="signup-cpf"
                 type="text"
                 placeholder="CPF"
                 value={signupData.cpf}
@@ -336,23 +321,22 @@ export default function Auth() {
                   setSignupData({ ...signupData, cpf: e.target.value })
                 }
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
 
               <input
-                id="signup-address"
                 type="text"
                 placeholder="Endereço Completo"
                 value={signupData.address}
@@ -360,23 +344,22 @@ export default function Auth() {
                   setSignupData({ ...signupData, address: e.target.value })
                 }
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
 
               <input
-                id="signup-password"
                 type="password"
                 placeholder="Senha"
                 value={signupData.password}
@@ -385,23 +368,22 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
 
               <input
-                id="signup-confirm-password"
                 type="password"
                 placeholder="Confirmar Senha"
                 value={signupData.confirmPassword}
@@ -410,17 +392,17 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "280px",
-                  height: "38px",
-                  backgroundColor: "#F5F7FA", 
-                  color: "#3A3A45",
-                  borderRadius: "12px",
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#E6E9F2", 
+                  color: "#364A75",
+                  borderRadius: "20px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  padding: "10px",
-                  marginBottom: "10px",
+                  padding: "0 20px",
+                  marginBottom: "12px",
                   display: "block"
                 }}
               />
@@ -429,17 +411,17 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "280px",
-                  height: "42px",
-                  backgroundColor: "#283A63", 
+                  width: "100%",
+                  height: "46px",
+                  backgroundColor: "#364A75", 
                   color: "#FFFFFF",
-                  borderRadius: "12px",
+                  borderRadius: "20px",
                   fontSize: "15px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "14px",
+                  marginTop: "8px",
                   display: "block",
                   transition: "opacity 0.2s ease",
                   opacity: loading ? 0.6 : 1
@@ -452,6 +434,18 @@ export default function Auth() {
             </form>
           </div>
         </div>
+
+        {/* Coluna Direita - Imagem */}
+        <div 
+          style={{ 
+            width: "50%",
+            backgroundImage: "url(/images/auth-background.png)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            borderRadius: "0 40px 40px 0"
+          }}
+        />
       </div>
     </div>
   );
