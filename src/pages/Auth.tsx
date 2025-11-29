@@ -130,7 +130,7 @@ export default function Auth() {
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Left Column - Logo */}
       <div 
-        className="flex items-center justify-center w-full md:w-1/2 h-[40vh] md:h-screen"
+        className="flex items-center justify-center w-full md:w-[55%] h-[40vh] md:h-screen"
         style={{ 
           backgroundColor: "#DBDDE9" 
         }}
@@ -147,21 +147,22 @@ export default function Auth() {
 
       {/* Right Column - Login and Signup Forms */}
       <div
-        className="flex items-center justify-center w-full md:w-1/2 min-h-[60vh] md:h-screen"
+        className="flex items-start justify-center w-full md:w-[45%] min-h-[60vh] md:h-screen overflow-y-auto"
         style={{ 
           backgroundColor: "#364A75",
-          padding: "40px"
+          padding: "24px",
+          paddingTop: "60px"
         }}
       >
-        <div style={{ width: "340px" }}>
+        <div style={{ width: "280px" }}>
           {/* Login Form */}
-          <div style={{ marginBottom: "40px", marginTop: "30px" }}>
+          <div style={{ marginBottom: "40px" }}>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
-                fontSize: "28px", 
+                fontSize: "26px", 
                 fontWeight: "600",
-                marginBottom: "12px",
+                marginBottom: "16px",
                 fontFamily: "Inter, sans-serif",
                 textAlign: "left"
               }}
@@ -172,23 +173,22 @@ export default function Auth() {
               <input
                 id="login-email"
                 type="email"
-                placeholder="Username"
+                placeholder="Email"
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 required
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -201,18 +201,17 @@ export default function Auth() {
                 onChange={(e) => setLoginPassword(e.target.value)}
                 required
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -221,19 +220,23 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "340px",
-                  height: "48px",
+                  width: "280px",
+                  height: "42px",
                   backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "20px",
-                  fontSize: "16px",
+                  borderRadius: "12px",
+                  fontSize: "15px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "6px",
-                  display: "block"
+                  marginTop: "14px",
+                  display: "block",
+                  transition: "opacity 0.2s ease",
+                  opacity: loading ? 0.6 : 1
                 }}
+                onMouseEnter={(e) => !loading && (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => !loading && (e.currentTarget.style.opacity = "1")}
               >
                 {loading ? "Entrando..." : "Entrar"}
               </button>
@@ -241,13 +244,13 @@ export default function Auth() {
           </div>
 
           {/* Signup Form */}
-          <div style={{ marginTop: "30px" }}>
+          <div>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
-                fontSize: "28px", 
+                fontSize: "26px", 
                 fontWeight: "600",
-                marginBottom: "12px",
+                marginBottom: "16px",
                 fontFamily: "Inter, sans-serif",
                 textAlign: "left"
               }}
@@ -265,18 +268,17 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -291,18 +293,17 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -316,18 +317,17 @@ export default function Auth() {
                   setSignupData({ ...signupData, phone: e.target.value })
                 }
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -341,18 +341,17 @@ export default function Auth() {
                   setSignupData({ ...signupData, cpf: e.target.value })
                 }
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -366,18 +365,17 @@ export default function Auth() {
                   setSignupData({ ...signupData, address: e.target.value })
                 }
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -392,18 +390,17 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -418,18 +415,17 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "340px",
-                  height: "44px",
-                  backgroundColor: "#F0F2F7", 
+                  width: "280px",
+                  height: "38px",
+                  backgroundColor: "#F5F7FA", 
                   color: "#3A3A45",
-                  borderRadius: "20px",
-                  fontSize: "15px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "16px",
-                  paddingRight: "16px",
-                  marginBottom: "16px",
+                  padding: "10px",
+                  marginBottom: "10px",
                   display: "block"
                 }}
               />
@@ -438,19 +434,23 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "340px",
-                  height: "48px",
+                  width: "280px",
+                  height: "42px",
                   backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "20px",
-                  fontSize: "16px",
+                  borderRadius: "12px",
+                  fontSize: "15px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "6px",
-                  display: "block"
+                  marginTop: "14px",
+                  display: "block",
+                  transition: "opacity 0.2s ease",
+                  opacity: loading ? 0.6 : 1
                 }}
+                onMouseEnter={(e) => !loading && (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => !loading && (e.currentTarget.style.opacity = "1")}
               >
                 {loading ? "Criando conta..." : "Criar Conta"}
               </button>
