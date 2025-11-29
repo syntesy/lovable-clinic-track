@@ -452,6 +452,7 @@ export type Database = {
           file_name: string
           file_path: string
           id: string
+          image_type: string | null
           session_id: string
           uploaded_at: string
         }
@@ -460,6 +461,7 @@ export type Database = {
           file_name: string
           file_path: string
           id?: string
+          image_type?: string | null
           session_id: string
           uploaded_at?: string
         }
@@ -468,6 +470,7 @@ export type Database = {
           file_name?: string
           file_path?: string
           id?: string
+          image_type?: string | null
           session_id?: string
           uploaded_at?: string
         }
