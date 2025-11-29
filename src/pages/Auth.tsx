@@ -143,7 +143,7 @@ export default function Auth() {
           style={{ 
             width: "40%",
             height: "auto",
-            marginBottom: "20px"
+            marginBottom: "24px"
           }}
         />
         <p
@@ -168,9 +168,9 @@ export default function Auth() {
           backgroundColor: "#3D4F7C"
         }}
       >
-        <div style={{ width: "360px" }}>
+        <div style={{ width: "380px" }}>
           {/* Login Form */}
-          <div style={{ marginBottom: "32px" }}>
+          <div style={{ marginBottom: "40px", marginTop: "50px" }}>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
@@ -190,18 +190,18 @@ export default function Auth() {
                 onChange={(e) => setLoginEmail(e.target.value)}
                 required
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -214,18 +214,18 @@ export default function Auth() {
                 onChange={(e) => setLoginPassword(e.target.value)}
                 required
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -234,16 +234,16 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "100%",
-                  height: "50px",
+                  width: "380px",
+                  height: "48px",
                   backgroundColor: "#2D3E66", 
                   color: "#FFFFFF",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "15px",
                   fontWeight: "500",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "4px",
+                  marginTop: "6px",
                   display: "block"
                 }}
               >
@@ -275,18 +275,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -301,18 +301,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -326,18 +326,18 @@ export default function Auth() {
                   setSignupData({ ...signupData, phone: e.target.value })
                 }
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -351,18 +351,18 @@ export default function Auth() {
                   setSignupData({ ...signupData, cpf: e.target.value })
                 }
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -376,18 +376,18 @@ export default function Auth() {
                   setSignupData({ ...signupData, address: e.target.value })
                 }
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -402,18 +402,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -428,18 +428,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "100%",
-                  height: "48px",
+                  width: "380px",
+                  height: "46px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "14px",
                   fontWeight: "400",
                   border: "1px solid #DBDDE9",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "16px",
+                  marginBottom: "14px",
                   display: "block"
                 }}
               />
@@ -448,16 +448,16 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "100%",
-                  height: "50px",
+                  width: "380px",
+                  height: "48px",
                   backgroundColor: "#2D3E66", 
                   color: "#FFFFFF",
-                  borderRadius: "14px",
+                  borderRadius: "12px",
                   fontSize: "15px",
                   fontWeight: "500",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "4px",
+                  marginTop: "6px",
                   display: "block"
                 }}
               >
