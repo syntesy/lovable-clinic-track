@@ -86,7 +86,6 @@ const RegistrarEvolucao = () => {
             vas_on_day: data.vas_on_day ? parseFloat(data.vas_on_day) : null,
             session_description: data.session_description,
             clinical_observations: data.clinical_observations,
-            immediate_response: data.immediate_response,
             light_type: selectedLights.join(", "),
             treatment_time: data.treatment_time_total ? parseFloat(data.treatment_time_total) : null,
             pharmaceutical_used: data.pharmaceutical_used,
@@ -364,16 +363,6 @@ const RegistrarEvolucao = () => {
                 {...register("clinical_observations")}
                 className="border-input"
                 placeholder="Observações sobre a evolução clínica do paciente..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="immediate_response">Resposta Imediata</Label>
-              <Textarea
-                id="immediate_response"
-                {...register("immediate_response")}
-                className="border-input"
-                placeholder="Como o paciente respondeu imediatamente após a sessão..."
               />
             </div>
           </CardContent>
