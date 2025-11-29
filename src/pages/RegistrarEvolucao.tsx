@@ -53,6 +53,26 @@ const RegistrarEvolucao = () => {
   });
 
 
+  const handleDischarge = async () => {
+    try {
+      const { error } = await supabase
+        .from("patient_discharges")
+        .insert({
+          patient_id: id,
+          discharge_date: new Date().toISOString().split('T')[0],
+          discharge_notes: "Alta terapêutica registrada"
+        });
+
+      if (error) throw error;
+
+      toast.success("Alta terapêutica registrada com sucesso!");
+      navigate("/evolucao");
+    } catch (error) {
+      console.error("Erro ao registrar alta:", error);
+      toast.error("Erro ao registrar alta terapêutica");
+    }
+  };
+
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
@@ -488,13 +508,34 @@ const RegistrarEvolucao = () => {
             type="button"
             variant="outline"
             onClick={() => navigate("/evolucao")}
+            style={{ marginRight: '16px' }}
           >
             Cancelar
           </Button>
           <Button
+            type="button"
+            onClick={handleDischarge}
+            style={{ 
+              backgroundColor: '#2F3F6B', 
+              color: '#FFFFFF', 
+              borderRadius: '12px',
+              marginRight: '16px',
+              fontWeight: 600
+            }}
+            className="hover:opacity-90"
+          >
+            Alta Terapêutica
+          </Button>
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-primary hover:bg-primary/90"
+            style={{ 
+              backgroundColor: '#2F3F6B', 
+              color: '#FFFFFF', 
+              borderRadius: '12px',
+              fontWeight: 600
+            }}
+            className="hover:opacity-90"
           >
             {isSubmitting ? "Salvando..." : "Registrar Evolução"}
           </Button>
