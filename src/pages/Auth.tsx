@@ -127,13 +127,11 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen">
       {/* Left Column - Logo */}
       <div 
-        className="flex flex-col items-center justify-center" 
+        className="flex items-center justify-center w-full md:w-1/2 h-[40vh] md:h-screen"
         style={{ 
-          width: "50%", 
-          height: "100vh",
           backgroundColor: "#DBDDE9" 
         }}
       >
@@ -141,42 +139,31 @@ export default function Auth() {
           src={macLogo} 
           alt="MAC Logo" 
           style={{ 
-            width: "40%",
-            height: "auto",
-            marginBottom: "24px"
+            width: "380px",
+            height: "auto"
           }}
         />
-        <p
-          style={{
-            color: "#3D4F7C",
-            fontSize: "18px",
-            fontWeight: "600",
-            textAlign: "center",
-            letterSpacing: "0.5px"
-          }}
-        >
-          MÉTODO DE ACELERAÇÃO CICATRICIAL
-        </p>
       </div>
 
       {/* Right Column - Login and Signup Forms */}
       <div
-        className="flex items-center justify-center"
+        className="flex items-center justify-center w-full md:w-1/2 min-h-[60vh] md:h-screen"
         style={{ 
-          width: "50%", 
-          height: "100vh",
-          backgroundColor: "#3D4F7C"
+          backgroundColor: "#364A75",
+          padding: "40px"
         }}
       >
-        <div style={{ width: "380px" }}>
+        <div style={{ width: "340px" }}>
           {/* Login Form */}
-          <div style={{ marginBottom: "40px", marginTop: "50px" }}>
+          <div style={{ marginBottom: "40px", marginTop: "30px" }}>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
-                fontSize: "30px", 
+                fontSize: "28px", 
                 fontWeight: "600",
-                marginBottom: "20px"
+                marginBottom: "12px",
+                fontFamily: "Inter, sans-serif",
+                textAlign: "left"
               }}
             >
               Log in
@@ -190,18 +177,18 @@ export default function Auth() {
                 onChange={(e) => setLoginEmail(e.target.value)}
                 required
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -214,18 +201,18 @@ export default function Auth() {
                 onChange={(e) => setLoginPassword(e.target.value)}
                 required
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -234,13 +221,14 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "380px",
+                  width: "340px",
                   height: "48px",
-                  backgroundColor: "#2D3E66", 
+                  backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "12px",
-                  fontSize: "15px",
-                  fontWeight: "500",
+                  borderRadius: "20px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  fontFamily: "Inter, sans-serif",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
                   marginTop: "6px",
@@ -253,13 +241,15 @@ export default function Auth() {
           </div>
 
           {/* Signup Form */}
-          <div style={{ marginTop: "40px" }}>
+          <div style={{ marginTop: "30px" }}>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
-                fontSize: "30px", 
+                fontSize: "28px", 
                 fontWeight: "600",
-                marginBottom: "20px"
+                marginBottom: "12px",
+                fontFamily: "Inter, sans-serif",
+                textAlign: "left"
               }}
             >
               Cadastrar
@@ -275,18 +265,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -301,18 +291,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -326,18 +316,18 @@ export default function Auth() {
                   setSignupData({ ...signupData, phone: e.target.value })
                 }
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -351,18 +341,18 @@ export default function Auth() {
                   setSignupData({ ...signupData, cpf: e.target.value })
                 }
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -376,18 +366,18 @@ export default function Auth() {
                   setSignupData({ ...signupData, address: e.target.value })
                 }
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -402,18 +392,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -428,18 +418,18 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "380px",
-                  height: "46px",
-                  backgroundColor: "#F5F6FA", 
+                  width: "340px",
+                  height: "44px",
+                  backgroundColor: "#F0F2F7", 
                   color: "#3A3A45",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "400",
-                  border: "1px solid #DBDDE9",
+                  borderRadius: "20px",
+                  fontSize: "15px",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
                   outline: "none",
                   paddingLeft: "16px",
                   paddingRight: "16px",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   display: "block"
                 }}
               />
@@ -448,13 +438,14 @@ export default function Auth() {
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "380px",
+                  width: "340px",
                   height: "48px",
-                  backgroundColor: "#2D3E66", 
+                  backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "12px",
-                  fontSize: "15px",
-                  fontWeight: "500",
+                  borderRadius: "20px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  fontFamily: "Inter, sans-serif",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
                   marginTop: "6px",
