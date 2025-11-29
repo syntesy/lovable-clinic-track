@@ -156,9 +156,9 @@ export default function Auth() {
           backgroundColor: "#3D4F7C"
         }}
       >
-        <div style={{ width: "480px" }}>
+        <div style={{ width: "360px" }}>
           {/* Login Form */}
-          <div style={{ marginBottom: "24px" }}>
+          <div style={{ marginBottom: "20px" }}>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
@@ -178,78 +178,64 @@ export default function Auth() {
                 onChange={(e) => setLoginEmail(e.target.value)}
                 required
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "400",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "18px",
-                  paddingRight: "18px",
-                  marginBottom: "10px",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
                   display: "block"
                 }}
               />
 
-              <div style={{ position: "relative", marginBottom: "10px" }}>
-                <input
-                  id="login-password"
-                  type={showLoginPassword ? "text" : "password"}
-                  placeholder="Password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  style={{ 
-                    width: "380px",
-                    height: "42px",
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    borderRadius: "22px",
-                    fontSize: "14px",
-                    fontWeight: "400",
-                    border: "none",
-                    outline: "none",
-                    paddingLeft: "18px",
-                    paddingRight: "45px",
-                    display: "block"
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  style={{ 
-                    position: "absolute",
-                    right: "15px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#9CA3AF",
-                    padding: "0"
-                  }}
-                >
-                  {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <input
+                id="login-password"
+                type="password"
+                placeholder="Password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                style={{ 
+                  width: "100%",
+                  height: "36px",
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  borderRadius: "18px",
+                  fontSize: "13px",
+                  fontWeight: "400",
+                  border: "none",
+                  outline: "none",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
+                  display: "block"
+                }}
+              />
 
               <button
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#2F3F6B", 
                   color: "#FFFFFF",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "500",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "10px",
+                  marginTop: "8px",
                   display: "block"
                 }}
               >
@@ -259,7 +245,7 @@ export default function Auth() {
           </div>
 
           {/* Signup Form */}
-          <div style={{ marginTop: "24px" }}>
+          <div style={{ marginTop: "20px" }}>
             <h2 
               style={{ 
                 color: "#FFFFFF", 
@@ -281,18 +267,20 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "400",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "18px",
-                  paddingRight: "18px",
-                  marginBottom: "10px",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
                   display: "block"
                 }}
               />
@@ -307,18 +295,20 @@ export default function Auth() {
                 }
                 required
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "400",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "18px",
-                  paddingRight: "18px",
-                  marginBottom: "10px",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
                   display: "block"
                 }}
               />
@@ -332,18 +322,20 @@ export default function Auth() {
                   setSignupData({ ...signupData, phone: e.target.value })
                 }
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "400",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "18px",
-                  paddingRight: "18px",
-                  marginBottom: "10px",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
                   display: "block"
                 }}
               />
@@ -357,18 +349,20 @@ export default function Auth() {
                   setSignupData({ ...signupData, cpf: e.target.value })
                 }
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "400",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "18px",
-                  paddingRight: "18px",
-                  marginBottom: "10px",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
                   display: "block"
                 }}
               />
@@ -382,124 +376,94 @@ export default function Auth() {
                   setSignupData({ ...signupData, address: e.target.value })
                 }
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#F5F6FA", 
                   color: "#3A3A45",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "400",
                   border: "none",
                   outline: "none",
-                  paddingLeft: "18px",
-                  paddingRight: "18px",
-                  marginBottom: "10px",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
                   display: "block"
                 }}
               />
 
-              <div style={{ position: "relative", marginBottom: "10px" }}>
-                <input
-                  id="signup-password"
-                  type={showSignupPassword ? "text" : "password"}
-                  placeholder="Senha"
-                  value={signupData.password}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, password: e.target.value })
-                  }
-                  required
-                  style={{ 
-                    width: "380px",
-                    height: "42px",
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    borderRadius: "22px",
-                    fontSize: "14px",
-                    fontWeight: "400",
-                    border: "none",
-                    outline: "none",
-                    paddingLeft: "18px",
-                    paddingRight: "45px",
-                    display: "block"
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowSignupPassword(!showSignupPassword)}
-                  style={{ 
-                    position: "absolute",
-                    right: "15px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#9CA3AF",
-                    padding: "0"
-                  }}
-                >
-                  {showSignupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <input
+                id="signup-password"
+                type="password"
+                placeholder="Senha"
+                value={signupData.password}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, password: e.target.value })
+                }
+                required
+                style={{ 
+                  width: "100%",
+                  height: "36px",
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  borderRadius: "18px",
+                  fontSize: "13px",
+                  fontWeight: "400",
+                  border: "none",
+                  outline: "none",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
+                  display: "block"
+                }}
+              />
 
-              <div style={{ position: "relative", marginBottom: "10px" }}>
-                <input
-                  id="signup-confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirmar Senha"
-                  value={signupData.confirmPassword}
-                  onChange={(e) =>
-                    setSignupData({ ...signupData, confirmPassword: e.target.value })
-                  }
-                  required
-                  style={{ 
-                    width: "380px",
-                    height: "42px",
-                    backgroundColor: "#F5F6FA", 
-                    color: "#3A3A45",
-                    borderRadius: "22px",
-                    fontSize: "14px",
-                    fontWeight: "400",
-                    border: "none",
-                    outline: "none",
-                    paddingLeft: "18px",
-                    paddingRight: "45px",
-                    display: "block"
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{ 
-                    position: "absolute",
-                    right: "15px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#9CA3AF",
-                    padding: "0"
-                  }}
-                >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <input
+                id="signup-confirm-password"
+                type="password"
+                placeholder="Confirmar Senha"
+                value={signupData.confirmPassword}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, confirmPassword: e.target.value })
+                }
+                required
+                style={{ 
+                  width: "100%",
+                  height: "36px",
+                  backgroundColor: "#F5F6FA", 
+                  color: "#3A3A45",
+                  borderRadius: "18px",
+                  fontSize: "13px",
+                  fontWeight: "400",
+                  border: "none",
+                  outline: "none",
+                  paddingTop: "6px",
+                  paddingBottom: "6px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  marginBottom: "8px",
+                  display: "block"
+                }}
+              />
 
               <button
                 type="submit"
                 disabled={loading}
                 style={{ 
-                  width: "380px",
-                  height: "42px",
+                  width: "100%",
+                  height: "36px",
                   backgroundColor: "#2F3F6B", 
                   color: "#FFFFFF",
-                  borderRadius: "22px",
-                  fontSize: "14px",
+                  borderRadius: "18px",
+                  fontSize: "13px",
                   fontWeight: "500",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  marginTop: "10px",
+                  marginTop: "8px",
                   display: "block"
                 }}
               >
