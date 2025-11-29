@@ -88,6 +88,19 @@ const DetalhePaciente = () => {
             {patient.status === "active" ? "Em Tratamento" : "Alta"}
           </span>
         </div>
+        <Button
+          onClick={() => navigate(`/protocolo-mac/${id}`)}
+          style={{
+            backgroundColor: '#2F3F6B',
+            color: '#FFFFFF',
+            borderRadius: '12px',
+            fontWeight: 600,
+          }}
+          className="hover:opacity-90 ml-2"
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Novo Protocolo MAC
+        </Button>
       </div>
 
       <Tabs defaultValue="info" className="space-y-6">
@@ -293,7 +306,10 @@ const DetalhePaciente = () => {
               <p className="text-muted-foreground">
                 Nenhum protocolo cadastrado ainda
               </p>
-              <Button className="mt-4 bg-primary hover:bg-primary/90">
+              <Button 
+                className="mt-4 bg-primary hover:bg-primary/90"
+                onClick={() => navigate(`/protocolo-mac/${id}`)}
+              >
                 Adicionar Protocolo
               </Button>
             </Card>
@@ -363,7 +379,10 @@ const DetalhePaciente = () => {
               <p className="text-muted-foreground">
                 Nenhuma sessão registrada ainda
               </p>
-              <Button className="mt-4 bg-primary hover:bg-primary/90">
+              <Button 
+                className="mt-4 bg-primary hover:bg-primary/90"
+                onClick={() => navigate(`/evolucao/${id}`)}
+              >
                 Registrar Sessão
               </Button>
             </Card>

@@ -15,6 +15,7 @@ import RegistrarEvolucao from "./pages/RegistrarEvolucao";
 import Protocolos from "./pages/Protocolos";
 import Relatorios from "./pages/Relatorios";
 import VisualizarRelatorio from "./pages/VisualizarRelatorio";
+import ProtocoloMAC from "./pages/ProtocoloMAC";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -94,6 +95,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Protocolos />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/protocolo-mac/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProtocoloMAC />
                 </Layout>
               </ProtectedRoute>
             }
