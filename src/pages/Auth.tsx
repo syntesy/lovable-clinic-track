@@ -125,21 +125,22 @@ export default function Auth() {
       style={{ 
         minHeight: "100vh",
         width: "100%",
-        backgroundColor: "#364A75",
+        backgroundColor: "#3F5085",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        padding: "0"
       }}
     >
       {/* Card Central */}
       <div 
         style={{ 
-          width: "850px",
+          width: "70vw",
+          height: "78vh",
           backgroundColor: "#E5E5E6",
-          borderRadius: "28px",
+          borderRadius: "32px",
           display: "flex",
-          overflow: "hidden",
-          margin: "40px 0"
+          overflow: "hidden"
         }}
       >
         {/* Coluna Esquerda - Formulários */}
@@ -147,7 +148,7 @@ export default function Auth() {
           style={{ 
             width: "50%",
             backgroundColor: "#E5E5E6",
-            padding: "48px 24px",
+            padding: "42px 0",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -161,16 +162,16 @@ export default function Auth() {
             style={{ 
               width: "240px",
               height: "auto",
-              marginBottom: "40px"
+              marginBottom: "32px"
             }}
           />
 
           {/* Seção Login */}
-          <div style={{ width: "320px", marginBottom: "30px" }}>
+          <div style={{ width: "320px", marginBottom: "32px" }}>
             <h2 
               style={{ 
-                color: "#2E3350", 
-                fontSize: "26px", 
+                color: "#283A63", 
+                fontSize: "28px", 
                 fontWeight: "600",
                 marginBottom: "20px",
                 fontFamily: "Inter, sans-serif",
@@ -188,10 +189,10 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -210,10 +211,10 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -229,11 +230,11 @@ export default function Auth() {
                 disabled={loading}
                 style={{ 
                   width: "320px",
-                  height: "48px",
+                  height: "44px",
                   backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "20px",
-                  fontSize: "16px",
+                  borderRadius: "18px",
+                  fontSize: "15px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -255,8 +256,8 @@ export default function Auth() {
           <div style={{ width: "320px" }}>
             <h2 
               style={{ 
-                color: "#2E3350", 
-                fontSize: "26px", 
+                color: "#283A63", 
+                fontSize: "28px", 
                 fontWeight: "600",
                 marginBottom: "20px",
                 fontFamily: "Inter, sans-serif",
@@ -276,10 +277,10 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -300,10 +301,10 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -323,10 +324,10 @@ export default function Auth() {
                 }
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -346,10 +347,10 @@ export default function Auth() {
                 }
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -369,10 +370,10 @@ export default function Auth() {
                 }
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -393,10 +394,10 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -417,10 +418,10 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "320px",
-                  height: "42px",
-                  backgroundColor: "#F0F2F7", 
+                  height: "38px",
+                  backgroundColor: "#EEF1F8", 
                   color: "#2E3350",
-                  borderRadius: "20px",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -436,11 +437,11 @@ export default function Auth() {
                 disabled={loading}
                 style={{ 
                   width: "320px",
-                  height: "48px",
+                  height: "44px",
                   backgroundColor: "#283A63", 
                   color: "#FFFFFF",
-                  borderRadius: "20px",
-                  fontSize: "16px",
+                  borderRadius: "18px",
+                  fontSize: "15px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -467,7 +468,7 @@ export default function Auth() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            borderRadius: "0 28px 28px 0"
+            borderRadius: "0 32px 32px 0"
           }}
         />
       </div>
