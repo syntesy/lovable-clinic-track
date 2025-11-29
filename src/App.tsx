@@ -16,6 +16,7 @@ import Protocolos from "./pages/Protocolos";
 import Relatorios from "./pages/Relatorios";
 import VisualizarRelatorio from "./pages/VisualizarRelatorio";
 import ProtocoloMAC from "./pages/ProtocoloMAC";
+import AgenteMAC from "./pages/AgenteMAC";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -122,6 +123,16 @@ const App = () => (
           <Route
             path="/relatorios/visualizar/:id"
             element={<VisualizarRelatorio />}
+          />
+          <Route
+            path="/agente-mac"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AgenteMAC />
+                </Layout>
+              </ProtectedRoute>
+            }
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
