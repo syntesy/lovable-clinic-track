@@ -128,19 +128,16 @@ export default function Auth() {
         backgroundColor: "#364A75",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 20px"
+        justifyContent: "center"
       }}
     >
-      {/* Card Central Branco */}
+      {/* Card Central */}
       <div 
         style={{ 
-          width: "70vw",
-          maxWidth: "1200px",
-          minHeight: "70vh",
-          backgroundColor: "#FFFFFF",
-          borderRadius: "40px",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+          width: "1100px",
+          height: "650px",
+          backgroundColor: "#E5E5E6",
+          borderRadius: "36px",
           display: "flex",
           overflow: "hidden"
         }}
@@ -148,8 +145,10 @@ export default function Auth() {
         {/* Coluna Esquerda - Formulários */}
         <div 
           style={{ 
-            width: "50%",
-            padding: "60px 50px",
+            width: "550px",
+            height: "100%",
+            backgroundColor: "#E5E5E6",
+            padding: "48px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -161,16 +160,16 @@ export default function Auth() {
             src={macLogo} 
             alt="MAC Logo" 
             style={{ 
-              width: "180px",
+              width: "160px",
               marginBottom: "40px"
             }}
           />
 
           {/* Seção Login */}
-          <div style={{ width: "100%", maxWidth: "340px", marginBottom: "30px" }}>
+          <div style={{ width: "380px", marginBottom: "30px" }}>
             <h2 
               style={{ 
-                color: "#364A75", 
+                color: "#2E3350", 
                 fontSize: "26px", 
                 fontWeight: "600",
                 marginBottom: "20px",
@@ -189,11 +188,11 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -211,11 +210,11 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -224,14 +223,39 @@ export default function Auth() {
                   display: "block"
                 }}
               />
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ 
+                  width: "100%",
+                  height: "42px",
+                  backgroundColor: "#283A63", 
+                  color: "#FFFFFF",
+                  borderRadius: "20px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  fontFamily: "Inter, sans-serif",
+                  border: "none",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  marginTop: "8px",
+                  display: "block",
+                  transition: "opacity 0.2s ease",
+                  opacity: loading ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => !loading && (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => !loading && (e.currentTarget.style.opacity = "1")}
+              >
+                {loading ? "Entrando..." : "Entrar"}
+              </button>
             </form>
           </div>
 
           {/* Seção Cadastrar */}
-          <div style={{ width: "100%", maxWidth: "340px" }}>
+          <div style={{ width: "380px" }}>
             <h2 
               style={{ 
-                color: "#364A75", 
+                color: "#2E3350", 
                 fontSize: "26px", 
                 fontWeight: "600",
                 marginBottom: "20px",
@@ -252,11 +276,11 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -276,11 +300,11 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -299,11 +323,11 @@ export default function Auth() {
                 }
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -322,11 +346,11 @@ export default function Auth() {
                 }
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -345,11 +369,11 @@ export default function Auth() {
                 }
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -369,11 +393,11 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -393,11 +417,11 @@ export default function Auth() {
                 required
                 style={{ 
                   width: "100%",
-                  height: "42px",
-                  backgroundColor: "#E6E9F2", 
-                  color: "#364A75",
+                  height: "40px",
+                  backgroundColor: "#DCE1EC", 
+                  color: "#2E3350",
                   borderRadius: "20px",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
                   outline: "none",
@@ -412,11 +436,11 @@ export default function Auth() {
                 disabled={loading}
                 style={{ 
                   width: "100%",
-                  height: "46px",
-                  backgroundColor: "#364A75", 
+                  height: "42px",
+                  backgroundColor: "#283A63", 
                   color: "#FFFFFF",
                   borderRadius: "20px",
-                  fontSize: "15px",
+                  fontSize: "16px",
                   fontWeight: "600",
                   fontFamily: "Inter, sans-serif",
                   border: "none",
@@ -438,12 +462,13 @@ export default function Auth() {
         {/* Coluna Direita - Imagem */}
         <div 
           style={{ 
-            width: "50%",
+            width: "550px",
+            height: "100%",
             backgroundImage: "url(/images/auth-background.png)",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            borderRadius: "0 40px 40px 0"
+            borderRadius: "0 36px 36px 0"
           }}
         />
       </div>
