@@ -128,21 +128,16 @@ export default function Auth() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Left Column - Logo */}
+      {/* Left Column - Background Image */}
       <div 
         className="flex items-center justify-center w-full md:w-[55%] h-[40vh] md:h-screen"
         style={{ 
-          backgroundColor: "#DBDDE9" 
+          backgroundImage: "url(/images/auth-background.png)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
         }}
       >
-        <img 
-          src={macLogo} 
-          alt="MAC Logo" 
-          style={{ 
-            width: "380px",
-            height: "auto"
-          }}
-        />
       </div>
 
       {/* Right Column - Login and Signup Forms */}
