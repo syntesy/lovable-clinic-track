@@ -211,6 +211,38 @@ export type Database = {
           },
         ]
       }
+      patient_discharges: {
+        Row: {
+          created_at: string
+          discharge_date: string
+          discharge_notes: string | null
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          discharge_date?: string
+          discharge_notes?: string | null
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          discharge_date?: string
+          discharge_notes?: string | null
+          id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_discharges_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_documents: {
         Row: {
           document_type: string
