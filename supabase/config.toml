@@ -1,1 +1,7 @@
 project_id = "oedlipwpqkvhreqipoji"
+
+[functions.chat-gpt]
+verify_jwt = false
+
+[functions.mac-agent]
+verify_jwt = false
