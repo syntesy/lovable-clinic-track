@@ -34,7 +34,12 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const client = new OpenAI({ apiKey: openAIApiKey });
+    const client = new OpenAI({ 
+      apiKey: openAIApiKey,
+      defaultHeaders: {
+        'OpenAI-Beta': 'assistants=v2'
+      }
+    });
 
     let threadId: string;
     let conversationDbId: string;
