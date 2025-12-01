@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "https://deno.land/x/openai@v4.20.1/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -12,8 +11,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const OPENAI_BASE = 'https://api.openai.com/v1';
+const ASSISTANT_ID = 'asst_PrcAyGYeI0xIP0lxMXyy050';
+
+async function openaiRequest(endpoint: string, method: string, body?: any) {
+  const response = await fetch(`${OPENAI_BASE}${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Content-Type': 'application/json',
+      'OpenAI-Beta': 'assistants=v2',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('OpenAI API error:', response.status, error);
+    throw new Error(`OpenAI API error: ${response.status} - ${error}`);
+  }
+  
+  return response.json();
+}
+
 serve(async (req) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -33,13 +54,10 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const client = new OpenAI({ apiKey: openAIApiKey });
-    const assistantId = "asst_PrcAyGYeI0xIP0lxMXyy050";
 
     let conversationDbId: string;
     let threadId: string;
 
-    // Verifica ou cria conversa no banco
     if (conversationId) {
       console.log("Buscando conversa existente:", conversationId);
       const { data: conversation, error } = await supabase
@@ -57,8 +75,9 @@ serve(async (req) => {
       threadId = conversation.thread_id;
     } else {
       console.log("Criando nova thread e conversa");
-      // Cria thread no OpenAI
-      const thread = await client.beta.threads.create();
+      
+      // Create thread with v2 API
+      const thread = await openaiRequest('/threads', 'POST', {});
       threadId = thread.id;
 
       const { data: newConversation, error } = await supabase
@@ -80,7 +99,7 @@ serve(async (req) => {
       console.log("Conversa e thread criadas:", conversationDbId, threadId);
     }
 
-    // Salva a mensagem do usuário
+    // Save user message to DB
     await supabase.from('chat_messages').insert({
       conversation_id: conversationDbId,
       role: 'user',
@@ -89,33 +108,34 @@ serve(async (req) => {
 
     console.log('Adicionando mensagem à thread:', threadId);
     
-    // Adiciona mensagem à thread
-    await client.beta.threads.messages.create(threadId, {
+    // Add message to thread with v2 API
+    await openaiRequest(`/threads/${threadId}/messages`, 'POST', {
       role: "user",
       content: message,
     });
 
-    console.log('Executando assistant:', assistantId);
+    console.log('Executando assistant:', ASSISTANT_ID);
 
-    // Executa o assistant
-    const run = await client.beta.threads.runs.create(threadId, {
-      assistant_id: assistantId,
+    // Create run with v2 API
+    const run = await openaiRequest(`/threads/${threadId}/runs`, 'POST', {
+      assistant_id: ASSISTANT_ID,
     });
 
     console.log('Run criado:', run.id);
 
-    // Polling para aguardar conclusão
-    let runStatus = await client.beta.threads.runs.retrieve(threadId, run.id);
+    // Poll for completion
+    let runStatus = run;
     let attempts = 0;
-    const maxAttempts = 60; // 60 segundos máximo
+    const maxAttempts = 60;
 
     while (runStatus.status !== 'completed' && attempts < maxAttempts) {
       if (runStatus.status === 'failed' || runStatus.status === 'cancelled' || runStatus.status === 'expired') {
+        console.error('Run failed:', runStatus);
         throw new Error(`Run falhou com status: ${runStatus.status}`);
       }
       
       await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await client.beta.threads.runs.retrieve(threadId, run.id);
+      runStatus = await openaiRequest(`/threads/${threadId}/runs/${run.id}`, 'GET');
       attempts++;
       console.log('Status do run:', runStatus.status, 'Tentativa:', attempts);
     }
@@ -126,8 +146,8 @@ serve(async (req) => {
 
     console.log('Run completado, buscando resposta');
 
-    // Busca a resposta final
-    const msgs = await client.beta.threads.messages.list(threadId);
+    // Get messages with v2 API
+    const msgs = await openaiRequest(`/threads/${threadId}/messages`, 'GET');
     const latestMessage = msgs.data[0];
     
     let answer = "Erro ao gerar resposta do MAC.";
@@ -141,14 +161,14 @@ serve(async (req) => {
 
     console.log('Resposta obtida, tamanho:', answer.length);
 
-    // Salva a resposta do assistente no banco
+    // Save assistant response
     await supabase.from('chat_messages').insert({
       conversation_id: conversationDbId,
       role: 'assistant',
       content: answer,
     });
 
-    // Atualiza o timestamp da conversa
+    // Update conversation timestamp
     await supabase
       .from('chat_conversations')
       .update({ updated_at: new Date().toISOString() })
