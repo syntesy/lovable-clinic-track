@@ -72,7 +72,24 @@ serve(async (req) => {
       }
 
       conversationDbId = conversation.id;
-      threadId = conversation.thread_id;
+      
+      // Check if thread_id is valid (starts with 'thread_')
+      if (conversation.thread_id && conversation.thread_id.startsWith('thread_')) {
+        threadId = conversation.thread_id;
+      } else {
+        // Invalid thread_id, create a new OpenAI thread
+        console.log("Thread inválido detectado, criando novo thread OpenAI");
+        const thread = await openaiRequest('/threads', 'POST', {});
+        threadId = thread.id;
+        
+        // Update the conversation with the new valid thread_id
+        await supabase
+          .from('chat_conversations')
+          .update({ thread_id: threadId })
+          .eq('id', conversationDbId);
+        
+        console.log("Novo thread criado e salvo:", threadId);
+      }
     } else {
       console.log("Criando nova thread e conversa");
       
