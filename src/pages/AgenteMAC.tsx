@@ -142,32 +142,29 @@ const AgenteMAC = () => {
           },
           body: JSON.stringify({ 
             message: messageText,
-            conversationId: currentConversationId,
-            userId: userId
+            threadId: currentConversationId,
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Erro ao comunicar com o Agente MAC");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao comunicar com o Agente MAC");
       }
 
       const data = await response.json();
 
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.answer ?? "Não foi possível obter resposta do Agente MAC.",
+        content: data.reply ?? "Não foi possível obter resposta do Agente MAC.",
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // Atualiza o ID da conversa se for nova
-      if (!currentConversationId && data.conversationId) {
-        setCurrentConversationId(data.conversationId);
+      // Atualiza o ID da conversa (threadId) se for nova
+      if (!currentConversationId && data.threadId) {
+        setCurrentConversationId(data.threadId);
       }
-
-      // Recarrega lista de conversas
-      loadConversations(userId);
     } catch (error) {
       console.error("Error:", error);
       toast({
