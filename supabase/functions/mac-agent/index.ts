@@ -12,7 +12,7 @@ const corsHeaders = {
 };
 
 const OPENAI_BASE = 'https://api.openai.com/v1';
-const ASSISTANT_ID = 'asst_PrcAyGYeI0xIP0lxMXyy050';
+const ASSISTANT_ID = Deno.env.get('ASSISTANT_ID');
 
 async function openaiRequest(endpoint: string, method: string, body?: any) {
   const response = await fetch(`${OPENAI_BASE}${endpoint}`, {
@@ -51,6 +51,10 @@ serve(async (req) => {
 
     if (!openAIApiKey) {
       throw new Error("OPENAI_API_KEY não configurada");
+    }
+
+    if (!ASSISTANT_ID) {
+      throw new Error("ASSISTANT_ID não configurado");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
