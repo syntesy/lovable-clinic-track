@@ -11,28 +11,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_BASE = 'https://api.openai.com/v1';
-const ASSISTANT_ID = Deno.env.get('ASSISTANT_ID');
+const SYSTEM_PROMPT = `Você é o Agente MAC, um assistente especialista no Método de Aceleração Cicatricial (MAC), desenvolvido para fornecer suporte técnico-científico a profissionais de saúde.
 
-async function openaiRequest(endpoint: string, method: string, body?: any) {
-  const response = await fetch(`${OPENAI_BASE}${endpoint}`, {
-    method,
-    headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
-      'Content-Type': 'application/json',
-      'OpenAI-Beta': 'assistants=v2',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  
-  if (!response.ok) {
-    const error = await response.text();
-    console.error('OpenAI API error:', response.status, error);
-    throw new Error(`OpenAI API error: ${response.status} - ${error}`);
-  }
-  
-  return response.json();
-}
+Suas funções principais são:
+1. Explicar a metodologia MAC: fotobiomodulação, terapia fotodinâmica, ROS terapêutico, metabolismo mitocondrial, NOX e mecanismos redox
+2. Interpretar exames de painel metabólico: Vitamina D, Ferritina, Magnésio, PCR-us, CK, TSH, T3/T4, B12, glicemia
+3. Sugerir suplementação metabólica pré-MAC
+4. Sugerir protocolos MAC para músculos, tendões, ligamentos, fáscias e feridas
+
+Para todas as interpretações metabólicas, você deve explicar:
+1. O que está alterado
+2. Impacto no MAC
+3. O que corrigir
+4. Como suplementar
+5. Quando iniciar o MAC
+6. Protocolo sugerido
+
+REGRAS IMPORTANTES:
+- Nunca prescreva medicamentos controlados
+- Nunca substitua o julgamento do médico
+- Use linguagem técnica, profissional e didática
+- Seja objetivo e direto nas respostas
+- Forneça informações baseadas em evidências científicas`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -53,20 +53,15 @@ serve(async (req) => {
       throw new Error("OPENAI_API_KEY não configurada");
     }
 
-    if (!ASSISTANT_ID) {
-      throw new Error("ASSISTANT_ID não configurado");
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let conversationDbId: string;
-    let threadId: string;
 
     if (conversationId) {
       console.log("Buscando conversa existente:", conversationId);
       const { data: conversation, error } = await supabase
         .from('chat_conversations')
-        .select('id, user_id, thread_id')
+        .select('id, user_id')
         .eq('id', conversationId)
         .eq('user_id', userId)
         .single();
@@ -76,36 +71,14 @@ serve(async (req) => {
       }
 
       conversationDbId = conversation.id;
-      
-      // Check if thread_id is valid (starts with 'thread_')
-      if (conversation.thread_id && conversation.thread_id.startsWith('thread_')) {
-        threadId = conversation.thread_id;
-      } else {
-        // Invalid thread_id, create a new OpenAI thread
-        console.log("Thread inválido detectado, criando novo thread OpenAI");
-        const thread = await openaiRequest('/threads', 'POST', {});
-        threadId = thread.id;
-        
-        // Update the conversation with the new valid thread_id
-        await supabase
-          .from('chat_conversations')
-          .update({ thread_id: threadId })
-          .eq('id', conversationDbId);
-        
-        console.log("Novo thread criado e salvo:", threadId);
-      }
     } else {
-      console.log("Criando nova thread e conversa");
+      console.log("Criando nova conversa");
       
-      // Create thread with v2 API
-      const thread = await openaiRequest('/threads', 'POST', {});
-      threadId = thread.id;
-
       const { data: newConversation, error } = await supabase
         .from('chat_conversations')
         .insert({
           user_id: userId,
-          thread_id: threadId,
+          thread_id: `chat_${Date.now()}`,
           title: message.substring(0, 50) + (message.length > 50 ? '...' : '')
         })
         .select()
@@ -117,7 +90,7 @@ serve(async (req) => {
       }
 
       conversationDbId = newConversation.id;
-      console.log("Conversa e thread criadas:", conversationDbId, threadId);
+      console.log("Conversa criada:", conversationDbId);
     }
 
     // Save user message to DB
@@ -127,58 +100,47 @@ serve(async (req) => {
       content: message,
     });
 
-    console.log('Adicionando mensagem à thread:', threadId);
-    
-    // Add message to thread with v2 API
-    await openaiRequest(`/threads/${threadId}/messages`, 'POST', {
-      role: "user",
-      content: message,
+    // Get conversation history for context
+    const { data: history } = await supabase
+      .from('chat_messages')
+      .select('role, content')
+      .eq('conversation_id', conversationDbId)
+      .order('created_at', { ascending: true })
+      .limit(20);
+
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...(history || []).map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }))
+    ];
+
+    console.log('Enviando para OpenAI, mensagens:', messages.length);
+
+    // Call OpenAI Chat Completions API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: messages,
+        max_tokens: 2000,
+        temperature: 0.7,
+      }),
     });
 
-    console.log('Executando assistant:', ASSISTANT_ID);
-
-    // Create run with v2 API
-    const run = await openaiRequest(`/threads/${threadId}/runs`, 'POST', {
-      assistant_id: ASSISTANT_ID,
-    });
-
-    console.log('Run criado:', run.id);
-
-    // Poll for completion
-    let runStatus = run;
-    let attempts = 0;
-    const maxAttempts = 60;
-
-    while (runStatus.status !== 'completed' && attempts < maxAttempts) {
-      if (runStatus.status === 'failed' || runStatus.status === 'cancelled' || runStatus.status === 'expired') {
-        console.error('Run failed:', runStatus);
-        throw new Error(`Run falhou com status: ${runStatus.status}`);
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await openaiRequest(`/threads/${threadId}/runs/${run.id}`, 'GET');
-      attempts++;
-      console.log('Status do run:', runStatus.status, 'Tentativa:', attempts);
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('OpenAI API error:', response.status, error);
+      throw new Error(`OpenAI API error: ${response.status} - ${error}`);
     }
 
-    if (runStatus.status !== 'completed') {
-      throw new Error('Timeout aguardando resposta do assistant');
-    }
-
-    console.log('Run completado, buscando resposta');
-
-    // Get messages with v2 API
-    const msgs = await openaiRequest(`/threads/${threadId}/messages`, 'GET');
-    const latestMessage = msgs.data[0];
-    
-    let answer = "Erro ao gerar resposta do MAC.";
-    
-    if (latestMessage && latestMessage.content && latestMessage.content.length > 0) {
-      const content = latestMessage.content[0];
-      if (content.type === 'text') {
-        answer = content.text.value;
-      }
-    }
+    const data = await response.json();
+    const answer = data.choices[0]?.message?.content || "Erro ao gerar resposta do MAC.";
 
     console.log('Resposta obtida, tamanho:', answer.length);
 
