@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -25,6 +32,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const LIGHT_TYPE_OPTIONS = ["Vermelho", "Infravermelho", "Verde", "Âmbar"];
 
 interface Protocol {
   id: string;
@@ -341,13 +350,19 @@ const Protocolos = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tipo_luz_1" className="text-foreground">1ª Luz</Label>
-                <Input
-                  id="tipo_luz_1"
+                <Select
                   value={formData.tipo_luz_1 || ""}
-                  onChange={(e) => handleInputChange("tipo_luz_1", e.target.value)}
-                  placeholder="Ex: Vermelho"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
-                />
+                  onValueChange={(value) => handleInputChange("tipo_luz_1", value)}
+                >
+                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card">
+                    {LIGHT_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tempo_luz_1" className="text-foreground">Tempo 1ª Luz (s)</Label>
@@ -365,13 +380,19 @@ const Protocolos = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tipo_luz_2" className="text-foreground">2ª Luz</Label>
-                <Input
-                  id="tipo_luz_2"
+                <Select
                   value={formData.tipo_luz_2 || ""}
-                  onChange={(e) => handleInputChange("tipo_luz_2", e.target.value)}
-                  placeholder="Ex: Infravermelho"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
-                />
+                  onValueChange={(value) => handleInputChange("tipo_luz_2", value)}
+                >
+                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card">
+                    {LIGHT_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tempo_luz_2" className="text-foreground">Tempo 2ª Luz (s)</Label>
@@ -389,13 +410,19 @@ const Protocolos = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tipo_luz_3" className="text-foreground">3ª Luz</Label>
-                <Input
-                  id="tipo_luz_3"
+                <Select
                   value={formData.tipo_luz_3 || ""}
-                  onChange={(e) => handleInputChange("tipo_luz_3", e.target.value)}
-                  placeholder="Ex: Verde"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
-                />
+                  onValueChange={(value) => handleInputChange("tipo_luz_3", value)}
+                >
+                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card">
+                    {LIGHT_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tempo_luz_3" className="text-foreground">Tempo 3ª Luz (s)</Label>
@@ -413,13 +440,19 @@ const Protocolos = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tipo_luz_4" className="text-foreground">4ª Luz</Label>
-                <Input
-                  id="tipo_luz_4"
+                <Select
                   value={formData.tipo_luz_4 || ""}
-                  onChange={(e) => handleInputChange("tipo_luz_4", e.target.value)}
-                  placeholder="Ex: Âmbar"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
-                />
+                  onValueChange={(value) => handleInputChange("tipo_luz_4", value)}
+                >
+                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card">
+                    {LIGHT_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tempo_luz_4" className="text-foreground">Tempo 4ª Luz (s)</Label>
