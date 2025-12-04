@@ -448,7 +448,6 @@ export type Database = {
       reference_protocols: {
         Row: {
           created_at: string
-          diagnostico: string
           efeito_luz: string | null
           id: string
           nome: string | null
@@ -464,7 +463,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          diagnostico: string
           efeito_luz?: string | null
           id?: string
           nome?: string | null
@@ -480,7 +478,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          diagnostico?: string
           efeito_luz?: string | null
           id?: string
           nome?: string | null
