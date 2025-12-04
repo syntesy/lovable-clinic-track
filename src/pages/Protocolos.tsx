@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Protocol {
   id: string;
+  nome: string | null;
   diagnostico: string;
   regiao: string;
   tipo_luz_1: string | null;
@@ -45,6 +46,7 @@ interface Protocol {
 type ProtocolFormData = Omit<Protocol, 'id' | 'created_at'>;
 
 const emptyFormData: ProtocolFormData = {
+  nome: "",
   diagnostico: "",
   regiao: "",
   tipo_luz_1: "",
@@ -140,6 +142,7 @@ const Protocolos = () => {
   const handleOpenEditDialog = (protocol: Protocol) => {
     setEditingProtocol(protocol);
     setFormData({
+      nome: protocol.nome || "",
       diagnostico: protocol.diagnostico,
       regiao: protocol.regiao,
       tipo_luz_1: protocol.tipo_luz_1 || "",
@@ -221,6 +224,9 @@ const Protocolos = () => {
             <Card key={protocol.id} className="p-6 bg-card/85 backdrop-blur-sm">
               <div className="flex justify-between items-start mb-4">
                 <div>
+                  {protocol.nome && (
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{protocol.nome}</p>
+                  )}
                   <h3 className="text-lg font-semibold text-foreground">{protocol.diagnostico}</h3>
                   <p className="text-sm text-muted-foreground">Região: {protocol.regiao}</p>
                 </div>
@@ -298,6 +304,17 @@ const Protocolos = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome" className="text-foreground">Nome do Protocolo</Label>
+              <Input
+                id="nome"
+                value={formData.nome || ""}
+                onChange={(e) => handleInputChange("nome", e.target.value)}
+                placeholder="Ex: Protocolo Tendão de Aquiles Fase Aguda"
+                className="bg-[#F5F6FA] border-[#C5CADF]"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="diagnostico" className="text-foreground">Diagnóstico *</Label>
