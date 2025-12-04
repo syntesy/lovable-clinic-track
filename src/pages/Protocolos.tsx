@@ -38,7 +38,6 @@ const LIGHT_TYPE_OPTIONS = ["Vermelho", "Infravermelho", "Verde", "Âmbar"];
 interface Protocol {
   id: string;
   nome: string | null;
-  diagnostico: string;
   regiao: string;
   tipo_luz_1: string | null;
   tempo_luz_1: number | null;
@@ -56,7 +55,6 @@ type ProtocolFormData = Omit<Protocol, 'id' | 'created_at'>;
 
 const emptyFormData: ProtocolFormData = {
   nome: "",
-  diagnostico: "",
   regiao: "",
   tipo_luz_1: "",
   tempo_luz_1: null,
@@ -84,7 +82,7 @@ const Protocolos = () => {
       const { data, error } = await supabase
         .from("reference_protocols")
         .select("*")
-        .order("diagnostico", { ascending: true });
+        .order("nome", { ascending: true });
       if (error) throw error;
       return data as Protocol[];
     },
@@ -152,7 +150,6 @@ const Protocolos = () => {
     setEditingProtocol(protocol);
     setFormData({
       nome: protocol.nome || "",
-      diagnostico: protocol.diagnostico,
       regiao: protocol.regiao,
       tipo_luz_1: protocol.tipo_luz_1 || "",
       tempo_luz_1: protocol.tempo_luz_1,
@@ -179,7 +176,7 @@ const Protocolos = () => {
   };
 
   const handleSubmit = () => {
-    if (!formData.diagnostico.trim() || !formData.regiao.trim()) {
+    if (!formData.regiao.trim()) {
       toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
       return;
     }
@@ -233,10 +230,7 @@ const Protocolos = () => {
             <Card key={protocol.id} className="p-6 bg-card/85 backdrop-blur-sm">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  {protocol.nome && (
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{protocol.nome}</p>
-                  )}
-                  <h3 className="text-lg font-semibold text-foreground">{protocol.diagnostico}</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{protocol.nome || "Protocolo sem nome"}</h3>
                   <p className="text-sm text-muted-foreground">Região: {protocol.regiao}</p>
                 </div>
                 <div className="flex gap-2">
@@ -324,27 +318,15 @@ const Protocolos = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="diagnostico" className="text-foreground">Diagnóstico *</Label>
-                <Input
-                  id="diagnostico"
-                  value={formData.diagnostico}
-                  onChange={(e) => handleInputChange("diagnostico", e.target.value)}
-                  placeholder="Ex: Tendinopatia de Aquiles"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="regiao" className="text-foreground">Região *</Label>
-                <Input
-                  id="regiao"
-                  value={formData.regiao}
-                  onChange={(e) => handleInputChange("regiao", e.target.value)}
-                  placeholder="Ex: Tornozelo"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="regiao" className="text-foreground">Região *</Label>
+              <Input
+                id="regiao"
+                value={formData.regiao}
+                onChange={(e) => handleInputChange("regiao", e.target.value)}
+                placeholder="Ex: Tornozelo"
+                className="bg-[#F5F6FA] border-[#C5CADF]"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
