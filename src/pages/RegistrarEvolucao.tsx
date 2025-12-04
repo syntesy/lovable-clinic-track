@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, Activity, User, Upload, X } from "lucide-react";
 
@@ -21,7 +20,10 @@ const RegistrarEvolucao = () => {
   const [ultrasoundFiles, setUltrasoundFiles] = useState<File[]>([]);
   const [thermographyFiles, setThermographyFiles] = useState<File[]>([]);
   const [bloodTestFiles, setBloodTestFiles] = useState<File[]>([]);
-  const [selectedLights, setSelectedLights] = useState<string[]>([]);
+  const [luz1, setLuz1] = useState<string>("");
+  const [luz2, setLuz2] = useState<string>("");
+  const [luz3, setLuz3] = useState<string>("");
+  const [luz4, setLuz4] = useState<string>("");
   const { register, handleSubmit, watch, setValue } = useForm();
 
   const { data: patient, isLoading } = useQuery({
@@ -86,7 +88,7 @@ const RegistrarEvolucao = () => {
             vas_on_day: data.vas_on_day ? parseFloat(data.vas_on_day) : null,
             session_description: data.session_description,
             clinical_observations: data.clinical_observations,
-            light_type: selectedLights.join(", "),
+            light_type: [luz1, luz2, luz3, luz4].filter(Boolean).join(", "),
             treatment_time: data.treatment_time_total ? parseFloat(data.treatment_time_total) : null,
             pharmaceutical_used: data.pharmaceutical_used,
             associated_techniques: data.associated_techniques,
@@ -236,30 +238,29 @@ const RegistrarEvolucao = () => {
               <Label style={{ fontSize: '18px', fontWeight: 600, color: '#1F1F1F', marginBottom: '16px', display: 'block' }}>
                 Cluster Utilizado
               </Label>
-              <div className="grid grid-cols-2 gap-x-20 gap-y-6">
-                <div className="flex items-center gap-6">
-                  <Checkbox
-                    id="luz_vermelho"
-                    checked={selectedLights.includes("Vermelho")}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedLights([...selectedLights, "Vermelho"]);
-                      } else {
-                        setSelectedLights(selectedLights.filter(l => l !== "Vermelho"));
-                      }
-                    }}
-                  />
-                  <Label 
-                    htmlFor="luz_vermelho" 
-                    className="font-medium"
-                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
-                  >
-                    Vermelho
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                    1ª Luz
                   </Label>
+                  <Select value={luz1} onValueChange={setLuz1}>
+                    <SelectTrigger 
+                      className="w-[180px]"
+                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                    >
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Vermelho">Vermelho</SelectItem>
+                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                      <SelectItem value="Verde">Verde</SelectItem>
+                      <SelectItem value="Âmbar">Âmbar</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
-                    {...register("tempo_vermelho")}
+                    {...register("tempo_luz1")}
                     style={{
                       width: '150px',
                       backgroundColor: '#F5F6FA',
@@ -268,33 +269,31 @@ const RegistrarEvolucao = () => {
                       color: '#1F1F1F'
                     }}
                     className="placeholder:text-[#A9AEC6]"
-                    disabled={!selectedLights.includes("Vermelho")}
                   />
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <Checkbox
-                    id="luz_infravermelho"
-                    checked={selectedLights.includes("Infravermelho")}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedLights([...selectedLights, "Infravermelho"]);
-                      } else {
-                        setSelectedLights(selectedLights.filter(l => l !== "Infravermelho"));
-                      }
-                    }}
-                  />
-                  <Label 
-                    htmlFor="luz_infravermelho" 
-                    className="font-medium"
-                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
-                  >
-                    Infravermelho
+                <div className="flex items-center gap-4">
+                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                    2ª Luz
                   </Label>
+                  <Select value={luz2} onValueChange={setLuz2}>
+                    <SelectTrigger 
+                      className="w-[180px]"
+                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                    >
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Vermelho">Vermelho</SelectItem>
+                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                      <SelectItem value="Verde">Verde</SelectItem>
+                      <SelectItem value="Âmbar">Âmbar</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
-                    {...register("tempo_infravermelho")}
+                    {...register("tempo_luz2")}
                     style={{
                       width: '150px',
                       backgroundColor: '#F5F6FA',
@@ -303,33 +302,31 @@ const RegistrarEvolucao = () => {
                       color: '#1F1F1F'
                     }}
                     className="placeholder:text-[#A9AEC6]"
-                    disabled={!selectedLights.includes("Infravermelho")}
                   />
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <Checkbox
-                    id="luz_verde"
-                    checked={selectedLights.includes("Verde")}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedLights([...selectedLights, "Verde"]);
-                      } else {
-                        setSelectedLights(selectedLights.filter(l => l !== "Verde"));
-                      }
-                    }}
-                  />
-                  <Label 
-                    htmlFor="luz_verde" 
-                    className="font-medium"
-                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
-                  >
-                    Verde
+                <div className="flex items-center gap-4">
+                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                    3ª Luz
                   </Label>
+                  <Select value={luz3} onValueChange={setLuz3}>
+                    <SelectTrigger 
+                      className="w-[180px]"
+                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                    >
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Vermelho">Vermelho</SelectItem>
+                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                      <SelectItem value="Verde">Verde</SelectItem>
+                      <SelectItem value="Âmbar">Âmbar</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
-                    {...register("tempo_verde")}
+                    {...register("tempo_luz3")}
                     style={{
                       width: '150px',
                       backgroundColor: '#F5F6FA',
@@ -338,33 +335,31 @@ const RegistrarEvolucao = () => {
                       color: '#1F1F1F'
                     }}
                     className="placeholder:text-[#A9AEC6]"
-                    disabled={!selectedLights.includes("Verde")}
                   />
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <Checkbox
-                    id="luz_ambar"
-                    checked={selectedLights.includes("Âmbar")}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedLights([...selectedLights, "Âmbar"]);
-                      } else {
-                        setSelectedLights(selectedLights.filter(l => l !== "Âmbar"));
-                      }
-                    }}
-                  />
-                  <Label 
-                    htmlFor="luz_ambar" 
-                    className="font-medium"
-                    style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F', marginLeft: '8px' }}
-                  >
-                    Âmbar
+                <div className="flex items-center gap-4">
+                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                    4ª Luz
                   </Label>
+                  <Select value={luz4} onValueChange={setLuz4}>
+                    <SelectTrigger 
+                      className="w-[180px]"
+                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                    >
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Vermelho">Vermelho</SelectItem>
+                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                      <SelectItem value="Verde">Verde</SelectItem>
+                      <SelectItem value="Âmbar">Âmbar</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     type="number"
                     placeholder="Tempo (s)"
-                    {...register("tempo_ambar")}
+                    {...register("tempo_luz4")}
                     style={{
                       width: '150px',
                       backgroundColor: '#F5F6FA',
@@ -373,7 +368,6 @@ const RegistrarEvolucao = () => {
                       color: '#1F1F1F'
                     }}
                     className="placeholder:text-[#A9AEC6]"
-                    disabled={!selectedLights.includes("Âmbar")}
                   />
                 </div>
               </div>
