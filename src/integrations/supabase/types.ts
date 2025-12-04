@@ -451,7 +451,6 @@ export type Database = {
           efeito_luz: string | null
           id: string
           nome: string | null
-          regiao: string
           tempo_luz_1: number | null
           tempo_luz_2: number | null
           tempo_luz_3: number | null
@@ -466,7 +465,6 @@ export type Database = {
           efeito_luz?: string | null
           id?: string
           nome?: string | null
-          regiao: string
           tempo_luz_1?: number | null
           tempo_luz_2?: number | null
           tempo_luz_3?: number | null
@@ -481,7 +479,6 @@ export type Database = {
           efeito_luz?: string | null
           id?: string
           nome?: string | null
-          regiao?: string
           tempo_luz_1?: number | null
           tempo_luz_2?: number | null
           tempo_luz_3?: number | null

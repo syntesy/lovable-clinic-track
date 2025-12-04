@@ -38,7 +38,6 @@ const LIGHT_TYPE_OPTIONS = ["Vermelho", "Infravermelho", "Verde", "Âmbar"];
 interface Protocol {
   id: string;
   nome: string | null;
-  regiao: string;
   tipo_luz_1: string | null;
   tempo_luz_1: number | null;
   tipo_luz_2: string | null;
@@ -55,7 +54,6 @@ type ProtocolFormData = Omit<Protocol, 'id' | 'created_at'>;
 
 const emptyFormData: ProtocolFormData = {
   nome: "",
-  regiao: "",
   tipo_luz_1: "",
   tempo_luz_1: null,
   tipo_luz_2: "",
@@ -150,7 +148,6 @@ const Protocolos = () => {
     setEditingProtocol(protocol);
     setFormData({
       nome: protocol.nome || "",
-      regiao: protocol.regiao,
       tipo_luz_1: protocol.tipo_luz_1 || "",
       tempo_luz_1: protocol.tempo_luz_1,
       tipo_luz_2: protocol.tipo_luz_2 || "",
@@ -176,11 +173,6 @@ const Protocolos = () => {
   };
 
   const handleSubmit = () => {
-    if (!formData.regiao.trim()) {
-      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
-      return;
-    }
-
     if (editingProtocol) {
       updateMutation.mutate({ id: editingProtocol.id, data: formData });
     } else {
@@ -231,7 +223,6 @@ const Protocolos = () => {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">{protocol.nome || "Protocolo sem nome"}</h3>
-                  <p className="text-sm text-muted-foreground">Região: {protocol.regiao}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -314,17 +305,6 @@ const Protocolos = () => {
                 value={formData.nome || ""}
                 onChange={(e) => handleInputChange("nome", e.target.value)}
                 placeholder="Ex: Protocolo Tendão de Aquiles Fase Aguda"
-                className="bg-[#F5F6FA] border-[#C5CADF]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="regiao" className="text-foreground">Região *</Label>
-              <Input
-                id="regiao"
-                value={formData.regiao}
-                onChange={(e) => handleInputChange("regiao", e.target.value)}
-                placeholder="Ex: Tornozelo"
                 className="bg-[#F5F6FA] border-[#C5CADF]"
               />
             </div>
