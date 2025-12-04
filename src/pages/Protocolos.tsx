@@ -40,12 +40,20 @@ interface Protocol {
   nome: string | null;
   tipo_luz_1: string | null;
   tempo_luz_1: number | null;
+  tempo_luz_1_b: number | null;
+  tempo_luz_1_c: number | null;
   tipo_luz_2: string | null;
   tempo_luz_2: number | null;
+  tempo_luz_2_b: number | null;
+  tempo_luz_2_c: number | null;
   tipo_luz_3: string | null;
   tempo_luz_3: number | null;
+  tempo_luz_3_b: number | null;
+  tempo_luz_3_c: number | null;
   tipo_luz_4: string | null;
   tempo_luz_4: number | null;
+  tempo_luz_4_b: number | null;
+  tempo_luz_4_c: number | null;
   efeito_luz: string | null;
   created_at: string;
 }
@@ -56,12 +64,20 @@ const emptyFormData: ProtocolFormData = {
   nome: "",
   tipo_luz_1: "",
   tempo_luz_1: null,
+  tempo_luz_1_b: null,
+  tempo_luz_1_c: null,
   tipo_luz_2: "",
   tempo_luz_2: null,
+  tempo_luz_2_b: null,
+  tempo_luz_2_c: null,
   tipo_luz_3: "",
   tempo_luz_3: null,
+  tempo_luz_3_b: null,
+  tempo_luz_3_c: null,
   tipo_luz_4: "",
   tempo_luz_4: null,
+  tempo_luz_4_b: null,
+  tempo_luz_4_c: null,
   efeito_luz: "",
 };
 
@@ -150,12 +166,20 @@ const Protocolos = () => {
       nome: protocol.nome || "",
       tipo_luz_1: protocol.tipo_luz_1 || "",
       tempo_luz_1: protocol.tempo_luz_1,
+      tempo_luz_1_b: protocol.tempo_luz_1_b,
+      tempo_luz_1_c: protocol.tempo_luz_1_c,
       tipo_luz_2: protocol.tipo_luz_2 || "",
       tempo_luz_2: protocol.tempo_luz_2,
+      tempo_luz_2_b: protocol.tempo_luz_2_b,
+      tempo_luz_2_c: protocol.tempo_luz_2_c,
       tipo_luz_3: protocol.tipo_luz_3 || "",
       tempo_luz_3: protocol.tempo_luz_3,
+      tempo_luz_3_b: protocol.tempo_luz_3_b,
+      tempo_luz_3_c: protocol.tempo_luz_3_c,
       tipo_luz_4: protocol.tipo_luz_4 || "",
       tempo_luz_4: protocol.tempo_luz_4,
+      tempo_luz_4_b: protocol.tempo_luz_4_b,
+      tempo_luz_4_c: protocol.tempo_luz_4_c,
       efeito_luz: protocol.efeito_luz || "",
     });
     setIsDialogOpen(true);
@@ -188,6 +212,11 @@ const Protocolos = () => {
 
   const handleInputChange = (field: keyof ProtocolFormData, value: string | number | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const formatTimes = (t1: number | null, t2: number | null, t3: number | null) => {
+    const times = [t1, t2, t3].filter(t => t !== null);
+    return times.length > 0 ? times.join('s / ') + 's' : '-';
   };
 
   if (isLoading) {
@@ -251,28 +280,28 @@ const Protocolos = () => {
                   <div className="bg-[#F5F6FA] p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">1ª Luz</p>
                     <p className="font-medium text-foreground">{protocol.tipo_luz_1}</p>
-                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_1}s</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_1, protocol.tempo_luz_1_b, protocol.tempo_luz_1_c)}</p>
                   </div>
                 )}
                 {protocol.tipo_luz_2 && (
                   <div className="bg-[#F5F6FA] p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">2ª Luz</p>
                     <p className="font-medium text-foreground">{protocol.tipo_luz_2}</p>
-                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_2}s</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_2, protocol.tempo_luz_2_b, protocol.tempo_luz_2_c)}</p>
                   </div>
                 )}
                 {protocol.tipo_luz_3 && (
                   <div className="bg-[#F5F6FA] p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">3ª Luz</p>
                     <p className="font-medium text-foreground">{protocol.tipo_luz_3}</p>
-                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_3}s</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_3, protocol.tempo_luz_3_b, protocol.tempo_luz_3_c)}</p>
                   </div>
                 )}
                 {protocol.tipo_luz_4 && (
                   <div className="bg-[#F5F6FA] p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">4ª Luz</p>
                     <p className="font-medium text-foreground">{protocol.tipo_luz_4}</p>
-                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_4}s</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_4, protocol.tempo_luz_4_b, protocol.tempo_luz_4_c)}</p>
                   </div>
                 )}
               </div>
@@ -290,14 +319,14 @@ const Protocolos = () => {
 
       {/* Dialog for Create/Edit */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card">
           <DialogHeader>
             <DialogTitle className="text-foreground">
               {editingProtocol ? "Editar Protocolo" : "Novo Protocolo"}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="nome" className="text-foreground">Nome do Protocolo</Label>
               <Input
@@ -309,15 +338,16 @@ const Protocolos = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipo_luz_1" className="text-foreground">1ª Luz</Label>
+            {/* 1ª Luz */}
+            <div className="space-y-2">
+              <Label className="text-foreground font-semibold">1ª Luz</Label>
+              <div className="flex items-center gap-3">
                 <Select
                   value={formData.tipo_luz_1 || ""}
                   onValueChange={(value) => handleInputChange("tipo_luz_1", value)}
                 >
-                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
-                    <SelectValue placeholder="Selecione..." />
+                  <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Tipo..." />
                   </SelectTrigger>
                   <SelectContent className="bg-card">
                     {LIGHT_TYPE_OPTIONS.map((option) => (
@@ -325,29 +355,40 @@ const Protocolos = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tempo_luz_1" className="text-foreground">Tempo 1ª Luz (s)</Label>
                 <Input
-                  id="tempo_luz_1"
                   type="number"
                   value={formData.tempo_luz_1 || ""}
                   onChange={(e) => handleInputChange("tempo_luz_1", e.target.value ? parseInt(e.target.value) : null)}
-                  placeholder="Ex: 300"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                  placeholder="T1 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_1_b || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_1_b", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T2 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_1_c || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_1_c", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T3 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipo_luz_2" className="text-foreground">2ª Luz</Label>
+            {/* 2ª Luz */}
+            <div className="space-y-2">
+              <Label className="text-foreground font-semibold">2ª Luz</Label>
+              <div className="flex items-center gap-3">
                 <Select
                   value={formData.tipo_luz_2 || ""}
                   onValueChange={(value) => handleInputChange("tipo_luz_2", value)}
                 >
-                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
-                    <SelectValue placeholder="Selecione..." />
+                  <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Tipo..." />
                   </SelectTrigger>
                   <SelectContent className="bg-card">
                     {LIGHT_TYPE_OPTIONS.map((option) => (
@@ -355,29 +396,40 @@ const Protocolos = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tempo_luz_2" className="text-foreground">Tempo 2ª Luz (s)</Label>
                 <Input
-                  id="tempo_luz_2"
                   type="number"
                   value={formData.tempo_luz_2 || ""}
                   onChange={(e) => handleInputChange("tempo_luz_2", e.target.value ? parseInt(e.target.value) : null)}
-                  placeholder="Ex: 600"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                  placeholder="T1 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_2_b || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_2_b", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T2 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_2_c || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_2_c", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T3 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipo_luz_3" className="text-foreground">3ª Luz</Label>
+            {/* 3ª Luz */}
+            <div className="space-y-2">
+              <Label className="text-foreground font-semibold">3ª Luz</Label>
+              <div className="flex items-center gap-3">
                 <Select
                   value={formData.tipo_luz_3 || ""}
                   onValueChange={(value) => handleInputChange("tipo_luz_3", value)}
                 >
-                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
-                    <SelectValue placeholder="Selecione..." />
+                  <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Tipo..." />
                   </SelectTrigger>
                   <SelectContent className="bg-card">
                     {LIGHT_TYPE_OPTIONS.map((option) => (
@@ -385,29 +437,40 @@ const Protocolos = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tempo_luz_3" className="text-foreground">Tempo 3ª Luz (s)</Label>
                 <Input
-                  id="tempo_luz_3"
                   type="number"
                   value={formData.tempo_luz_3 || ""}
                   onChange={(e) => handleInputChange("tempo_luz_3", e.target.value ? parseInt(e.target.value) : null)}
-                  placeholder="Ex: 300"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                  placeholder="T1 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_3_b || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_3_b", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T2 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_3_c || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_3_c", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T3 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipo_luz_4" className="text-foreground">4ª Luz</Label>
+            {/* 4ª Luz */}
+            <div className="space-y-2">
+              <Label className="text-foreground font-semibold">4ª Luz</Label>
+              <div className="flex items-center gap-3">
                 <Select
                   value={formData.tipo_luz_4 || ""}
                   onValueChange={(value) => handleInputChange("tipo_luz_4", value)}
                 >
-                  <SelectTrigger className="bg-[#F5F6FA] border-[#C5CADF]">
-                    <SelectValue placeholder="Selecione..." />
+                  <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
+                    <SelectValue placeholder="Tipo..." />
                   </SelectTrigger>
                   <SelectContent className="bg-card">
                     {LIGHT_TYPE_OPTIONS.map((option) => (
@@ -415,16 +478,26 @@ const Protocolos = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tempo_luz_4" className="text-foreground">Tempo 4ª Luz (s)</Label>
                 <Input
-                  id="tempo_luz_4"
                   type="number"
                   value={formData.tempo_luz_4 || ""}
                   onChange={(e) => handleInputChange("tempo_luz_4", e.target.value ? parseInt(e.target.value) : null)}
-                  placeholder="Ex: 300"
-                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                  placeholder="T1 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_4_b || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_4_b", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T2 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
+                />
+                <Input
+                  type="number"
+                  value={formData.tempo_luz_4_c || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_4_c", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="T3 (s)"
+                  className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
               </div>
             </div>
@@ -473,7 +546,7 @@ const Protocolos = () => {
             <AlertDialogCancel className="border-[#C5CADF]">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Excluir

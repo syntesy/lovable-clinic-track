@@ -452,9 +452,17 @@ export type Database = {
           id: string
           nome: string | null
           tempo_luz_1: number | null
+          tempo_luz_1_b: number | null
+          tempo_luz_1_c: number | null
           tempo_luz_2: number | null
+          tempo_luz_2_b: number | null
+          tempo_luz_2_c: number | null
           tempo_luz_3: number | null
+          tempo_luz_3_b: number | null
+          tempo_luz_3_c: number | null
           tempo_luz_4: number | null
+          tempo_luz_4_b: number | null
+          tempo_luz_4_c: number | null
           tipo_luz_1: string | null
           tipo_luz_2: string | null
           tipo_luz_3: string | null
@@ -466,9 +474,17 @@ export type Database = {
           id?: string
           nome?: string | null
           tempo_luz_1?: number | null
+          tempo_luz_1_b?: number | null
+          tempo_luz_1_c?: number | null
           tempo_luz_2?: number | null
+          tempo_luz_2_b?: number | null
+          tempo_luz_2_c?: number | null
           tempo_luz_3?: number | null
+          tempo_luz_3_b?: number | null
+          tempo_luz_3_c?: number | null
           tempo_luz_4?: number | null
+          tempo_luz_4_b?: number | null
+          tempo_luz_4_c?: number | null
           tipo_luz_1?: string | null
           tipo_luz_2?: string | null
           tipo_luz_3?: string | null
@@ -480,9 +496,17 @@ export type Database = {
           id?: string
           nome?: string | null
           tempo_luz_1?: number | null
+          tempo_luz_1_b?: number | null
+          tempo_luz_1_c?: number | null
           tempo_luz_2?: number | null
+          tempo_luz_2_b?: number | null
+          tempo_luz_2_c?: number | null
           tempo_luz_3?: number | null
+          tempo_luz_3_b?: number | null
+          tempo_luz_3_c?: number | null
           tempo_luz_4?: number | null
+          tempo_luz_4_b?: number | null
+          tempo_luz_4_c?: number | null
           tipo_luz_1?: string | null
           tipo_luz_2?: string | null
           tipo_luz_3?: string | null
