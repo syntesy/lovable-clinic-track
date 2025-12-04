@@ -133,6 +133,17 @@ const AgenteMAC = () => {
     setIsLoading(true);
 
     try {
+      // Buscar threadId do banco se tiver conversationId
+      let threadId: string | null = null;
+      if (currentConversationId) {
+        const { data: convData } = await supabase
+          .from('chat_conversations')
+          .select('thread_id')
+          .eq('id', currentConversationId)
+          .single();
+        threadId = convData?.thread_id || null;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mac-agent`,
         {
@@ -142,7 +153,7 @@ const AgenteMAC = () => {
           },
           body: JSON.stringify({ 
             message: messageText,
-            threadId: currentConversationId,
+            threadId: threadId,
           }),
         }
       );
@@ -161,9 +172,43 @@ const AgenteMAC = () => {
 
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // Atualiza o ID da conversa (threadId) se for nova
+      // Se é nova conversa, criar no banco
+      let convId = currentConversationId;
       if (!currentConversationId && data.threadId) {
-        setCurrentConversationId(data.threadId);
+        const title = messageText.slice(0, 50) + (messageText.length > 50 ? "..." : "");
+        const { data: newConv, error: convError } = await supabase
+          .from('chat_conversations')
+          .insert({
+            user_id: userId,
+            thread_id: data.threadId,
+            title: title,
+          })
+          .select('id')
+          .single();
+
+        if (convError) {
+          console.error('Erro ao criar conversa:', convError);
+        } else {
+          convId = newConv.id;
+          setCurrentConversationId(convId);
+        }
+      }
+
+      // Salvar mensagens no banco
+      if (convId) {
+        await supabase.from('chat_messages').insert([
+          { conversation_id: convId, role: 'user', content: messageText },
+          { conversation_id: convId, role: 'assistant', content: assistantMessage.content }
+        ]);
+
+        // Atualizar updated_at da conversa
+        await supabase
+          .from('chat_conversations')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', convId);
+
+        // Recarregar lista de conversas
+        loadConversations(userId);
       }
     } catch (error) {
       console.error("Error:", error);
