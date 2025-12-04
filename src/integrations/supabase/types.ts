@@ -447,61 +447,49 @@ export type Database = {
       }
       reference_protocols: {
         Row: {
-          application_time: string
-          contraindications: string | null
           created_at: string
-          fluence: string
+          diagnostico: string
+          efeito_luz: string | null
           id: string
-          indications: string | null
-          irradiated_area: string
-          methylene_blue_concentration: string | null
-          observations: string | null
-          power: string
-          protocol_name: string
-          region: string
-          target_depth: string | null
-          technique: string
-          total_energy: string
-          uses_methylene_blue: boolean | null
-          wavelength: string
+          regiao: string
+          tempo_luz_1: number | null
+          tempo_luz_2: number | null
+          tempo_luz_3: number | null
+          tempo_luz_4: number | null
+          tipo_luz_1: string | null
+          tipo_luz_2: string | null
+          tipo_luz_3: string | null
+          tipo_luz_4: string | null
         }
         Insert: {
-          application_time: string
-          contraindications?: string | null
           created_at?: string
-          fluence: string
+          diagnostico: string
+          efeito_luz?: string | null
           id?: string
-          indications?: string | null
-          irradiated_area: string
-          methylene_blue_concentration?: string | null
-          observations?: string | null
-          power: string
-          protocol_name: string
-          region: string
-          target_depth?: string | null
-          technique: string
-          total_energy: string
-          uses_methylene_blue?: boolean | null
-          wavelength: string
+          regiao: string
+          tempo_luz_1?: number | null
+          tempo_luz_2?: number | null
+          tempo_luz_3?: number | null
+          tempo_luz_4?: number | null
+          tipo_luz_1?: string | null
+          tipo_luz_2?: string | null
+          tipo_luz_3?: string | null
+          tipo_luz_4?: string | null
         }
         Update: {
-          application_time?: string
-          contraindications?: string | null
           created_at?: string
-          fluence?: string
+          diagnostico?: string
+          efeito_luz?: string | null
           id?: string
-          indications?: string | null
-          irradiated_area?: string
-          methylene_blue_concentration?: string | null
-          observations?: string | null
-          power?: string
-          protocol_name?: string
-          region?: string
-          target_depth?: string | null
-          technique?: string
-          total_energy?: string
-          uses_methylene_blue?: boolean | null
-          wavelength?: string
+          regiao?: string
+          tempo_luz_1?: number | null
+          tempo_luz_2?: number | null
+          tempo_luz_3?: number | null
+          tempo_luz_4?: number | null
+          tipo_luz_1?: string | null
+          tipo_luz_2?: string | null
+          tipo_luz_3?: string | null
+          tipo_luz_4?: string | null
         }
         Relationships: []
       }

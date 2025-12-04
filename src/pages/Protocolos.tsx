@@ -1,20 +1,17 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Pencil, Trash2 } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -26,496 +23,452 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface Protocol {
+  id: string;
+  diagnostico: string;
+  regiao: string;
+  tipo_luz_1: string | null;
+  tempo_luz_1: number | null;
+  tipo_luz_2: string | null;
+  tempo_luz_2: number | null;
+  tipo_luz_3: string | null;
+  tempo_luz_3: number | null;
+  tipo_luz_4: string | null;
+  tempo_luz_4: number | null;
+  efeito_luz: string | null;
+  created_at: string;
+}
+
+type ProtocolFormData = Omit<Protocol, 'id' | 'created_at'>;
+
+const emptyFormData: ProtocolFormData = {
+  diagnostico: "",
+  regiao: "",
+  tipo_luz_1: "",
+  tempo_luz_1: null,
+  tipo_luz_2: "",
+  tempo_luz_2: null,
+  tipo_luz_3: "",
+  tempo_luz_3: null,
+  tipo_luz_4: "",
+  tempo_luz_4: null,
+  efeito_luz: "",
+};
 
 const Protocolos = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingProtocol, setEditingProtocol] = useState<any>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingProtocol, setEditingProtocol] = useState<Protocol | null>(null);
+  const [deletingProtocolId, setDeletingProtocolId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<ProtocolFormData>(emptyFormData);
 
   const { data: protocols, isLoading } = useQuery({
-    queryKey: ["reference-protocols"],
+    queryKey: ["reference_protocols"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reference_protocols")
         .select("*")
-        .order("created_at", { ascending: false });
-
+        .order("diagnostico", { ascending: true });
       if (error) throw error;
-      return data;
+      return data as Protocol[];
     },
   });
 
-  const updateProtocol = useMutation({
-    mutationFn: async (updatedProtocol: any) => {
-      const { error } = await supabase
-        .from("reference_protocols")
-        .update({
-          protocol_name: updatedProtocol.protocol_name,
-          region: updatedProtocol.region,
-          technique: updatedProtocol.technique,
-          wavelength: updatedProtocol.wavelength,
-          application_time: updatedProtocol.application_time,
-          power: updatedProtocol.power,
-          total_energy: updatedProtocol.total_energy,
-          fluence: updatedProtocol.fluence,
-          irradiated_area: updatedProtocol.irradiated_area,
-          indications: updatedProtocol.indications,
-          observations: updatedProtocol.observations,
-        })
-        .eq("id", updatedProtocol.id);
-
+  const createMutation = useMutation({
+    mutationFn: async (data: ProtocolFormData) => {
+      const { error } = await supabase.from("reference_protocols").insert([data]);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reference-protocols"] });
-      setIsEditDialogOpen(false);
-      setEditingProtocol(null);
-      toast({
-        title: "Protocolo atualizado",
-        description: "O protocolo foi atualizado com sucesso.",
-      });
+      queryClient.invalidateQueries({ queryKey: ["reference_protocols"] });
+      toast({ title: "Protocolo criado com sucesso" });
+      handleCloseDialog();
     },
-    onError: (error) => {
-      toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível atualizar o protocolo.",
-        variant: "destructive",
-      });
-      console.error(error);
+    onError: () => {
+      toast({ title: "Erro ao criar protocolo", variant: "destructive" });
     },
   });
 
-  const deleteProtocol = useMutation({
-    mutationFn: async (protocolId: string) => {
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ProtocolFormData }) => {
+      const { error } = await supabase
+        .from("reference_protocols")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reference_protocols"] });
+      toast({ title: "Protocolo atualizado com sucesso" });
+      handleCloseDialog();
+    },
+    onError: () => {
+      toast({ title: "Erro ao atualizar protocolo", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("reference_protocols")
         .delete()
-        .eq("id", protocolId);
-
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reference-protocols"] });
+      queryClient.invalidateQueries({ queryKey: ["reference_protocols"] });
+      toast({ title: "Protocolo excluído com sucesso" });
       setIsDeleteDialogOpen(false);
-      setIsEditDialogOpen(false);
-      setEditingProtocol(null);
-      toast({
-        title: "Protocolo excluído",
-        description: "O protocolo foi excluído com sucesso.",
-      });
+      setDeletingProtocolId(null);
     },
-    onError: (error) => {
-      toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir o protocolo.",
-        variant: "destructive",
-      });
-      console.error(error);
+    onError: () => {
+      toast({ title: "Erro ao excluir protocolo", variant: "destructive" });
     },
   });
 
-  const handleEditClick = (protocol: any) => {
-    setEditingProtocol({ ...protocol });
-    setIsEditDialogOpen(true);
+  const handleOpenNewDialog = () => {
+    setEditingProtocol(null);
+    setFormData(emptyFormData);
+    setIsDialogOpen(true);
   };
 
-  const handleSaveEdit = () => {
-    if (editingProtocol) {
-      updateProtocol.mutate(editingProtocol);
-    }
+  const handleOpenEditDialog = (protocol: Protocol) => {
+    setEditingProtocol(protocol);
+    setFormData({
+      diagnostico: protocol.diagnostico,
+      regiao: protocol.regiao,
+      tipo_luz_1: protocol.tipo_luz_1 || "",
+      tempo_luz_1: protocol.tempo_luz_1,
+      tipo_luz_2: protocol.tipo_luz_2 || "",
+      tempo_luz_2: protocol.tempo_luz_2,
+      tipo_luz_3: protocol.tipo_luz_3 || "",
+      tempo_luz_3: protocol.tempo_luz_3,
+      tipo_luz_4: protocol.tipo_luz_4 || "",
+      tempo_luz_4: protocol.tempo_luz_4,
+      efeito_luz: protocol.efeito_luz || "",
+    });
+    setIsDialogOpen(true);
   };
 
-  const handleDeleteClick = () => {
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingProtocol(null);
+    setFormData(emptyFormData);
+  };
+
+  const handleOpenDeleteDialog = (id: string) => {
+    setDeletingProtocolId(id);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleSubmit = () => {
+    if (!formData.diagnostico.trim() || !formData.regiao.trim()) {
+      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+      return;
+    }
+
     if (editingProtocol) {
-      deleteProtocol.mutate(editingProtocol.id);
+      updateMutation.mutate({ id: editingProtocol.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  // Group protocols by pathology
-  const groupedProtocols = protocols?.reduce((acc, protocol) => {
-    let category = "";
-    
-    if (protocol.protocol_name.includes("Muscular") || protocol.protocol_name.includes("Muscle")) {
-      category = "Lesões Musculares";
-    } else if (protocol.protocol_name.includes("Ligamento") || protocol.protocol_name.includes("Entorse") || protocol.protocol_name.includes("Sprain")) {
-      category = "Lesões de Ligamento – Entorse";
-    } else if (protocol.protocol_name.includes("Menisco") || protocol.protocol_name.includes("Meniscus")) {
-      category = "Lesão de Menisco";
-    } else if (protocol.protocol_name.includes("Tendão Agudo") || protocol.protocol_name.includes("Tendon Acute")) {
-      category = "Lesões de Tendão – Agudo";
-    } else if (protocol.protocol_name.includes("Tendão Crônico") || protocol.protocol_name.includes("Tendon Chronic")) {
-      category = "Lesões de Tendão – Crônico";
-    } else if (protocol.protocol_name.includes("Tendão") || protocol.protocol_name.includes("Tendon")) {
-      // Generic tendon injuries if not specified as acute or chronic
-      if (protocol.indications?.toLowerCase().includes("agudo") || protocol.indications?.toLowerCase().includes("acute")) {
-        category = "Lesões de Tendão – Agudo";
-      } else if (protocol.indications?.toLowerCase().includes("crônico") || protocol.indications?.toLowerCase().includes("chronic")) {
-        category = "Lesões de Tendão – Crônico";
-      } else {
-        category = "Lesões de Tendão – Agudo";
-      }
-    } else if (protocol.protocol_name.includes("Fratura Qx") || protocol.protocol_name.includes("Fx Qx") || protocol.protocol_name.includes("Fracture Surgery")) {
-      category = "Fraturas Cirúrgicas – Fx Qx";
-    } else if (protocol.protocol_name.includes("Fratura no Qx") || protocol.protocol_name.includes("Fx no Qx") || protocol.protocol_name.includes("Fracture No Surgery")) {
-      category = "Fraturas Não Cirúrgicas – Fx no Qx";
-    } else if (protocol.protocol_name.includes("Fratura") || protocol.protocol_name.includes("Fracture")) {
-      // Generic fracture if not specified
-      if (protocol.indications?.toLowerCase().includes("cirurgia") || protocol.indications?.toLowerCase().includes("surgery")) {
-        category = "Fraturas Cirúrgicas – Fx Qx";
-      } else {
-        category = "Fraturas Não Cirúrgicas – Fx no Qx";
-      }
-    } else {
-      category = "Outros";
+  const handleConfirmDelete = () => {
+    if (deletingProtocolId) {
+      deleteMutation.mutate(deletingProtocolId);
     }
+  };
 
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(protocol);
-    return acc;
-  }, {} as Record<string, typeof protocols>);
+  const handleInputChange = (field: keyof ProtocolFormData, value: string | number | null) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-  // Define pathology order
-  const pathologyOrder = [
-    "Lesões Musculares",
-    "Lesões de Ligamento – Entorse",
-    "Lesão de Menisco",
-    "Lesões de Tendão – Agudo",
-    "Lesões de Tendão – Crônico",
-    "Fraturas Cirúrgicas – Fx Qx",
-    "Fraturas Não Cirúrgicas – Fx no Qx",
-    "Outros",
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold text-foreground mb-2">
-            Protocolos de Referência
-          </h2>
-          <p className="text-muted-foreground">
-            Biblioteca de protocolos MAC e fotobiomodulação
-          </p>
-        </div>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Plus className="mr-2 h-4 w-4" />
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-foreground">Protocolos de Referência</h1>
+        <Button onClick={handleOpenNewDialog} className="bg-[#2F3F6B] hover:bg-[#2F3F6B]/90">
+          <Plus className="h-4 w-4 mr-2" />
           Novo Protocolo
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Carregando...
-        </div>
-      ) : protocols && protocols.length > 0 ? (
-        <>
-          <Accordion type="multiple" className="space-y-4">
-            {pathologyOrder.map((category) => {
-              const categoryProtocols = groupedProtocols?.[category];
-              if (!categoryProtocols || categoryProtocols.length === 0) return null;
-              
-              return (
-                <AccordionItem key={category} value={category} className="border border-border rounded-lg bg-card">
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {category}
-                      </h3>
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        ({categoryProtocols.length} protocolos)
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4">
-                    <div className="grid gap-4 mt-2">
-                      {categoryProtocols.map((protocol) => (
-                        <Card key={protocol.id} className="border-border/50">
-                          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                            <CardTitle className="text-base font-medium text-foreground">
-                              {protocol.protocol_name}
-                            </CardTitle>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditClick(protocol)}
-                              className="gap-2"
-                            >
-                              <Pencil className="h-4 w-4" />
-                              Editar
-                            </Button>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">Região:</span>
-                                <p className="font-medium text-foreground">{protocol.region}</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Técnica:</span>
-                                <p className="font-medium text-foreground">{protocol.technique}</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">λ (nm):</span>
-                                <p className="font-medium text-foreground">{protocol.wavelength}</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Tempo:</span>
-                                <p className="font-medium text-foreground">{protocol.application_time}</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Potência:</span>
-                                <p className="font-medium text-foreground">{protocol.power}</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Energia:</span>
-                                <p className="font-medium text-foreground">{protocol.total_energy}</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Fluência:</span>
-                                <p className="font-medium text-foreground">{protocol.fluence}</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Área:</span>
-                                <p className="font-medium text-foreground">{protocol.irradiated_area}</p>
-                              </div>
-                            </div>
-                            {protocol.indications && (
-                              <div className="pt-2 border-t border-border/50">
-                                <span className="text-muted-foreground text-sm">Indicações:</span>
-                                <p className="text-sm text-foreground mt-1">{protocol.indications}</p>
-                              </div>
-                            )}
-                            {protocol.observations && (
-                              <div className="pt-2 border-t border-border/50">
-                                <span className="text-muted-foreground text-sm">Observações:</span>
-                                <p className="text-sm text-foreground mt-1">{protocol.observations}</p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Editar Protocolo</DialogTitle>
-              </DialogHeader>
-              {editingProtocol && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="protocol_name">Nome do Protocolo</Label>
-                    <Input
-                      id="protocol_name"
-                      value={editingProtocol.protocol_name}
-                      onChange={(e) =>
-                        setEditingProtocol({ ...editingProtocol, protocol_name: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="region">Região</Label>
-                    <Input
-                      id="region"
-                      value={editingProtocol.region}
-                      onChange={(e) =>
-                        setEditingProtocol({ ...editingProtocol, region: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="technique">Técnica</Label>
-                    <Input
-                      id="technique"
-                      value={editingProtocol.technique}
-                      onChange={(e) =>
-                        setEditingProtocol({ ...editingProtocol, technique: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="wavelength">Comprimento de Onda (nm)</Label>
-                      <Input
-                        id="wavelength"
-                        value={editingProtocol.wavelength}
-                        onChange={(e) =>
-                          setEditingProtocol({ ...editingProtocol, wavelength: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="application_time">Tempo de Aplicação</Label>
-                      <Input
-                        id="application_time"
-                        value={editingProtocol.application_time}
-                        onChange={(e) =>
-                          setEditingProtocol({ ...editingProtocol, application_time: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="power">Potência</Label>
-                      <Input
-                        id="power"
-                        value={editingProtocol.power}
-                        onChange={(e) =>
-                          setEditingProtocol({ ...editingProtocol, power: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="total_energy">Energia Total</Label>
-                      <Input
-                        id="total_energy"
-                        value={editingProtocol.total_energy}
-                        onChange={(e) =>
-                          setEditingProtocol({ ...editingProtocol, total_energy: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fluence">Fluência</Label>
-                      <Input
-                        id="fluence"
-                        value={editingProtocol.fluence}
-                        onChange={(e) =>
-                          setEditingProtocol({ ...editingProtocol, fluence: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="irradiated_area">Área Irradiada</Label>
-                      <Input
-                        id="irradiated_area"
-                        value={editingProtocol.irradiated_area}
-                        onChange={(e) =>
-                          setEditingProtocol({ ...editingProtocol, irradiated_area: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="indications">Indicações</Label>
-                    <Textarea
-                      id="indications"
-                      value={editingProtocol.indications || ""}
-                      onChange={(e) =>
-                        setEditingProtocol({ ...editingProtocol, indications: e.target.value })
-                      }
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="observations">Observações</Label>
-                    <Textarea
-                      id="observations"
-                      value={editingProtocol.observations || ""}
-                      onChange={(e) =>
-                        setEditingProtocol({ ...editingProtocol, observations: e.target.value })
-                      }
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="flex justify-between gap-2 pt-4 border-t">
-                    <Button 
-                      variant="destructive" 
-                      onClick={handleDeleteClick}
-                      className="gap-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Excluir Protocolo
-                    </Button>
-                    <div className="flex gap-2">
-                      <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button onClick={handleSaveEdit}>
-                        Salvar
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja excluir este protocolo? Esta ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={handleConfirmDelete}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  Excluir
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      ) : (
-        <Card className="p-12 text-center border-border">
-          <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Nenhum protocolo cadastrado
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            Adicione protocolos de referência para consulta rápida
-          </p>
-          <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar Protocolo
+      {protocols && protocols.length === 0 ? (
+        <Card className="p-8 text-center bg-card/85 backdrop-blur-sm">
+          <p className="text-muted-foreground">Nenhum protocolo cadastrado.</p>
+          <Button onClick={handleOpenNewDialog} className="mt-4 bg-[#2F3F6B] hover:bg-[#2F3F6B]/90">
+            <Plus className="h-4 w-4 mr-2" />
+            Criar Primeiro Protocolo
           </Button>
         </Card>
+      ) : (
+        <div className="grid gap-4">
+          {protocols?.map((protocol) => (
+            <Card key={protocol.id} className="p-6 bg-card/85 backdrop-blur-sm">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">{protocol.diagnostico}</h3>
+                  <p className="text-sm text-muted-foreground">Região: {protocol.regiao}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenEditDialog(protocol)}
+                    className="border-[#3D4F7C] text-[#3D4F7C] hover:bg-[#3D4F7C]/10"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenDeleteDialog(protocol.id)}
+                    className="border-destructive text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Excluir
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                {protocol.tipo_luz_1 && (
+                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground">1ª Luz</p>
+                    <p className="font-medium text-foreground">{protocol.tipo_luz_1}</p>
+                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_1}s</p>
+                  </div>
+                )}
+                {protocol.tipo_luz_2 && (
+                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground">2ª Luz</p>
+                    <p className="font-medium text-foreground">{protocol.tipo_luz_2}</p>
+                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_2}s</p>
+                  </div>
+                )}
+                {protocol.tipo_luz_3 && (
+                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground">3ª Luz</p>
+                    <p className="font-medium text-foreground">{protocol.tipo_luz_3}</p>
+                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_3}s</p>
+                  </div>
+                )}
+                {protocol.tipo_luz_4 && (
+                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground">4ª Luz</p>
+                    <p className="font-medium text-foreground">{protocol.tipo_luz_4}</p>
+                    <p className="text-sm text-muted-foreground">{protocol.tempo_luz_4}s</p>
+                  </div>
+                )}
+              </div>
+
+              {protocol.efeito_luz && (
+                <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Efeito da Luz</p>
+                  <p className="text-sm text-foreground">{protocol.efeito_luz}</p>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
       )}
+
+      {/* Dialog for Create/Edit */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              {editingProtocol ? "Editar Protocolo" : "Novo Protocolo"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="diagnostico" className="text-foreground">Diagnóstico *</Label>
+                <Input
+                  id="diagnostico"
+                  value={formData.diagnostico}
+                  onChange={(e) => handleInputChange("diagnostico", e.target.value)}
+                  placeholder="Ex: Tendinopatia de Aquiles"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="regiao" className="text-foreground">Região *</Label>
+                <Input
+                  id="regiao"
+                  value={formData.regiao}
+                  onChange={(e) => handleInputChange("regiao", e.target.value)}
+                  placeholder="Ex: Tornozelo"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tipo_luz_1" className="text-foreground">1ª Luz</Label>
+                <Input
+                  id="tipo_luz_1"
+                  value={formData.tipo_luz_1 || ""}
+                  onChange={(e) => handleInputChange("tipo_luz_1", e.target.value)}
+                  placeholder="Ex: Vermelho"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tempo_luz_1" className="text-foreground">Tempo 1ª Luz (s)</Label>
+                <Input
+                  id="tempo_luz_1"
+                  type="number"
+                  value={formData.tempo_luz_1 || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_1", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Ex: 300"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tipo_luz_2" className="text-foreground">2ª Luz</Label>
+                <Input
+                  id="tipo_luz_2"
+                  value={formData.tipo_luz_2 || ""}
+                  onChange={(e) => handleInputChange("tipo_luz_2", e.target.value)}
+                  placeholder="Ex: Infravermelho"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tempo_luz_2" className="text-foreground">Tempo 2ª Luz (s)</Label>
+                <Input
+                  id="tempo_luz_2"
+                  type="number"
+                  value={formData.tempo_luz_2 || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_2", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Ex: 600"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tipo_luz_3" className="text-foreground">3ª Luz</Label>
+                <Input
+                  id="tipo_luz_3"
+                  value={formData.tipo_luz_3 || ""}
+                  onChange={(e) => handleInputChange("tipo_luz_3", e.target.value)}
+                  placeholder="Ex: Verde"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tempo_luz_3" className="text-foreground">Tempo 3ª Luz (s)</Label>
+                <Input
+                  id="tempo_luz_3"
+                  type="number"
+                  value={formData.tempo_luz_3 || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_3", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Ex: 300"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tipo_luz_4" className="text-foreground">4ª Luz</Label>
+                <Input
+                  id="tipo_luz_4"
+                  value={formData.tipo_luz_4 || ""}
+                  onChange={(e) => handleInputChange("tipo_luz_4", e.target.value)}
+                  placeholder="Ex: Âmbar"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tempo_luz_4" className="text-foreground">Tempo 4ª Luz (s)</Label>
+                <Input
+                  id="tempo_luz_4"
+                  type="number"
+                  value={formData.tempo_luz_4 || ""}
+                  onChange={(e) => handleInputChange("tempo_luz_4", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Ex: 300"
+                  className="bg-[#F5F6FA] border-[#C5CADF]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="efeito_luz" className="text-foreground">Efeito da Luz</Label>
+              <Textarea
+                id="efeito_luz"
+                value={formData.efeito_luz || ""}
+                onChange={(e) => handleInputChange("efeito_luz", e.target.value)}
+                placeholder="Descreva o efeito esperado da aplicação..."
+                rows={3}
+                className="bg-[#F5F6FA] border-[#C5CADF]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseDialog} className="border-[#C5CADF]">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="bg-[#2F3F6B] hover:bg-[#2F3F6B]/90"
+            >
+              {(createMutation.isPending || updateMutation.isPending) && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              {editingProtocol ? "Salvar Alterações" : "Criar Protocolo"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este protocolo? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#C5CADF]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
