@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const LIGHT_TYPE_OPTIONS = ["Vermelho", "Infravermelho", "Verde", "Âmbar"];
@@ -86,7 +86,9 @@ const Protocolos = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [editingProtocol, setEditingProtocol] = useState<Protocol | null>(null);
+  const [viewingProtocol, setViewingProtocol] = useState<Protocol | null>(null);
   const [deletingProtocolId, setDeletingProtocolId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProtocolFormData>(emptyFormData);
 
@@ -196,6 +198,11 @@ const Protocolos = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleOpenViewDialog = (protocol: Protocol) => {
+    setViewingProtocol(protocol);
+    setIsViewDialogOpen(true);
+  };
+
   const handleSubmit = () => {
     if (editingProtocol) {
       updateMutation.mutate({ id: editingProtocol.id, data: formData });
@@ -254,6 +261,15 @@ const Protocolos = () => {
                   <h3 className="text-lg font-semibold text-foreground">{protocol.nome || "Protocolo sem nome"}</h3>
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenViewDialog(protocol)}
+                    className="border-[#3D4F7C] text-[#3D4F7C] hover:bg-[#3D4F7C]/10"
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Ver
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -521,6 +537,69 @@ const Protocolos = () => {
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
               {editingProtocol ? "Salvar Alterações" : "Criar Protocolo"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Protocol Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-foreground text-xl">
+              {viewingProtocol?.nome || "Protocolo"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {viewingProtocol && (
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {viewingProtocol.tipo_luz_1 && (
+                  <div className="bg-[#F5F6FA] p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground font-medium">1ª Luz</p>
+                    <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_1}</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_1, viewingProtocol.tempo_luz_1_b, viewingProtocol.tempo_luz_1_c)}</p>
+                  </div>
+                )}
+                {viewingProtocol.tipo_luz_2 && (
+                  <div className="bg-[#F5F6FA] p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground font-medium">2ª Luz</p>
+                    <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_2}</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_2, viewingProtocol.tempo_luz_2_b, viewingProtocol.tempo_luz_2_c)}</p>
+                  </div>
+                )}
+                {viewingProtocol.tipo_luz_3 && (
+                  <div className="bg-[#F5F6FA] p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground font-medium">3ª Luz</p>
+                    <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_3}</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_3, viewingProtocol.tempo_luz_3_b, viewingProtocol.tempo_luz_3_c)}</p>
+                  </div>
+                )}
+                {viewingProtocol.tipo_luz_4 && (
+                  <div className="bg-[#F5F6FA] p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground font-medium">4ª Luz</p>
+                    <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_4}</p>
+                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_4, viewingProtocol.tempo_luz_4_b, viewingProtocol.tempo_luz_4_c)}</p>
+                  </div>
+                )}
+              </div>
+
+              {viewingProtocol.efeito_luz && (
+                <div className="bg-[#F5F6FA] p-4 rounded-lg">
+                  <p className="text-sm font-semibold text-foreground mb-2">Objetivos de Tratamento</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{viewingProtocol.efeito_luz}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewDialogOpen(false)}
+              className="border-[#C5CADF]"
+            >
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>
