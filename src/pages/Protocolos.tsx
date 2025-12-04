@@ -308,7 +308,7 @@ const Protocolos = () => {
 
               {protocol.efeito_luz && (
                 <div className="bg-[#F5F6FA] p-3 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Efeito da Luz</p>
+                  <p className="text-xs text-muted-foreground">Objetivos de Tratamento</p>
                   <p className="text-sm text-foreground">{protocol.efeito_luz}</p>
                 </div>
               )}
@@ -503,12 +503,12 @@ const Protocolos = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="efeito_luz" className="text-foreground">Efeito da Luz</Label>
+              <Label htmlFor="efeito_luz" className="text-foreground">Objetivos de Tratamento</Label>
               <Textarea
                 id="efeito_luz"
                 value={formData.efeito_luz || ""}
                 onChange={(e) => handleInputChange("efeito_luz", e.target.value)}
-                placeholder="Descreva o efeito esperado da aplicação..."
+                placeholder="Descreva os objetivos do tratamento..."
                 rows={3}
                 className="bg-[#F5F6FA] border-[#C5CADF]"
               />
