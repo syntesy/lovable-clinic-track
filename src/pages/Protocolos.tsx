@@ -305,13 +305,6 @@ const Protocolos = () => {
                   </div>
                 )}
               </div>
-
-              {protocol.efeito_luz && (
-                <div className="bg-[#F5F6FA] p-3 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Objetivos de Tratamento</p>
-                  <p className="text-sm text-foreground">{protocol.efeito_luz}</p>
-                </div>
-              )}
             </Card>
           ))}
         </div>
