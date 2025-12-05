@@ -263,10 +263,10 @@ const Protocolos = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground">Protocolos de Referência</h1>
-        <Button onClick={handleOpenNewDialog} className="bg-[#2F3F6B] hover:bg-[#2F3F6B]/90">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-xl md:text-2xl font-semibold text-foreground">Protocolos de Referência</h1>
+        <Button onClick={handleOpenNewDialog} className="bg-[#2F3F6B] hover:bg-[#2F3F6B]/90 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Novo Protocolo
         </Button>
@@ -281,19 +281,19 @@ const Protocolos = () => {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 md:gap-4">
           {protocols?.map((protocol) => (
-            <Card key={protocol.id} className="p-6 bg-card/85 backdrop-blur-sm">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">{protocol.nome || "Protocolo sem nome"}</h3>
+            <Card key={protocol.id} className="p-4 md:p-6 bg-card/85 backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                <div className="min-w-0">
+                  <h3 className="text-base md:text-lg font-semibold text-foreground truncate">{protocol.nome || "Protocolo sem nome"}</h3>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleOpenViewDialog(protocol)}
-                    className="border-[#3D4F7C] text-[#3D4F7C] hover:bg-[#3D4F7C]/10"
+                    className="border-[#3D4F7C] text-[#3D4F7C] hover:bg-[#3D4F7C]/10 text-xs md:text-sm"
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     Ver
@@ -302,7 +302,7 @@ const Protocolos = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleOpenEditDialog(protocol)}
-                    className="border-[#3D4F7C] text-[#3D4F7C] hover:bg-[#3D4F7C]/10"
+                    className="border-[#3D4F7C] text-[#3D4F7C] hover:bg-[#3D4F7C]/10 text-xs md:text-sm"
                   >
                     <Pencil className="h-4 w-4 mr-1" />
                     Editar
@@ -311,7 +311,7 @@ const Protocolos = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleOpenDeleteDialog(protocol.id)}
-                    className="border-destructive text-destructive hover:bg-destructive/10"
+                    className="border-destructive text-destructive hover:bg-destructive/10 text-xs md:text-sm"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Excluir
@@ -319,33 +319,33 @@ const Protocolos = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4">
                 {protocol.tipo_luz_1 && (
-                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">1ª Luz</p>
-                    <p className="font-medium text-foreground">{protocol.tipo_luz_1}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_1, protocol.tempo_luz_1_b, protocol.tempo_luz_1_c)}</p>
+                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_1}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_1, protocol.tempo_luz_1_b, protocol.tempo_luz_1_c)}</p>
                   </div>
                 )}
                 {protocol.tipo_luz_2 && (
-                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">2ª Luz</p>
-                    <p className="font-medium text-foreground">{protocol.tipo_luz_2}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_2, protocol.tempo_luz_2_b, protocol.tempo_luz_2_c)}</p>
+                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_2}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_2, protocol.tempo_luz_2_b, protocol.tempo_luz_2_c)}</p>
                   </div>
                 )}
                 {protocol.tipo_luz_3 && (
-                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">3ª Luz</p>
-                    <p className="font-medium text-foreground">{protocol.tipo_luz_3}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_3, protocol.tempo_luz_3_b, protocol.tempo_luz_3_c)}</p>
+                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_3}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_3, protocol.tempo_luz_3_b, protocol.tempo_luz_3_c)}</p>
                   </div>
                 )}
                 {protocol.tipo_luz_4 && (
-                  <div className="bg-[#F5F6FA] p-3 rounded-lg">
+                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground">4ª Luz</p>
-                    <p className="font-medium text-foreground">{protocol.tipo_luz_4}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_4, protocol.tempo_luz_4_b, protocol.tempo_luz_4_c)}</p>
+                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_4}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_4, protocol.tempo_luz_4_b, protocol.tempo_luz_4_c)}</p>
                   </div>
                 )}
               </div>
