@@ -239,13 +239,13 @@ const RegistrarEvolucao = () => {
                 Cluster Utilizado
               </Label>
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
                     1ª Luz
                   </Label>
                   <Select value={luz1} onValueChange={setLuz1}>
                     <SelectTrigger 
-                      className="w-[180px]"
+                      className="w-[160px]"
                       style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
                     >
                       <SelectValue placeholder="Selecione..." />
@@ -257,28 +257,18 @@ const RegistrarEvolucao = () => {
                       <SelectItem value="Âmbar">Âmbar</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="number"
-                    placeholder="Tempo (s)"
-                    {...register("tempo_luz1")}
-                    style={{
-                      width: '150px',
-                      backgroundColor: '#F5F6FA',
-                      border: '2px solid #3D4F7C',
-                      borderRadius: '14px',
-                      color: '#1F1F1F'
-                    }}
-                    className="placeholder:text-[#A9AEC6]"
-                  />
+                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz1_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz1_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz1_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
                     2ª Luz
                   </Label>
                   <Select value={luz2} onValueChange={setLuz2}>
                     <SelectTrigger 
-                      className="w-[180px]"
+                      className="w-[160px]"
                       style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
                     >
                       <SelectValue placeholder="Selecione..." />
@@ -290,28 +280,18 @@ const RegistrarEvolucao = () => {
                       <SelectItem value="Âmbar">Âmbar</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="number"
-                    placeholder="Tempo (s)"
-                    {...register("tempo_luz2")}
-                    style={{
-                      width: '150px',
-                      backgroundColor: '#F5F6FA',
-                      border: '2px solid #3D4F7C',
-                      borderRadius: '14px',
-                      color: '#1F1F1F'
-                    }}
-                    className="placeholder:text-[#A9AEC6]"
-                  />
+                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz2_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz2_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz2_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
                     3ª Luz
                   </Label>
                   <Select value={luz3} onValueChange={setLuz3}>
                     <SelectTrigger 
-                      className="w-[180px]"
+                      className="w-[160px]"
                       style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
                     >
                       <SelectValue placeholder="Selecione..." />
@@ -323,28 +303,18 @@ const RegistrarEvolucao = () => {
                       <SelectItem value="Âmbar">Âmbar</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="number"
-                    placeholder="Tempo (s)"
-                    {...register("tempo_luz3")}
-                    style={{
-                      width: '150px',
-                      backgroundColor: '#F5F6FA',
-                      border: '2px solid #3D4F7C',
-                      borderRadius: '14px',
-                      color: '#1F1F1F'
-                    }}
-                    className="placeholder:text-[#A9AEC6]"
-                  />
+                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz3_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz3_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz3_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
                     4ª Luz
                   </Label>
                   <Select value={luz4} onValueChange={setLuz4}>
                     <SelectTrigger 
-                      className="w-[180px]"
+                      className="w-[160px]"
                       style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
                     >
                       <SelectValue placeholder="Selecione..." />
@@ -356,19 +326,9 @@ const RegistrarEvolucao = () => {
                       <SelectItem value="Âmbar">Âmbar</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="number"
-                    placeholder="Tempo (s)"
-                    {...register("tempo_luz4")}
-                    style={{
-                      width: '150px',
-                      backgroundColor: '#F5F6FA',
-                      border: '2px solid #3D4F7C',
-                      borderRadius: '14px',
-                      color: '#1F1F1F'
-                    }}
-                    className="placeholder:text-[#A9AEC6]"
-                  />
+                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz4_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz4_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz4_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
                 </div>
               </div>
             </div>
