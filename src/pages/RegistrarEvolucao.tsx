@@ -86,7 +86,7 @@ const RegistrarEvolucao = () => {
             session_number: data.session_number ? parseInt(data.session_number) : 1,
             session_date: data.session_date,
             vas_on_day: data.vas_on_day ? parseFloat(data.vas_on_day) : null,
-            session_description: data.session_description,
+            session_description: null,
             clinical_observations: data.clinical_observations,
             light_type: [luz1, luz2, luz3, luz4].filter(Boolean).join(", "),
             treatment_time: data.treatment_time_total ? parseFloat(data.treatment_time_total) : null,
@@ -354,15 +354,6 @@ const RegistrarEvolucao = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="session_description">Descrição da Sessão</Label>
-              <Textarea
-                id="session_description"
-                {...register("session_description")}
-                className="border-input min-h-[100px]"
-                placeholder="Descreva o que foi realizado durante a sessão..."
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="clinical_observations">Observações Clínicas</Label>
