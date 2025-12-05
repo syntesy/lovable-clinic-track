@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Eye, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const LIGHT_TYPE_OPTIONS = ["Vermelho", "Infravermelho", "Verde", "Âmbar"];
@@ -221,6 +221,34 @@ const Protocolos = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleClearLight = (lightNumber: 1 | 2 | 3 | 4) => {
+    setFormData((prev) => {
+      const updates = { ...prev };
+      if (lightNumber === 1) {
+        updates.tipo_luz_1 = "";
+        updates.tempo_luz_1 = null;
+        updates.tempo_luz_1_b = null;
+        updates.tempo_luz_1_c = null;
+      } else if (lightNumber === 2) {
+        updates.tipo_luz_2 = "";
+        updates.tempo_luz_2 = null;
+        updates.tempo_luz_2_b = null;
+        updates.tempo_luz_2_c = null;
+      } else if (lightNumber === 3) {
+        updates.tipo_luz_3 = "";
+        updates.tempo_luz_3 = null;
+        updates.tempo_luz_3_b = null;
+        updates.tempo_luz_3_c = null;
+      } else if (lightNumber === 4) {
+        updates.tipo_luz_4 = "";
+        updates.tempo_luz_4 = null;
+        updates.tempo_luz_4_b = null;
+        updates.tempo_luz_4_c = null;
+      }
+      return updates;
+    });
+  };
+
   const formatTimes = (t1: number | null, t2: number | null, t3: number | null) => {
     const times = [t1, t2, t3].filter(t => t !== null);
     return times.length > 0 ? times.join('s / ') + 's' : '-';
@@ -385,6 +413,16 @@ const Protocolos = () => {
                   placeholder="T3 (s)"
                   className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleClearLight(1)}
+                  className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                  title="Excluir luz"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
@@ -426,6 +464,16 @@ const Protocolos = () => {
                   placeholder="T3 (s)"
                   className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleClearLight(2)}
+                  className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                  title="Excluir luz"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
@@ -467,6 +515,16 @@ const Protocolos = () => {
                   placeholder="T3 (s)"
                   className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleClearLight(3)}
+                  className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                  title="Excluir luz"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
@@ -508,6 +566,16 @@ const Protocolos = () => {
                   placeholder="T3 (s)"
                   className="w-[100px] bg-[#F5F6FA] border-[#C5CADF]"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleClearLight(4)}
+                  className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                  title="Excluir luz"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
