@@ -155,18 +155,19 @@ const RegistrarEvolucao = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 md:space-y-6 max-w-5xl mx-auto">
+      <div className="flex items-center gap-2 md:gap-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => navigate("/evolucao")}
+          className="flex-shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex-1">
-          <h2 className="text-3xl font-bold text-foreground">Registrar Evolução</h2>
-          <p className="text-muted-foreground">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl md:text-3xl font-bold text-foreground truncate">Registrar Evolução</h2>
+          <p className="text-sm md:text-base text-muted-foreground truncate">
             {patient.full_name}
           </p>
         </div>
@@ -235,100 +236,108 @@ const RegistrarEvolucao = () => {
             </div>
 
             <div className="space-y-4">
-              <Label style={{ fontSize: '18px', fontWeight: 600, color: '#1F1F1F', marginBottom: '16px', display: 'block' }}>
+              <Label className="text-base md:text-lg font-semibold text-foreground block">
                 Cluster Utilizado
               </Label>
               <div className="space-y-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
                     1ª Luz
                   </Label>
-                  <Select value={luz1} onValueChange={setLuz1}>
-                    <SelectTrigger 
-                      className="w-[160px]"
-                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                    >
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Vermelho">Vermelho</SelectItem>
-                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                      <SelectItem value="Verde">Verde</SelectItem>
-                      <SelectItem value="Âmbar">Âmbar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz1_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz1_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz1_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={luz1} onValueChange={setLuz1}>
+                      <SelectTrigger 
+                        className="w-full sm:w-[140px] md:w-[160px]"
+                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                      >
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vermelho">Vermelho</SelectItem>
+                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                        <SelectItem value="Verde">Verde</SelectItem>
+                        <SelectItem value="Âmbar">Âmbar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input type="number" placeholder="T1" {...register("tempo_luz1_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T2" {...register("tempo_luz1_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T3" {...register("tempo_luz1_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-4 flex-wrap">
-                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
                     2ª Luz
                   </Label>
-                  <Select value={luz2} onValueChange={setLuz2}>
-                    <SelectTrigger 
-                      className="w-[160px]"
-                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                    >
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Vermelho">Vermelho</SelectItem>
-                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                      <SelectItem value="Verde">Verde</SelectItem>
-                      <SelectItem value="Âmbar">Âmbar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz2_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz2_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz2_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={luz2} onValueChange={setLuz2}>
+                      <SelectTrigger 
+                        className="w-full sm:w-[140px] md:w-[160px]"
+                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                      >
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vermelho">Vermelho</SelectItem>
+                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                        <SelectItem value="Verde">Verde</SelectItem>
+                        <SelectItem value="Âmbar">Âmbar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input type="number" placeholder="T1" {...register("tempo_luz2_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T2" {...register("tempo_luz2_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T3" {...register("tempo_luz2_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-4 flex-wrap">
-                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
                     3ª Luz
                   </Label>
-                  <Select value={luz3} onValueChange={setLuz3}>
-                    <SelectTrigger 
-                      className="w-[160px]"
-                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                    >
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Vermelho">Vermelho</SelectItem>
-                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                      <SelectItem value="Verde">Verde</SelectItem>
-                      <SelectItem value="Âmbar">Âmbar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz3_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz3_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz3_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={luz3} onValueChange={setLuz3}>
+                      <SelectTrigger 
+                        className="w-full sm:w-[140px] md:w-[160px]"
+                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                      >
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vermelho">Vermelho</SelectItem>
+                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                        <SelectItem value="Verde">Verde</SelectItem>
+                        <SelectItem value="Âmbar">Âmbar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input type="number" placeholder="T1" {...register("tempo_luz3_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T2" {...register("tempo_luz3_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T3" {...register("tempo_luz3_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-4 flex-wrap">
-                  <Label className="font-medium min-w-[60px]" style={{ fontSize: '16px', fontWeight: 500, color: '#1F1F1F' }}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
                     4ª Luz
                   </Label>
-                  <Select value={luz4} onValueChange={setLuz4}>
-                    <SelectTrigger 
-                      className="w-[160px]"
-                      style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                    >
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Vermelho">Vermelho</SelectItem>
-                      <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                      <SelectItem value="Verde">Verde</SelectItem>
-                      <SelectItem value="Âmbar">Âmbar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input type="number" placeholder="Tempo 1" {...register("tempo_luz4_a")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 2" {...register("tempo_luz4_b")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
-                  <Input type="number" placeholder="Tempo 3" {...register("tempo_luz4_c")} style={{ width: '100px', backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} className="placeholder:text-[#A9AEC6]" />
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={luz4} onValueChange={setLuz4}>
+                      <SelectTrigger 
+                        className="w-full sm:w-[140px] md:w-[160px]"
+                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                      >
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vermelho">Vermelho</SelectItem>
+                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
+                        <SelectItem value="Verde">Verde</SelectItem>
+                        <SelectItem value="Âmbar">Âmbar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input type="number" placeholder="T1" {...register("tempo_luz4_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T2" {...register("tempo_luz4_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                    <Input type="number" placeholder="T3" {...register("tempo_luz4_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+                  </div>
                 </div>
               </div>
             </div>

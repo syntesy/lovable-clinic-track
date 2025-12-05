@@ -94,24 +94,28 @@ const ProntuarioClinico = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/pacientes")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h2 className="text-3xl font-bold text-foreground">{patient.full_name}</h2>
-          <p className="text-muted-foreground">
-            {patient.age} anos • {patient.gender || "—"} • {getFototipoLabel(patient.skin_phototype || "")}
-          </p>
+    <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/pacientes")}
+            className="flex-shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl md:text-3xl font-bold text-foreground truncate">{patient.full_name}</h2>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              {patient.age} anos • {patient.gender || "—"} • {getFototipoLabel(patient.skin_phototype || "")}
+            </p>
+          </div>
         </div>
         <Button
           variant="outline"
           onClick={() => navigate(`/pacientes/editar/${id}`)}
+          className="w-full sm:w-auto"
         >
           <Edit className="h-4 w-4 mr-2" />
           Editar Cadastro

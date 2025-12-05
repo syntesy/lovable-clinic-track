@@ -33,24 +33,24 @@ const Evolucao = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-foreground mb-2">Evolução de Pacientes</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2">Evolução de Pacientes</h2>
+        <p className="text-sm md:text-base text-muted-foreground">
           Busque e registre a evolução dos pacientes em tratamento
         </p>
       </div>
 
       <Card className="border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Search className="h-5 w-5 mr-2 text-primary" />
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="flex items-center text-base md:text-lg">
+            <Search className="h-4 w-4 md:h-5 md:w-5 mr-2 text-primary" />
             Buscar Paciente
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label htmlFor="search">Nome do Paciente</Label>
+            <Label htmlFor="search" className="text-sm md:text-base">Nome do Paciente</Label>
             <Input
               id="search"
               placeholder="Digite o nome do paciente..."
@@ -66,14 +66,14 @@ const Evolucao = () => {
       </Card>
 
       {isLoading && searchTerm.length >= 2 && (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-6 md:py-8 text-muted-foreground">
           Buscando pacientes...
         </div>
       )}
 
       {patients && patients.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-base md:text-lg font-semibold text-foreground">
             Resultados ({patients.length})
           </h3>
           <div className="grid gap-3">
@@ -82,17 +82,17 @@ const Evolucao = () => {
                 key={patient.id}
                 className="border-border hover:shadow-md transition-shadow"
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-6 w-6 text-primary" />
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3 md:space-x-4">
+                      <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <User className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground">
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-foreground text-sm md:text-base truncate">
                           {patient.full_name}
                         </h4>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">
                           {patient.age} anos • {patient.gender || "—"} • {patient.treated_region || "Região não especificada"}
                         </p>
                         <div className="mt-1">
@@ -110,9 +110,9 @@ const Evolucao = () => {
                     </div>
                     <Button
                       onClick={() => navigate(`/evolucao/${patient.id}`)}
-                      className="bg-primary hover:bg-primary/90"
+                      className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-xs md:text-sm"
                     >
-                      <FileText className="h-4 w-4 mr-2" />
+                      <FileText className="h-4 w-4 mr-1 md:mr-2" />
                       Registrar Evolução
                     </Button>
                   </div>

@@ -47,18 +47,19 @@ const NovoPaciente = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 md:space-y-6 max-w-4xl mx-auto">
+      <div className="flex items-center gap-2 md:gap-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => navigate("/pacientes")}
+          className="flex-shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <h2 className="text-3xl font-bold text-foreground">Novo Paciente</h2>
-          <p className="text-muted-foreground">Cadastro de dados demográficos</p>
+        <div className="min-w-0">
+          <h2 className="text-xl md:text-3xl font-bold text-foreground truncate">Novo Paciente</h2>
+          <p className="text-sm md:text-base text-muted-foreground">Cadastro de dados demográficos</p>
         </div>
       </div>
 
@@ -171,18 +172,19 @@ const NovoPaciente = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-4">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 md:gap-4">
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate("/pacientes")}
+            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting || !skinPhototype}
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
           >
             {isSubmitting ? "Salvando..." : "Cadastrar Paciente"}
           </Button>
