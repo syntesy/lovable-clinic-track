@@ -284,7 +284,7 @@ const Protocolos = () => {
         <div className="grid gap-3 md:gap-4">
           {protocols?.map((protocol) => (
             <Card key={protocol.id} className="p-4 md:p-6 bg-card/85 backdrop-blur-sm">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div className="min-w-0">
                   <h3 className="text-base md:text-lg font-semibold text-foreground truncate">{protocol.nome || "Protocolo sem nome"}</h3>
                 </div>
@@ -317,37 +317,6 @@ const Protocolos = () => {
                     Excluir
                   </Button>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4">
-                {protocol.tipo_luz_1 && (
-                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
-                    <p className="text-xs text-muted-foreground">1ª Luz</p>
-                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_1}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_1, protocol.tempo_luz_1_b, protocol.tempo_luz_1_c)}</p>
-                  </div>
-                )}
-                {protocol.tipo_luz_2 && (
-                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
-                    <p className="text-xs text-muted-foreground">2ª Luz</p>
-                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_2}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_2, protocol.tempo_luz_2_b, protocol.tempo_luz_2_c)}</p>
-                  </div>
-                )}
-                {protocol.tipo_luz_3 && (
-                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
-                    <p className="text-xs text-muted-foreground">3ª Luz</p>
-                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_3}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_3, protocol.tempo_luz_3_b, protocol.tempo_luz_3_c)}</p>
-                  </div>
-                )}
-                {protocol.tipo_luz_4 && (
-                  <div className="bg-[#F5F6FA] p-2 md:p-3 rounded-lg">
-                    <p className="text-xs text-muted-foreground">4ª Luz</p>
-                    <p className="font-medium text-foreground text-sm md:text-base">{protocol.tipo_luz_4}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">{formatTimes(protocol.tempo_luz_4, protocol.tempo_luz_4_b, protocol.tempo_luz_4_c)}</p>
-                  </div>
-                )}
               </div>
             </Card>
           ))}
