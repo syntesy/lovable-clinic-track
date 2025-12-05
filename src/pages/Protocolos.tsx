@@ -225,22 +225,22 @@ const Protocolos = () => {
     setFormData((prev) => {
       const updates = { ...prev };
       if (lightNumber === 1) {
-        updates.tipo_luz_1 = "";
+        updates.tipo_luz_1 = null;
         updates.tempo_luz_1 = null;
         updates.tempo_luz_1_b = null;
         updates.tempo_luz_1_c = null;
       } else if (lightNumber === 2) {
-        updates.tipo_luz_2 = "";
+        updates.tipo_luz_2 = null;
         updates.tempo_luz_2 = null;
         updates.tempo_luz_2_b = null;
         updates.tempo_luz_2_c = null;
       } else if (lightNumber === 3) {
-        updates.tipo_luz_3 = "";
+        updates.tipo_luz_3 = null;
         updates.tempo_luz_3 = null;
         updates.tempo_luz_3_b = null;
         updates.tempo_luz_3_c = null;
       } else if (lightNumber === 4) {
-        updates.tipo_luz_4 = "";
+        updates.tipo_luz_4 = null;
         updates.tempo_luz_4 = null;
         updates.tempo_luz_4_b = null;
         updates.tempo_luz_4_c = null;
@@ -380,7 +380,7 @@ const Protocolos = () => {
               <Label className="text-foreground font-semibold">1ª Luz</Label>
               <div className="flex items-center gap-3">
                 <Select
-                  value={formData.tipo_luz_1 || ""}
+                  value={formData.tipo_luz_1 || undefined}
                   onValueChange={(value) => handleInputChange("tipo_luz_1", value)}
                 >
                   <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
@@ -431,7 +431,7 @@ const Protocolos = () => {
               <Label className="text-foreground font-semibold">2ª Luz</Label>
               <div className="flex items-center gap-3">
                 <Select
-                  value={formData.tipo_luz_2 || ""}
+                  value={formData.tipo_luz_2 || undefined}
                   onValueChange={(value) => handleInputChange("tipo_luz_2", value)}
                 >
                   <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
@@ -482,7 +482,7 @@ const Protocolos = () => {
               <Label className="text-foreground font-semibold">3ª Luz</Label>
               <div className="flex items-center gap-3">
                 <Select
-                  value={formData.tipo_luz_3 || ""}
+                  value={formData.tipo_luz_3 || undefined}
                   onValueChange={(value) => handleInputChange("tipo_luz_3", value)}
                 >
                   <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
@@ -533,7 +533,7 @@ const Protocolos = () => {
               <Label className="text-foreground font-semibold">4ª Luz</Label>
               <div className="flex items-center gap-3">
                 <Select
-                  value={formData.tipo_luz_4 || ""}
+                  value={formData.tipo_luz_4 || undefined}
                   onValueChange={(value) => handleInputChange("tipo_luz_4", value)}
                 >
                   <SelectTrigger className="w-[160px] bg-[#F5F6FA] border-[#C5CADF]">
