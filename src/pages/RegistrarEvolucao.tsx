@@ -20,11 +20,23 @@ const RegistrarEvolucao = () => {
   const [ultrasoundFiles, setUltrasoundFiles] = useState<File[]>([]);
   const [thermographyFiles, setThermographyFiles] = useState<File[]>([]);
   const [bloodTestFiles, setBloodTestFiles] = useState<File[]>([]);
-  const [luz1, setLuz1] = useState<string>("");
-  const [luz2, setLuz2] = useState<string>("");
-  const [luz3, setLuz3] = useState<string>("");
-  const [luz4, setLuz4] = useState<string>("");
+  const [selectedProtocol, setSelectedProtocol] = useState<string>("");
   const { register, handleSubmit, watch, setValue } = useForm();
+
+  const { data: protocols } = useQuery({
+    queryKey: ["reference-protocols"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reference_protocols")
+        .select("*")
+        .order("nome", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const selectedProtocolData = protocols?.find(p => p.id === selectedProtocol);
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patient", id],
@@ -88,7 +100,12 @@ const RegistrarEvolucao = () => {
             vas_on_day: data.vas_on_day ? parseFloat(data.vas_on_day) : null,
             session_description: null,
             clinical_observations: data.clinical_observations,
-            light_type: [luz1, luz2, luz3, luz4].filter(Boolean).join(", "),
+            light_type: selectedProtocolData ? [
+              selectedProtocolData.tipo_luz_1,
+              selectedProtocolData.tipo_luz_2,
+              selectedProtocolData.tipo_luz_3,
+              selectedProtocolData.tipo_luz_4
+            ].filter(Boolean).join(", ") : null,
             treatment_time: data.treatment_time_total ? parseFloat(data.treatment_time_total) : null,
             pharmaceutical_used: data.pharmaceutical_used,
             associated_techniques: data.associated_techniques,
@@ -237,109 +254,67 @@ const RegistrarEvolucao = () => {
 
             <div className="space-y-4">
               <Label className="text-base md:text-lg font-semibold text-foreground block">
-                Cluster Utilizado
+                Protocolo
               </Label>
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
-                    1ª Luz
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Select value={luz1} onValueChange={setLuz1}>
-                      <SelectTrigger 
-                        className="w-full sm:w-[140px] md:w-[160px]"
-                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                      >
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Vermelho">Vermelho</SelectItem>
-                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                        <SelectItem value="Verde">Verde</SelectItem>
-                        <SelectItem value="Âmbar">Âmbar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input type="number" placeholder="T1" {...register("tempo_luz1_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T2" {...register("tempo_luz1_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T3" {...register("tempo_luz1_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                  </div>
-                </div>
+              <Select value={selectedProtocol} onValueChange={setSelectedProtocol}>
+                <SelectTrigger 
+                  className="w-full"
+                  style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
+                >
+                  <SelectValue placeholder="Selecione um protocolo..." />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  {protocols?.map((protocol) => (
+                    <SelectItem key={protocol.id} value={protocol.id}>
+                      {protocol.nome || "Protocolo sem nome"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
-                    2ª Luz
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Select value={luz2} onValueChange={setLuz2}>
-                      <SelectTrigger 
-                        className="w-full sm:w-[140px] md:w-[160px]"
-                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                      >
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Vermelho">Vermelho</SelectItem>
-                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                        <SelectItem value="Verde">Verde</SelectItem>
-                        <SelectItem value="Âmbar">Âmbar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input type="number" placeholder="T1" {...register("tempo_luz2_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T2" {...register("tempo_luz2_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T3" {...register("tempo_luz2_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
+              {selectedProtocolData && (
+                <div className="bg-[#F5F6FA] p-4 rounded-lg space-y-3">
+                  <p className="text-sm font-medium text-foreground">Luzes do Protocolo:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {selectedProtocolData.tipo_luz_1 && (
+                      <div className="bg-white p-3 rounded-lg">
+                        <p className="text-xs text-[#5A6080] font-medium">1ª Luz</p>
+                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_1}</p>
+                        <p className="text-xs text-[#5A6080]">
+                          {[selectedProtocolData.tempo_luz_1, selectedProtocolData.tempo_luz_1_b, selectedProtocolData.tempo_luz_1_c].filter(Boolean).join("s / ")}s
+                        </p>
+                      </div>
+                    )}
+                    {selectedProtocolData.tipo_luz_2 && (
+                      <div className="bg-white p-3 rounded-lg">
+                        <p className="text-xs text-[#5A6080] font-medium">2ª Luz</p>
+                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_2}</p>
+                        <p className="text-xs text-[#5A6080]">
+                          {[selectedProtocolData.tempo_luz_2, selectedProtocolData.tempo_luz_2_b, selectedProtocolData.tempo_luz_2_c].filter(Boolean).join("s / ")}s
+                        </p>
+                      </div>
+                    )}
+                    {selectedProtocolData.tipo_luz_3 && (
+                      <div className="bg-white p-3 rounded-lg">
+                        <p className="text-xs text-[#5A6080] font-medium">3ª Luz</p>
+                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_3}</p>
+                        <p className="text-xs text-[#5A6080]">
+                          {[selectedProtocolData.tempo_luz_3, selectedProtocolData.tempo_luz_3_b, selectedProtocolData.tempo_luz_3_c].filter(Boolean).join("s / ")}s
+                        </p>
+                      </div>
+                    )}
+                    {selectedProtocolData.tipo_luz_4 && (
+                      <div className="bg-white p-3 rounded-lg">
+                        <p className="text-xs text-[#5A6080] font-medium">4ª Luz</p>
+                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_4}</p>
+                        <p className="text-xs text-[#5A6080]">
+                          {[selectedProtocolData.tempo_luz_4, selectedProtocolData.tempo_luz_4_b, selectedProtocolData.tempo_luz_4_c].filter(Boolean).join("s / ")}s
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
-                    3ª Luz
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Select value={luz3} onValueChange={setLuz3}>
-                      <SelectTrigger 
-                        className="w-full sm:w-[140px] md:w-[160px]"
-                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                      >
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Vermelho">Vermelho</SelectItem>
-                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                        <SelectItem value="Verde">Verde</SelectItem>
-                        <SelectItem value="Âmbar">Âmbar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input type="number" placeholder="T1" {...register("tempo_luz3_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T2" {...register("tempo_luz3_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T3" {...register("tempo_luz3_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <Label className="font-medium min-w-[60px] text-sm md:text-base text-foreground">
-                    4ª Luz
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Select value={luz4} onValueChange={setLuz4}>
-                      <SelectTrigger 
-                        className="w-full sm:w-[140px] md:w-[160px]"
-                        style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                      >
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Vermelho">Vermelho</SelectItem>
-                        <SelectItem value="Infravermelho">Infravermelho</SelectItem>
-                        <SelectItem value="Verde">Verde</SelectItem>
-                        <SelectItem value="Âmbar">Âmbar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input type="number" placeholder="T1" {...register("tempo_luz4_a")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T2" {...register("tempo_luz4_b")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                    <Input type="number" placeholder="T3" {...register("tempo_luz4_c")} className="w-[70px] md:w-[100px] placeholder:text-muted-foreground" style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px', color: '#1F1F1F' }} />
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="space-y-2">
