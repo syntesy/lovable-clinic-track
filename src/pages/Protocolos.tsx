@@ -624,7 +624,7 @@ const Protocolos = () => {
               {viewingProtocol.efeito_luz && (
                 <div className="bg-[#F5F6FA] p-4 rounded-lg">
                   <p className="text-sm font-semibold text-foreground mb-2">Objetivos de Tratamento</p>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{viewingProtocol.efeito_luz}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{viewingProtocol.efeito_luz}</p>
                 </div>
               )}
             </div>
