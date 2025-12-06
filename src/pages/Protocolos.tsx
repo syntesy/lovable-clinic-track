@@ -593,30 +593,30 @@ const Protocolos = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {viewingProtocol.tipo_luz_1 && (
                   <div className="bg-[#F5F6FA] p-4 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-medium">1ª Luz</p>
+                    <p className="text-xs text-[#5A6080] font-medium">1ª Luz</p>
                     <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_1}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_1, viewingProtocol.tempo_luz_1_b, viewingProtocol.tempo_luz_1_c)}</p>
+                    <p className="text-sm text-[#5A6080]">{formatTimes(viewingProtocol.tempo_luz_1, viewingProtocol.tempo_luz_1_b, viewingProtocol.tempo_luz_1_c)}</p>
                   </div>
                 )}
                 {viewingProtocol.tipo_luz_2 && (
                   <div className="bg-[#F5F6FA] p-4 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-medium">2ª Luz</p>
+                    <p className="text-xs text-[#5A6080] font-medium">2ª Luz</p>
                     <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_2}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_2, viewingProtocol.tempo_luz_2_b, viewingProtocol.tempo_luz_2_c)}</p>
+                    <p className="text-sm text-[#5A6080]">{formatTimes(viewingProtocol.tempo_luz_2, viewingProtocol.tempo_luz_2_b, viewingProtocol.tempo_luz_2_c)}</p>
                   </div>
                 )}
                 {viewingProtocol.tipo_luz_3 && (
                   <div className="bg-[#F5F6FA] p-4 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-medium">3ª Luz</p>
+                    <p className="text-xs text-[#5A6080] font-medium">3ª Luz</p>
                     <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_3}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_3, viewingProtocol.tempo_luz_3_b, viewingProtocol.tempo_luz_3_c)}</p>
+                    <p className="text-sm text-[#5A6080]">{formatTimes(viewingProtocol.tempo_luz_3, viewingProtocol.tempo_luz_3_b, viewingProtocol.tempo_luz_3_c)}</p>
                   </div>
                 )}
                 {viewingProtocol.tipo_luz_4 && (
                   <div className="bg-[#F5F6FA] p-4 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-medium">4ª Luz</p>
+                    <p className="text-xs text-[#5A6080] font-medium">4ª Luz</p>
                     <p className="font-semibold text-foreground">{viewingProtocol.tipo_luz_4}</p>
-                    <p className="text-sm text-muted-foreground">{formatTimes(viewingProtocol.tempo_luz_4, viewingProtocol.tempo_luz_4_b, viewingProtocol.tempo_luz_4_c)}</p>
+                    <p className="text-sm text-[#5A6080]">{formatTimes(viewingProtocol.tempo_luz_4, viewingProtocol.tempo_luz_4_b, viewingProtocol.tempo_luz_4_c)}</p>
                   </div>
                 )}
               </div>
