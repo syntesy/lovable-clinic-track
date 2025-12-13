@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Activity, TrendingUp } from "lucide-react";
+import { ArrowLeft, FileText, Activity, TrendingUp, AlertTriangle } from "lucide-react";
 
 const DetalhePaciente = () => {
   const { id } = useParams();
@@ -104,10 +104,11 @@ const DetalhePaciente = () => {
       </div>
 
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto">
           <TabsTrigger value="info">Dados Clínicos</TabsTrigger>
           <TabsTrigger value="protocol">Protocolo MAC</TabsTrigger>
           <TabsTrigger value="sessions">Evolução</TabsTrigger>
+          <TabsTrigger value="contraindications">Contra-Indicações</TabsTrigger>
           <TabsTrigger value="discharge">Alta</TabsTrigger>
         </TabsList>
 
@@ -387,6 +388,73 @@ const DetalhePaciente = () => {
               </Button>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="contraindications" className="space-y-4">
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertTriangle className="mr-2 h-5 w-5 text-primary" />
+                Contra-Indicações por Tratamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Tabs defaultValue="mac" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="mac">MAC</TabsTrigger>
+                  <TabsTrigger value="epi">EPI</TabsTrigger>
+                  <TabsTrigger value="prp">PRP</TabsTrigger>
+                  <TabsTrigger value="bma">BMA</TabsTrigger>
+                  <TabsTrigger value="bmac">BMAC</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="mac" className="mt-4">
+                  <div className="p-4 bg-accent/10 rounded-lg">
+                    <h4 className="font-semibold text-foreground mb-2">MAC - Método de Aceleração Cicatricial</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione aqui as contra-indicações específicas para o tratamento MAC.
+                    </p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="epi" className="mt-4">
+                  <div className="p-4 bg-accent/10 rounded-lg">
+                    <h4 className="font-semibold text-foreground mb-2">EPI - Eletrólise Percutânea Intratecidual</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione aqui as contra-indicações específicas para o tratamento EPI.
+                    </p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="prp" className="mt-4">
+                  <div className="p-4 bg-accent/10 rounded-lg">
+                    <h4 className="font-semibold text-foreground mb-2">PRP - Plasma Rico em Plaquetas</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione aqui as contra-indicações específicas para o tratamento PRP.
+                    </p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="bma" className="mt-4">
+                  <div className="p-4 bg-accent/10 rounded-lg">
+                    <h4 className="font-semibold text-foreground mb-2">BMA - Aspirado de Medula Óssea</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione aqui as contra-indicações específicas para o tratamento BMA.
+                    </p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="bmac" className="mt-4">
+                  <div className="p-4 bg-accent/10 rounded-lg">
+                    <h4 className="font-semibold text-foreground mb-2">BMAC - Concentrado de Aspirado de Medula Óssea</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione aqui as contra-indicações específicas para o tratamento BMAC.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="discharge" className="space-y-4">
