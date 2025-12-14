@@ -28,7 +28,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground font-semibold text-lg px-4 py-6">
-            {!isCollapsed && "Sistema MAC"}
+            {!isCollapsed && "Fisioterapia Regenerativa"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

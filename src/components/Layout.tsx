@@ -30,7 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center min-w-0">
               <SidebarTrigger className="mr-2 md:mr-4 flex-shrink-0" />
               <h1 className="font-inter font-semibold truncate text-sm md:text-xl" style={{ color: '#3A3A45' }}>
-                {isMobile ? "MAC" : "Método de Aceleração Cicatricial"}
+                Fisioterapia Regenerativa
               </h1>
             </div>
             <Button
