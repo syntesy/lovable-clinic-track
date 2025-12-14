@@ -80,7 +80,7 @@ const RegistrarEvolucao = () => {
       if (error) throw error;
 
       toast.success("Alta terapêutica registrada com sucesso!");
-      navigate("/evolucao");
+      navigate(`/pacientes/${id}`);
     } catch (error) {
       console.error("Erro ao registrar alta:", error);
       toast.error("Erro ao registrar alta terapêutica");
@@ -154,7 +154,7 @@ const RegistrarEvolucao = () => {
 
       toast.success("Evolução registrada com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["patient-sessions", id] });
-      navigate("/evolucao");
+      navigate(`/pacientes/${id}`);
     } catch (error) {
       console.error("Erro ao registrar evolução:", error);
       toast.error("Erro ao registrar evolução");
@@ -177,7 +177,7 @@ const RegistrarEvolucao = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate("/evolucao")}
+          onClick={() => navigate(`/pacientes/${id}`)}
           className="flex-shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />

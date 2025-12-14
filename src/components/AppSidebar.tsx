@@ -1,4 +1,4 @@
-import { Home, Users, Activity, FileText, Upload, BarChart3, Bot } from "lucide-react";
+import { Users, FileText, BarChart3, Bot } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -14,7 +14,6 @@ import {
 
 const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
-  { title: "Evolução", url: "/evolucao", icon: Activity },
   { title: "Protocolos", url: "/protocolos", icon: FileText },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Agente MAC", url: "/agente-mac", icon: Bot },
@@ -38,7 +37,6 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      end
                       className="hover:bg-sidebar-accent/50"
                       activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                     >

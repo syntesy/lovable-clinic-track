@@ -318,6 +318,21 @@ const DetalhePaciente = () => {
         </TabsContent>
 
         <TabsContent value="sessions" className="space-y-4">
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() => navigate(`/evolucao/${id}`)}
+              style={{
+                backgroundColor: '#2F3F6B',
+                color: '#FFFFFF',
+                borderRadius: '12px',
+                fontWeight: 600,
+              }}
+              className="hover:opacity-90"
+            >
+              <Activity className="h-4 w-4 mr-2" />
+              Registrar Evolução
+            </Button>
+          </div>
           {sessions && sessions.length > 0 ? (
             <div className="space-y-4">
               {sessions.map((session) => (
@@ -380,12 +395,6 @@ const DetalhePaciente = () => {
               <p className="text-muted-foreground">
                 Nenhuma sessão registrada ainda
               </p>
-              <Button 
-                className="mt-4 bg-primary hover:bg-primary/90"
-                onClick={() => navigate(`/evolucao/${id}`)}
-              >
-                Registrar Sessão
-              </Button>
             </Card>
           )}
         </TabsContent>
