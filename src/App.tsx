@@ -10,9 +10,11 @@ import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import DetalhePaciente from "./pages/DetalhePaciente";
 import ProntuarioClinico from "./pages/ProntuarioClinico";
-import Evolucao from "./pages/Evolucao";
 import RegistrarEvolucao from "./pages/RegistrarEvolucao";
-import Protocolos from "./pages/Protocolos";
+import ProtocolosMenu from "./pages/ProtocolosMenu";
+import ProtocolosMAC from "./pages/ProtocolosMAC";
+import ProtocolosEPI from "./pages/ProtocolosEPI";
+import ProtocolosOrtobiologicos from "./pages/ProtocolosOrtobiologicos";
 import Relatorios from "./pages/Relatorios";
 import VisualizarRelatorio from "./pages/VisualizarRelatorio";
 import ProtocoloMAC from "./pages/ProtocoloMAC";
@@ -71,16 +73,6 @@ const App = () => (
             }
           />
           <Route
-            path="/evolucao"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Evolucao />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/evolucao/:id"
             element={
               <ProtectedRoute>
@@ -95,7 +87,37 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Protocolos />
+                  <ProtocolosMenu />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/protocolos/mac"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProtocolosMAC />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/protocolos/epi"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProtocolosEPI />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/protocolos/ortobiologicos"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProtocolosOrtobiologicos />
                 </Layout>
               </ProtectedRoute>
             }
