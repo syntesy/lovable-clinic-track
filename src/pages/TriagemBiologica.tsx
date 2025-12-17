@@ -40,6 +40,12 @@ interface ExtractedText {
   error?: string;
 }
 
+interface ExamGroup {
+  axis: string;
+  exams: string[];
+  justification: string;
+}
+
 const questionBlocks: QuestionBlock[] = [
   {
     id: "dorCicatrizacao",
@@ -128,7 +134,7 @@ export default function TriagemBiologica() {
   const [answers, setAnswers] = useState<Record<string, Record<string, boolean>>>({});
   const [analysis, setAnalysis] = useState<string>("");
   const [classification, setClassification] = useState<string>("");
-  const [recommendedExams, setRecommendedExams] = useState<string[]>([]);
+  const [recommendedExams, setRecommendedExams] = useState<ExamGroup[]>([]);
   const [patientOrientations, setPatientOrientations] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [labResultsText, setLabResultsText] = useState("");
@@ -654,14 +660,26 @@ export default function TriagemBiologica() {
                 <CardContent className="space-y-4">
                   {recommendedExams.length > 0 ? (
                     <>
-                      <div className="space-y-2">
-                        {recommendedExams.map((exam, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-sm">
-                            <span className="w-2 h-2 rounded-full bg-primary" />
-                            {exam}
-                          </div>
-                        ))}
-                      </div>
+                      <ScrollArea className="h-[300px] pr-4">
+                        <div className="space-y-4">
+                          {recommendedExams.map((group, idx) => (
+                            <div key={idx} className="border-l-2 border-primary pl-3">
+                              <h4 className="text-sm font-semibold text-primary mb-1">{group.axis}</h4>
+                              <div className="space-y-1 mb-2">
+                                {group.exams.map((exam, examIdx) => (
+                                  <div key={examIdx} className="flex items-center gap-2 text-sm">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                                    {exam}
+                                  </div>
+                                ))}
+                              </div>
+                              <p className="text-xs text-muted-foreground italic">
+                                {group.justification}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
                       <Button 
                         onClick={() => handleOpenPrintPreview("exams")}
                         className="w-full"

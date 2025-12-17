@@ -343,7 +343,20 @@ function formatQuestionnaireForAnalysis(data: Record<string, Record<string, bool
   formatted += "Analise as seguintes respostas e forneça:\n";
   formatted += "1. Classificação: APTO PARA ORTOBIOLÓGICO, NÃO APTO AGORA – NECESSITA PREPARO BIOLÓGICO, ou CONTRAINDICADO / ADIAR – NECESSITA AVALIAÇÃO MÉDICA\n";
   formatted += "2. Principais riscos biológicos identificados\n";
-  formatted += "3. Lista de exames de sangue a serem solicitados (organizados por categoria)\n";
+  formatted += "3. EXAMES RECOMENDADOS (formato obrigatório - gere APENAS exames pertinentes aos eixos alterados):\n";
+  formatted += "   Para cada eixo alterado, liste os exames no seguinte formato:\n";
+  formatted += "   [EIXO: nome_do_eixo]\n";
+  formatted += "   - NomeExame1\n";
+  formatted += "   - NomeExame2\n";
+  formatted += "   [JUSTIFICATIVA: justificativa_curta]\n";
+  formatted += "   \n";
+  formatted += "   Exemplo:\n";
+  formatted += "   [EIXO: Inflamação Sistêmica]\n";
+  formatted += "   - PCR ultrassensível\n";
+  formatted += "   - VHS\n";
+  formatted += "   [JUSTIFICATIVA: Avaliar marcadores inflamatórios devido a sinais de inflamação crônica]\n";
+  formatted += "   \n";
+  formatted += "   IMPORTANTE: NÃO solicite exames de eixos que NÃO apresentam alterações. Se não houver alterações em um eixo, não inclua exames desse eixo.\n";
   formatted += "4. Orientações ao paciente (alimentares, estilo de vida, preparo biológico)\n";
   formatted += "5. Alertas importantes\n\n";
   formatted += "RESPOSTAS DO QUESTIONÁRIO:\n";
@@ -396,21 +409,71 @@ function parseClassification(text: string): string {
   return "NAO_APTO_PREPARO";
 }
 
-function parseRecommendedExams(text: string): string[] {
-  const exams: string[] = [];
-  const commonExams = [
-    "Hemograma completo", "PCR", "VHS", "Ferritina", "Vitamina D",
-    "Glicemia", "HbA1c", "Perfil lipídico", "TSH", "T3 livre", "T4 livre",
-    "Magnésio", "Vitamina B12", "Insulina", "HOMA-IR", "Testosterona"
-  ];
+interface ExamGroup {
+  axis: string;
+  exams: string[];
+  justification: string;
+}
+
+function parseRecommendedExams(text: string): ExamGroup[] {
+  const examGroups: ExamGroup[] = [];
   
-  for (const exam of commonExams) {
-    if (text.toLowerCase().includes(exam.toLowerCase())) {
-      exams.push(exam);
+  // Try to find structured exam sections with [EIXO:] format
+  const eixoPattern = /\[EIXO:\s*([^\]]+)\]([\s\S]*?)\[JUSTIFICATIVA:\s*([^\]]+)\]/gi;
+  let match;
+  
+  while ((match = eixoPattern.exec(text)) !== null) {
+    const axis = match[1].trim();
+    const examsSection = match[2];
+    const justification = match[3].trim();
+    
+    // Extract exam names from the section (lines starting with - or •)
+    const examLines = examsSection.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.startsWith('-') || line.startsWith('•'))
+      .map(line => line.replace(/^[-•]\s*/, '').trim())
+      .filter(line => line.length > 0);
+    
+    if (examLines.length > 0) {
+      examGroups.push({
+        axis,
+        exams: examLines,
+        justification
+      });
     }
   }
   
-  return exams;
+  // Fallback: if no structured format found, try to extract from common patterns
+  if (examGroups.length === 0) {
+    const axisPatterns = [
+      { pattern: /inflamação|inflamat/i, axis: "Inflamação Sistêmica", exams: ["PCR ultrassensível", "VHS", "Hemograma completo"] },
+      { pattern: /ferro|anemia/i, axis: "Ferro e Anemia", exams: ["Hemograma completo", "Ferritina", "Ferro sérico", "Transferrina"] },
+      { pattern: /energético|fadiga|mitocôndria|bioenergé/i, axis: "Metabolismo Energético", exams: ["Vitamina D (25-OH)", "Vitamina B12", "Magnésio"] },
+      { pattern: /glicêm|diabetes|glicose|insulina/i, axis: "Metabolismo Glicêmico", exams: ["Glicemia de jejum", "HbA1c", "Insulina basal", "HOMA-IR"] },
+      { pattern: /hormonal|tireoide|tsh|testosterona/i, axis: "Eixo Hormonal", exams: ["TSH", "T4 livre", "T3 livre"] },
+    ];
+    
+    const lowerText = text.toLowerCase();
+    
+    for (const { pattern, axis, exams } of axisPatterns) {
+      if (pattern.test(lowerText)) {
+        // Check if any of the exams from this axis are mentioned
+        const mentionedExams = exams.filter(exam => 
+          lowerText.includes(exam.toLowerCase())
+        );
+        
+        if (mentionedExams.length > 0) {
+          examGroups.push({
+            axis,
+            exams: mentionedExams,
+            justification: `Avaliação do eixo ${axis.toLowerCase()}`
+          });
+        }
+      }
+    }
+  }
+  
+  return examGroups;
 }
 
 function parseOrientations(text: string): string {
