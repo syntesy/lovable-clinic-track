@@ -1,17 +1,22 @@
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Printer, ArrowLeft, FileText, CheckCircle } from "lucide-react";
+import { Printer, ArrowLeft, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+interface ExamGroup {
+  axis: string;
+  exams: string[];
+  justification: string;
+}
 
 interface PrintPreviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: "exams" | "orientations";
   patientName: string;
-  content: string[] | string;
+  content: ExamGroup[] | string;
   date?: Date;
 }
 
@@ -31,7 +36,7 @@ export function PrintPreviewModal({
     if (!printWindow) return;
 
     const htmlContent = type === "exams" 
-      ? generateExamsPrintHTML(patientName, content as string[], formattedDateShort)
+      ? generateExamsPrintHTML(patientName, content as ExamGroup[], formattedDateShort)
       : generateOrientationsPrintHTML(patientName, content as string, formattedDateShort);
 
     printWindow.document.write(htmlContent);
@@ -49,7 +54,6 @@ export function PrintPreviewModal({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Informações de Conferência */}
         <div className="px-6 py-4 bg-muted/30 border-b">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
@@ -67,18 +71,16 @@ export function PrintPreviewModal({
           </div>
         </div>
 
-        {/* Preview do Documento */}
         <ScrollArea className="flex-1 max-h-[50vh]">
           <div className="p-6">
             {type === "exams" ? (
-              <ExamsPreview exams={content as string[]} patientName={patientName} date={formattedDateShort} />
+              <ExamsPreview examGroups={content as ExamGroup[]} patientName={patientName} date={formattedDateShort} />
             ) : (
               <OrientationsPreview orientations={content as string} patientName={patientName} date={formattedDateShort} />
             )}
           </div>
         </ScrollArea>
 
-        {/* Botões de Ação */}
         <div className="p-6 border-t bg-background flex flex-col sm:flex-row gap-3 justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
@@ -94,11 +96,9 @@ export function PrintPreviewModal({
   );
 }
 
-// Preview Components
-function ExamsPreview({ exams, patientName, date }: { exams: string[]; patientName: string; date: string }) {
+function ExamsPreview({ examGroups, patientName, date }: { examGroups: ExamGroup[]; patientName: string; date: string }) {
   return (
     <div className="bg-white border rounded-lg shadow-sm p-8 text-foreground" style={{ fontFamily: 'Arial, sans-serif' }}>
-      {/* Header */}
       <div className="text-center border-b-2 border-primary pb-4 mb-6">
         <h1 className="text-xl font-bold text-primary">FISIOTERAPIA REGENERATIVA</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -106,7 +106,6 @@ function ExamsPreview({ exams, patientName, date }: { exams: string[]; patientNa
         </p>
       </div>
 
-      {/* Patient Info */}
       <div className="bg-muted/50 p-4 rounded-lg mb-6">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
@@ -120,25 +119,32 @@ function ExamsPreview({ exams, patientName, date }: { exams: string[]; patientNa
         </div>
       </div>
 
-      {/* Exams List */}
       <div className="mb-6">
         <h3 className="font-semibold text-primary border-b pb-2 mb-4">EXAMES SOLICITADOS</h3>
-        <div className="space-y-2">
-          {exams.map((exam, idx) => (
-            <div key={idx} className="flex items-center gap-3 py-2 border-b border-dashed last:border-0">
-              <span className="text-primary text-lg">☐</span>
-              <span className="text-sm">{exam}</span>
+        <div className="space-y-4">
+          {examGroups.map((group, idx) => (
+            <div key={idx} className="border-l-2 border-primary pl-3 py-2">
+              <h4 className="font-semibold text-sm text-primary mb-2">{group.axis}</h4>
+              <div className="space-y-1 mb-2">
+                {group.exams.map((exam, examIdx) => (
+                  <div key={examIdx} className="flex items-center gap-3 py-1">
+                    <span className="text-primary text-lg">☐</span>
+                    <span className="text-sm">{exam}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground italic pl-6">
+                Justificativa: {group.justification}
+              </p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Standard Text */}
       <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-muted-foreground italic">
         Exames solicitados como investigação complementar para avaliação biológica prévia a procedimentos regenerativos.
       </div>
 
-      {/* Footer */}
       <div className="border-t pt-6">
         <div className="text-center mb-8">
           <div className="w-64 mx-auto border-t border-foreground pt-2">
@@ -158,7 +164,6 @@ function ExamsPreview({ exams, patientName, date }: { exams: string[]; patientNa
 function OrientationsPreview({ orientations, patientName, date }: { orientations: string; patientName: string; date: string }) {
   return (
     <div className="bg-white border rounded-lg shadow-sm p-8 text-foreground" style={{ fontFamily: 'Arial, sans-serif' }}>
-      {/* Header */}
       <div className="text-center border-b-2 border-primary pb-4 mb-6">
         <h1 className="text-xl font-bold text-primary">FISIOTERAPIA REGENERATIVA</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -166,7 +171,6 @@ function OrientationsPreview({ orientations, patientName, date }: { orientations
         </p>
       </div>
 
-      {/* Patient Info */}
       <div className="bg-muted/50 p-4 rounded-lg mb-6">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
@@ -180,7 +184,6 @@ function OrientationsPreview({ orientations, patientName, date }: { orientations
         </div>
       </div>
 
-      {/* Orientations Content */}
       <div className="mb-6">
         <h3 className="font-semibold text-primary border-b pb-2 mb-4">ORIENTAÇÕES</h3>
         <div className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -188,7 +191,6 @@ function OrientationsPreview({ orientations, patientName, date }: { orientations
         </div>
       </div>
 
-      {/* Safety Warning */}
       <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-sm">
         <p className="font-semibold text-amber-800 mb-2">⚠️ AVISO DE SEGURANÇA:</p>
         <p className="text-amber-700">
@@ -197,7 +199,6 @@ function OrientationsPreview({ orientations, patientName, date }: { orientations
         </p>
       </div>
 
-      {/* Footer */}
       <div className="mt-6 pt-4 border-t text-xs text-muted-foreground text-center">
         <p>Fisioterapia Regenerativa</p>
         <p>Documento gerado em: {date}</p>
@@ -206,21 +207,30 @@ function OrientationsPreview({ orientations, patientName, date }: { orientations
   );
 }
 
-// HTML Generators for Print
-function generateExamsPrintHTML(patientName: string, exams: string[], date: string): string {
+function generateExamsPrintHTML(patientName: string, examGroups: ExamGroup[], date: string): string {
+  const examGroupsHTML = examGroups.map(group => `
+    <div class="exam-group">
+      <h4 class="axis-title">${group.axis}</h4>
+      <div class="exams-list">
+        ${group.exams.map(exam => `
+          <div class="exam-item">
+            <div class="checkbox"></div>
+            <span class="exam-name">${exam}</span>
+          </div>
+        `).join('')}
+      </div>
+      <p class="justification">Justificativa: ${group.justification}</p>
+    </div>
+  `).join('');
+
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <title>Solicitação de Exames - ${patientName}</title>
       <style>
-        @page {
-          size: A4;
-          margin: 20mm;
-        }
-        * {
-          box-sizing: border-box;
-        }
+        @page { size: A4; margin: 20mm; }
+        * { box-sizing: border-box; }
         body {
           font-family: Arial, Helvetica, sans-serif;
           font-size: 12pt;
@@ -230,29 +240,15 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
           padding: 0;
           background: white;
         }
-        .page {
-          max-width: 190mm;
-          margin: 0 auto;
-          padding: 10mm 0;
-        }
+        .page { max-width: 190mm; margin: 0 auto; padding: 10mm 0; }
         .header {
           text-align: center;
           border-bottom: 3px solid #1e40af;
           padding-bottom: 15px;
           margin-bottom: 25px;
         }
-        .header h1 {
-          color: #1e40af;
-          margin: 0;
-          font-size: 22pt;
-          font-weight: bold;
-          letter-spacing: 1px;
-        }
-        .header .subtitle {
-          color: #4b5563;
-          margin: 8px 0 0;
-          font-size: 11pt;
-        }
+        .header h1 { color: #1e40af; margin: 0; font-size: 22pt; font-weight: bold; letter-spacing: 1px; }
+        .header .subtitle { color: #4b5563; margin: 8px 0 0; font-size: 11pt; }
         .patient-box {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
@@ -260,22 +256,10 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
           padding: 15px 20px;
           margin-bottom: 25px;
         }
-        .patient-box table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        .patient-box td {
-          padding: 5px 0;
-        }
-        .patient-box .label {
-          color: #6b7280;
-          font-size: 10pt;
-          width: 150px;
-        }
-        .patient-box .value {
-          font-weight: bold;
-          font-size: 11pt;
-        }
+        .patient-box table { width: 100%; border-collapse: collapse; }
+        .patient-box td { padding: 5px 0; }
+        .patient-box .label { color: #6b7280; font-size: 10pt; width: 150px; }
+        .patient-box .value { font-weight: bold; font-size: 11pt; }
         .section-title {
           color: #1e40af;
           font-size: 12pt;
@@ -284,28 +268,37 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
           padding-bottom: 8px;
           margin-bottom: 15px;
         }
-        .exams-list {
-          margin-bottom: 25px;
+        .exam-group {
+          border-left: 3px solid #1e40af;
+          padding-left: 15px;
+          margin-bottom: 20px;
         }
+        .axis-title {
+          color: #1e40af;
+          font-size: 11pt;
+          font-weight: bold;
+          margin: 0 0 10px 0;
+        }
+        .exams-list { margin-bottom: 8px; }
         .exam-item {
           display: flex;
           align-items: center;
-          padding: 10px 0;
-          border-bottom: 1px dashed #d1d5db;
-        }
-        .exam-item:last-child {
-          border-bottom: none;
+          padding: 6px 0;
         }
         .checkbox {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           border: 2px solid #1e40af;
           border-radius: 3px;
           margin-right: 12px;
           flex-shrink: 0;
         }
-        .exam-name {
-          font-size: 11pt;
+        .exam-name { font-size: 11pt; }
+        .justification {
+          font-size: 9pt;
+          font-style: italic;
+          color: #6b7280;
+          margin: 5px 0 0 28px;
         }
         .note-box {
           background: #eff6ff;
@@ -315,12 +308,9 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
           font-size: 10pt;
           font-style: italic;
           color: #1e40af;
-          margin-bottom: 40px;
+          margin: 25px 0 40px;
         }
-        .signature-area {
-          text-align: center;
-          margin: 50px 0 30px;
-        }
+        .signature-area { text-align: center; margin: 50px 0 30px; }
         .signature-line {
           width: 250px;
           border-top: 1px solid #1a1a1a;
@@ -328,11 +318,7 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
           padding-top: 8px;
           font-size: 10pt;
         }
-        .footer {
-          border-top: 1px solid #e2e8f0;
-          padding-top: 15px;
-          text-align: center;
-        }
+        .footer { border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; }
         .footer .warning {
           background: #fef3c7;
           border: 1px solid #fcd34d;
@@ -340,24 +326,10 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
           padding: 12px;
           margin-bottom: 15px;
         }
-        .footer .warning-title {
-          font-weight: bold;
-          color: #92400e;
-          font-size: 10pt;
-          margin-bottom: 5px;
-        }
-        .footer .warning-text {
-          color: #a16207;
-          font-size: 9pt;
-          line-height: 1.4;
-        }
-        .footer .clinic {
-          font-size: 9pt;
-          color: #6b7280;
-        }
-        @media print {
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
+        .footer .warning-title { font-weight: bold; color: #92400e; font-size: 10pt; margin-bottom: 5px; }
+        .footer .warning-text { color: #a16207; font-size: 9pt; line-height: 1.4; }
+        .footer .clinic { font-size: 9pt; color: #6b7280; }
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
       </style>
     </head>
     <body>
@@ -386,14 +358,7 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
         
         <div class="section-title">EXAMES SOLICITADOS</div>
         
-        <div class="exams-list">
-          ${exams.map(exam => `
-            <div class="exam-item">
-              <div class="checkbox"></div>
-              <span class="exam-name">${exam}</span>
-            </div>
-          `).join('')}
-        </div>
+        ${examGroupsHTML}
         
         <div class="note-box">
           Exames solicitados como investigação complementar para avaliação biológica prévia a procedimentos regenerativos.
@@ -424,7 +389,6 @@ function generateExamsPrintHTML(patientName: string, exams: string[], date: stri
 }
 
 function generateOrientationsPrintHTML(patientName: string, orientations: string, date: string): string {
-  // Format orientations for better readability
   const formattedOrientations = orientations
     .split('\n')
     .map(line => line.trim())
@@ -438,13 +402,8 @@ function generateOrientationsPrintHTML(patientName: string, orientations: string
     <head>
       <title>Orientações ao Paciente - ${patientName}</title>
       <style>
-        @page {
-          size: A4;
-          margin: 20mm;
-        }
-        * {
-          box-sizing: border-box;
-        }
+        @page { size: A4; margin: 20mm; }
+        * { box-sizing: border-box; }
         body {
           font-family: Arial, Helvetica, sans-serif;
           font-size: 12pt;
@@ -454,29 +413,15 @@ function generateOrientationsPrintHTML(patientName: string, orientations: string
           padding: 0;
           background: white;
         }
-        .page {
-          max-width: 190mm;
-          margin: 0 auto;
-          padding: 10mm 0;
-        }
+        .page { max-width: 190mm; margin: 0 auto; padding: 10mm 0; }
         .header {
           text-align: center;
           border-bottom: 3px solid #1e40af;
           padding-bottom: 15px;
           margin-bottom: 25px;
         }
-        .header h1 {
-          color: #1e40af;
-          margin: 0;
-          font-size: 22pt;
-          font-weight: bold;
-          letter-spacing: 1px;
-        }
-        .header .subtitle {
-          color: #4b5563;
-          margin: 8px 0 0;
-          font-size: 11pt;
-        }
+        .header h1 { color: #1e40af; margin: 0; font-size: 22pt; font-weight: bold; letter-spacing: 1px; }
+        .header .subtitle { color: #4b5563; margin: 8px 0 0; font-size: 11pt; }
         .patient-box {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
@@ -484,22 +429,10 @@ function generateOrientationsPrintHTML(patientName: string, orientations: string
           padding: 15px 20px;
           margin-bottom: 25px;
         }
-        .patient-box table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        .patient-box td {
-          padding: 5px 0;
-        }
-        .patient-box .label {
-          color: #6b7280;
-          font-size: 10pt;
-          width: 150px;
-        }
-        .patient-box .value {
-          font-weight: bold;
-          font-size: 11pt;
-        }
+        .patient-box table { width: 100%; border-collapse: collapse; }
+        .patient-box td { padding: 5px 0; }
+        .patient-box .label { color: #6b7280; font-size: 10pt; width: 150px; }
+        .patient-box .value { font-weight: bold; font-size: 11pt; }
         .section-title {
           color: #1e40af;
           font-size: 12pt;
@@ -508,53 +441,24 @@ function generateOrientationsPrintHTML(patientName: string, orientations: string
           padding-bottom: 8px;
           margin-bottom: 15px;
         }
-        .content {
-          margin-bottom: 30px;
-          font-size: 11pt;
-        }
-        .content p {
-          margin: 8px 0;
-        }
-        .warning-box {
+        .content { margin-bottom: 25px; font-size: 11pt; line-height: 1.6; }
+        .safety-box {
           background: #fef3c7;
-          border: 2px solid #f59e0b;
-          border-radius: 8px;
-          padding: 15px 20px;
-          margin-bottom: 25px;
+          border: 1px solid #fcd34d;
+          border-radius: 6px;
+          padding: 15px;
+          margin-bottom: 20px;
         }
-        .warning-box .warning-icon {
-          font-size: 16pt;
-          margin-bottom: 8px;
-        }
-        .warning-box .warning-title {
-          font-weight: bold;
-          color: #92400e;
-          font-size: 11pt;
-          margin-bottom: 8px;
-        }
-        .warning-box .warning-text {
-          color: #a16207;
-          font-size: 10pt;
-          line-height: 1.5;
-        }
+        .safety-title { font-weight: bold; color: #92400e; font-size: 11pt; margin-bottom: 8px; }
+        .safety-text { color: #a16207; font-size: 10pt; line-height: 1.5; }
         .footer {
           border-top: 1px solid #e2e8f0;
           padding-top: 15px;
           text-align: center;
-        }
-        .footer .clinic {
-          font-size: 10pt;
-          color: #4b5563;
-          font-weight: 500;
-        }
-        .footer .date {
           font-size: 9pt;
           color: #6b7280;
-          margin-top: 5px;
         }
-        @media print {
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
       </style>
     </head>
     <body>
@@ -583,18 +487,17 @@ function generateOrientationsPrintHTML(patientName: string, orientations: string
           ${formattedOrientations}
         </div>
         
-        <div class="warning-box">
-          <div class="warning-icon">⚠️</div>
-          <div class="warning-title">AVISO DE SEGURANÇA</div>
-          <div class="warning-text">
+        <div class="safety-box">
+          <div class="safety-title">⚠️ AVISO DE SEGURANÇA</div>
+          <div class="safety-text">
             As orientações acima não substituem acompanhamento profissional.<br>
             Em caso de dúvidas ou sintomas novos, procure seu profissional de saúde.
           </div>
         </div>
         
         <div class="footer">
-          <div class="clinic">Fisioterapia Regenerativa</div>
-          <div class="date">Documento gerado em: ${date}</div>
+          <p>Fisioterapia Regenerativa</p>
+          <p>Documento gerado em: ${date}</p>
         </div>
       </div>
     </body>
