@@ -12,15 +12,32 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
+import { ExamFileUpload } from "@/components/ExamFileUpload";
+import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
 import { ptBR } from "date-fns/locale";
 
 interface QuestionBlock {
   id: string;
   title: string;
   questions: string[];
+}
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  url: string;
+  uploadedAt: Date;
+  type: "image" | "pdf";
+}
+
+interface ExtractedText {
+  fileName: string;
+  text: string;
+  success: boolean;
+  error?: string;
 }
 
 const questionBlocks: QuestionBlock[] = [
@@ -120,6 +137,14 @@ export default function TriagemBiologica() {
   const [activeTab, setActiveTab] = useState("triagem");
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
   const [printPreviewType, setPrintPreviewType] = useState<"exams" | "orientations">("exams");
+  
+  // New states for file upload and OCR
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [extractedTexts, setExtractedTexts] = useState<ExtractedText[]>([]);
+  const [consolidatedText, setConsolidatedText] = useState("");
+  const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
 
   // Fetch patients
   const { data: patients, isLoading: loadingPatients } = useQuery({
@@ -161,6 +186,16 @@ export default function TriagemBiologica() {
     });
     setAnswers(initialAnswers);
   }, []);
+
+  // Reset file uploads when patient changes
+  useEffect(() => {
+    setUploadedFiles([]);
+    setExtractedTexts([]);
+    setConsolidatedText("");
+    setExtractionWarnings([]);
+    setLabResultsText("");
+    setLabInterpretation("");
+  }, [selectedPatientId]);
 
   const handleAnswerChange = (blockId: string, question: string, checked: boolean) => {
     setAnswers(prev => ({
@@ -215,12 +250,61 @@ export default function TriagemBiologica() {
     }
   };
 
-  const handleAnalyzeLabResults = async () => {
-    if (!labResultsText.trim()) {
-      toast.error("Insira os resultados dos exames");
+  const handleExtractText = async () => {
+    if (uploadedFiles.length === 0 && !labResultsText.trim()) {
+      toast.error("Anexe arquivos ou digite os resultados");
       return;
     }
 
+    // If no files, go directly to analysis
+    if (uploadedFiles.length === 0) {
+      setConsolidatedText(labResultsText);
+      setExtractedTexts([]);
+      setExtractionWarnings([]);
+      setPreviewModalOpen(true);
+      return;
+    }
+
+    setIsExtractingText(true);
+    try {
+      // Prepare image data for OCR
+      const imageUrls = uploadedFiles.map(file => ({
+        url: file.url,
+        fileName: file.name
+      }));
+
+      const { data, error } = await supabase.functions.invoke('triagem-prp', {
+        body: { 
+          action: "extract_text",
+          imageUrls 
+        }
+      });
+
+      if (error) throw error;
+
+      setExtractedTexts(data.extractedTexts || []);
+      setConsolidatedText(data.consolidatedText || "");
+      setExtractionWarnings(data.warnings || []);
+
+      if (data.successCount === 0) {
+        toast.error("Não foi possível extrair texto dos arquivos");
+      } else if (data.failCount > 0) {
+        toast.warning(`${data.successCount} de ${data.totalFiles} arquivo(s) processado(s)`);
+      } else {
+        toast.success("Texto extraído com sucesso!");
+      }
+
+      // Open preview modal
+      setPreviewModalOpen(true);
+    } catch (error) {
+      console.error("Error extracting text:", error);
+      toast.error("Erro ao extrair texto dos arquivos");
+    } finally {
+      setIsExtractingText(false);
+    }
+  };
+
+  const handleConfirmAndAnalyze = async (finalText: string) => {
     if (!selectedPatientId) {
       toast.error("Selecione um paciente");
       return;
@@ -233,15 +317,30 @@ export default function TriagemBiologica() {
       return;
     }
 
+    setPreviewModalOpen(false);
     setIsAnalyzingLab(true);
+
     try {
       const { data, error } = await supabase.functions.invoke('triagem-prp', {
-        body: { labResults: { rawText: labResultsText }, action: "lab_results" }
+        body: { 
+          labResults: { 
+            rawText: finalText,
+            extractedFromImages: consolidatedText 
+          }, 
+          action: "lab_results" 
+        }
       });
 
       if (error) throw error;
 
       setLabInterpretation(data.analysis);
+
+      // Prepare attached files info
+      const attachedFilesInfo = uploadedFiles.map(f => ({
+        id: f.id,
+        name: f.name,
+        uploadedAt: f.uploadedAt.toISOString()
+      }));
 
       // Save lab results
       const { error: saveError } = await supabase
@@ -249,8 +348,10 @@ export default function TriagemBiologica() {
         .insert({
           screening_id: latestScreening.id,
           raw_text: labResultsText,
+          extracted_text: consolidatedText,
           interpretation: data.analysis,
-          updated_classification: data.classification
+          updated_classification: data.classification,
+          attached_files: attachedFilesInfo
         });
 
       if (saveError) throw saveError;
@@ -270,6 +371,21 @@ export default function TriagemBiologica() {
       toast.error("Erro ao analisar resultados. Tente novamente.");
     } finally {
       setIsAnalyzingLab(false);
+    }
+  };
+
+  const handleAnalyzeLabResults = async () => {
+    // If there are files, extract text first
+    if (uploadedFiles.length > 0) {
+      await handleExtractText();
+    } else if (labResultsText.trim()) {
+      // If only manual text, show preview
+      setConsolidatedText("");
+      setExtractedTexts([]);
+      setExtractionWarnings([]);
+      setPreviewModalOpen(true);
+    } else {
+      toast.error("Insira os resultados dos exames ou anexe arquivos");
     }
   };
 
@@ -445,30 +561,59 @@ export default function TriagemBiologica() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card className="bg-card/95 backdrop-blur border-border/50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Inserir Resultados de Exames</CardTitle>
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <FlaskConical className="w-4 h-4" />
+                    Inserir Resultados de Exames
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                  {/* File Upload Section */}
                   <div>
-                    <Label>Cole ou digite os resultados dos exames laboratoriais:</Label>
+                    <Label className="flex items-center gap-2 mb-3">
+                      <Upload className="w-4 h-4" />
+                      Anexar Exames (OCR Automático)
+                    </Label>
+                    <ExamFileUpload
+                      patientId={selectedPatientId}
+                      files={uploadedFiles}
+                      onFilesChange={setUploadedFiles}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Manual Text Entry */}
+                  <div>
+                    <Label>Ou cole/digite os resultados dos exames:</Label>
                     <Textarea
                       value={labResultsText}
                       onChange={(e) => setLabResultsText(e.target.value)}
                       placeholder="Exemplo:&#10;Hemograma: Hb 12.5 g/dL, Ht 38%&#10;Ferritina: 45 ng/mL&#10;Vitamina D: 28 ng/mL&#10;PCR: 3.2 mg/L&#10;..."
-                      className="mt-2 min-h-[300px] font-mono text-sm"
+                      className="mt-2 min-h-[200px] font-mono text-sm"
                     />
                   </div>
+
+                  {/* Action Button */}
                   <Button 
                     onClick={handleAnalyzeLabResults}
-                    disabled={isAnalyzingLab || !labResultsText.trim()}
+                    disabled={isAnalyzingLab || isExtractingText || (!labResultsText.trim() && uploadedFiles.length === 0)}
                     className="w-full"
                   >
-                    {isAnalyzingLab ? (
+                    {isExtractingText ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Extraindo Texto...
+                      </>
+                    ) : isAnalyzingLab ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Analisando Exames...
                       </>
                     ) : (
-                      "Analisar Resultados"
+                      <>
+                        <Eye className="w-4 h-4 mr-2" />
+                        {uploadedFiles.length > 0 ? "Extrair e Analisar" : "Analisar Resultados"}
+                      </>
                     )}
                   </Button>
                 </CardContent>
@@ -480,14 +625,18 @@ export default function TriagemBiologica() {
                 </CardHeader>
                 <CardContent>
                   {labInterpretation ? (
-                    <ScrollArea className="h-[400px] pr-4">
+                    <ScrollArea className="h-[500px] pr-4">
                       <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">
                         {labInterpretation}
                       </div>
                     </ScrollArea>
                   ) : (
-                    <div className="h-[400px] flex items-center justify-center text-muted-foreground text-sm">
-                      Insira os resultados dos exames para ver a interpretação
+                    <div className="h-[500px] flex items-center justify-center text-muted-foreground text-sm text-center px-4">
+                      <div>
+                        <FlaskConical className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                        <p>Anexe arquivos de exames ou digite os resultados para ver a interpretação.</p>
+                        <p className="mt-2 text-xs">O sistema irá extrair automaticamente os valores usando OCR/Vision.</p>
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -621,6 +770,17 @@ export default function TriagemBiologica() {
         type={printPreviewType}
         patientName={selectedPatient?.full_name || ""}
         content={printPreviewType === "exams" ? recommendedExams : (patientOrientations || analysis)}
+      />
+
+      {/* Extracted Text Preview Modal */}
+      <ExtractedTextPreviewModal
+        open={previewModalOpen}
+        onOpenChange={setPreviewModalOpen}
+        extractedTexts={extractedTexts}
+        consolidatedText={consolidatedText}
+        warnings={extractionWarnings}
+        manualText={labResultsText}
+        onConfirm={handleConfirmAndAnalyze}
       />
     </div>
   );

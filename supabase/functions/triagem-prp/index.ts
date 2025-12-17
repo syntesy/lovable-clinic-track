@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const assistantId = Deno.env.get('ASSISTANT_TRIAGEM_PRP_ID');
+const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,7 +16,12 @@ serve(async (req) => {
   }
 
   try {
-    const { questionnaireData, labResults, action } = await req.json();
+    const { questionnaireData, labResults, action, imageUrls } = await req.json();
+
+    // Handle OCR/Vision extraction
+    if (action === "extract_text") {
+      return await handleTextExtraction(imageUrls);
+    }
 
     if (!openAIApiKey) {
       throw new Error("OPENAI_API_KEY não está configurada");
@@ -32,7 +38,7 @@ serve(async (req) => {
     } else if (action === "lab_results") {
       userMessage = formatLabResultsForAnalysis(labResults);
     } else {
-      throw new Error("Ação inválida. Use 'questionnaire' ou 'lab_results'");
+      throw new Error("Ação inválida. Use 'questionnaire', 'lab_results' ou 'extract_text'");
     }
 
     console.log("Creating thread...");
@@ -169,6 +175,158 @@ serve(async (req) => {
   }
 });
 
+// Handle OCR/Vision text extraction using Lovable AI
+async function handleTextExtraction(imageUrls: string[]): Promise<Response> {
+  if (!lovableApiKey) {
+    throw new Error("LOVABLE_API_KEY não está configurada");
+  }
+
+  if (!imageUrls || imageUrls.length === 0) {
+    return new Response(JSON.stringify({ error: "Nenhuma imagem fornecida" }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  console.log(`Extracting text from ${imageUrls.length} images...`);
+
+  const extractedTexts: { fileName: string; text: string; success: boolean; error?: string }[] = [];
+
+  for (const imageData of imageUrls) {
+    const { url, fileName } = typeof imageData === 'string' 
+      ? { url: imageData, fileName: 'arquivo' } 
+      : imageData;
+
+    try {
+      console.log(`Processing: ${fileName}`);
+      
+      const content: any[] = [
+        {
+          type: "text",
+          text: `Você é um especialista em OCR e extração de dados de exames laboratoriais.
+          
+TAREFA: Extraia TODOS os valores de exames laboratoriais desta imagem de forma estruturada.
+
+FORMATO DE SAÍDA:
+- Liste cada exame com seu valor e unidade
+- Se houver valores de referência, inclua também
+- Se algum valor estiver ilegível, indique: "[ILEGÍVEL - CONFERIR MANUALMENTE]"
+- NÃO invente valores - se não conseguir ler, sinalize
+
+EXEMPLO DE FORMATO:
+Hemoglobina: 12.5 g/dL (Ref: 12-16)
+Hematócrito: 38% (Ref: 36-44)
+Ferritina: 45 ng/mL (Ref: 20-200)
+
+Extraia agora os resultados da imagem:`
+        },
+        {
+          type: "image_url",
+          image_url: { url }
+        }
+      ];
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "user",
+              content
+            }
+          ],
+          max_tokens: 4000,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`OCR error for ${fileName}:`, errorText);
+        
+        if (response.status === 429) {
+          extractedTexts.push({
+            fileName,
+            text: "",
+            success: false,
+            error: "Limite de requisições excedido. Tente novamente em alguns segundos."
+          });
+          continue;
+        }
+        
+        if (response.status === 402) {
+          extractedTexts.push({
+            fileName,
+            text: "",
+            success: false,
+            error: "Créditos insuficientes. Adicione créditos ao workspace."
+          });
+          continue;
+        }
+
+        extractedTexts.push({
+          fileName,
+          text: "",
+          success: false,
+          error: `Erro ao processar imagem: ${response.status}`
+        });
+        continue;
+      }
+
+      const data = await response.json();
+      const extractedText = data.choices?.[0]?.message?.content || "";
+      
+      console.log(`Extracted text from ${fileName}: ${extractedText.substring(0, 100)}...`);
+
+      extractedTexts.push({
+        fileName,
+        text: extractedText,
+        success: true
+      });
+    } catch (err) {
+      console.error(`Error extracting from ${fileName}:`, err);
+      extractedTexts.push({
+        fileName,
+        text: "",
+        success: false,
+        error: err instanceof Error ? err.message : "Erro desconhecido"
+      });
+    }
+  }
+
+  // Consolidate all extracted texts
+  const successfulExtractions = extractedTexts.filter(e => e.success);
+  const failedExtractions = extractedTexts.filter(e => !e.success);
+
+  let consolidatedText = "";
+  
+  if (successfulExtractions.length > 0) {
+    consolidatedText = successfulExtractions
+      .map(e => `=== ${e.fileName} ===\n${e.text}`)
+      .join("\n\n");
+  }
+
+  const warnings: string[] = [];
+  if (failedExtractions.length > 0) {
+    warnings.push(...failedExtractions.map(e => `${e.fileName}: ${e.error}`));
+  }
+
+  return new Response(JSON.stringify({ 
+    extractedTexts,
+    consolidatedText,
+    warnings,
+    totalFiles: imageUrls.length,
+    successCount: successfulExtractions.length,
+    failCount: failedExtractions.length
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 function formatQuestionnaireForAnalysis(data: Record<string, Record<string, boolean>>): string {
   const blockNames: Record<string, string> = {
     dorCicatrizacao: "DOR E CICATRIZAÇÃO",
@@ -203,10 +361,12 @@ function formatQuestionnaireForAnalysis(data: Record<string, Record<string, bool
 function formatLabResultsForAnalysis(labResults: any): string {
   let formatted = "RESULTADOS DE EXAMES LABORATORIAIS\n\n";
   formatted += "Analise os seguintes resultados e forneça:\n";
-  formatted += "1. Interpretação de cada exame alterado\n";
-  formatted += "2. Atualização da classificação: APTO PARA ORTOBIOLÓGICO, NÃO APTO AGORA – NECESSITA PREPARO BIOLÓGICO, ou CONTRAINDICADO / ADIAR\n";
-  formatted += "3. Recomendações de suplementação ou correção se necessário\n";
-  formatted += "4. Indicação se o paciente agora está APTO ou se deve continuar em PREPARO\n\n";
+  formatted += "1. Resumo dos exames analisados\n";
+  formatted += "2. Principais alterações identificadas\n";
+  formatted += "3. Impacto biológico na resposta aos ortobiológicos\n";
+  formatted += "4. Classificação final atualizada: APTO PARA ORTOBIOLÓGICO, NÃO APTO AGORA – NECESSITA PREPARO BIOLÓGICO, ou CONTRAINDICADO / ADIAR\n";
+  formatted += "5. Recomendações gerais (não medicamentosas)\n";
+  formatted += "6. Quando reavaliar / próximos passos\n\n";
   
   if (labResults.rawText) {
     formatted += "RESULTADOS:\n" + labResults.rawText;
@@ -215,6 +375,10 @@ function formatLabResultsForAnalysis(labResults: any): string {
     for (const [exam, value] of Object.entries(labResults.values)) {
       formatted += `- ${exam}: ${value}\n`;
     }
+  }
+  
+  if (labResults.extractedFromImages) {
+    formatted += "\n\nRESULTADOS EXTRAÍDOS DE IMAGENS:\n" + labResults.extractedFromImages;
   }
   
   return formatted;
