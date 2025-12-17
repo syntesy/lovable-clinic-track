@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, FileText, Thermometer, TestTube, Edit } from "lucide-react";
+import AvaliacaoPrePRP from "@/components/AvaliacaoPrePRP";
 
 const ProntuarioClinico = () => {
   const { id } = useParams();
@@ -198,6 +199,9 @@ const ProntuarioClinico = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Avaliação Pré-PRP */}
+      <AvaliacaoPrePRP patientId={patient.id} patientName={patient.full_name} />
 
       <Card className="border-border">
         <CardHeader>
