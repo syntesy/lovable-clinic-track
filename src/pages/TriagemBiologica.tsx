@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { PrintPreviewModal } from "@/components/PrintPreviewModal";
 import { ptBR } from "date-fns/locale";
 
 interface QuestionBlock {
@@ -117,6 +118,8 @@ export default function TriagemBiologica() {
   const [isAnalyzingLab, setIsAnalyzingLab] = useState(false);
   const [labInterpretation, setLabInterpretation] = useState("");
   const [activeTab, setActiveTab] = useState("triagem");
+  const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
+  const [printPreviewType, setPrintPreviewType] = useState<"exams" | "orientations">("exams");
 
   // Fetch patients
   const { data: patients, isLoading: loadingPatients } = useQuery({
@@ -270,18 +273,9 @@ export default function TriagemBiologica() {
     }
   };
 
-  const handlePrint = (type: "exams" | "orientations") => {
-    const selectedPatient = patients?.find(p => p.id === selectedPatientId);
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    const content = type === "exams" 
-      ? generateExamsPrintContent(selectedPatient?.full_name || "", recommendedExams)
-      : generateOrientationsPrintContent(selectedPatient?.full_name || "", patientOrientations || analysis);
-
-    printWindow.document.write(content);
-    printWindow.document.close();
-    printWindow.print();
+  const handleOpenPrintPreview = (type: "exams" | "orientations") => {
+    setPrintPreviewType(type);
+    setPrintPreviewOpen(true);
   };
 
   const getClassificationBadge = (cls: string) => {
@@ -520,7 +514,7 @@ export default function TriagemBiologica() {
                         ))}
                       </div>
                       <Button 
-                        onClick={() => handlePrint("exams")}
+                        onClick={() => handleOpenPrintPreview("exams")}
                         className="w-full"
                         variant="outline"
                       >
@@ -549,7 +543,7 @@ export default function TriagemBiologica() {
                         </div>
                       </ScrollArea>
                       <Button 
-                        onClick={() => handlePrint("orientations")}
+                        onClick={() => handleOpenPrintPreview("orientations")}
                         className="w-full"
                         variant="outline"
                       >
@@ -619,220 +613,15 @@ export default function TriagemBiologica() {
           </CardContent>
         </Card>
       )}
+
+      {/* Print Preview Modal */}
+      <PrintPreviewModal
+        open={printPreviewOpen}
+        onOpenChange={setPrintPreviewOpen}
+        type={printPreviewType}
+        patientName={selectedPatient?.full_name || ""}
+        content={printPreviewType === "exams" ? recommendedExams : (patientOrientations || analysis)}
+      />
     </div>
   );
-}
-
-function generateExamsPrintContent(patientName: string, exams: string[]): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Solicitação de Exames - ${patientName}</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 40px;
-          color: #333;
-        }
-        .header {
-          text-align: center;
-          border-bottom: 2px solid #2563eb;
-          padding-bottom: 20px;
-          margin-bottom: 30px;
-        }
-        .header h1 {
-          color: #1e40af;
-          margin: 0;
-          font-size: 24px;
-        }
-        .header p {
-          color: #666;
-          margin: 5px 0 0;
-        }
-        .patient-info {
-          background: #f8fafc;
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 25px;
-        }
-        .patient-info h2 {
-          margin: 0;
-          font-size: 14px;
-          color: #666;
-        }
-        .patient-info p {
-          margin: 5px 0 0;
-          font-size: 18px;
-          font-weight: bold;
-        }
-        .exams-list {
-          margin-top: 20px;
-        }
-        .exams-list h3 {
-          color: #1e40af;
-          border-bottom: 1px solid #e2e8f0;
-          padding-bottom: 10px;
-        }
-        .exams-list ul {
-          list-style: none;
-          padding: 0;
-        }
-        .exams-list li {
-          padding: 10px 0;
-          border-bottom: 1px solid #e2e8f0;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .exams-list li::before {
-          content: "☐";
-          color: #2563eb;
-          font-size: 18px;
-        }
-        .footer {
-          margin-top: 50px;
-          border-top: 1px solid #e2e8f0;
-          padding-top: 20px;
-          text-align: center;
-          color: #666;
-          font-size: 12px;
-        }
-        .signature {
-          margin-top: 80px;
-          text-align: center;
-        }
-        .signature-line {
-          width: 300px;
-          border-top: 1px solid #333;
-          margin: 0 auto;
-          padding-top: 10px;
-        }
-        @media print {
-          body { padding: 20px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>FISIOTERAPIA REGENERATIVA</h1>
-        <p>Solicitação de Exames Laboratoriais - Triagem Pré-PRP</p>
-      </div>
-      
-      <div class="patient-info">
-        <h2>PACIENTE</h2>
-        <p>${patientName}</p>
-        <p style="font-size: 12px; color: #666; font-weight: normal;">Data: ${format(new Date(), "dd/MM/yyyy")}</p>
-      </div>
-      
-      <div class="exams-list">
-        <h3>EXAMES SOLICITADOS</h3>
-        <ul>
-          ${exams.map(exam => `<li>${exam}</li>`).join('')}
-        </ul>
-      </div>
-      
-      <div class="signature">
-        <div class="signature-line">
-          Assinatura e Carimbo do Profissional
-        </div>
-      </div>
-      
-      <div class="footer">
-        <p>Este documento foi gerado pelo Sistema de Fisioterapia Regenerativa</p>
-        <p>Data de emissão: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-function generateOrientationsPrintContent(patientName: string, orientations: string): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Orientações ao Paciente - ${patientName}</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 40px;
-          color: #333;
-          line-height: 1.6;
-        }
-        .header {
-          text-align: center;
-          border-bottom: 2px solid #2563eb;
-          padding-bottom: 20px;
-          margin-bottom: 30px;
-        }
-        .header h1 {
-          color: #1e40af;
-          margin: 0;
-          font-size: 24px;
-        }
-        .header p {
-          color: #666;
-          margin: 5px 0 0;
-        }
-        .patient-info {
-          background: #f8fafc;
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 25px;
-        }
-        .patient-info h2 {
-          margin: 0;
-          font-size: 14px;
-          color: #666;
-        }
-        .patient-info p {
-          margin: 5px 0 0;
-          font-size: 18px;
-          font-weight: bold;
-        }
-        .content {
-          white-space: pre-wrap;
-          font-size: 14px;
-        }
-        .footer {
-          margin-top: 50px;
-          border-top: 1px solid #e2e8f0;
-          padding-top: 20px;
-          text-align: center;
-          color: #666;
-          font-size: 12px;
-        }
-        @media print {
-          body { padding: 20px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>FISIOTERAPIA REGENERATIVA</h1>
-        <p>Orientações ao Paciente - Preparo para Terapia Ortobiológica</p>
-      </div>
-      
-      <div class="patient-info">
-        <h2>PACIENTE</h2>
-        <p>${patientName}</p>
-        <p style="font-size: 12px; color: #666; font-weight: normal;">Data: ${format(new Date(), "dd/MM/yyyy")}</p>
-      </div>
-      
-      <div class="content">
-        ${orientations}
-      </div>
-      
-      <div class="footer">
-        <p>Este documento foi gerado pelo Sistema de Fisioterapia Regenerativa</p>
-        <p>Data de emissão: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
-      </div>
-    </body>
-    </html>
-  `;
 }
