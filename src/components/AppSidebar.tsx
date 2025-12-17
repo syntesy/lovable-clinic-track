@@ -1,4 +1,4 @@
-import { Users, FileText, BarChart3, Bot } from "lucide-react";
+import { Users, FileText, BarChart3, Bot, FlaskConical } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -14,6 +14,7 @@ import logoFisioregen from "@/assets/logo-fisioregen.png";
 
 const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
+  { title: "Triagem Pré-PRP", url: "/triagem-biologica", icon: FlaskConical, isTriagem: true },
   { title: "Protocolos", url: "/protocolos", icon: FileText },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "AGENTE FISIOREGEN", url: "/agente-mac", icon: Bot, isAgent: true },
@@ -71,19 +72,24 @@ export function AppSidebar() {
                         flex items-center gap-3 px-3 py-2.5 rounded-lg
                         text-sidebar-foreground/80 hover:text-sidebar-foreground
                         hover:bg-white/10 transition-all duration-200
-                        ${item.isAgent ? 'group' : ''}
+                        ${item.isAgent || item.isTriagem ? 'group' : ''}
                       `}
                       activeClassName="bg-white/15 text-sidebar-foreground font-medium shadow-sm"
                     >
-                      <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${item.isAgent ? 'text-emerald-400' : ''}`} />
+                      <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${item.isAgent ? 'text-emerald-400' : item.isTriagem ? 'text-amber-400' : ''}`} />
                       {!isCollapsed && (
-                        <span className={`text-[13px] tracking-wide ${item.isAgent ? 'font-semibold text-emerald-300' : 'font-medium'}`}>
+                        <span className={`text-[13px] tracking-wide ${item.isAgent ? 'font-semibold text-emerald-300' : item.isTriagem ? 'font-medium text-amber-300' : 'font-medium'}`}>
                           {item.title}
                         </span>
                       )}
                       {!isCollapsed && item.isAgent && (
                         <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-emerald-500/20 text-emerald-300 rounded tracking-wider">
                           IA
+                        </span>
+                      )}
+                      {!isCollapsed && item.isTriagem && (
+                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-300 rounded tracking-wider">
+                          BIO
                         </span>
                       )}
                     </NavLink>
