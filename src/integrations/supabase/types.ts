@@ -447,7 +447,9 @@ export type Database = {
       }
       prp_lab_results: {
         Row: {
+          attached_files: Json | null
           created_at: string
+          extracted_text: string | null
           id: string
           interpretation: string | null
           lab_values: Json | null
@@ -456,7 +458,9 @@ export type Database = {
           updated_classification: string | null
         }
         Insert: {
+          attached_files?: Json | null
           created_at?: string
+          extracted_text?: string | null
           id?: string
           interpretation?: string | null
           lab_values?: Json | null
@@ -465,7 +469,9 @@ export type Database = {
           updated_classification?: string | null
         }
         Update: {
+          attached_files?: Json | null
           created_at?: string
+          extracted_text?: string | null
           id?: string
           interpretation?: string | null
           lab_values?: Json | null
