@@ -19,6 +19,7 @@ import Relatorios from "./pages/Relatorios";
 import VisualizarRelatorio from "./pages/VisualizarRelatorio";
 import ProtocoloMAC from "./pages/ProtocoloMAC";
 import AgenteMAC from "./pages/AgenteMAC";
+import TriagemBiologica from "./pages/TriagemBiologica";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -152,6 +153,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <AgenteMAC />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/triagem-biologica"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TriagemBiologica />
                 </Layout>
               </ProtectedRoute>
             }

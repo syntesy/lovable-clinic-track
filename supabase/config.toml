@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.mac-agent]
 verify_jwt = false
+
+[functions.analyze-prp]
+verify_jwt = false
+
+[functions.triagem-prp]
+verify_jwt = false

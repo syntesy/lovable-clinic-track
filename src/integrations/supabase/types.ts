@@ -445,6 +445,91 @@ export type Database = {
         }
         Relationships: []
       }
+      prp_lab_results: {
+        Row: {
+          created_at: string
+          id: string
+          interpretation: string | null
+          lab_values: Json | null
+          raw_text: string | null
+          screening_id: string
+          updated_classification: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interpretation?: string | null
+          lab_values?: Json | null
+          raw_text?: string | null
+          screening_id: string
+          updated_classification?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interpretation?: string | null
+          lab_values?: Json | null
+          raw_text?: string | null
+          screening_id?: string
+          updated_classification?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prp_lab_results_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "prp_screenings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prp_screenings: {
+        Row: {
+          analysis_result: string | null
+          classification: string | null
+          created_at: string
+          id: string
+          patient_id: string
+          patient_orientations: string | null
+          questionnaire_responses: Json
+          recommended_exams: Json | null
+          screening_date: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_result?: string | null
+          classification?: string | null
+          created_at?: string
+          id?: string
+          patient_id: string
+          patient_orientations?: string | null
+          questionnaire_responses: Json
+          recommended_exams?: Json | null
+          screening_date?: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_result?: string | null
+          classification?: string | null
+          created_at?: string
+          id?: string
+          patient_id?: string
+          patient_orientations?: string | null
+          questionnaire_responses?: Json
+          recommended_exams?: Json | null
+          screening_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prp_screenings_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reference_protocols: {
         Row: {
           created_at: string
