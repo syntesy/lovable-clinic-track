@@ -39,6 +39,9 @@ export default function Auth() {
   return (
     <div
       style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
         width: "100vw",
         height: "100vh",
         display: "flex",
@@ -48,7 +51,7 @@ export default function Auth() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        position: "relative",
+        zIndex: 9999,
       }}
     >
       {/* Overlay sutil para profundidade */}
