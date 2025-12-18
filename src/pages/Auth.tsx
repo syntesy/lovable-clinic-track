@@ -149,17 +149,7 @@ export default function Auth() {
           marginBottom: "20px",
           alignSelf: "flex-start"
         }}>
-            <div style={{
-            width: "26px",
-            height: "26px",
-            backgroundColor: "#1E2A5E",
-            borderRadius: "6px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
-              
-            </div>
+            
             <div style={{
             lineHeight: "1.1"
           }}>
