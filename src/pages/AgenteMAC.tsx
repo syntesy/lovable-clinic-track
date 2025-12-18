@@ -297,12 +297,12 @@ const AgenteMAC = () => {
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4 min-h-0">
           {messages.length === 0 && (
-            <div className="text-center py-8 md:py-12 text-muted-foreground">
-              <Bot size={40} className="mx-auto mb-4 opacity-50 md:w-12 md:h-12" />
-              <p className="text-sm md:text-base font-medium">
+            <div className="text-center py-8 md:py-12">
+              <Bot size={40} className="mx-auto mb-4 text-[#3A3A45] md:w-12 md:h-12" />
+              <p className="text-sm md:text-base font-medium text-[#3A3A45]">
                 Olá! Sou o Agente MAC.
               </p>
-              <p className="text-xs md:text-sm mt-2">
+              <p className="text-xs md:text-sm mt-2 text-[#5A6080]">
                 Como posso ajudá-lo com informações sobre protocolos de fotobiomodulação?
               </p>
             </div>
