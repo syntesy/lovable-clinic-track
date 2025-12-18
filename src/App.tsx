@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Auth from "./pages/Auth";
+import LoginDNA from "./pages/LoginDNA";
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import DetalhePaciente from "./pages/DetalhePaciente";
@@ -32,6 +33,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/login-dna" element={<LoginDNA />} />
           <Route path="/" element={<Navigate to="/pacientes" replace />} />
           <Route
             path="/pacientes"
