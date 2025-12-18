@@ -421,7 +421,7 @@ export default function TriagemBiologica() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Triagem Biológica Pré-PRP</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm mt-1" style={{ color: '#5A6080' }}>
             Avaliação clínico-biológica para terapias ortobiológicas e leucoplaquetárias
           </p>
         </div>
@@ -784,8 +784,8 @@ export default function TriagemBiologica() {
       {!selectedPatientId && (
         <Card className="bg-card/95 backdrop-blur border-border/50">
           <CardContent className="py-12 text-center">
-            <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">
+            <ClipboardList className="w-12 h-12 mx-auto mb-4" style={{ color: '#7A8099' }} />
+            <p style={{ color: '#5A6080' }}>
               Selecione um paciente acima para iniciar a triagem biológica
             </p>
           </CardContent>
