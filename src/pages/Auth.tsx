@@ -2,532 +2,318 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Lock } from "lucide-react";
-
+import { User } from "lucide-react";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isLoginView, setIsLoginView] = useState(true);
-  const [rememberMe, setRememberMe] = useState(false);
-
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-
-  const [signupData, setSignupData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    cpf: "",
-    crefito: "",
-    address: "",
-    password: "",
-    confirmPassword: ""
-  });
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword
-      });
-      if (error) throw error;
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Redirecionando..."
-      });
-      navigate("/pacientes");
-    } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    setError("");
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (signupData.password !== signupData.confirmPassword) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
       toast({
-        title: "Erro",
-        description: "As senhas não coincidem",
-        variant: "destructive"
-      });
-      return;
-    }
-    if (signupData.password.length < 6) {
-      toast({
-        title: "Erro",
-        description: "A senha deve ter pelo menos 6 caracteres",
-        variant: "destructive"
-      });
-      return;
-    }
-    setLoading(true);
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: signupData.email,
-        password: signupData.password,
-        options: {
-          data: {
-            full_name: signupData.fullName,
-            crefito: signupData.crefito
-          },
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-      if (authError) throw authError;
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from("user_profiles")
-          .update({
-            phone: signupData.phone,
-            cpf: signupData.cpf,
-            address: signupData.address
-          })
-          .eq("user_id", authData.user.id);
-        if (profileError) throw profileError;
-        toast({
-          title: "Cadastro realizado com sucesso",
-          description: "Redirecionando..."
-        });
-        navigate("/pacientes");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro no cadastro",
+        title: "Login failed",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+    } else {
+      navigate("/pacientes");
     }
+
+    setLoading(false);
   };
 
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "row",
         width: "100vw",
         height: "100vh",
-        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundImage: "url('/images/dna-login-bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        position: "relative",
       }}
     >
-      {/* COLUNA ESQUERDA - LOGIN */}
+      {/* Overlay sutil para profundidade */}
       <div
         style={{
-          width: "450px",
-          minWidth: "450px",
-          height: "100%",
+          position: "absolute",
+          inset: 0,
+          background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.3) 100%)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Container do card com avatar flutuante */}
+      <div
+        style={{
+          position: "relative",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#E8EAF0",
+          zIndex: 10,
         }}
       >
-        {/* CARD DE LOGIN */}
+        {/* Avatar flutuante */}
         <div
           style={{
-            width: "360px",
-            backgroundColor: "#FFFFFF",
-            borderRadius: "24px",
-            boxShadow: "0 4px 24px rgba(0, 0, 0, 0.08)",
-            padding: "40px 32px",
+            width: "80px",
+            height: "80px",
+            borderRadius: "50%",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
+            justifyContent: "center",
+            marginBottom: "-40px",
+            zIndex: 20,
           }}
         >
-          {isLoginView ? (
-            <>
-              {/* 1. LOGO DO APP */}
-              <h1
+          <User
+            style={{
+              width: "70px",
+              height: "70px",
+              color: "#5B7FFF",
+            }}
+            strokeWidth={1.5}
+          />
+        </div>
+
+        {/* Card glassmorphism */}
+        <div
+          style={{
+            width: "min(520px, 90vw)",
+            backgroundColor: "rgba(20, 25, 40, 0.85)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderRadius: "24px",
+            padding: "60px 50px 40px 50px",
+            boxShadow: "0 25px 60px rgba(0, 0, 0, 0.4)",
+            border: "1px solid rgba(255, 255, 255, 0.05)",
+          }}
+        >
+          {/* Título LOG-IN */}
+          <h1
+            style={{
+              color: "#FFFFFF",
+              fontSize: "24px",
+              fontWeight: 600,
+              letterSpacing: "3px",
+              textAlign: "center",
+              marginBottom: "40px",
+              fontFamily: "Inter, sans-serif",
+            }}
+          >
+            LOG-IN
+          </h1>
+
+          <form onSubmit={handleLogin}>
+            {/* Campo Username */}
+            <div style={{ marginBottom: "30px" }}>
+              <label
                 style={{
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  color: "#2F3F6B",
-                  textAlign: "center",
-                  marginBottom: "24px",
+                  display: "block",
+                  color: "#FFFFFF",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  marginBottom: "8px",
                   fontFamily: "Inter, sans-serif",
-                  letterSpacing: "1px",
-                  textTransform: "uppercase",
                 }}
               >
-                Fisioterapia Regenerativa
-              </h1>
-
-              {/* 2. ÍCONE DE USUÁRIO */}
-              <div
+                Username
+              </label>
+              <input
+                type="email"
+                placeholder="Who are you ?"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 style={{
-                  width: "80px",
-                  height: "80px",
-                  borderRadius: "50%",
-                  backgroundColor: "#2F3F6B",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: "32px",
-                }}
-              >
-                <User size={40} color="#FFFFFF" strokeWidth={1.5} />
-              </div>
-
-              {/* FORMULÁRIO DE LOGIN */}
-              <form onSubmit={handleLogin} style={{ width: "100%" }}>
-                {/* 3. CAMPO USUÁRIO */}
-                <div style={{ marginBottom: "16px" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      color: "#2F3F6B",
-                      marginBottom: "6px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Usuário
-                  </label>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      backgroundColor: "#F0F2F7",
-                      borderRadius: "12px",
-                      padding: "0 16px",
-                      height: "46px",
-                    }}
-                  >
-                    <User size={18} color="#9CA3AF" />
-                    <input
-                      type="email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                      autoComplete="off"
-                      style={{
-                        flex: 1,
-                        border: "none",
-                        background: "transparent",
-                        marginLeft: "12px",
-                        fontSize: "14px",
-                        color: "#1F2937",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* 4. CAMPO SENHA */}
-                <div style={{ marginBottom: "24px" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      color: "#2F3F6B",
-                      marginBottom: "6px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Senha
-                  </label>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      backgroundColor: "#F0F2F7",
-                      borderRadius: "12px",
-                      padding: "0 16px",
-                      height: "46px",
-                    }}
-                  >
-                    <Lock size={18} color="#9CA3AF" />
-                    <input
-                      type="password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                      autoComplete="new-password"
-                      style={{
-                        flex: 1,
-                        border: "none",
-                        background: "transparent",
-                        marginLeft: "12px",
-                        fontSize: "14px",
-                        color: "#1F2937",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* 5. BOTÃO LOGIN */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    width: "100%",
-                    height: "46px",
-                    backgroundColor: "#2F3F6B",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "12px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: loading ? "not-allowed" : "pointer",
-                    opacity: loading ? 0.7 : 1,
-                    textTransform: "uppercase",
-                    letterSpacing: "1.5px",
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  {loading ? "Entrando..." : "LOGIN"}
-                </button>
-              </form>
-
-              {/* 6. OPÇÕES ABAIXO DO BOTÃO */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
                   width: "100%",
-                  marginTop: "16px",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+                  padding: "12px 0",
+                  color: "#FFFFFF",
+                  fontSize: "14px",
+                  outline: "none",
+                  fontFamily: "Inter, sans-serif",
                 }}
-              >
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "12px",
-                    color: "#6B7280",
-                    cursor: "pointer",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    style={{
-                      width: "14px",
-                      height: "14px",
-                      accentColor: "#2F3F6B",
-                    }}
-                  />
-                  Lembrar-me
-                </label>
-                <button
-                  type="button"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    fontSize: "12px",
-                    color: "#6B7280",
-                    cursor: "pointer",
-                  }}
-                >
-                  Esqueceu sua senha?
-                </button>
-              </div>
+              />
+            </div>
 
-              {/* 7. INDICADOR DE PÁGINA */}
-              <div
+            {/* Campo Password */}
+            <div style={{ marginBottom: "35px" }}>
+              <label
                 style={{
-                  display: "flex",
-                  gap: "8px",
-                  marginTop: "32px",
+                  display: "block",
+                  color: "#FFFFFF",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  marginBottom: "8px",
+                  fontFamily: "Inter, sans-serif",
                 }}
               >
-                <div
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: "#2F3F6B",
-                  }}
-                />
-                <div
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: "#D1D5DB",
-                  }}
-                />
-                <div
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: "#D1D5DB",
-                  }}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              {/* FORMULÁRIO DE CADASTRO */}
-              <h2
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="Prove that it is true"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
                 style={{
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: "#2F3F6B",
-                  marginBottom: "24px",
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
+                  width: "100%",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+                  padding: "12px 0",
+                  color: "#FFFFFF",
+                  fontSize: "14px",
+                  outline: "none",
+                  fontFamily: "Inter, sans-serif",
                 }}
-              >
-                Cadastrar
-              </h2>
-              <form onSubmit={handleSignup} style={{ width: "100%" }}>
-                {[
-                  { label: "Nome Completo", value: signupData.fullName, key: "fullName", required: true },
-                  { label: "Email", value: signupData.email, key: "email", type: "email", required: true },
-                  { label: "Registro CREFITO", value: signupData.crefito, key: "crefito", required: true },
-                  { label: "Telefone", value: signupData.phone, key: "phone", type: "tel" },
-                  { label: "CPF", value: signupData.cpf, key: "cpf" },
-                  { label: "Senha", value: signupData.password, key: "password", type: "password", required: true },
-                  { label: "Confirmar Senha", value: signupData.confirmPassword, key: "confirmPassword", type: "password", required: true }
-                ].map((field) => (
-                  <div key={field.key} style={{ marginBottom: "12px" }}>
-                    <label
-                      style={{
-                        display: "block",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        color: "#2F3F6B",
-                        marginBottom: "4px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      {field.label}
-                    </label>
-                    <input
-                      type={field.type || "text"}
-                      value={field.value}
-                      onChange={(e) => setSignupData({ ...signupData, [field.key]: e.target.value })}
-                      required={field.required}
-                      autoComplete="off"
-                      style={{
-                        width: "100%",
-                        height: "42px",
-                        backgroundColor: "#F0F2F7",
-                        borderRadius: "12px",
-                        border: "none",
-                        padding: "0 16px",
-                        fontSize: "14px",
-                        color: "#1F2937",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                ))}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    width: "100%",
-                    height: "46px",
-                    backgroundColor: "#2F3F6B",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "12px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: loading ? "not-allowed" : "pointer",
-                    opacity: loading ? 0.7 : 1,
-                    textTransform: "uppercase",
-                    letterSpacing: "1.5px",
-                    marginTop: "8px",
-                  }}
-                >
-                  {loading ? "Criando..." : "CRIAR CONTA"}
-                </button>
-              </form>
+              />
+            </div>
+
+            {/* Mensagem de erro */}
+            {error && (
               <p
                 style={{
+                  color: "#FF6B6B",
                   fontSize: "12px",
-                  color: "#6B7280",
-                  marginTop: "16px",
-                  cursor: "pointer",
+                  textAlign: "center",
+                  marginBottom: "15px",
+                  fontFamily: "Inter, sans-serif",
                 }}
-                onClick={() => setIsLoginView(true)}
               >
-                Já tem conta?{" "}
-                <span style={{ textDecoration: "underline", fontWeight: 600 }}>
-                  Fazer login
-                </span>
+                {error}
               </p>
-            </>
-          )}
-        </div>
-      </div>
+            )}
 
-      {/* COLUNA DIREITA - BRANDING */}
-      <div
-        style={{
-          flex: 1,
-          height: "100%",
-          backgroundColor: "#2F3F6B",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "0 80px",
-        }}
-      >
-        {/* TEXTOS - ALINHADOS À ESQUERDA */}
-        <div style={{ maxWidth: "380px" }}>
-          <h2
-            style={{
-              fontSize: "48px",
-              fontWeight: 700,
-              color: "#FFFFFF",
-              marginBottom: "16px",
-              fontFamily: "Inter, sans-serif",
-              lineHeight: 1.1,
-            }}
-          >
-            Bem-vindo.
-          </h2>
-          <p
-            style={{
-              fontSize: "15px",
-              color: "rgba(255, 255, 255, 0.75)",
-              lineHeight: 1.6,
-              marginBottom: "24px",
-            }}
-          >
-            Por favor, faça login para acessar o sistema da Fisioterapia Regenerativa.
-          </p>
-          <button
-            type="button"
-            onClick={() => setIsLoginView(!isLoginView)}
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: "14px",
-              color: "#FFFFFF",
-              cursor: "pointer",
-              textDecoration: "underline",
-              padding: 0,
-            }}
-          >
-            {isLoginView ? "Primeiro acesso? Registre-se agora" : "Já tem conta? Faça login"}
-          </button>
-        </div>
+            {/* Botão Login */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: "100%",
+                height: "52px",
+                backgroundColor: "#4A6CF7",
+                border: "none",
+                borderRadius: "26px",
+                color: "#FFFFFF",
+                fontSize: "16px",
+                fontWeight: 500,
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1,
+                transition: "all 0.2s ease",
+                fontFamily: "Inter, sans-serif",
+                boxShadow: "0 4px 20px rgba(74, 108, 247, 0.3)",
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = "#5B7FFF";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#4A6CF7";
+              }}
+            >
+              {loading ? "Loading..." : "Login"}
+            </button>
+          </form>
 
+          {/* Links do rodapé */}
+          <div
+            style={{
+              marginTop: "25px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            <button
+              type="button"
+              style={{
+                background: "none",
+                border: "none",
+                color: "rgba(255, 255, 255, 0.5)",
+                fontSize: "12px",
+                cursor: "pointer",
+                textAlign: "left",
+                padding: 0,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Lost your password?
+            </button>
+            <button
+              type="button"
+              style={{
+                background: "none",
+                border: "none",
+                color: "rgba(255, 255, 255, 0.5)",
+                fontSize: "12px",
+                cursor: "pointer",
+                textAlign: "left",
+                padding: 0,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Don't have an account?
+            </button>
+          </div>
+
+          {/* Indicador de página (3 dots) */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "8px",
+              marginTop: "30px",
+            }}
+          >
+            <div
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+              }}
+            />
+            <div
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(255, 255, 255, 0.6)",
+              }}
+            />
+            <div
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+              }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
