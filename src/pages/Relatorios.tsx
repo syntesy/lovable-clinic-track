@@ -107,7 +107,7 @@ const Relatorios = () => {
       if (protocolsError) throw protocolsError;
 
       // Criar CSV
-      let csv = "DADOS COMPLETOS - SISTEMA MAC\n\n";
+      let csv = "DADOS COMPLETOS - SISTEMA FISIOTERAPIA REGENERATIVA\n\n";
 
       // Cabeçalho de pacientes
       csv += "PACIENTES\n";

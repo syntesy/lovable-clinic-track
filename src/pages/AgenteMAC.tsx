@@ -287,10 +287,10 @@ const AgenteMAC = () => {
         {/* Header */}
         <div className="p-4 md:p-6 border-b-2 border-border bg-[#F5F6FA]">
           <h1 className="text-lg md:text-2xl font-semibold text-foreground font-inter">
-            Agente MAC
+            Agente Fisioterapia Regenerativa
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Assistente especializado em fotobiomodulação
+            Assistente especializado em terapias regenerativas e fotobiomodulação
           </p>
         </div>
 
@@ -300,10 +300,10 @@ const AgenteMAC = () => {
             <div className="text-center py-8 md:py-12">
               <Bot size={40} className="mx-auto mb-4 text-[#3A3A45] md:w-12 md:h-12" />
               <p className="text-sm md:text-base font-medium text-[#3A3A45]">
-                Olá! Sou o Agente MAC.
+                Olá! Sou o Agente Fisioterapia Regenerativa.
               </p>
               <p className="text-xs md:text-sm mt-2 text-[#5A6080]">
-                Como posso ajudá-lo com informações sobre protocolos de fotobiomodulação?
+                Como posso ajudá-lo com informações sobre terapias regenerativas e protocolos de fotobiomodulação?
               </p>
             </div>
           )}
