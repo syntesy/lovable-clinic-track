@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Lock } from "lucide-react";
-import badgeImage from "@/assets/fisioterapia-regenerativa-badge.png";
+
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -483,7 +483,7 @@ export default function Auth() {
           backgroundColor: "#2F3F6B",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "center",
           padding: "0 80px",
         }}
       >
@@ -528,24 +528,6 @@ export default function Auth() {
           </button>
         </div>
 
-        {/* SÍMBOLO DA FISIOTERAPIA REGENERATIVA */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <img
-            src={badgeImage}
-            alt="Fisioterapia Regenerativa"
-            style={{
-              width: "300px",
-              height: "auto",
-              objectFit: "contain",
-            }}
-          />
-        </div>
       </div>
     </div>
   );
