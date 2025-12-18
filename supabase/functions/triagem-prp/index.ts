@@ -339,35 +339,66 @@ function formatQuestionnaireForAnalysis(data: Record<string, Record<string, bool
     estiloVida: "ESTILO DE VIDA"
   };
 
+  // Identify which axes have "SIM" responses (altered axes)
+  const alteredAxes: string[] = [];
+  for (const [blockKey, questions] of Object.entries(data)) {
+    const hasYes = Object.values(questions).some(answer => answer === true);
+    if (hasYes) {
+      alteredAxes.push(blockNames[blockKey] || blockKey);
+    }
+  }
+
   let formatted = "QUESTIONÁRIO DE TRIAGEM BIOLÓGICA PRÉ-PRP\n\n";
-  formatted += "Analise as seguintes respostas e forneça:\n";
-  formatted += "1. Classificação: APTO PARA ORTOBIOLÓGICO, NÃO APTO AGORA – NECESSITA PREPARO BIOLÓGICO, ou CONTRAINDICADO / ADIAR – NECESSITA AVALIAÇÃO MÉDICA\n";
-  formatted += "2. Principais riscos biológicos identificados\n";
-  formatted += "3. EXAMES RECOMENDADOS (formato obrigatório - gere APENAS exames pertinentes aos eixos alterados):\n";
-  formatted += "   Para cada eixo alterado, liste os exames no seguinte formato:\n";
-  formatted += "   [EIXO: nome_do_eixo]\n";
-  formatted += "   - NomeExame1\n";
-  formatted += "   - NomeExame2\n";
-  formatted += "   [JUSTIFICATIVA: justificativa_curta]\n";
-  formatted += "   \n";
-  formatted += "   Exemplo:\n";
-  formatted += "   [EIXO: Inflamação Sistêmica]\n";
-  formatted += "   - PCR ultrassensível\n";
-  formatted += "   - VHS\n";
-  formatted += "   [JUSTIFICATIVA: Avaliar marcadores inflamatórios devido a sinais de inflamação crônica]\n";
-  formatted += "   \n";
-  formatted += "   IMPORTANTE: NÃO solicite exames de eixos que NÃO apresentam alterações. Se não houver alterações em um eixo, não inclua exames desse eixo.\n";
-  formatted += "4. Orientações ao paciente (alimentares, estilo de vida, preparo biológico)\n";
-  formatted += "5. Alertas importantes\n\n";
+  formatted += "INSTRUÇÕES OBRIGATÓRIAS PARA ANÁLISE:\n";
+  formatted += "=".repeat(50) + "\n\n";
+  
+  formatted += "1. CLASSIFICAÇÃO (escolha UMA):\n";
+  formatted += "   - APTO PARA ORTOBIOLÓGICO\n";
+  formatted += "   - NÃO APTO AGORA – NECESSITA PREPARO BIOLÓGICO\n";
+  formatted += "   - CONTRAINDICADO / ADIAR – NECESSITA AVALIAÇÃO MÉDICA\n\n";
+  
+  formatted += "2. RISCOS BIOLÓGICOS: Liste os riscos identificados baseados nas respostas SIM.\n\n";
+  
+  formatted += "3. EXAMES RECOMENDADOS - REGRA CRÍTICA:\n";
+  formatted += "   ⚠️ PERSONALIZAÇÃO OBRIGATÓRIA: Solicite exames APENAS para eixos com respostas SIM.\n";
+  formatted += "   ⚠️ Se um eixo tem APENAS respostas NÃO, NÃO solicite exames desse eixo.\n";
+  formatted += "   ⚠️ Cada exame deve ter justificativa específica baseada nas respostas do paciente.\n\n";
+  
+  formatted += "   FORMATO OBRIGATÓRIO (use exatamente este formato):\n";
+  formatted += "   [EIXO: NomeDo Eixo]\n";
+  formatted += "   - NomeDoExame1\n";
+  formatted += "   - NomeDoExame2\n";
+  formatted += "   [JUSTIFICATIVA: Motivo específico baseado nas respostas SIM deste paciente]\n\n";
+  
+  if (alteredAxes.length > 0) {
+    formatted += `   📋 EIXOS COM ALTERAÇÕES DETECTADAS: ${alteredAxes.join(", ")}\n`;
+    formatted += "   Solicite exames APENAS para estes eixos acima.\n\n";
+  } else {
+    formatted += "   📋 NENHUM EIXO COM ALTERAÇÕES - Não solicite exames.\n\n";
+  }
+  
+  formatted += "4. ORIENTAÇÕES AO PACIENTE: Recomendações alimentares, estilo de vida, preparo biológico.\n\n";
+  formatted += "5. ALERTAS IMPORTANTES: Contraindicações, medicamentos a evitar, etc.\n\n";
+  
+  formatted += "=".repeat(50) + "\n";
   formatted += "RESPOSTAS DO QUESTIONÁRIO:\n";
+  formatted += "=".repeat(50) + "\n";
 
   for (const [blockKey, questions] of Object.entries(data)) {
     const blockName = blockNames[blockKey] || blockKey;
-    formatted += `\n## ${blockName}\n`;
+    const hasYes = Object.values(questions).some(answer => answer === true);
+    const statusIcon = hasYes ? "⚠️ ALTERADO" : "✅ NORMAL";
+    
+    formatted += `\n## ${blockName} [${statusIcon}]\n`;
     for (const [question, answer] of Object.entries(questions)) {
-      formatted += `- ${question}: ${answer ? "SIM" : "NÃO"}\n`;
+      const answerIcon = answer ? "🔴 SIM" : "⚪ NÃO";
+      formatted += `- ${question}: ${answerIcon}\n`;
     }
   }
+  
+  formatted += "\n" + "=".repeat(50) + "\n";
+  formatted += "LEMBRETE FINAL: Personalize 100% baseado nas respostas acima. Não use lista genérica.\n";
+  
   return formatted;
 }
 
@@ -443,35 +474,34 @@ function parseRecommendedExams(text: string): ExamGroup[] {
     }
   }
   
-  // Fallback: if no structured format found, try to extract from common patterns
+  // Se não encontrou formato estruturado, tenta extrair de forma mais flexível
+  // mas APENAS exames explicitamente mencionados, sem fallback genérico
   if (examGroups.length === 0) {
-    const axisPatterns = [
-      { pattern: /inflamação|inflamat/i, axis: "Inflamação Sistêmica", exams: ["PCR ultrassensível", "VHS", "Hemograma completo"] },
-      { pattern: /ferro|anemia/i, axis: "Ferro e Anemia", exams: ["Hemograma completo", "Ferritina", "Ferro sérico", "Transferrina"] },
-      { pattern: /energético|fadiga|mitocôndria|bioenergé/i, axis: "Metabolismo Energético", exams: ["Vitamina D (25-OH)", "Vitamina B12", "Magnésio"] },
-      { pattern: /glicêm|diabetes|glicose|insulina/i, axis: "Metabolismo Glicêmico", exams: ["Glicemia de jejum", "HbA1c", "Insulina basal", "HOMA-IR"] },
-      { pattern: /hormonal|tireoide|tsh|testosterona/i, axis: "Eixo Hormonal", exams: ["TSH", "T4 livre", "T3 livre"] },
-    ];
+    console.log("Formato estruturado não encontrado, tentando extração flexível...");
     
-    const lowerText = text.toLowerCase();
+    // Procura por padrões alternativos como "Exames:" ou listas com "-"
+    const examSectionMatch = text.match(/(?:exames?\s+recomendados?|solicita[çr]\s+exames?)[\s:]+([^]*?)(?=orient|alert|conclus|$)/i);
     
-    for (const { pattern, axis, exams } of axisPatterns) {
-      if (pattern.test(lowerText)) {
-        // Check if any of the exams from this axis are mentioned
-        const mentionedExams = exams.filter(exam => 
-          lowerText.includes(exam.toLowerCase())
-        );
-        
-        if (mentionedExams.length > 0) {
-          examGroups.push({
-            axis,
-            exams: mentionedExams,
-            justification: `Avaliação do eixo ${axis.toLowerCase()}`
-          });
-        }
+    if (examSectionMatch) {
+      const examSection = examSectionMatch[1];
+      const lines = examSection.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('-') || line.startsWith('•') || line.match(/^\d+\./))
+        .map(line => line.replace(/^[-•\d.]\s*/, '').trim())
+        .filter(line => line.length > 3 && !line.toLowerCase().includes('justificativa'));
+      
+      if (lines.length > 0) {
+        examGroups.push({
+          axis: "Exames Personalizados",
+          exams: lines,
+          justification: "Baseado na análise individual do questionário"
+        });
       }
     }
   }
+  
+  // Log para debug - sem fallback genérico
+  console.log(`Exames extraídos: ${examGroups.length} grupos, total ${examGroups.reduce((acc, g) => acc + g.exams.length, 0)} exames`);
   
   return examGroups;
 }
