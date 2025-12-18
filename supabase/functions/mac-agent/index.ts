@@ -128,7 +128,7 @@ serve(async (req) => {
     console.error("Erro na função mac-agent:", error);
     return new Response(
       JSON.stringify({
-        error: "Erro ao chamar o Agente MAC",
+        error: "Erro ao chamar o Agente Fisioterapia Regenerativa",
         details: error instanceof Error ? error.message : String(error),
       }),
       {

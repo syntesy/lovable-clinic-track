@@ -424,7 +424,7 @@ const VisualizarRelatorio = () => {
           {/* Footer for Print */}
           <div className="hidden print:block mt-12 pt-6 border-t border-border text-center text-xs text-muted-foreground">
             <p>Relatório gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
-            <p className="mt-1">Sistema MAC - Método de Aceleração Cicatricial</p>
+            <p className="mt-1">Sistema Fisioterapia Regenerativa</p>
           </div>
         </div>
       </div>
