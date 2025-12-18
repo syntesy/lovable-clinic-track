@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Lock, Plus } from "lucide-react";
+import { User, Lock } from "lucide-react";
 import badgeImage from "@/assets/fisioterapia-regenerativa-badge.png";
 export default function Auth() {
   const navigate = useNavigate();
@@ -158,7 +158,7 @@ export default function Auth() {
             alignItems: "center",
             justifyContent: "center"
           }}>
-              <Plus size={16} color="#FFFFFF" strokeWidth={3} />
+              
             </div>
             <div style={{
             lineHeight: "1.1"
