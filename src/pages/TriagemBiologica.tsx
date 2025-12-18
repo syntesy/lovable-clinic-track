@@ -436,18 +436,29 @@ export default function TriagemBiologica() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-            <SelectTrigger className="w-full md:w-96">
-              <SelectValue placeholder="Selecione um paciente para iniciar a triagem" />
-            </SelectTrigger>
-            <SelectContent>
-              {patients?.map(patient => (
-                <SelectItem key={patient.id} value={patient.id}>
-                  {patient.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {loadingPatients ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Carregando pacientes...
+            </div>
+          ) : patients && patients.length > 0 ? (
+            <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
+              <SelectTrigger className="w-full md:w-96 bg-background">
+                <SelectValue placeholder="Selecione um paciente para iniciar a triagem" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border border-border z-50">
+                {patients.map(patient => (
+                  <SelectItem key={patient.id} value={patient.id}>
+                    {patient.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Nenhum paciente cadastrado. Cadastre pacientes na aba "Pacientes" primeiro.
+            </p>
+          )}
           {selectedPatient && (
             <p className="mt-2 text-sm text-muted-foreground">
               Paciente selecionado: <span className="font-medium text-foreground">{selectedPatient.full_name}</span>
