@@ -127,76 +127,73 @@ export default function Auth() {
       style={{ 
         minHeight: "100vh",
         width: "100%",
-        background: "linear-gradient(135deg, #1E2A5E 0%, #283A63 50%, #364A75 100%)",
+        background: "linear-gradient(180deg, #1a2550 0%, #243058 40%, #2d3a68 100%)",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
+        flexDirection: "column",
         position: "relative",
         overflow: "hidden"
       }}
     >
-      {/* Container Principal - Layout Horizontal */}
+      {/* Conteúdo Principal */}
       <div 
         style={{ 
-          width: "100%",
-          maxWidth: "1100px",
+          flex: 1,
           display: "flex",
-          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
-          gap: "40px"
+          padding: "40px 60px",
+          gap: "60px"
         }}
       >
-        {/* Card de Login/Cadastro - Esquerda */}
+        {/* Card de Login - Esquerda */}
         <div 
           style={{ 
-            width: "340px",
-            minWidth: "340px",
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            borderRadius: "24px",
-            padding: "32px 28px",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
+            width: "320px",
+            backgroundColor: "rgba(245, 247, 252, 0.97)",
+            borderRadius: "20px",
+            padding: "28px 24px",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center"
+            alignItems: "center",
+            flexShrink: 0
           }}
         >
           {/* Logo Header */}
           <div style={{ 
             display: "flex", 
             alignItems: "center", 
-            gap: "10px",
-            marginBottom: "24px"
+            gap: "8px",
+            marginBottom: "20px",
+            alignSelf: "flex-start"
           }}>
             <div style={{
-              width: "28px",
-              height: "28px",
-              backgroundColor: "#283A63",
+              width: "26px",
+              height: "26px",
+              backgroundColor: "#1E2A5E",
               borderRadius: "6px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center"
             }}>
-              <Plus size={18} color="#FFFFFF" strokeWidth={3} />
+              <Plus size={16} color="#FFFFFF" strokeWidth={3} />
             </div>
-            <div>
+            <div style={{ lineHeight: "1.1" }}>
               <span style={{ 
-                color: "#283A63", 
-                fontSize: "14px", 
+                color: "#1E2A5E", 
+                fontSize: "13px", 
                 fontWeight: "700",
                 fontFamily: "Inter, sans-serif",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.3px",
+                display: "block"
               }}>
                 FISIOTERAPIA
               </span>
-              <br />
               <span style={{ 
-                color: "#5A6A8A", 
-                fontSize: "10px", 
+                color: "#6B7A99", 
+                fontSize: "9px", 
                 fontWeight: "500",
                 fontFamily: "Inter, sans-serif",
-                letterSpacing: "1px"
+                letterSpacing: "1.5px"
               }}>
                 REGENERATIVA
               </span>
@@ -207,16 +204,16 @@ export default function Auth() {
             <>
               {/* Avatar Icon */}
               <div style={{
-                width: "80px",
-                height: "80px",
-                backgroundColor: "#3A4A6A",
+                width: "72px",
+                height: "72px",
+                backgroundColor: "#2A3A5E",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: "24px"
+                marginBottom: "20px"
               }}>
-                <User size={44} color="#8A9ABB" strokeWidth={1.5} />
+                <User size={38} color="#7A8EBB" strokeWidth={1.5} />
               </div>
 
               {/* Login Form */}
@@ -224,16 +221,16 @@ export default function Auth() {
                 {/* Email Input */}
                 <div style={{
                   position: "relative",
-                  marginBottom: "12px"
+                  marginBottom: "10px"
                 }}>
                   <div style={{
                     position: "absolute",
                     left: "14px",
                     top: "50%",
                     transform: "translateY(-50%)",
-                    color: "#7A8AAA"
+                    color: "#8A9BB8"
                   }}>
-                    <User size={16} />
+                    <User size={15} />
                   </div>
                   <input
                     type="email"
@@ -243,17 +240,17 @@ export default function Auth() {
                     required
                     style={{ 
                       width: "100%",
-                      height: "44px",
-                      backgroundColor: "#E8EBF2", 
+                      height: "40px",
+                      backgroundColor: "#E4E8F0", 
                       color: "#2E3350",
-                      borderRadius: "22px",
-                      fontSize: "12px",
+                      borderRadius: "20px",
+                      fontSize: "11px",
                       fontFamily: "Inter, sans-serif",
                       fontWeight: "500",
                       letterSpacing: "0.5px",
                       border: "none",
                       outline: "none",
-                      padding: "0 16px 0 42px",
+                      padding: "0 14px 0 38px",
                       boxSizing: "border-box"
                     }}
                   />
@@ -262,16 +259,16 @@ export default function Auth() {
                 {/* Password Input */}
                 <div style={{
                   position: "relative",
-                  marginBottom: "16px"
+                  marginBottom: "14px"
                 }}>
                   <div style={{
                     position: "absolute",
                     left: "14px",
                     top: "50%",
                     transform: "translateY(-50%)",
-                    color: "#7A8AAA"
+                    color: "#8A9BB8"
                   }}>
-                    <Lock size={16} />
+                    <Lock size={15} />
                   </div>
                   <input
                     type="password"
@@ -281,17 +278,17 @@ export default function Auth() {
                     required
                     style={{ 
                       width: "100%",
-                      height: "44px",
-                      backgroundColor: "#E8EBF2", 
+                      height: "40px",
+                      backgroundColor: "#E4E8F0", 
                       color: "#2E3350",
-                      borderRadius: "22px",
-                      fontSize: "12px",
+                      borderRadius: "20px",
+                      fontSize: "11px",
                       fontFamily: "Inter, sans-serif",
                       fontWeight: "500",
                       letterSpacing: "2px",
                       border: "none",
                       outline: "none",
-                      padding: "0 16px 0 42px",
+                      padding: "0 14px 0 38px",
                       boxSizing: "border-box"
                     }}
                   />
@@ -303,11 +300,11 @@ export default function Auth() {
                   disabled={loading}
                   style={{ 
                     width: "100%",
-                    height: "44px",
-                    backgroundColor: "#283A63", 
+                    height: "40px",
+                    backgroundColor: "#1E2A5E", 
                     color: "#FFFFFF",
-                    borderRadius: "22px",
-                    fontSize: "13px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
                     fontWeight: "700",
                     fontFamily: "Inter, sans-serif",
                     letterSpacing: "1px",
@@ -315,10 +312,10 @@ export default function Auth() {
                     cursor: loading ? "not-allowed" : "pointer",
                     transition: "all 0.2s ease",
                     opacity: loading ? 0.6 : 1,
-                    marginBottom: "16px"
+                    marginBottom: "14px"
                   }}
-                  onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = "#1E2A4E")}
-                  onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = "#283A63")}
+                  onMouseEnter={(e) => !loading && (e.currentTarget.style.opacity = "0.9")}
+                  onMouseLeave={(e) => !loading && (e.currentTarget.style.opacity = "1")}
                 >
                   {loading ? "ENTRANDO..." : "LOGIN"}
                 </button>
@@ -329,8 +326,8 @@ export default function Auth() {
                 display: "flex",
                 justifyContent: "space-between",
                 width: "100%",
-                fontSize: "10px",
-                color: "#5A6A8A",
+                fontSize: "9px",
+                color: "#6B7A99",
                 fontFamily: "Inter, sans-serif"
               }}>
                 <label style={{ 
@@ -339,10 +336,15 @@ export default function Auth() {
                   gap: "5px",
                   cursor: "pointer"
                 }}>
-                  <input type="checkbox" style={{ accentColor: "#283A63", width: "12px", height: "12px" }} />
+                  <div style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    backgroundColor: "#1E2A5E"
+                  }} />
                   Lembrar-me
                 </label>
-                <span style={{ cursor: "pointer", textDecoration: "underline" }}>
+                <span style={{ cursor: "pointer" }}>
                   Esqueceu sua senha?
                 </span>
               </div>
@@ -351,25 +353,25 @@ export default function Auth() {
               <div style={{
                 display: "flex",
                 gap: "6px",
-                marginTop: "20px"
+                marginTop: "18px"
               }}>
                 <div style={{
-                  width: "7px",
-                  height: "7px",
+                  width: "6px",
+                  height: "6px",
                   borderRadius: "50%",
-                  backgroundColor: "#283A63"
+                  backgroundColor: "#1E2A5E"
                 }} />
                 <div style={{
-                  width: "7px",
-                  height: "7px",
+                  width: "6px",
+                  height: "6px",
                   borderRadius: "50%",
-                  backgroundColor: "#C5CADF"
+                  backgroundColor: "#C0C8D8"
                 }} />
                 <div style={{
-                  width: "7px",
-                  height: "7px",
+                  width: "6px",
+                  height: "6px",
                   borderRadius: "50%",
-                  backgroundColor: "#C5CADF"
+                  backgroundColor: "#C0C8D8"
                 }} />
               </div>
             </>
@@ -377,190 +379,73 @@ export default function Auth() {
             <>
               {/* Signup Form */}
               <h2 style={{
-                color: "#283A63",
-                fontSize: "20px",
+                color: "#1E2A5E",
+                fontSize: "18px",
                 fontWeight: "700",
                 fontFamily: "Inter, sans-serif",
-                marginBottom: "20px"
+                marginBottom: "16px"
               }}>
                 Cadastrar
               </h2>
               <form onSubmit={handleSignup} style={{ width: "100%" }}>
-                <input
-                  type="text"
-                  placeholder="Nome Completo"
-                  value={signupData.fullName}
-                  onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
-                  required
-                  style={{ 
-                    width: "100%",
-                    height: "42px",
-                    backgroundColor: "#E8EBF2", 
-                    color: "#2E3350",
-                    borderRadius: "21px",
-                    fontSize: "12px",
-                    fontFamily: "Inter, sans-serif",
-                    border: "none",
-                    outline: "none",
-                    padding: "0 16px",
-                    marginBottom: "8px",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={signupData.email}
-                  onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                  required
-                  style={{ 
-                    width: "100%",
-                    height: "42px",
-                    backgroundColor: "#E8EBF2", 
-                    color: "#2E3350",
-                    borderRadius: "21px",
-                    fontSize: "12px",
-                    fontFamily: "Inter, sans-serif",
-                    border: "none",
-                    outline: "none",
-                    padding: "0 16px",
-                    marginBottom: "8px",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <input
-                  type="tel"
-                  placeholder="Telefone"
-                  value={signupData.phone}
-                  onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
-                  style={{ 
-                    width: "100%",
-                    height: "42px",
-                    backgroundColor: "#E8EBF2", 
-                    color: "#2E3350",
-                    borderRadius: "21px",
-                    fontSize: "12px",
-                    fontFamily: "Inter, sans-serif",
-                    border: "none",
-                    outline: "none",
-                    padding: "0 16px",
-                    marginBottom: "8px",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="CPF"
-                  value={signupData.cpf}
-                  onChange={(e) => setSignupData({ ...signupData, cpf: e.target.value })}
-                  style={{ 
-                    width: "100%",
-                    height: "42px",
-                    backgroundColor: "#E8EBF2", 
-                    color: "#2E3350",
-                    borderRadius: "21px",
-                    fontSize: "12px",
-                    fontFamily: "Inter, sans-serif",
-                    border: "none",
-                    outline: "none",
-                    padding: "0 16px",
-                    marginBottom: "8px",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Endereço"
-                  value={signupData.address}
-                  onChange={(e) => setSignupData({ ...signupData, address: e.target.value })}
-                  style={{ 
-                    width: "100%",
-                    height: "42px",
-                    backgroundColor: "#E8EBF2", 
-                    color: "#2E3350",
-                    borderRadius: "21px",
-                    fontSize: "12px",
-                    fontFamily: "Inter, sans-serif",
-                    border: "none",
-                    outline: "none",
-                    padding: "0 16px",
-                    marginBottom: "8px",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <input
-                  type="password"
-                  placeholder="Senha"
-                  value={signupData.password}
-                  onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                  required
-                  style={{ 
-                    width: "100%",
-                    height: "42px",
-                    backgroundColor: "#E8EBF2", 
-                    color: "#2E3350",
-                    borderRadius: "21px",
-                    fontSize: "12px",
-                    fontFamily: "Inter, sans-serif",
-                    border: "none",
-                    outline: "none",
-                    padding: "0 16px",
-                    marginBottom: "8px",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <input
-                  type="password"
-                  placeholder="Confirmar Senha"
-                  value={signupData.confirmPassword}
-                  onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
-                  required
-                  style={{ 
-                    width: "100%",
-                    height: "42px",
-                    backgroundColor: "#E8EBF2", 
-                    color: "#2E3350",
-                    borderRadius: "21px",
-                    fontSize: "12px",
-                    fontFamily: "Inter, sans-serif",
-                    border: "none",
-                    outline: "none",
-                    padding: "0 16px",
-                    marginBottom: "14px",
-                    boxSizing: "border-box"
-                  }}
-                />
+                {[
+                  { placeholder: "Nome Completo", value: signupData.fullName, key: "fullName", required: true },
+                  { placeholder: "Email", value: signupData.email, key: "email", type: "email", required: true },
+                  { placeholder: "Telefone", value: signupData.phone, key: "phone", type: "tel" },
+                  { placeholder: "CPF", value: signupData.cpf, key: "cpf" },
+                  { placeholder: "Endereço", value: signupData.address, key: "address" },
+                  { placeholder: "Senha", value: signupData.password, key: "password", type: "password", required: true },
+                  { placeholder: "Confirmar Senha", value: signupData.confirmPassword, key: "confirmPassword", type: "password", required: true },
+                ].map((field) => (
+                  <input
+                    key={field.key}
+                    type={field.type || "text"}
+                    placeholder={field.placeholder}
+                    value={field.value}
+                    onChange={(e) => setSignupData({ ...signupData, [field.key]: e.target.value })}
+                    required={field.required}
+                    style={{ 
+                      width: "100%",
+                      height: "38px",
+                      backgroundColor: "#E4E8F0", 
+                      color: "#2E3350",
+                      borderRadius: "19px",
+                      fontSize: "11px",
+                      fontFamily: "Inter, sans-serif",
+                      border: "none",
+                      outline: "none",
+                      padding: "0 14px",
+                      marginBottom: "7px",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                ))}
                 <button
                   type="submit"
                   disabled={loading}
                   style={{ 
                     width: "100%",
-                    height: "44px",
-                    backgroundColor: "#283A63", 
+                    height: "40px",
+                    backgroundColor: "#1E2A5E", 
                     color: "#FFFFFF",
-                    borderRadius: "22px",
-                    fontSize: "13px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
                     fontWeight: "700",
                     fontFamily: "Inter, sans-serif",
                     letterSpacing: "1px",
                     border: "none",
                     cursor: loading ? "not-allowed" : "pointer",
-                    transition: "all 0.2s ease",
-                    opacity: loading ? 0.6 : 1
+                    marginTop: "6px"
                   }}
-                  onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = "#1E2A4E")}
-                  onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = "#283A63")}
                 >
                   {loading ? "CRIANDO..." : "CRIAR CONTA"}
                 </button>
               </form>
-
-              {/* Back to Login Link */}
               <p style={{
-                color: "#5A6A8A",
-                fontSize: "11px",
+                color: "#6B7A99",
+                fontSize: "10px",
                 fontFamily: "Inter, sans-serif",
-                marginTop: "16px",
+                marginTop: "12px",
                 cursor: "pointer"
               }} onClick={() => setIsLoginView(true)}>
                 Já tem conta? <span style={{ textDecoration: "underline", fontWeight: "600" }}>Fazer login</span>
@@ -569,45 +454,40 @@ export default function Auth() {
           )}
         </div>
 
-        {/* Seção Direita - Bem-vindo + Badge */}
+        {/* Seção Central - Texto de Boas Vindas */}
         <div 
           style={{ 
-            flex: 1,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
-            paddingLeft: "40px"
+            marginTop: "-40px"
           }}
         >
-          {/* Texto Bem-vindo */}
           <h1 style={{
             color: "#FFFFFF",
-            fontSize: "52px",
-            fontWeight: "700",
+            fontSize: "42px",
+            fontWeight: "600",
             fontFamily: "Inter, sans-serif",
-            marginBottom: "16px",
+            marginBottom: "12px",
             marginTop: "0"
           }}>
             Bem-vindo.
           </h1>
           <p style={{
-            color: "rgba(255, 255, 255, 0.75)",
-            fontSize: "15px",
+            color: "rgba(255, 255, 255, 0.7)",
+            fontSize: "14px",
             fontFamily: "Inter, sans-serif",
-            lineHeight: "1.6",
-            marginBottom: "20px",
-            maxWidth: "380px"
+            lineHeight: "1.5",
+            marginBottom: "20px"
           }}>
             Por favor, faça login para acessar o sistema<br />
             da Fisioterapia Regenerativa.
           </p>
 
-          {/* Link Primeiro Acesso */}
           <p style={{
-            color: "rgba(255, 255, 255, 0.65)",
-            fontSize: "13px",
-            fontFamily: "Inter, sans-serif",
-            marginBottom: "40px"
+            color: "rgba(255, 255, 255, 0.6)",
+            fontSize: "12px",
+            fontFamily: "Inter, sans-serif"
           }}>
             Primeiro acesso?{" "}
             <span 
@@ -616,22 +496,43 @@ export default function Auth() {
                 color: "#FFFFFF", 
                 textDecoration: "underline",
                 cursor: "pointer",
-                fontWeight: "600"
+                fontWeight: "500"
               }}
             >
               Registre-se agora
             </span>
           </p>
+        </div>
 
+        {/* Seção Direita - Badge com fundo */}
+        <div 
+          style={{ 
+            position: "relative",
+            marginLeft: "auto"
+          }}
+        >
+          {/* Card de fundo arredondado */}
+          <div style={{
+            position: "absolute",
+            top: "-20px",
+            right: "-30px",
+            width: "340px",
+            height: "380px",
+            backgroundColor: "rgba(35, 50, 90, 0.6)",
+            borderRadius: "24px",
+            zIndex: 0
+          }} />
+          
           {/* Badge Image */}
           <img 
             src={badgeImage} 
             alt="Fisioterapia Regenerativa Badge" 
             style={{
-              width: "280px",
+              width: "260px",
               height: "auto",
-              filter: "drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3))",
-              marginLeft: "40px"
+              position: "relative",
+              zIndex: 1,
+              filter: "drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2))"
             }}
           />
         </div>
