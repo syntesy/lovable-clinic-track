@@ -136,27 +136,26 @@ export default function Auth() {
         overflow: "hidden"
       }}
     >
-      {/* Container Principal */}
+      {/* Container Principal - Layout Horizontal */}
       <div 
         style={{ 
           width: "100%",
-          maxWidth: "1200px",
+          maxWidth: "1100px",
           display: "flex",
+          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "center",
-          gap: "60px",
-          flexDirection: "column"
+          justifyContent: "space-between",
+          gap: "40px"
         }}
-        className="lg:flex-row"
       >
         {/* Card de Login/Cadastro - Esquerda */}
         <div 
           style={{ 
-            width: "100%",
-            maxWidth: "380px",
+            width: "340px",
+            minWidth: "340px",
             backgroundColor: "rgba(255, 255, 255, 0.95)",
             borderRadius: "24px",
-            padding: "40px 32px",
+            padding: "32px 28px",
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
             display: "flex",
             flexDirection: "column",
@@ -168,23 +167,23 @@ export default function Auth() {
             display: "flex", 
             alignItems: "center", 
             gap: "10px",
-            marginBottom: "32px"
+            marginBottom: "24px"
           }}>
             <div style={{
-              width: "32px",
-              height: "32px",
+              width: "28px",
+              height: "28px",
               backgroundColor: "#283A63",
-              borderRadius: "8px",
+              borderRadius: "6px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center"
             }}>
-              <Plus size={20} color="#FFFFFF" strokeWidth={3} />
+              <Plus size={18} color="#FFFFFF" strokeWidth={3} />
             </div>
             <div>
               <span style={{ 
                 color: "#283A63", 
-                fontSize: "16px", 
+                fontSize: "14px", 
                 fontWeight: "700",
                 fontFamily: "Inter, sans-serif",
                 letterSpacing: "0.5px"
@@ -194,7 +193,7 @@ export default function Auth() {
               <br />
               <span style={{ 
                 color: "#5A6A8A", 
-                fontSize: "12px", 
+                fontSize: "10px", 
                 fontWeight: "500",
                 fontFamily: "Inter, sans-serif",
                 letterSpacing: "1px"
@@ -208,16 +207,16 @@ export default function Auth() {
             <>
               {/* Avatar Icon */}
               <div style={{
-                width: "90px",
-                height: "90px",
+                width: "80px",
+                height: "80px",
                 backgroundColor: "#3A4A6A",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: "28px"
+                marginBottom: "24px"
               }}>
-                <User size={50} color="#8A9ABB" strokeWidth={1.5} />
+                <User size={44} color="#8A9ABB" strokeWidth={1.5} />
               </div>
 
               {/* Login Form */}
@@ -225,16 +224,16 @@ export default function Auth() {
                 {/* Email Input */}
                 <div style={{
                   position: "relative",
-                  marginBottom: "14px"
+                  marginBottom: "12px"
                 }}>
                   <div style={{
                     position: "absolute",
-                    left: "16px",
+                    left: "14px",
                     top: "50%",
                     transform: "translateY(-50%)",
                     color: "#7A8AAA"
                   }}>
-                    <User size={18} />
+                    <User size={16} />
                   </div>
                   <input
                     type="email"
@@ -244,17 +243,17 @@ export default function Auth() {
                     required
                     style={{ 
                       width: "100%",
-                      height: "48px",
+                      height: "44px",
                       backgroundColor: "#E8EBF2", 
                       color: "#2E3350",
-                      borderRadius: "24px",
-                      fontSize: "13px",
+                      borderRadius: "22px",
+                      fontSize: "12px",
                       fontFamily: "Inter, sans-serif",
                       fontWeight: "500",
                       letterSpacing: "0.5px",
                       border: "none",
                       outline: "none",
-                      padding: "0 20px 0 48px",
+                      padding: "0 16px 0 42px",
                       boxSizing: "border-box"
                     }}
                   />
@@ -263,16 +262,16 @@ export default function Auth() {
                 {/* Password Input */}
                 <div style={{
                   position: "relative",
-                  marginBottom: "20px"
+                  marginBottom: "16px"
                 }}>
                   <div style={{
                     position: "absolute",
-                    left: "16px",
+                    left: "14px",
                     top: "50%",
                     transform: "translateY(-50%)",
                     color: "#7A8AAA"
                   }}>
-                    <Lock size={18} />
+                    <Lock size={16} />
                   </div>
                   <input
                     type="password"
@@ -282,17 +281,17 @@ export default function Auth() {
                     required
                     style={{ 
                       width: "100%",
-                      height: "48px",
+                      height: "44px",
                       backgroundColor: "#E8EBF2", 
                       color: "#2E3350",
-                      borderRadius: "24px",
-                      fontSize: "13px",
+                      borderRadius: "22px",
+                      fontSize: "12px",
                       fontFamily: "Inter, sans-serif",
                       fontWeight: "500",
                       letterSpacing: "2px",
                       border: "none",
                       outline: "none",
-                      padding: "0 20px 0 48px",
+                      padding: "0 16px 0 42px",
                       boxSizing: "border-box"
                     }}
                   />
@@ -304,11 +303,11 @@ export default function Auth() {
                   disabled={loading}
                   style={{ 
                     width: "100%",
-                    height: "48px",
+                    height: "44px",
                     backgroundColor: "#283A63", 
                     color: "#FFFFFF",
-                    borderRadius: "24px",
-                    fontSize: "14px",
+                    borderRadius: "22px",
+                    fontSize: "13px",
                     fontWeight: "700",
                     fontFamily: "Inter, sans-serif",
                     letterSpacing: "1px",
@@ -316,7 +315,7 @@ export default function Auth() {
                     cursor: loading ? "not-allowed" : "pointer",
                     transition: "all 0.2s ease",
                     opacity: loading ? 0.6 : 1,
-                    marginBottom: "20px"
+                    marginBottom: "16px"
                   }}
                   onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = "#1E2A4E")}
                   onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = "#283A63")}
@@ -330,17 +329,17 @@ export default function Auth() {
                 display: "flex",
                 justifyContent: "space-between",
                 width: "100%",
-                fontSize: "11px",
+                fontSize: "10px",
                 color: "#5A6A8A",
                 fontFamily: "Inter, sans-serif"
               }}>
                 <label style={{ 
                   display: "flex", 
                   alignItems: "center", 
-                  gap: "6px",
+                  gap: "5px",
                   cursor: "pointer"
                 }}>
-                  <input type="checkbox" style={{ accentColor: "#283A63" }} />
+                  <input type="checkbox" style={{ accentColor: "#283A63", width: "12px", height: "12px" }} />
                   Lembrar-me
                 </label>
                 <span style={{ cursor: "pointer", textDecoration: "underline" }}>
@@ -351,24 +350,24 @@ export default function Auth() {
               {/* Pagination Dots */}
               <div style={{
                 display: "flex",
-                gap: "8px",
-                marginTop: "24px"
+                gap: "6px",
+                marginTop: "20px"
               }}>
                 <div style={{
-                  width: "8px",
-                  height: "8px",
+                  width: "7px",
+                  height: "7px",
                   borderRadius: "50%",
                   backgroundColor: "#283A63"
                 }} />
                 <div style={{
-                  width: "8px",
-                  height: "8px",
+                  width: "7px",
+                  height: "7px",
                   borderRadius: "50%",
                   backgroundColor: "#C5CADF"
                 }} />
                 <div style={{
-                  width: "8px",
-                  height: "8px",
+                  width: "7px",
+                  height: "7px",
                   borderRadius: "50%",
                   backgroundColor: "#C5CADF"
                 }} />
@@ -379,10 +378,10 @@ export default function Auth() {
               {/* Signup Form */}
               <h2 style={{
                 color: "#283A63",
-                fontSize: "22px",
+                fontSize: "20px",
                 fontWeight: "700",
                 fontFamily: "Inter, sans-serif",
-                marginBottom: "24px"
+                marginBottom: "20px"
               }}>
                 Cadastrar
               </h2>
@@ -395,16 +394,16 @@ export default function Auth() {
                   required
                   style={{ 
                     width: "100%",
-                    height: "46px",
+                    height: "42px",
                     backgroundColor: "#E8EBF2", 
                     color: "#2E3350",
-                    borderRadius: "24px",
-                    fontSize: "13px",
+                    borderRadius: "21px",
+                    fontSize: "12px",
                     fontFamily: "Inter, sans-serif",
                     border: "none",
                     outline: "none",
-                    padding: "0 20px",
-                    marginBottom: "10px",
+                    padding: "0 16px",
+                    marginBottom: "8px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -416,16 +415,16 @@ export default function Auth() {
                   required
                   style={{ 
                     width: "100%",
-                    height: "46px",
+                    height: "42px",
                     backgroundColor: "#E8EBF2", 
                     color: "#2E3350",
-                    borderRadius: "24px",
-                    fontSize: "13px",
+                    borderRadius: "21px",
+                    fontSize: "12px",
                     fontFamily: "Inter, sans-serif",
                     border: "none",
                     outline: "none",
-                    padding: "0 20px",
-                    marginBottom: "10px",
+                    padding: "0 16px",
+                    marginBottom: "8px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -436,16 +435,16 @@ export default function Auth() {
                   onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
                   style={{ 
                     width: "100%",
-                    height: "46px",
+                    height: "42px",
                     backgroundColor: "#E8EBF2", 
                     color: "#2E3350",
-                    borderRadius: "24px",
-                    fontSize: "13px",
+                    borderRadius: "21px",
+                    fontSize: "12px",
                     fontFamily: "Inter, sans-serif",
                     border: "none",
                     outline: "none",
-                    padding: "0 20px",
-                    marginBottom: "10px",
+                    padding: "0 16px",
+                    marginBottom: "8px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -456,16 +455,16 @@ export default function Auth() {
                   onChange={(e) => setSignupData({ ...signupData, cpf: e.target.value })}
                   style={{ 
                     width: "100%",
-                    height: "46px",
+                    height: "42px",
                     backgroundColor: "#E8EBF2", 
                     color: "#2E3350",
-                    borderRadius: "24px",
-                    fontSize: "13px",
+                    borderRadius: "21px",
+                    fontSize: "12px",
                     fontFamily: "Inter, sans-serif",
                     border: "none",
                     outline: "none",
-                    padding: "0 20px",
-                    marginBottom: "10px",
+                    padding: "0 16px",
+                    marginBottom: "8px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -476,16 +475,16 @@ export default function Auth() {
                   onChange={(e) => setSignupData({ ...signupData, address: e.target.value })}
                   style={{ 
                     width: "100%",
-                    height: "46px",
+                    height: "42px",
                     backgroundColor: "#E8EBF2", 
                     color: "#2E3350",
-                    borderRadius: "24px",
-                    fontSize: "13px",
+                    borderRadius: "21px",
+                    fontSize: "12px",
                     fontFamily: "Inter, sans-serif",
                     border: "none",
                     outline: "none",
-                    padding: "0 20px",
-                    marginBottom: "10px",
+                    padding: "0 16px",
+                    marginBottom: "8px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -497,16 +496,16 @@ export default function Auth() {
                   required
                   style={{ 
                     width: "100%",
-                    height: "46px",
+                    height: "42px",
                     backgroundColor: "#E8EBF2", 
                     color: "#2E3350",
-                    borderRadius: "24px",
-                    fontSize: "13px",
+                    borderRadius: "21px",
+                    fontSize: "12px",
                     fontFamily: "Inter, sans-serif",
                     border: "none",
                     outline: "none",
-                    padding: "0 20px",
-                    marginBottom: "10px",
+                    padding: "0 16px",
+                    marginBottom: "8px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -518,16 +517,16 @@ export default function Auth() {
                   required
                   style={{ 
                     width: "100%",
-                    height: "46px",
+                    height: "42px",
                     backgroundColor: "#E8EBF2", 
                     color: "#2E3350",
-                    borderRadius: "24px",
-                    fontSize: "13px",
+                    borderRadius: "21px",
+                    fontSize: "12px",
                     fontFamily: "Inter, sans-serif",
                     border: "none",
                     outline: "none",
-                    padding: "0 20px",
-                    marginBottom: "16px",
+                    padding: "0 16px",
+                    marginBottom: "14px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -536,11 +535,11 @@ export default function Auth() {
                   disabled={loading}
                   style={{ 
                     width: "100%",
-                    height: "48px",
+                    height: "44px",
                     backgroundColor: "#283A63", 
                     color: "#FFFFFF",
-                    borderRadius: "24px",
-                    fontSize: "14px",
+                    borderRadius: "22px",
+                    fontSize: "13px",
                     fontWeight: "700",
                     fontFamily: "Inter, sans-serif",
                     letterSpacing: "1px",
@@ -555,6 +554,17 @@ export default function Auth() {
                   {loading ? "CRIANDO..." : "CRIAR CONTA"}
                 </button>
               </form>
+
+              {/* Back to Login Link */}
+              <p style={{
+                color: "#5A6A8A",
+                fontSize: "11px",
+                fontFamily: "Inter, sans-serif",
+                marginTop: "16px",
+                cursor: "pointer"
+              }} onClick={() => setIsLoginView(true)}>
+                Já tem conta? <span style={{ textDecoration: "underline", fontWeight: "600" }}>Fazer login</span>
+              </p>
             </>
           )}
         </div>
@@ -562,31 +572,31 @@ export default function Auth() {
         {/* Seção Direita - Bem-vindo + Badge */}
         <div 
           style={{ 
+            flex: 1,
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            maxWidth: "500px"
+            alignItems: "flex-start",
+            paddingLeft: "40px"
           }}
-          className="hidden lg:flex"
         >
           {/* Texto Bem-vindo */}
           <h1 style={{
             color: "#FFFFFF",
-            fontSize: "48px",
+            fontSize: "52px",
             fontWeight: "700",
             fontFamily: "Inter, sans-serif",
-            marginBottom: "16px"
+            marginBottom: "16px",
+            marginTop: "0"
           }}>
             Bem-vindo.
           </h1>
           <p style={{
-            color: "rgba(255, 255, 255, 0.8)",
-            fontSize: "16px",
+            color: "rgba(255, 255, 255, 0.75)",
+            fontSize: "15px",
             fontFamily: "Inter, sans-serif",
             lineHeight: "1.6",
-            marginBottom: "24px",
-            maxWidth: "400px"
+            marginBottom: "20px",
+            maxWidth: "380px"
           }}>
             Por favor, faça login para acessar o sistema<br />
             da Fisioterapia Regenerativa.
@@ -594,14 +604,14 @@ export default function Auth() {
 
           {/* Link Primeiro Acesso */}
           <p style={{
-            color: "rgba(255, 255, 255, 0.7)",
-            fontSize: "14px",
+            color: "rgba(255, 255, 255, 0.65)",
+            fontSize: "13px",
             fontFamily: "Inter, sans-serif",
             marginBottom: "40px"
           }}>
             Primeiro acesso?{" "}
             <span 
-              onClick={() => setIsLoginView(!isLoginView)}
+              onClick={() => setIsLoginView(false)}
               style={{ 
                 color: "#FFFFFF", 
                 textDecoration: "underline",
@@ -609,7 +619,7 @@ export default function Auth() {
                 fontWeight: "600"
               }}
             >
-              {isLoginView ? "Registre-se agora" : "Fazer login"}
+              Registre-se agora
             </span>
           </p>
 
@@ -618,39 +628,13 @@ export default function Auth() {
             src={badgeImage} 
             alt="Fisioterapia Regenerativa Badge" 
             style={{
-              width: "320px",
+              width: "280px",
               height: "auto",
-              filter: "drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3))"
+              filter: "drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3))",
+              marginLeft: "40px"
             }}
           />
         </div>
-      </div>
-
-      {/* Mobile Toggle Link */}
-      <div 
-        style={{
-          position: "absolute",
-          bottom: "30px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          color: "rgba(255, 255, 255, 0.8)",
-          fontSize: "14px",
-          fontFamily: "Inter, sans-serif"
-        }}
-        className="lg:hidden"
-      >
-        {isLoginView ? "Primeiro acesso? " : "Já tem conta? "}
-        <span 
-          onClick={() => setIsLoginView(!isLoginView)}
-          style={{ 
-            color: "#FFFFFF", 
-            textDecoration: "underline",
-            cursor: "pointer",
-            fontWeight: "600"
-          }}
-        >
-          {isLoginView ? "Registre-se" : "Fazer login"}
-        </span>
       </div>
     </div>
   );
