@@ -40,17 +40,18 @@ export default function Auth() {
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
+        inset: 0,
         width: "100vw",
         height: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundImage: "url('/images/dna-login-bg.png')",
+        backgroundColor: "#000",
+        backgroundImage: "url('/images/dna-login-bg-clean.png?v=2')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        overflow: "hidden",
         zIndex: 9999,
       }}
     >
