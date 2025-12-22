@@ -3,14 +3,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code } from "lucide-react";
 import { format } from "date-fns";
@@ -18,12 +19,6 @@ import { PrintPreviewModal } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
 import { ptBR } from "date-fns/locale";
-
-interface QuestionBlock {
-  id: string;
-  title: string;
-  questions: { key: string; label: string }[];
-}
 
 interface UploadedFile {
   id: string;
@@ -63,46 +58,109 @@ interface TriagemAnalysisResult {
     what_to_do_now: string;
     timeline?: string;
   };
+  soil_preparation?: {
+    needed: boolean;
+    recommendations?: string[];
+  };
   raw_json?: any;
 }
 
-const questionBlocks: QuestionBlock[] = [
-  {
-    id: "eixoHormonal",
-    title: "EIXO HORMONAL",
-    questions: [
-      { key: "sintomas_tireoide", label: "Sintomas de disfunção tireoidiana?" },
-      { key: "homem_baixa_libido_forca", label: "Homens: redução de libido ou força?" },
-      { key: "mulher_ciclo_irregular", label: "Mulheres: ciclos menstruais irregulares?" },
-      { key: "reposicao_hormonal", label: "Uso de reposição hormonal?" }
-    ]
-  },
-  {
-    id: "medicamentos",
-    title: "USO DE MEDICAMENTOS",
-    questions: [
-      { key: "antiinflamatorios_7_dias", label: "Uso de anti-inflamatórios nos últimos 7 dias?" },
-      { key: "corticoide_3_meses", label: "Uso de corticoides (oral ou infiltração) nos últimos 3 meses?" },
-      { key: "anticoagulantes_antiagregantes", label: "Uso contínuo de anticoagulantes/antiagregantes?" },
-      { key: "imunossupressores", label: "Uso de medicamentos imunossupressores?" }
-    ]
-  },
-  {
-    id: "estiloVida",
-    title: "ESTILO DE VIDA",
-    questions: [
-      { key: "atividade_fisica_regular", label: "Atividade física regular (≥3x/semana)?" },
-      { key: "alcool_regular", label: "Consumo regular de álcool (>2x/semana)?" },
-      { key: "tabagismo_recente", label: "Tabagismo atual ou recente (<1 ano)?" },
-      { key: "vitamina_d_exposicao_ou_suplementacao", label: "Exposição solar adequada ou suplementação de vitamina D?" }
-    ]
-  }
-];
+// Estrutura do questionário clínico MVP
+interface QuestionnaireAnswers {
+  // A) Identificação do caso
+  idade: number | null;
+  sexo: string;
+  regiao_principal: string;
+  diagnostico_suspeito: string;
+  tempo_dor: string;
+  dor_escala: number | null;
+  
+  // B) Procedimento pretendido
+  procedimento_considerado: string;
+  
+  // C) Segurança / Red flags
+  febre_infeccao_2_semanas: boolean | null;
+  infeccao_pele_local: boolean | null;
+  cancer_ativo: boolean | null;
+  doenca_autoimune_ativa: boolean | null;
+  diabetes_descompensado: boolean | null;
+  doenca_renal_hepatica: boolean | null;
+  
+  // D) Medicamentos
+  corticoide_oral_4_semanas: boolean | null;
+  infiltracao_corticoide_3_meses: boolean | null;
+  aine_7_dias: boolean | null;
+  anticoagulante: string;
+  imunossupressor_biologico: boolean | null;
+  
+  // E) Histórico terapêutico
+  prp_prf_bmac_anterior: string;
+  fisioterapia_6_semanas: boolean | null;
+  cirurgia_previa_regiao: boolean | null;
+  
+  // F) Preparo do solo
+  exames_sangue_60_dias: boolean | null;
+  historico_anemia_ferritina_b12: string;
+  tabagismo_atual: boolean | null;
+  obesidade_imc_alto: boolean | null;
+}
+
+// Estrutura dos exames laboratoriais
+interface LabExamValues {
+  hemoglobina: string;
+  hematocrito: string;
+  leucocitos: string;
+  plaquetas: string;
+  pcr: string;
+  ferritina: string;
+  glicemia: string;
+  hba1c: string;
+}
+
+const initialAnswers: QuestionnaireAnswers = {
+  idade: null,
+  sexo: "",
+  regiao_principal: "",
+  diagnostico_suspeito: "",
+  tempo_dor: "",
+  dor_escala: null,
+  procedimento_considerado: "",
+  febre_infeccao_2_semanas: null,
+  infeccao_pele_local: null,
+  cancer_ativo: null,
+  doenca_autoimune_ativa: null,
+  diabetes_descompensado: null,
+  doenca_renal_hepatica: null,
+  corticoide_oral_4_semanas: null,
+  infiltracao_corticoide_3_meses: null,
+  aine_7_dias: null,
+  anticoagulante: "",
+  imunossupressor_biologico: null,
+  prp_prf_bmac_anterior: "",
+  fisioterapia_6_semanas: null,
+  cirurgia_previa_regiao: null,
+  exames_sangue_60_dias: null,
+  historico_anemia_ferritina_b12: "",
+  tabagismo_atual: null,
+  obesidade_imc_alto: null,
+};
+
+const initialLabExams: LabExamValues = {
+  hemoglobina: "",
+  hematocrito: "",
+  leucocitos: "",
+  plaquetas: "",
+  pcr: "",
+  ferritina: "",
+  glicemia: "",
+  hba1c: "",
+};
 
 export default function TriagemBiologica() {
   const queryClient = useQueryClient();
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [answers, setAnswers] = useState<Record<string, boolean>>({});
+  const [answers, setAnswers] = useState<QuestionnaireAnswers>(initialAnswers);
+  const [labExams, setLabExams] = useState<LabExamValues>(initialLabExams);
   const [analysisResult, setAnalysisResult] = useState<TriagemAnalysisResult | null>(null);
   const [rawAnalysisJson, setRawAnalysisJson] = useState<string>("");
   const [showRawJson, setShowRawJson] = useState(false);
@@ -117,7 +175,7 @@ export default function TriagemBiologica() {
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
   const [printPreviewType, setPrintPreviewType] = useState<"exams" | "orientations">("exams");
   
-  // New states for file upload and OCR
+  // States for file upload and OCR
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [extractedTexts, setExtractedTexts] = useState<ExtractedText[]>([]);
@@ -154,18 +212,7 @@ export default function TriagemBiologica() {
     enabled: !!selectedPatientId
   });
 
-  // Initialize answers with flat keys
-  useEffect(() => {
-    const initialAnswers: Record<string, boolean> = {};
-    questionBlocks.forEach(block => {
-      block.questions.forEach(q => {
-        initialAnswers[q.key] = false;
-      });
-    });
-    setAnswers(initialAnswers);
-  }, []);
-
-  // Reset file uploads when patient changes
+  // Reset when patient changes
   useEffect(() => {
     setUploadedFiles([]);
     setExtractedTexts([]);
@@ -175,22 +222,54 @@ export default function TriagemBiologica() {
     setLabInterpretation("");
     setAnalysisResult(null);
     setRawAnalysisJson("");
+    setAnswers(initialAnswers);
+    setLabExams(initialLabExams);
   }, [selectedPatientId]);
 
-  const handleAnswerChange = (key: string, checked: boolean) => {
-    setAnswers(prev => ({
-      ...prev,
-      [key]: checked
-    }));
-  };
+  // Helper for yes/no/null radio
+  const YesNoRadio = ({ 
+    value, 
+    onChange, 
+    id 
+  }: { 
+    value: boolean | null; 
+    onChange: (val: boolean | null) => void; 
+    id: string;
+  }) => (
+    <RadioGroup
+      value={value === null ? "" : value ? "sim" : "nao"}
+      onValueChange={(v) => onChange(v === "" ? null : v === "sim")}
+      className="flex gap-4"
+    >
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="sim" id={`${id}-sim`} />
+        <Label htmlFor={`${id}-sim`} className="text-sm cursor-pointer">Sim</Label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="nao" id={`${id}-nao`} />
+        <Label htmlFor={`${id}-nao`} className="text-sm cursor-pointer">Não</Label>
+      </div>
+    </RadioGroup>
+  );
 
-  // Monta o JSON cru para envio (SEM interpretações)
+  // Build raw JSON for submission (NO interpretations)
   const buildRawQuestionnaire = () => {
+    // Build provided_exams from labExams
+    const providedExams: Record<string, string> = {};
+    if (labExams.hemoglobina) providedExams.hemoglobina = labExams.hemoglobina;
+    if (labExams.hematocrito) providedExams.hematocrito = labExams.hematocrito;
+    if (labExams.leucocitos) providedExams.leucocitos = labExams.leucocitos;
+    if (labExams.plaquetas) providedExams.plaquetas = labExams.plaquetas;
+    if (labExams.pcr) providedExams.pcr = labExams.pcr;
+    if (labExams.ferritina) providedExams.ferritina = labExams.ferritina;
+    if (labExams.glicemia) providedExams.glicemia = labExams.glicemia;
+    if (labExams.hba1c) providedExams.hba1c = labExams.hba1c;
+
     return {
       mode: "TRIAGEM",
       patient_id: selectedPatientId,
       answers: { ...answers },
-      provided_exams: []
+      provided_exams: Object.keys(providedExams).length > 0 ? providedExams : null
     };
   };
 
@@ -435,7 +514,7 @@ export default function TriagemBiologica() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Triagem Biológica Pré-PRP</h1>
           <p className="text-sm mt-1" style={{ color: '#5A6080' }}>
-            Avaliação clínico-biológica para terapias ortobiológicas e leucoplaquetárias
+            Avaliação clínico-biológica para terapias ortobiológicas (PRP, PRF, BMAC)
           </p>
         </div>
       </div>
@@ -508,36 +587,354 @@ export default function TriagemBiologica() {
               {/* Questionnaire */}
               <Card className="bg-card/95 backdrop-blur border-border/50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Questionário de Triagem Biológica</CardTitle>
+                  <CardTitle className="text-base font-medium">Questionário Clínico de Ortobiológicos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[500px] pr-4">
+                  <ScrollArea className="h-[600px] pr-4">
                     <div className="space-y-6">
-                      {questionBlocks.map(block => (
-                        <div key={block.id}>
-                          <h3 className="text-sm font-semibold text-primary mb-3">{block.title}</h3>
-                          <div className="space-y-3">
-                            {block.questions.map(question => (
-                              <div key={question.key} className="flex items-start space-x-3">
-                                <Checkbox
-                                  id={question.key}
-                                  checked={answers[question.key] || false}
-                                  onCheckedChange={(checked) => 
-                                    handleAnswerChange(question.key, checked as boolean)
-                                  }
-                                />
-                                <Label 
-                                  htmlFor={question.key}
-                                  className="text-sm text-foreground/80 leading-tight cursor-pointer"
-                                >
-                                  {question.label}
-                                </Label>
-                              </div>
-                            ))}
+                      {/* A) Identificação do caso */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-primary mb-3">A) IDENTIFICAÇÃO DO CASO</h3>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="idade">Idade</Label>
+                              <Input
+                                id="idade"
+                                type="number"
+                                placeholder="Ex: 45"
+                                value={answers.idade ?? ""}
+                                onChange={(e) => setAnswers(prev => ({ ...prev, idade: e.target.value ? parseInt(e.target.value) : null }))}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="sexo">Sexo</Label>
+                              <Select value={answers.sexo} onValueChange={(v) => setAnswers(prev => ({ ...prev, sexo: v }))}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="M">Masculino</SelectItem>
+                                  <SelectItem value="F">Feminino</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
-                          <Separator className="mt-4" />
+
+                          <div>
+                            <Label>Região principal</Label>
+                            <Select value={answers.regiao_principal} onValueChange={(v) => setAnswers(prev => ({ ...prev, regiao_principal: v }))}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Selecione a região" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="joelho">Joelho</SelectItem>
+                                <SelectItem value="ombro">Ombro</SelectItem>
+                                <SelectItem value="quadril">Quadril</SelectItem>
+                                <SelectItem value="cotovelo">Cotovelo</SelectItem>
+                                <SelectItem value="tornozelo">Tornozelo</SelectItem>
+                                <SelectItem value="mao">Mão/Punho</SelectItem>
+                                <SelectItem value="coluna">Coluna</SelectItem>
+                                <SelectItem value="outro">Outro</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>Diagnóstico suspeito</Label>
+                            <Select value={answers.diagnostico_suspeito} onValueChange={(v) => setAnswers(prev => ({ ...prev, diagnostico_suspeito: v }))}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Selecione o diagnóstico" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="artrose">Artrose</SelectItem>
+                                <SelectItem value="tendinopatia">Tendinopatia</SelectItem>
+                                <SelectItem value="lesao_muscular">Lesão muscular</SelectItem>
+                                <SelectItem value="lesao_ligamentar">Lesão ligamentar</SelectItem>
+                                <SelectItem value="menisco">Lesão de menisco</SelectItem>
+                                <SelectItem value="hernia_disco">Coluna - Hérnia de disco</SelectItem>
+                                <SelectItem value="outro">Outro</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label>Tempo de dor</Label>
+                              <Select value={answers.tempo_dor} onValueChange={(v) => setAnswers(prev => ({ ...prev, tempo_dor: v }))}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="0-6sem">0-6 semanas</SelectItem>
+                                  <SelectItem value="6-12sem">6-12 semanas</SelectItem>
+                                  <SelectItem value="3-6m">3-6 meses</SelectItem>
+                                  <SelectItem value=">6m">Mais de 6 meses</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="dor_escala">Dor (0-10)</Label>
+                              <Input
+                                id="dor_escala"
+                                type="number"
+                                min="0"
+                                max="10"
+                                placeholder="0-10"
+                                value={answers.dor_escala ?? ""}
+                                onChange={(e) => setAnswers(prev => ({ ...prev, dor_escala: e.target.value ? parseInt(e.target.value) : null }))}
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      ))}
+                        <Separator className="mt-4" />
+                      </div>
+
+                      {/* B) Procedimento pretendido */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-primary mb-3">B) PROCEDIMENTO PRETENDIDO</h3>
+                        <div>
+                          <Label>Procedimento considerado</Label>
+                          <Select value={answers.procedimento_considerado} onValueChange={(v) => setAnswers(prev => ({ ...prev, procedimento_considerado: v }))}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Selecione o procedimento" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="PRP">PRP (Plasma Rico em Plaquetas)</SelectItem>
+                              <SelectItem value="PRF">PRF (Fibrina Rica em Plaquetas)</SelectItem>
+                              <SelectItem value="BMAC">BMAC (Aspirado de Medula Óssea)</SelectItem>
+                              <SelectItem value="NAO_SEI">Não sei / A definir</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Separator className="mt-4" />
+                      </div>
+
+                      {/* C) Segurança / Red flags */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-red-500 mb-3">C) SEGURANÇA / RED FLAGS</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-sm">Febre ou infecção ativa nas últimas 2 semanas?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="febre_infeccao"
+                                value={answers.febre_infeccao_2_semanas}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, febre_infeccao_2_semanas: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Infecção de pele no local a ser tratado?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="infeccao_pele"
+                                value={answers.infeccao_pele_local}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, infeccao_pele_local: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Câncer ativo em tratamento?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="cancer_ativo"
+                                value={answers.cancer_ativo}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, cancer_ativo: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Doença autoimune ativa / surto atual?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="autoimune"
+                                value={answers.doenca_autoimune_ativa}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, doenca_autoimune_ativa: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Diabetes descompensado ou HbA1c desconhecida?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="diabetes"
+                                value={answers.diabetes_descompensado}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, diabetes_descompensado: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Doença renal/hepática importante conhecida?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="renal_hepatica"
+                                value={answers.doenca_renal_hepatica}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, doenca_renal_hepatica: v }))}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <Separator className="mt-4" />
+                      </div>
+
+                      {/* D) Medicamentos */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-primary mb-3">D) MEDICAMENTOS</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-sm">Corticoide oral nas últimas 4 semanas?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="corticoide_oral"
+                                value={answers.corticoide_oral_4_semanas}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, corticoide_oral_4_semanas: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Infiltração com corticoide no local nos últimos 3 meses?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="infiltracao_corticoide"
+                                value={answers.infiltracao_corticoide_3_meses}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, infiltracao_corticoide_3_meses: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">AINE (anti-inflamatório) nos últimos 7 dias?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="aine"
+                                value={answers.aine_7_dias}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, aine_7_dias: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label>Anticoagulante / Antiagregante</Label>
+                            <Select value={answers.anticoagulante} onValueChange={(v) => setAnswers(prev => ({ ...prev, anticoagulante: v }))}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="nenhum">Nenhum</SelectItem>
+                                <SelectItem value="AAS">AAS (Aspirina)</SelectItem>
+                                <SelectItem value="clopidogrel">Clopidogrel</SelectItem>
+                                <SelectItem value="varfarina">Varfarina</SelectItem>
+                                <SelectItem value="rivaroxabana">Rivaroxabana</SelectItem>
+                                <SelectItem value="apixabana">Apixabana</SelectItem>
+                                <SelectItem value="outros">Outros</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Imunossupressor / Biológico em uso?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="imunossupressor"
+                                value={answers.imunossupressor_biologico}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, imunossupressor_biologico: v }))}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <Separator className="mt-4" />
+                      </div>
+
+                      {/* E) Histórico terapêutico */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-primary mb-3">E) HISTÓRICO TERAPÊUTICO</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Já fez PRP/PRF/BMAC antes?</Label>
+                            <Select value={answers.prp_prf_bmac_anterior} onValueChange={(v) => setAnswers(prev => ({ ...prev, prp_prf_bmac_anterior: v }))}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="nunca">Nunca</SelectItem>
+                                <SelectItem value="sim_ajudou">Sim, ajudou</SelectItem>
+                                <SelectItem value="sim_nao_ajudou">Sim, não ajudou</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Fisioterapia ≥6 semanas para esta condição?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="fisioterapia"
+                                value={answers.fisioterapia_6_semanas}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, fisioterapia_6_semanas: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Cirurgia prévia na região?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="cirurgia_previa"
+                                value={answers.cirurgia_previa_regiao}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, cirurgia_previa_regiao: v }))}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <Separator className="mt-4" />
+                      </div>
+
+                      {/* F) Preparo do solo */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-primary mb-3">F) PREPARO DO SOLO BIOLÓGICO</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-sm">Exames de sangue recentes (&lt;60 dias)?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="exames_sangue"
+                                value={answers.exames_sangue_60_dias}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, exames_sangue_60_dias: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label>Histórico de anemia, ferritina baixa ou B12 baixa?</Label>
+                            <Select value={answers.historico_anemia_ferritina_b12} onValueChange={(v) => setAnswers(prev => ({ ...prev, historico_anemia_ferritina_b12: v }))}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="sim">Sim</SelectItem>
+                                <SelectItem value="nao">Não</SelectItem>
+                                <SelectItem value="nao_sei">Não sei</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Tabagismo atual?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="tabagismo"
+                                value={answers.tabagismo_atual}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, tabagismo_atual: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Obesidade / IMC elevado?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="obesidade"
+                                value={answers.obesidade_imc_alto}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, obesidade_imc_alto: v }))}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </ScrollArea>
                   <div className="mt-4 pt-4 border-t">
@@ -648,29 +1045,52 @@ export default function TriagemBiologica() {
                       </CardContent>
                     </Card>
 
-                    {/* Card 4: Motivo Principal */}
-                    {analysisResult.key_reasons?.length > 0 && (
-                      <Card className="bg-card/95 backdrop-blur border-border/50">
+                    {/* Card 4: Preparo do Solo */}
+                    {analysisResult.soil_preparation?.needed && (
+                      <Card className="bg-card/95 backdrop-blur border-amber-500/30 border-2">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <CardTitle className="text-base font-medium flex items-center gap-2 text-amber-600">
                             <AlertTriangle className="w-4 h-4" />
-                            Motivo Principal
+                            Preparo do Solo Biológico
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm">{analysisResult.key_reasons[0]}</p>
-                          {analysisResult.key_reasons.length > 1 && (
-                            <ul className="mt-2 space-y-1">
-                              {analysisResult.key_reasons.slice(1).map((reason, idx) => (
-                                <li key={idx} className="text-sm text-muted-foreground">• {reason}</li>
+                          {analysisResult.soil_preparation.recommendations && analysisResult.soil_preparation.recommendations.length > 0 ? (
+                            <ul className="space-y-1">
+                              {analysisResult.soil_preparation.recommendations.map((rec, idx) => (
+                                <li key={idx} className="text-sm flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                  {rec}
+                                </li>
                               ))}
                             </ul>
+                          ) : (
+                            <p className="text-sm">Preparo necessário antes do procedimento</p>
                           )}
                         </CardContent>
                       </Card>
                     )}
 
-                    {/* Card 5: Próximo Passo */}
+                    {/* Card 5: Motivo Principal */}
+                    {analysisResult.key_reasons?.length > 0 && (
+                      <Card className="bg-card/95 backdrop-blur border-border/50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base font-medium flex items-center gap-2">
+                            <Info className="w-4 h-4" />
+                            Motivos Principais
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-1">
+                            {analysisResult.key_reasons.map((reason, idx) => (
+                              <li key={idx} className="text-sm">• {reason}</li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Card 6: Próximo Passo */}
                     {analysisResult.next_steps?.what_to_do_now && (
                       <Card className="bg-card/95 backdrop-blur border-border/50 border-primary/30">
                         <CardHeader className="pb-2">
@@ -738,6 +1158,101 @@ export default function TriagemBiologica() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Structured Lab Input */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold">Hemograma</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="hb" className="text-xs">Hemoglobina (g/dL)</Label>
+                        <Input
+                          id="hb"
+                          placeholder="Ex: 13.5"
+                          value={labExams.hemoglobina}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, hemoglobina: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="ht" className="text-xs">Hematócrito (%)</Label>
+                        <Input
+                          id="ht"
+                          placeholder="Ex: 42"
+                          value={labExams.hematocrito}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, hematocrito: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="leuco" className="text-xs">Leucócitos (/mm³)</Label>
+                        <Input
+                          id="leuco"
+                          placeholder="Ex: 7500"
+                          value={labExams.leucocitos}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, leucocitos: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="plaq" className="text-xs">Plaquetas (/mm³)</Label>
+                        <Input
+                          id="plaq"
+                          placeholder="Ex: 250000"
+                          value={labExams.plaquetas}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, plaquetas: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <h4 className="text-sm font-semibold">Bioquímica</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="pcr" className="text-xs">PCR (mg/L)</Label>
+                        <Input
+                          id="pcr"
+                          placeholder="Ex: 2.5"
+                          value={labExams.pcr}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, pcr: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="ferritina" className="text-xs">Ferritina (ng/mL)</Label>
+                        <Input
+                          id="ferritina"
+                          placeholder="Ex: 80"
+                          value={labExams.ferritina}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, ferritina: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="glicemia" className="text-xs">Glicemia (mg/dL)</Label>
+                        <Input
+                          id="glicemia"
+                          placeholder="Ex: 95"
+                          value={labExams.glicemia}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, glicemia: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="hba1c" className="text-xs">HbA1c (%)</Label>
+                        <Input
+                          id="hba1c"
+                          placeholder="Ex: 5.6"
+                          value={labExams.hba1c}
+                          onChange={(e) => setLabExams(prev => ({ ...prev, hba1c: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   {/* File Upload Section */}
                   <div>
                     <Label className="flex items-center gap-2 mb-3">
@@ -755,19 +1270,19 @@ export default function TriagemBiologica() {
 
                   {/* Manual Text Entry */}
                   <div>
-                    <Label>Ou cole/digite os resultados dos exames:</Label>
+                    <Label>Ou cole/digite outros resultados:</Label>
                     <Textarea
                       value={labResultsText}
                       onChange={(e) => setLabResultsText(e.target.value)}
-                      placeholder="Exemplo:&#10;Hemograma: Hb 12.5 g/dL, Ht 38%&#10;Ferritina: 45 ng/mL&#10;Vitamina D: 28 ng/mL&#10;PCR: 3.2 mg/L&#10;..."
-                      className="mt-2 min-h-[200px] font-mono text-sm"
+                      placeholder="Cole aqui resultados adicionais..."
+                      className="mt-2 min-h-[100px] font-mono text-sm"
                     />
                   </div>
 
                   {/* Action Button */}
                   <Button 
                     onClick={handleAnalyzeLabResults}
-                    disabled={isAnalyzingLab || isExtractingText || (!labResultsText.trim() && uploadedFiles.length === 0)}
+                    disabled={isAnalyzingLab || isExtractingText}
                     className="w-full"
                   >
                     {isExtractingText ? (
@@ -805,8 +1320,8 @@ export default function TriagemBiologica() {
                     <div className="h-[500px] flex items-center justify-center text-muted-foreground text-sm text-center px-4">
                       <div>
                         <FlaskConical className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                        <p>Anexe arquivos de exames ou digite os resultados para ver a interpretação.</p>
-                        <p className="mt-2 text-xs">O sistema irá extrair automaticamente os valores usando OCR/Vision.</p>
+                        <p>Preencha os valores dos exames ou anexe arquivos para ver a interpretação.</p>
+                        <p className="mt-2 text-xs">Os resultados serão enviados ao Assistant para análise.</p>
                       </div>
                     </div>
                   )}
@@ -841,6 +1356,33 @@ export default function TriagemBiologica() {
                               <p className="text-xs text-muted-foreground italic">
                                 {group.justification}
                               </p>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      <Button 
+                        onClick={() => handleOpenPrintPreview("exams")}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimir Solicitação de Exames
+                      </Button>
+                    </>
+                  ) : analysisResult?.requested_exams?.required?.length > 0 ? (
+                    <>
+                      <ScrollArea className="h-[300px] pr-4">
+                        <div className="space-y-2">
+                          {analysisResult.requested_exams.required.map((exam, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                              {exam}
+                            </div>
+                          ))}
+                          {analysisResult.requested_exams.optional?.map((exam, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              {exam} (opcional)
                             </div>
                           ))}
                         </div>
