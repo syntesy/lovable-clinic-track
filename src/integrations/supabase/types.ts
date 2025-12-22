@@ -178,6 +178,68 @@ export type Database = {
           },
         ]
       }
+      epi_protocols: {
+        Row: {
+          application_time: number | null
+          clinical_observations: string | null
+          contraindications: string | null
+          created_at: string
+          current_intensity: number | null
+          id: string
+          injury_region: string | null
+          needle_type: string | null
+          patient_id: string | null
+          protocol_name: string
+          session_frequency: string | null
+          specific_tissue: string | null
+          technique: string | null
+          total_sessions: number | null
+          updated_at: string
+        }
+        Insert: {
+          application_time?: number | null
+          clinical_observations?: string | null
+          contraindications?: string | null
+          created_at?: string
+          current_intensity?: number | null
+          id?: string
+          injury_region?: string | null
+          needle_type?: string | null
+          patient_id?: string | null
+          protocol_name: string
+          session_frequency?: string | null
+          specific_tissue?: string | null
+          technique?: string | null
+          total_sessions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          application_time?: number | null
+          clinical_observations?: string | null
+          contraindications?: string | null
+          created_at?: string
+          current_intensity?: number | null
+          id?: string
+          injury_region?: string | null
+          needle_type?: string | null
+          patient_id?: string | null
+          protocol_name?: string
+          session_frequency?: string | null
+          specific_tissue?: string | null
+          technique?: string | null
+          total_sessions?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_protocols_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mac_protocols: {
         Row: {
           accumulated_treatment_time: number | null
@@ -263,6 +325,77 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "mac_protocols_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ortobiologicos_protocols: {
+        Row: {
+          application_site: string | null
+          associated_therapies: string | null
+          clinical_observations: string | null
+          collection_method: string | null
+          contraindications: string | null
+          created_at: string
+          id: string
+          injection_technique: string | null
+          patient_id: string | null
+          pre_procedure_exams: string | null
+          processing_method: string | null
+          protocol_name: string
+          session_frequency: string | null
+          therapy_type: string
+          total_sessions: number | null
+          updated_at: string
+          volume_applied: number | null
+          volume_collected: number | null
+        }
+        Insert: {
+          application_site?: string | null
+          associated_therapies?: string | null
+          clinical_observations?: string | null
+          collection_method?: string | null
+          contraindications?: string | null
+          created_at?: string
+          id?: string
+          injection_technique?: string | null
+          patient_id?: string | null
+          pre_procedure_exams?: string | null
+          processing_method?: string | null
+          protocol_name: string
+          session_frequency?: string | null
+          therapy_type: string
+          total_sessions?: number | null
+          updated_at?: string
+          volume_applied?: number | null
+          volume_collected?: number | null
+        }
+        Update: {
+          application_site?: string | null
+          associated_therapies?: string | null
+          clinical_observations?: string | null
+          collection_method?: string | null
+          contraindications?: string | null
+          created_at?: string
+          id?: string
+          injection_technique?: string | null
+          patient_id?: string | null
+          pre_procedure_exams?: string | null
+          processing_method?: string | null
+          protocol_name?: string
+          session_frequency?: string | null
+          therapy_type?: string
+          total_sessions?: number | null
+          updated_at?: string
+          volume_applied?: number | null
+          volume_collected?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ortobiologicos_protocols_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
