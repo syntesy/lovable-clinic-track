@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code } from "lucide-react";
 import { format } from "date-fns";
@@ -65,7 +66,7 @@ interface TriagemAnalysisResult {
   raw_json?: any;
 }
 
-// Estrutura do questionário clínico MVP
+// Estrutura do questionário clínico RESUMIDO
 interface QuestionnaireAnswers {
   // A) Identificação do caso
   idade: number | null;
@@ -78,51 +79,24 @@ interface QuestionnaireAnswers {
   // B) Procedimento pretendido
   procedimento_considerado: string;
   
-  // C) Segurança / Red flags
-  febre_infeccao_2_semanas: boolean | null;
-  infeccao_pele_local: boolean | null;
-  cancer_ativo: boolean | null;
-  doenca_autoimune_ativa: boolean | null;
-  diabetes_descompensado: boolean | null;
-  doenca_renal_hepatica: boolean | null;
+  // C) Segurança / Red flags (multi-select)
+  red_flags: string[];
   
-  // D) Medicamentos
-  corticoide_oral_4_semanas: boolean | null;
-  infiltracao_corticoide_3_meses: boolean | null;
-  aine_7_dias: boolean | null;
-  anticoagulante: string;
-  imunossupressor_biologico: boolean | null;
+  // D) Medicamentos relevantes (multi-select)
+  medicamentos: string[];
   
   // E) Histórico terapêutico
   prp_prf_bmac_anterior: string;
   fisioterapia_6_semanas: boolean | null;
   cirurgia_previa_regiao: boolean | null;
   
-  // F) Preparo do solo
-  exames_sangue_60_dias: boolean | null;
-  historico_anemia_ferritina_b12: string;
-  tabagismo_atual: boolean | null;
-  obesidade_imc_alto: boolean | null;
+  // F) Preparo do solo biológico (multi-select)
+  fatores_preparo: string[];
   
-  // G) Status Nutricional e Micronutrientes
-  // Vitamina D
-  vitamina_d_exame_12_meses: string;
-  vitamina_d_exposicao_sol: boolean | null;
-  vitamina_d_suplementacao: boolean | null;
-  // Ferro / Ferritina
-  diagnostico_anemia_ferro_baixo: string;
-  sintomas_cansaco_fraqueza_queda_cabelo: boolean | null;
-  // Vitamina B12
-  b12_baixa_ou_suplementacao: string;
-  dieta_vegetariana_vegana: boolean | null;
-  // Magnésio / Metabolismo muscular
-  caibras_fadiga_recuperacao_lenta: boolean | null;
-  sono_nao_reparador_estresse: boolean | null;
-  // Vitamina C / E / Zinco
-  consumo_frutas_legumes_diario: boolean | null;
-  dieta_restritiva_bariatrica: boolean | null;
+  // G) Status nutricional / micronutrientes (multi-select)
+  fatores_nutricionais: string[];
   
-  // H) Estilo de Vida e Fatores de Cicatrização
+  // H) Estilo de Vida
   qualidade_sono: string;
   consumo_alcool_2x_semana: boolean | null;
   nivel_estresse: string;
@@ -148,37 +122,13 @@ const initialAnswers: QuestionnaireAnswers = {
   tempo_dor: "",
   dor_escala: null,
   procedimento_considerado: "",
-  febre_infeccao_2_semanas: null,
-  infeccao_pele_local: null,
-  cancer_ativo: null,
-  doenca_autoimune_ativa: null,
-  diabetes_descompensado: null,
-  doenca_renal_hepatica: null,
-  corticoide_oral_4_semanas: null,
-  infiltracao_corticoide_3_meses: null,
-  aine_7_dias: null,
-  anticoagulante: "",
-  imunossupressor_biologico: null,
+  red_flags: [],
+  medicamentos: [],
   prp_prf_bmac_anterior: "",
   fisioterapia_6_semanas: null,
   cirurgia_previa_regiao: null,
-  exames_sangue_60_dias: null,
-  historico_anemia_ferritina_b12: "",
-  tabagismo_atual: null,
-  obesidade_imc_alto: null,
-  // G) Status Nutricional
-  vitamina_d_exame_12_meses: "",
-  vitamina_d_exposicao_sol: null,
-  vitamina_d_suplementacao: null,
-  diagnostico_anemia_ferro_baixo: "",
-  sintomas_cansaco_fraqueza_queda_cabelo: null,
-  b12_baixa_ou_suplementacao: "",
-  dieta_vegetariana_vegana: null,
-  caibras_fadiga_recuperacao_lenta: null,
-  sono_nao_reparador_estresse: null,
-  consumo_frutas_legumes_diario: null,
-  dieta_restritiva_bariatrica: null,
-  // H) Estilo de Vida
+  fatores_preparo: [],
+  fatores_nutricionais: [],
   qualidade_sono: "",
   consumo_alcool_2x_semana: null,
   nivel_estresse: "",
@@ -751,134 +701,96 @@ export default function TriagemBiologica() {
                         <Separator className="mt-4" />
                       </div>
 
-                      {/* C) Segurança / Red flags */}
+                      {/* C) Segurança / Red flags (multi-select) */}
                       <div>
                         <h3 className="text-sm font-semibold text-red-500 mb-3">C) SEGURANÇA / RED FLAGS</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <Label className="text-sm">Febre ou infecção ativa nas últimas 2 semanas?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="febre_infeccao"
-                                value={answers.febre_infeccao_2_semanas}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, febre_infeccao_2_semanas: v }))}
+                        <Label className="text-sm text-muted-foreground mb-3 block">
+                          Alguma das condições abaixo está presente? (selecione todas que se aplicam)
+                        </Label>
+                        <div className="space-y-2">
+                          {[
+                            { value: "infeccao_ativa_febre", label: "Infecção ativa ou febre recente" },
+                            { value: "infeccao_pele_local", label: "Infecção de pele no local" },
+                            { value: "cancer_ativo", label: "Câncer ativo em tratamento" },
+                            { value: "doenca_autoimune_ativa", label: "Doença autoimune em atividade" },
+                            { value: "diabetes_descompensado", label: "Diabetes descompensado" },
+                            { value: "doenca_renal_hepatica", label: "Doença renal ou hepática importante" },
+                          ].map((item) => (
+                            <div key={item.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={item.value}
+                                checked={answers.red_flags.includes(item.value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setAnswers(prev => ({ ...prev, red_flags: [...prev.red_flags.filter(v => v !== "nenhum"), item.value] }));
+                                  } else {
+                                    setAnswers(prev => ({ ...prev, red_flags: prev.red_flags.filter(v => v !== item.value) }));
+                                  }
+                                }}
                               />
+                              <Label htmlFor={item.value} className="text-sm cursor-pointer">{item.label}</Label>
                             </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Infecção de pele no local a ser tratado?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="infeccao_pele"
-                                value={answers.infeccao_pele_local}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, infeccao_pele_local: v }))}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Câncer ativo em tratamento?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="cancer_ativo"
-                                value={answers.cancer_ativo}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, cancer_ativo: v }))}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Doença autoimune ativa / surto atual?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="autoimune"
-                                value={answers.doenca_autoimune_ativa}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, doenca_autoimune_ativa: v }))}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Diabetes descompensado ou HbA1c desconhecida?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="diabetes"
-                                value={answers.diabetes_descompensado}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, diabetes_descompensado: v }))}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Doença renal/hepática importante conhecida?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="renal_hepatica"
-                                value={answers.doenca_renal_hepatica}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, doenca_renal_hepatica: v }))}
-                              />
-                            </div>
+                          ))}
+                          <div className="flex items-center space-x-2 pt-2 border-t">
+                            <Checkbox
+                              id="red_flags_nenhum"
+                              checked={answers.red_flags.includes("nenhum")}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setAnswers(prev => ({ ...prev, red_flags: ["nenhum"] }));
+                                } else {
+                                  setAnswers(prev => ({ ...prev, red_flags: [] }));
+                                }
+                              }}
+                            />
+                            <Label htmlFor="red_flags_nenhum" className="text-sm cursor-pointer font-medium text-green-600">Nenhuma das alternativas</Label>
                           </div>
                         </div>
                         <Separator className="mt-4" />
                       </div>
 
-                      {/* D) Medicamentos */}
+                      {/* D) Medicamentos relevantes (multi-select) */}
                       <div>
-                        <h3 className="text-sm font-semibold text-primary mb-3">D) MEDICAMENTOS</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <Label className="text-sm">Corticoide oral nas últimas 4 semanas?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="corticoide_oral"
-                                value={answers.corticoide_oral_4_semanas}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, corticoide_oral_4_semanas: v }))}
+                        <h3 className="text-sm font-semibold text-primary mb-3">D) MEDICAMENTOS RELEVANTES</h3>
+                        <Label className="text-sm text-muted-foreground mb-3 block">
+                          Uso recente de algum dos medicamentos abaixo? (selecione todos que se aplicam)
+                        </Label>
+                        <div className="space-y-2">
+                          {[
+                            { value: "corticoide_oral_4sem", label: "Corticoide oral (<4 semanas)" },
+                            { value: "infiltracao_corticoide_3m", label: "Infiltração com corticoide (<3 meses)" },
+                            { value: "aine_7dias", label: "Anti-inflamatório (AINE) nos últimos 7 dias" },
+                            { value: "anticoagulante", label: "Anticoagulante / antiagregante" },
+                            { value: "imunossupressor", label: "Imunossupressor / biológico" },
+                          ].map((item) => (
+                            <div key={item.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={item.value}
+                                checked={answers.medicamentos.includes(item.value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setAnswers(prev => ({ ...prev, medicamentos: [...prev.medicamentos.filter(v => v !== "nenhum"), item.value] }));
+                                  } else {
+                                    setAnswers(prev => ({ ...prev, medicamentos: prev.medicamentos.filter(v => v !== item.value) }));
+                                  }
+                                }}
                               />
+                              <Label htmlFor={item.value} className="text-sm cursor-pointer">{item.label}</Label>
                             </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Infiltração com corticoide no local nos últimos 3 meses?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="infiltracao_corticoide"
-                                value={answers.infiltracao_corticoide_3_meses}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, infiltracao_corticoide_3_meses: v }))}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">AINE (anti-inflamatório) nos últimos 7 dias?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="aine"
-                                value={answers.aine_7_dias}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, aine_7_dias: v }))}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label>Anticoagulante / Antiagregante</Label>
-                            <Select value={answers.anticoagulante} onValueChange={(v) => setAnswers(prev => ({ ...prev, anticoagulante: v }))}>
-                              <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="nenhum">Nenhum</SelectItem>
-                                <SelectItem value="AAS">AAS (Aspirina)</SelectItem>
-                                <SelectItem value="clopidogrel">Clopidogrel</SelectItem>
-                                <SelectItem value="varfarina">Varfarina</SelectItem>
-                                <SelectItem value="rivaroxabana">Rivaroxabana</SelectItem>
-                                <SelectItem value="apixabana">Apixabana</SelectItem>
-                                <SelectItem value="outros">Outros</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Imunossupressor / Biológico em uso?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="imunossupressor"
-                                value={answers.imunossupressor_biologico}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, imunossupressor_biologico: v }))}
-                              />
-                            </div>
+                          ))}
+                          <div className="flex items-center space-x-2 pt-2 border-t">
+                            <Checkbox
+                              id="medicamentos_nenhum"
+                              checked={answers.medicamentos.includes("nenhum")}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setAnswers(prev => ({ ...prev, medicamentos: ["nenhum"] }));
+                                } else {
+                                  setAnswers(prev => ({ ...prev, medicamentos: [] }));
+                                }
+                              }}
+                            />
+                            <Label htmlFor="medicamentos_nenhum" className="text-sm cursor-pointer font-medium text-green-600">Nenhum</Label>
                           </div>
                         </div>
                         <Separator className="mt-4" />
@@ -889,20 +801,20 @@ export default function TriagemBiologica() {
                         <h3 className="text-sm font-semibold text-primary mb-3">E) HISTÓRICO TERAPÊUTICO</h3>
                         <div className="space-y-4">
                           <div>
-                            <Label>Já fez PRP/PRF/BMAC antes?</Label>
+                            <Label>Já realizou PRP / PRF / BMAC anteriormente?</Label>
                             <Select value={answers.prp_prf_bmac_anterior} onValueChange={(v) => setAnswers(prev => ({ ...prev, prp_prf_bmac_anterior: v }))}>
                               <SelectTrigger className="mt-1">
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="nunca">Nunca</SelectItem>
-                                <SelectItem value="sim_ajudou">Sim, ajudou</SelectItem>
-                                <SelectItem value="sim_nao_ajudou">Sim, não ajudou</SelectItem>
+                                <SelectItem value="sim_boa_resposta">Sim, com boa resposta</SelectItem>
+                                <SelectItem value="sim_sem_boa_resposta">Sim, sem boa resposta</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           <div>
-                            <Label className="text-sm">Fisioterapia ≥6 semanas para esta condição?</Label>
+                            <Label className="text-sm">Já realizou fisioterapia adequada (≥6 semanas) para este problema?</Label>
                             <div className="mt-2">
                               <YesNoRadio
                                 id="fisioterapia"
@@ -925,211 +837,102 @@ export default function TriagemBiologica() {
                         <Separator className="mt-4" />
                       </div>
 
-                      {/* F) Preparo do solo */}
+                      {/* F) Preparo do solo biológico (multi-select) */}
                       <div>
                         <h3 className="text-sm font-semibold text-primary mb-3">F) PREPARO DO SOLO BIOLÓGICO</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <Label className="text-sm">Exames de sangue recentes (&lt;60 dias)?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="exames_sangue"
-                                value={answers.exames_sangue_60_dias}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, exames_sangue_60_dias: v }))}
+                        <Label className="text-sm text-muted-foreground mb-3 block">
+                          Algum dos fatores abaixo está presente? (selecione todos que se aplicam)
+                        </Label>
+                        <div className="space-y-2">
+                          {[
+                            { value: "sem_exames_60dias", label: "Não possui exames de sangue recentes (<60 dias)" },
+                            { value: "historico_anemia_ferro_b12", label: "Histórico de anemia, ferro baixo ou B12 baixa" },
+                            { value: "tabagismo_atual", label: "Tabagismo atual" },
+                            { value: "obesidade_imc_elevado", label: "Obesidade / IMC elevado" },
+                          ].map((item) => (
+                            <div key={item.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={item.value}
+                                checked={answers.fatores_preparo.includes(item.value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setAnswers(prev => ({ ...prev, fatores_preparo: [...prev.fatores_preparo.filter(v => v !== "nenhum"), item.value] }));
+                                  } else {
+                                    setAnswers(prev => ({ ...prev, fatores_preparo: prev.fatores_preparo.filter(v => v !== item.value) }));
+                                  }
+                                }}
                               />
+                              <Label htmlFor={item.value} className="text-sm cursor-pointer">{item.label}</Label>
                             </div>
-                          </div>
-                          <div>
-                            <Label>Histórico de anemia, ferritina baixa ou B12 baixa?</Label>
-                            <Select value={answers.historico_anemia_ferritina_b12} onValueChange={(v) => setAnswers(prev => ({ ...prev, historico_anemia_ferritina_b12: v }))}>
-                              <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="sim">Sim</SelectItem>
-                                <SelectItem value="nao">Não</SelectItem>
-                                <SelectItem value="nao_sei">Não sei</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Tabagismo atual?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="tabagismo"
-                                value={answers.tabagismo_atual}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, tabagismo_atual: v }))}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-sm">Obesidade / IMC elevado?</Label>
-                            <div className="mt-2">
-                              <YesNoRadio
-                                id="obesidade"
-                                value={answers.obesidade_imc_alto}
-                                onChange={(v) => setAnswers(prev => ({ ...prev, obesidade_imc_alto: v }))}
-                              />
-                            </div>
+                          ))}
+                          <div className="flex items-center space-x-2 pt-2 border-t">
+                            <Checkbox
+                              id="fatores_preparo_nenhum"
+                              checked={answers.fatores_preparo.includes("nenhum")}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setAnswers(prev => ({ ...prev, fatores_preparo: ["nenhum"] }));
+                                } else {
+                                  setAnswers(prev => ({ ...prev, fatores_preparo: [] }));
+                                }
+                              }}
+                            />
+                            <Label htmlFor="fatores_preparo_nenhum" className="text-sm cursor-pointer font-medium text-green-600">Nenhum</Label>
                           </div>
                         </div>
                         <Separator className="mt-4" />
                       </div>
 
-                      {/* G) Status Nutricional e Micronutrientes */}
+                      {/* G) Status nutricional / micronutrientes (multi-select) */}
                       <div>
-                        <h3 className="text-sm font-semibold text-emerald-600 mb-3">G) STATUS NUTRICIONAL E MICRONUTRIENTES</h3>
-                        <div className="space-y-4">
-                          {/* Vitamina D */}
-                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
-                            <span className="text-xs font-semibold text-emerald-600 uppercase">Vitamina D</span>
-                            <div>
-                              <Label className="text-sm">Você realizou exame de vitamina D (25-OH) nos últimos 12 meses?</Label>
-                              <Select value={answers.vitamina_d_exame_12_meses} onValueChange={(v) => setAnswers(prev => ({ ...prev, vitamina_d_exame_12_meses: v }))}>
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="sim_normal">Sim – normal</SelectItem>
-                                  <SelectItem value="sim_baixa">Sim – estava baixa</SelectItem>
-                                  <SelectItem value="nao_realizou">Não realizou / não sabe</SelectItem>
-                                </SelectContent>
-                              </Select>
+                        <h3 className="text-sm font-semibold text-emerald-600 mb-3">G) STATUS NUTRICIONAL / MICRONUTRIENTES</h3>
+                        <Label className="text-sm text-muted-foreground mb-3 block">
+                          Em relação à nutrição e recuperação, você se identifica com alguma situação abaixo? (selecione todas que se aplicam)
+                        </Label>
+                        <div className="space-y-2">
+                          {[
+                            { value: "pouca_exposicao_solar_sem_vitamina_d", label: "Pouca exposição solar ou não uso vitamina D" },
+                            { value: "cansaco_fraqueza_queda_cabelo", label: "Cansaço frequente, fraqueza ou queda de cabelo" },
+                            { value: "dieta_vegetariana_vegana_restritiva", label: "Dieta vegetariana/vegana ou restritiva" },
+                            { value: "caibras_recuperacao_lenta", label: "Cãibras frequentes ou recuperação muscular lenta" },
+                            { value: "baixo_consumo_frutas_verduras", label: "Baixo consumo diário de frutas e verduras" },
+                          ].map((item) => (
+                            <div key={item.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={item.value}
+                                checked={answers.fatores_nutricionais.includes(item.value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setAnswers(prev => ({ ...prev, fatores_nutricionais: [...prev.fatores_nutricionais.filter(v => v !== "nenhum"), item.value] }));
+                                  } else {
+                                    setAnswers(prev => ({ ...prev, fatores_nutricionais: prev.fatores_nutricionais.filter(v => v !== item.value) }));
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={item.value} className="text-sm cursor-pointer">{item.label}</Label>
                             </div>
-                            <div>
-                              <Label className="text-sm">Você se expõe ao sol pelo menos 15–20 minutos, 3 vezes por semana?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="vitamina_d_sol"
-                                  value={answers.vitamina_d_exposicao_sol}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, vitamina_d_exposicao_sol: v }))}
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-sm">Faz uso atual de suplementação de vitamina D?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="vitamina_d_suplemento"
-                                  value={answers.vitamina_d_suplementacao}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, vitamina_d_suplementacao: v }))}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Ferro / Ferritina */}
-                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
-                            <span className="text-xs font-semibold text-emerald-600 uppercase">Ferro / Ferritina</span>
-                            <div>
-                              <Label className="text-sm">Já teve diagnóstico prévio de anemia ou ferro baixo?</Label>
-                              <Select value={answers.diagnostico_anemia_ferro_baixo} onValueChange={(v) => setAnswers(prev => ({ ...prev, diagnostico_anemia_ferro_baixo: v }))}>
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="sim">Sim</SelectItem>
-                                  <SelectItem value="nao">Não</SelectItem>
-                                  <SelectItem value="nao_sabe">Não sabe</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-sm">Apresenta com frequência cansaço excessivo, fraqueza ou queda de cabelo?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="sintomas_ferro"
-                                  value={answers.sintomas_cansaco_fraqueza_queda_cabelo}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, sintomas_cansaco_fraqueza_queda_cabelo: v }))}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Vitamina B12 */}
-                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
-                            <span className="text-xs font-semibold text-emerald-600 uppercase">Vitamina B12</span>
-                            <div>
-                              <Label className="text-sm">Já foi informado por profissional de saúde que tinha vitamina B12 baixa ou faz suplementação?</Label>
-                              <Select value={answers.b12_baixa_ou_suplementacao} onValueChange={(v) => setAnswers(prev => ({ ...prev, b12_baixa_ou_suplementacao: v }))}>
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="sim">Sim</SelectItem>
-                                  <SelectItem value="nao">Não</SelectItem>
-                                  <SelectItem value="nao_sabe">Não sabe</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-sm">Segue dieta vegetariana ou vegana?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="dieta_veg"
-                                  value={answers.dieta_vegetariana_vegana}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, dieta_vegetariana_vegana: v }))}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Magnésio / Metabolismo muscular */}
-                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
-                            <span className="text-xs font-semibold text-emerald-600 uppercase">Magnésio / Metabolismo Muscular</span>
-                            <div>
-                              <Label className="text-sm">Apresenta cãibras frequentes, fadiga muscular ou recuperação lenta após esforço?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="caibras_fadiga"
-                                  value={answers.caibras_fadiga_recuperacao_lenta}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, caibras_fadiga_recuperacao_lenta: v }))}
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-sm">Sono não reparador ou estresse elevado?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="sono_estresse"
-                                  value={answers.sono_nao_reparador_estresse}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, sono_nao_reparador_estresse: v }))}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Vitamina C / E / Zinco */}
-                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
-                            <span className="text-xs font-semibold text-emerald-600 uppercase">Vitamina C / E / Zinco</span>
-                            <div>
-                              <Label className="text-sm">Consome frutas, legumes e verduras diariamente?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="frutas_legumes"
-                                  value={answers.consumo_frutas_legumes_diario}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, consumo_frutas_legumes_diario: v }))}
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-sm">Segue dieta restritiva, bariátrica ou muito pobre em gorduras?</Label>
-                              <div className="mt-2">
-                                <YesNoRadio
-                                  id="dieta_restritiva"
-                                  value={answers.dieta_restritiva_bariatrica}
-                                  onChange={(v) => setAnswers(prev => ({ ...prev, dieta_restritiva_bariatrica: v }))}
-                                />
-                              </div>
-                            </div>
+                          ))}
+                          <div className="flex items-center space-x-2 pt-2 border-t">
+                            <Checkbox
+                              id="fatores_nutricionais_nenhum"
+                              checked={answers.fatores_nutricionais.includes("nenhum")}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setAnswers(prev => ({ ...prev, fatores_nutricionais: ["nenhum"] }));
+                                } else {
+                                  setAnswers(prev => ({ ...prev, fatores_nutricionais: [] }));
+                                }
+                              }}
+                            />
+                            <Label htmlFor="fatores_nutricionais_nenhum" className="text-sm cursor-pointer font-medium text-green-600">Nenhuma das alternativas</Label>
                           </div>
                         </div>
                         <Separator className="mt-4" />
                       </div>
 
-                      {/* H) Estilo de Vida e Fatores de Cicatrização */}
+                      {/* H) Estilo de Vida */}
                       <div>
-                        <h3 className="text-sm font-semibold text-blue-600 mb-3">H) ESTILO DE VIDA E FATORES DE CICATRIZAÇÃO</h3>
+                        <h3 className="text-sm font-semibold text-blue-600 mb-3">H) ESTILO DE VIDA</h3>
                         <div className="space-y-4">
                           <div>
                             <Label>Qualidade do sono</Label>
