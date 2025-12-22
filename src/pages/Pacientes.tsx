@@ -79,11 +79,11 @@ const Pacientes = () => {
                   <div className="mt-2 md:mt-3">
                     <Button
                       size="sm"
-                      onClick={() => navigate(`/prontuario/${patient.id}`)}
+                      onClick={() => navigate(`/pacientes/${patient.id}`)}
                       className="bg-primary hover:bg-primary/90 text-xs md:text-sm w-full sm:w-auto"
                     >
                       <FileText className="h-4 w-4 mr-1 md:mr-2" />
-                      Ver Prontuário
+                      Ver Detalhes
                     </Button>
                   </div>
                 </div>
