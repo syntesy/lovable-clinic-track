@@ -14,9 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code } from "lucide-react";
+import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code, Ban } from "lucide-react";
 import { format } from "date-fns";
-import { PrintPreviewModal } from "@/components/PrintPreviewModal";
+import { PrintPreviewModal, RequestedExam } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
 import { ptBR } from "date-fns/locale";
@@ -442,7 +442,61 @@ export default function TriagemBiologica() {
     }
   };
 
+  // Build the exams list from analysisResult.requested_exams for printing
+  const getExamsForPrint = (): RequestedExam[] => {
+    const exams: RequestedExam[] = [];
+    
+    // First priority: use analysisResult.requested_exams
+    if (analysisResult?.requested_exams) {
+      if (analysisResult.requested_exams.required?.length > 0) {
+        analysisResult.requested_exams.required.forEach(exam => {
+          // Parse exam string - format can be "Exam Name — Justification" or just "Exam Name"
+          const parts = exam.split(/\s*[—–-]\s*/);
+          exams.push({
+            name: parts[0].trim(),
+            justification: parts[1]?.trim() || "Avaliação para triagem biológica",
+            type: "required"
+          });
+        });
+      }
+      
+      if (analysisResult.requested_exams.optional?.length > 0) {
+        analysisResult.requested_exams.optional.forEach(exam => {
+          const parts = exam.split(/\s*[—–-]\s*/);
+          exams.push({
+            name: parts[0].trim(),
+            justification: parts[1]?.trim() || "Investigação complementar",
+            type: "optional"
+          });
+        });
+      }
+    }
+    
+    // Second priority: use recommendedExams (legacy format)
+    if (exams.length === 0 && recommendedExams.length > 0) {
+      recommendedExams.forEach(group => {
+        group.exams.forEach(exam => {
+          exams.push({
+            name: exam,
+            justification: group.justification,
+            type: "required"
+          });
+        });
+      });
+    }
+    
+    return exams;
+  };
+
+  const hasExamsToRequest = (): boolean => {
+    return getExamsForPrint().length > 0;
+  };
+
   const handleOpenPrintPreview = (type: "exams" | "orientations") => {
+    if (type === "exams" && !hasExamsToRequest()) {
+      toast.warning("Nenhum exame foi indicado pela triagem");
+      return;
+    }
     setPrintPreviewType(type);
     setPrintPreviewOpen(true);
   };
@@ -1375,26 +1429,46 @@ export default function TriagemBiologica() {
                   <CardTitle className="text-base font-medium">Solicitação de Exames</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {recommendedExams.length > 0 ? (
+                  {hasExamsToRequest() ? (
                     <>
                       <ScrollArea className="h-[300px] pr-4">
-                        <div className="space-y-4">
-                          {recommendedExams.map((group, idx) => (
-                            <div key={idx} className="border-l-2 border-primary pl-3">
-                              <h4 className="text-sm font-semibold text-primary mb-1">{group.axis}</h4>
-                              <div className="space-y-1 mb-2">
-                                {group.exams.map((exam, examIdx) => (
-                                  <div key={examIdx} className="flex items-center gap-2 text-sm">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                                    {exam}
+                        <div className="space-y-3">
+                          {getExamsForPrint().filter(e => e.type === "required").length > 0 && (
+                            <div className="border-l-2 border-red-500 pl-3">
+                              <h4 className="text-sm font-semibold text-red-600 mb-2">OBRIGATÓRIOS</h4>
+                              <div className="space-y-1">
+                                {getExamsForPrint().filter(e => e.type === "required").map((exam, idx) => (
+                                  <div key={idx} className="flex items-start gap-2 text-sm">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5" />
+                                    <div>
+                                      <span className="font-medium">{exam.name}</span>
+                                      {exam.justification && (
+                                        <span className="text-muted-foreground"> — {exam.justification}</span>
+                                      )}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
-                              <p className="text-xs text-muted-foreground italic">
-                                {group.justification}
-                              </p>
                             </div>
-                          ))}
+                          )}
+                          {getExamsForPrint().filter(e => e.type === "optional").length > 0 && (
+                            <div className="border-l-2 border-amber-500 pl-3">
+                              <h4 className="text-sm font-semibold text-amber-600 mb-2">OPCIONAIS</h4>
+                              <div className="space-y-1">
+                                {getExamsForPrint().filter(e => e.type === "optional").map((exam, idx) => (
+                                  <div key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5" />
+                                    <div>
+                                      <span className="font-medium">{exam.name}</span>
+                                      {exam.justification && (
+                                        <span> — {exam.justification}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </ScrollArea>
                       <Button 
@@ -1406,35 +1480,16 @@ export default function TriagemBiologica() {
                         Imprimir Solicitação de Exames
                       </Button>
                     </>
-                  ) : analysisResult?.requested_exams?.required?.length > 0 ? (
-                    <>
-                      <ScrollArea className="h-[300px] pr-4">
-                        <div className="space-y-2">
-                          {analysisResult.requested_exams.required.map((exam, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                              {exam}
-                            </div>
-                          ))}
-                          {analysisResult.requested_exams.optional?.map((exam, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                              {exam} (opcional)
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                      <Button 
-                        onClick={() => handleOpenPrintPreview("exams")}
-                        className="w-full"
-                        variant="outline"
-                      >
-                        <Printer className="w-4 h-4 mr-2" />
-                        Imprimir Solicitação de Exames
-                      </Button>
-                    </>
+                  ) : analysisResult ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Ban className="w-10 h-10 text-amber-500 mb-3" />
+                      <p className="text-sm font-medium text-amber-700">Nenhum exame foi indicado pela triagem</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        O paciente não necessita de exames laboratoriais adicionais
+                      </p>
+                    </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground text-center py-8">
                       Realize a triagem primeiro para ver os exames recomendados
                     </p>
                   )}
@@ -1463,7 +1518,7 @@ export default function TriagemBiologica() {
                       </Button>
                     </>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground text-center py-8">
                       Realize a triagem primeiro para ver as orientações
                     </p>
                   )}
@@ -1529,7 +1584,7 @@ export default function TriagemBiologica() {
         onOpenChange={setPrintPreviewOpen}
         type={printPreviewType}
         patientName={selectedPatient?.full_name || ""}
-        content={printPreviewType === "exams" ? recommendedExams : (patientOrientations || "")}
+        content={printPreviewType === "exams" ? getExamsForPrint() : (patientOrientations || "")}
       />
 
       {/* Extracted Text Preview Modal */}
