@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,6 +148,8 @@ const initialLabExams: LabExamValues = {
 
 export default function TriagemBiologica() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const patientIdFromUrl = searchParams.get("paciente");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [answers, setAnswers] = useState<QuestionnaireAnswers>(initialAnswers);
   const [labExams, setLabExams] = useState<LabExamValues>(initialLabExams);
@@ -200,6 +203,13 @@ export default function TriagemBiologica() {
     },
     enabled: !!selectedPatientId
   });
+
+  // Set patient from URL parameter
+  useEffect(() => {
+    if (patientIdFromUrl && patientIdFromUrl !== selectedPatientId) {
+      setSelectedPatientId(patientIdFromUrl);
+    }
+  }, [patientIdFromUrl]);
 
   // Reset when patient changes
   useEffect(() => {
