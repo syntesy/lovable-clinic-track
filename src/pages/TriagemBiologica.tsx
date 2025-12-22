@@ -103,6 +103,29 @@ interface QuestionnaireAnswers {
   historico_anemia_ferritina_b12: string;
   tabagismo_atual: boolean | null;
   obesidade_imc_alto: boolean | null;
+  
+  // G) Status Nutricional e Micronutrientes
+  // Vitamina D
+  vitamina_d_exame_12_meses: string;
+  vitamina_d_exposicao_sol: boolean | null;
+  vitamina_d_suplementacao: boolean | null;
+  // Ferro / Ferritina
+  diagnostico_anemia_ferro_baixo: string;
+  sintomas_cansaco_fraqueza_queda_cabelo: boolean | null;
+  // Vitamina B12
+  b12_baixa_ou_suplementacao: string;
+  dieta_vegetariana_vegana: boolean | null;
+  // Magnésio / Metabolismo muscular
+  caibras_fadiga_recuperacao_lenta: boolean | null;
+  sono_nao_reparador_estresse: boolean | null;
+  // Vitamina C / E / Zinco
+  consumo_frutas_legumes_diario: boolean | null;
+  dieta_restritiva_bariatrica: boolean | null;
+  
+  // H) Estilo de Vida e Fatores de Cicatrização
+  qualidade_sono: string;
+  consumo_alcool_2x_semana: boolean | null;
+  nivel_estresse: string;
 }
 
 // Estrutura dos exames laboratoriais
@@ -143,6 +166,22 @@ const initialAnswers: QuestionnaireAnswers = {
   historico_anemia_ferritina_b12: "",
   tabagismo_atual: null,
   obesidade_imc_alto: null,
+  // G) Status Nutricional
+  vitamina_d_exame_12_meses: "",
+  vitamina_d_exposicao_sol: null,
+  vitamina_d_suplementacao: null,
+  diagnostico_anemia_ferro_baixo: "",
+  sintomas_cansaco_fraqueza_queda_cabelo: null,
+  b12_baixa_ou_suplementacao: "",
+  dieta_vegetariana_vegana: null,
+  caibras_fadiga_recuperacao_lenta: null,
+  sono_nao_reparador_estresse: null,
+  consumo_frutas_legumes_diario: null,
+  dieta_restritiva_bariatrica: null,
+  // H) Estilo de Vida
+  qualidade_sono: "",
+  consumo_alcool_2x_semana: null,
+  nivel_estresse: "",
 };
 
 const initialLabExams: LabExamValues = {
@@ -932,6 +971,201 @@ export default function TriagemBiologica() {
                                 onChange={(v) => setAnswers(prev => ({ ...prev, obesidade_imc_alto: v }))}
                               />
                             </div>
+                          </div>
+                        </div>
+                        <Separator className="mt-4" />
+                      </div>
+
+                      {/* G) Status Nutricional e Micronutrientes */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-emerald-600 mb-3">G) STATUS NUTRICIONAL E MICRONUTRIENTES</h3>
+                        <div className="space-y-4">
+                          {/* Vitamina D */}
+                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
+                            <span className="text-xs font-semibold text-emerald-600 uppercase">Vitamina D</span>
+                            <div>
+                              <Label className="text-sm">Você realizou exame de vitamina D (25-OH) nos últimos 12 meses?</Label>
+                              <Select value={answers.vitamina_d_exame_12_meses} onValueChange={(v) => setAnswers(prev => ({ ...prev, vitamina_d_exame_12_meses: v }))}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="sim_normal">Sim – normal</SelectItem>
+                                  <SelectItem value="sim_baixa">Sim – estava baixa</SelectItem>
+                                  <SelectItem value="nao_realizou">Não realizou / não sabe</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Você se expõe ao sol pelo menos 15–20 minutos, 3 vezes por semana?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="vitamina_d_sol"
+                                  value={answers.vitamina_d_exposicao_sol}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, vitamina_d_exposicao_sol: v }))}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Faz uso atual de suplementação de vitamina D?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="vitamina_d_suplemento"
+                                  value={answers.vitamina_d_suplementacao}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, vitamina_d_suplementacao: v }))}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Ferro / Ferritina */}
+                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
+                            <span className="text-xs font-semibold text-emerald-600 uppercase">Ferro / Ferritina</span>
+                            <div>
+                              <Label className="text-sm">Já teve diagnóstico prévio de anemia ou ferro baixo?</Label>
+                              <Select value={answers.diagnostico_anemia_ferro_baixo} onValueChange={(v) => setAnswers(prev => ({ ...prev, diagnostico_anemia_ferro_baixo: v }))}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="sim">Sim</SelectItem>
+                                  <SelectItem value="nao">Não</SelectItem>
+                                  <SelectItem value="nao_sabe">Não sabe</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Apresenta com frequência cansaço excessivo, fraqueza ou queda de cabelo?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="sintomas_ferro"
+                                  value={answers.sintomas_cansaco_fraqueza_queda_cabelo}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, sintomas_cansaco_fraqueza_queda_cabelo: v }))}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Vitamina B12 */}
+                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
+                            <span className="text-xs font-semibold text-emerald-600 uppercase">Vitamina B12</span>
+                            <div>
+                              <Label className="text-sm">Já foi informado por profissional de saúde que tinha vitamina B12 baixa ou faz suplementação?</Label>
+                              <Select value={answers.b12_baixa_ou_suplementacao} onValueChange={(v) => setAnswers(prev => ({ ...prev, b12_baixa_ou_suplementacao: v }))}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="sim">Sim</SelectItem>
+                                  <SelectItem value="nao">Não</SelectItem>
+                                  <SelectItem value="nao_sabe">Não sabe</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Segue dieta vegetariana ou vegana?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="dieta_veg"
+                                  value={answers.dieta_vegetariana_vegana}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, dieta_vegetariana_vegana: v }))}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Magnésio / Metabolismo muscular */}
+                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
+                            <span className="text-xs font-semibold text-emerald-600 uppercase">Magnésio / Metabolismo Muscular</span>
+                            <div>
+                              <Label className="text-sm">Apresenta cãibras frequentes, fadiga muscular ou recuperação lenta após esforço?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="caibras_fadiga"
+                                  value={answers.caibras_fadiga_recuperacao_lenta}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, caibras_fadiga_recuperacao_lenta: v }))}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Sono não reparador ou estresse elevado?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="sono_estresse"
+                                  value={answers.sono_nao_reparador_estresse}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, sono_nao_reparador_estresse: v }))}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Vitamina C / E / Zinco */}
+                          <div className="pl-2 border-l-2 border-emerald-500/30 space-y-3">
+                            <span className="text-xs font-semibold text-emerald-600 uppercase">Vitamina C / E / Zinco</span>
+                            <div>
+                              <Label className="text-sm">Consome frutas, legumes e verduras diariamente?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="frutas_legumes"
+                                  value={answers.consumo_frutas_legumes_diario}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, consumo_frutas_legumes_diario: v }))}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Segue dieta restritiva, bariátrica ou muito pobre em gorduras?</Label>
+                              <div className="mt-2">
+                                <YesNoRadio
+                                  id="dieta_restritiva"
+                                  value={answers.dieta_restritiva_bariatrica}
+                                  onChange={(v) => setAnswers(prev => ({ ...prev, dieta_restritiva_bariatrica: v }))}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <Separator className="mt-4" />
+                      </div>
+
+                      {/* H) Estilo de Vida e Fatores de Cicatrização */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-blue-600 mb-3">H) ESTILO DE VIDA E FATORES DE CICATRIZAÇÃO</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Qualidade do sono</Label>
+                            <Select value={answers.qualidade_sono} onValueChange={(v) => setAnswers(prev => ({ ...prev, qualidade_sono: v }))}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="boa">Boa</SelectItem>
+                                <SelectItem value="regular">Regular</SelectItem>
+                                <SelectItem value="ruim">Ruim</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-sm">Consumo de álcool maior que 2 vezes por semana?</Label>
+                            <div className="mt-2">
+                              <YesNoRadio
+                                id="alcool_frequente"
+                                value={answers.consumo_alcool_2x_semana}
+                                onChange={(v) => setAnswers(prev => ({ ...prev, consumo_alcool_2x_semana: v }))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label>Nível de estresse percebido</Label>
+                            <Select value={answers.nivel_estresse} onValueChange={(v) => setAnswers(prev => ({ ...prev, nivel_estresse: v }))}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="baixo">Baixo</SelectItem>
+                                <SelectItem value="moderado">Moderado</SelectItem>
+                                <SelectItem value="alto">Alto</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                       </div>
