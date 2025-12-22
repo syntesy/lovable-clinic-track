@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Activity, TrendingUp, AlertTriangle } from "lucide-react";
-
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, FileText, Activity, TrendingUp, AlertTriangle, FlaskConical, CheckCircle2, XCircle, AlertCircle, Clock, FileSearch } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 const DetalhePaciente = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -50,6 +52,50 @@ const DetalhePaciente = () => {
       return data;
     },
   });
+
+  // Query for PRP screenings
+  const { data: screenings } = useQuery({
+    queryKey: ["patient-screenings", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prp_screenings")
+        .select("*, prp_lab_results(*)")
+        .eq("patient_id", id)
+        .order("screening_date", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Query for blood tests
+  const { data: bloodTests } = useQuery({
+    queryKey: ["patient-blood-tests", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blood_tests")
+        .select("*")
+        .eq("patient_id", id)
+        .order("collection_date", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getClassificationBadge = (classification: string) => {
+    switch (classification?.toUpperCase()) {
+      case "APTO":
+        return <Badge className="bg-emerald-500 text-white"><CheckCircle2 className="w-3 h-3 mr-1" /> APTO</Badge>;
+      case "APTO_COM_PREPARO":
+        return <Badge className="bg-amber-500 text-white"><AlertCircle className="w-3 h-3 mr-1" /> APTO COM PREPARO</Badge>;
+      case "NAO_APTO":
+      case "CONTRAINDICADO":
+        return <Badge className="bg-red-500 text-white"><XCircle className="w-3 h-3 mr-1" /> NÃO APTO</Badge>;
+      default:
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> {classification || "Aguardando"}</Badge>;
+    }
+  };
 
   if (isLoading) {
     return <div className="text-center py-12">Carregando...</div>;
@@ -104,8 +150,12 @@ const DetalhePaciente = () => {
       </div>
 
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto">
           <TabsTrigger value="info">Dados Clínicos</TabsTrigger>
+          <TabsTrigger value="triagem" className="flex items-center gap-1">
+            <FlaskConical className="h-3 w-3" />
+            Triagem & Exames
+          </TabsTrigger>
           <TabsTrigger value="protocol">Protocolo MAC</TabsTrigger>
           <TabsTrigger value="sessions">Evolução</TabsTrigger>
           <TabsTrigger value="contraindications">Contra-Indicações</TabsTrigger>
@@ -216,6 +266,158 @@ const DetalhePaciente = () => {
                   {patient.initial_mobility ?? "—"}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Triagem & Exames Tab */}
+        <TabsContent value="triagem" className="space-y-6">
+          {/* Triagens Realizadas */}
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center">
+                <FlaskConical className="mr-2 h-5 w-5 text-primary" />
+                Triagens Biológicas Pré-PRP
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/triagem-biologica?paciente=${id}`)}
+              >
+                Nova Triagem
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {screenings && screenings.length > 0 ? (
+                <div className="space-y-4">
+                  {screenings.map((screening) => {
+                    const recommendedExams = screening.recommended_exams as any[] | null;
+                    const labResults = screening.prp_lab_results as any[] | null;
+                    
+                    return (
+                      <Card key={screening.id} className="bg-accent/5 border-border/50">
+                        <CardContent className="pt-4">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="text-sm font-medium">
+                                {format(new Date(screening.screening_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </div>
+                              {getClassificationBadge(screening.classification || "")}
+                            </div>
+                          </div>
+                          
+                          {screening.analysis_result && (
+                            <div className="mb-4">
+                              <p className="text-sm text-muted-foreground mb-1">Análise</p>
+                              <p className="text-sm bg-background/50 p-3 rounded-lg">{screening.analysis_result}</p>
+                            </div>
+                          )}
+
+                          {/* Exames Solicitados */}
+                          {recommendedExams && recommendedExams.length > 0 && (
+                            <div className="mb-4">
+                              <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                                <FileSearch className="h-4 w-4" />
+                                Exames Solicitados
+                              </p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {recommendedExams.map((exam: any, idx: number) => (
+                                  <div key={idx} className="text-sm bg-background/50 p-2 rounded border border-border/30">
+                                    <span className="font-medium">{exam.exam || exam.name || exam}</span>
+                                    {exam.justification && (
+                                      <p className="text-xs text-muted-foreground mt-1">{exam.justification}</p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Resultados de Exames */}
+                          {labResults && labResults.length > 0 && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                Resultados de Exames
+                              </p>
+                              <div className="space-y-2">
+                                {labResults.map((result: any) => (
+                                  <div key={result.id} className="text-sm bg-emerald-500/10 p-3 rounded border border-emerald-500/20">
+                                    {result.interpretation && (
+                                      <p className="text-sm">{result.interpretation}</p>
+                                    )}
+                                    {result.updated_classification && (
+                                      <div className="mt-2">
+                                        <span className="text-xs text-muted-foreground">Classificação Atualizada: </span>
+                                        {getClassificationBadge(result.updated_classification)}
+                                      </div>
+                                    )}
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      Registrado em {format(new Date(result.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {screening.patient_orientations && (
+                            <div className="mt-4 pt-4 border-t border-border/30">
+                              <p className="text-sm text-muted-foreground mb-1">Orientações ao Paciente</p>
+                              <p className="text-sm">{screening.patient_orientations}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FlaskConical className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">Nenhuma triagem realizada ainda</p>
+                  <Button 
+                    onClick={() => navigate(`/triagem-biologica?paciente=${id}`)}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Iniciar Triagem
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Exames de Sangue */}
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="mr-2 h-5 w-5 text-primary" />
+                Exames Laboratoriais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {bloodTests && bloodTests.length > 0 ? (
+                <div className="space-y-3">
+                  {bloodTests.map((test) => (
+                    <div key={test.id} className="flex items-center justify-between p-3 bg-accent/10 rounded-lg border border-border/30">
+                      <div>
+                        <p className="font-medium text-sm">{test.test_type}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Coleta: {format(new Date(test.collection_date), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                        {test.observations && (
+                          <p className="text-xs text-muted-foreground mt-1">{test.observations}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="text-xs">{test.file_name}</Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  Nenhum exame laboratorial registrado
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
