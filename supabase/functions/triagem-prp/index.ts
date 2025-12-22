@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { questionnaireData, labResults, action, imageUrls } = await req.json();
+    const { rawQuestionnaire, questionnaireData, labResults, action, imageUrls } = await req.json();
 
     // Handle OCR/Vision extraction
     if (action === "extract_text") {
@@ -34,7 +34,9 @@ serve(async (req) => {
     let userMessage = "";
 
     if (action === "questionnaire") {
-      userMessage = formatQuestionnaireForAnalysis(questionnaireData);
+      // Prioriza o novo formato rawQuestionnaire, mas aceita o antigo questionnaireData
+      const dataToUse = rawQuestionnaire || questionnaireData;
+      userMessage = formatRawQuestionnaireForAssistant(dataToUse);
     } else if (action === "lab_results") {
       userMessage = formatLabResultsForAnalysis(labResults);
     } else {
@@ -42,6 +44,7 @@ serve(async (req) => {
     }
 
     console.log("Creating thread...");
+    console.log("User message (first 500 chars):", userMessage.substring(0, 500));
     
     // Create a thread
     const threadResponse = await fetch('https://api.openai.com/v1/threads', {
@@ -148,9 +151,13 @@ serve(async (req) => {
     }
 
     const analysisText = assistantMessage.content[0]?.text?.value || "";
+    console.log("Assistant response (first 500 chars):", analysisText.substring(0, 500));
 
-    // Parse classification from response
-    const classification = parseClassification(analysisText);
+    // Try to parse structured JSON from response
+    const structuredResult = parseStructuredResponse(analysisText);
+
+    // Parse classification from response (fallback)
+    const classification = structuredResult?.eligibility?.overall_status || parseClassification(analysisText);
 
     // Parse recommended exams
     const recommendedExams = parseRecommendedExams(analysisText);
@@ -159,7 +166,8 @@ serve(async (req) => {
     const patientOrientations = parseOrientations(analysisText);
 
     return new Response(JSON.stringify({ 
-      analysis: analysisText,
+      rawAnalysis: analysisText,
+      structuredResult,
       classification,
       recommendedExams,
       patientOrientations
@@ -327,79 +335,95 @@ Extraia agora os resultados da imagem:`
   });
 }
 
-function formatQuestionnaireForAnalysis(data: Record<string, Record<string, boolean>>): string {
-  const blockNames: Record<string, string> = {
-    dorCicatrizacao: "DOR E CICATRIZAÇÃO",
-    inflamacaoSistemica: "INFLAMAÇÃO SISTÊMICA",
-    metabolismoEnergetico: "METABOLISMO ENERGÉTICO",
-    ferroAnemia: "FERRO E ANEMIA",
-    metabolismoGlicemico: "METABOLISMO GLICÊMICO",
-    eixoHormonal: "EIXO HORMONAL",
-    medicamentos: "USO DE MEDICAMENTOS",
-    estiloVida: "ESTILO DE VIDA"
+// NOVO: Formata o rawQuestionnaire como JSON puro com wrapper neutro
+function formatRawQuestionnaireForAssistant(data: any): string {
+  // Se já é o novo formato com mode/answers, usa diretamente
+  if (data && data.mode === "TRIAGEM" && data.answers) {
+    return `DADOS BRUTOS DO QUESTIONÁRIO (JSON):
+
+${JSON.stringify(data, null, 2)}
+
+INSTRUÇÕES:
+- Você receberá um JSON de respostas do questionário acima.
+- NÃO invente informações. Interprete SOMENTE o que está no JSON.
+- Se faltar dado para concluir, marque como INDEFINIDO e solicite exames ou perguntas adicionais.
+- Responda EXCLUSIVAMENTE em JSON seguindo o contrato abaixo.
+
+CONTRATO DE RESPOSTA (JSON):
+{
+  "eligibility": {
+    "overall_status": "APTO" | "APTO_COM_PREPARO" | "NAO_APTO" | "INDEFINIDO",
+    "prp": { "status": "APTO" | "COM_RESSALVAS" | "CONTRAINDICADO", "notes": "..." },
+    "prf": { "status": "APTO" | "COM_RESSALVAS" | "CONTRAINDICADO", "notes": "..." },
+    "bmac": { "status": "APTO" | "COM_RESSALVAS" | "CONTRAINDICADO", "notes": "..." }
+  },
+  "key_reasons": ["motivo1", "motivo2"],
+  "requested_exams": {
+    "required": ["exame1", "exame2"],
+    "optional": ["exame3"]
+  },
+  "next_steps": {
+    "what_to_do_now": "Descrição do próximo passo",
+    "timeline": "Prazo sugerido"
+  }
+}`;
+  }
+
+  // Fallback: formato antigo com blocos de perguntas
+  // Converte para formato simplificado
+  const flatAnswers: Record<string, boolean> = {};
+  
+  if (typeof data === 'object' && data !== null) {
+    for (const [blockKey, questions] of Object.entries(data)) {
+      if (typeof questions === 'object' && questions !== null) {
+        for (const [question, answer] of Object.entries(questions as Record<string, boolean>)) {
+          // Cria uma chave simplificada
+          const simpleKey = question
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, '_')
+            .substring(0, 50);
+          flatAnswers[simpleKey] = answer as boolean;
+        }
+      }
+    }
+  }
+
+  const rawData = {
+    mode: "TRIAGEM",
+    answers: flatAnswers,
+    provided_exams: []
   };
 
-  // Identify which axes have "SIM" responses (altered axes)
-  const alteredAxes: string[] = [];
-  for (const [blockKey, questions] of Object.entries(data)) {
-    const hasYes = Object.values(questions).some(answer => answer === true);
-    if (hasYes) {
-      alteredAxes.push(blockNames[blockKey] || blockKey);
-    }
-  }
+  return `DADOS BRUTOS DO QUESTIONÁRIO (JSON):
 
-  let formatted = "QUESTIONÁRIO DE TRIAGEM BIOLÓGICA PRÉ-PRP\n\n";
-  formatted += "INSTRUÇÕES OBRIGATÓRIAS PARA ANÁLISE:\n";
-  formatted += "=".repeat(50) + "\n\n";
-  
-  formatted += "1. CLASSIFICAÇÃO (escolha UMA):\n";
-  formatted += "   - APTO PARA ORTOBIOLÓGICO\n";
-  formatted += "   - NÃO APTO AGORA – NECESSITA PREPARO BIOLÓGICO\n";
-  formatted += "   - CONTRAINDICADO / ADIAR – NECESSITA AVALIAÇÃO MÉDICA\n\n";
-  
-  formatted += "2. RISCOS BIOLÓGICOS: Liste os riscos identificados baseados nas respostas SIM.\n\n";
-  
-  formatted += "3. EXAMES RECOMENDADOS - REGRA CRÍTICA:\n";
-  formatted += "   ⚠️ PERSONALIZAÇÃO OBRIGATÓRIA: Solicite exames APENAS para eixos com respostas SIM.\n";
-  formatted += "   ⚠️ Se um eixo tem APENAS respostas NÃO, NÃO solicite exames desse eixo.\n";
-  formatted += "   ⚠️ Cada exame deve ter justificativa específica baseada nas respostas do paciente.\n\n";
-  
-  formatted += "   FORMATO OBRIGATÓRIO (use exatamente este formato):\n";
-  formatted += "   [EIXO: NomeDo Eixo]\n";
-  formatted += "   - NomeDoExame1\n";
-  formatted += "   - NomeDoExame2\n";
-  formatted += "   [JUSTIFICATIVA: Motivo específico baseado nas respostas SIM deste paciente]\n\n";
-  
-  if (alteredAxes.length > 0) {
-    formatted += `   📋 EIXOS COM ALTERAÇÕES DETECTADAS: ${alteredAxes.join(", ")}\n`;
-    formatted += "   Solicite exames APENAS para estes eixos acima.\n\n";
-  } else {
-    formatted += "   📋 NENHUM EIXO COM ALTERAÇÕES - Não solicite exames.\n\n";
-  }
-  
-  formatted += "4. ORIENTAÇÕES AO PACIENTE: Recomendações alimentares, estilo de vida, preparo biológico.\n\n";
-  formatted += "5. ALERTAS IMPORTANTES: Contraindicações, medicamentos a evitar, etc.\n\n";
-  
-  formatted += "=".repeat(50) + "\n";
-  formatted += "RESPOSTAS DO QUESTIONÁRIO:\n";
-  formatted += "=".repeat(50) + "\n";
+${JSON.stringify(rawData, null, 2)}
 
-  for (const [blockKey, questions] of Object.entries(data)) {
-    const blockName = blockNames[blockKey] || blockKey;
-    const hasYes = Object.values(questions).some(answer => answer === true);
-    const statusIcon = hasYes ? "⚠️ ALTERADO" : "✅ NORMAL";
-    
-    formatted += `\n## ${blockName} [${statusIcon}]\n`;
-    for (const [question, answer] of Object.entries(questions)) {
-      const answerIcon = answer ? "🔴 SIM" : "⚪ NÃO";
-      formatted += `- ${question}: ${answerIcon}\n`;
-    }
+INSTRUÇÕES:
+- Você receberá um JSON de respostas do questionário acima.
+- NÃO invente informações. Interprete SOMENTE o que está no JSON.
+- Se faltar dado para concluir, marque como INDEFINIDO e solicite exames ou perguntas adicionais.
+- Responda EXCLUSIVAMENTE em JSON seguindo o contrato abaixo.
+
+CONTRATO DE RESPOSTA (JSON):
+{
+  "eligibility": {
+    "overall_status": "APTO" | "APTO_COM_PREPARO" | "NAO_APTO" | "INDEFINIDO",
+    "prp": { "status": "APTO" | "COM_RESSALVAS" | "CONTRAINDICADO", "notes": "..." },
+    "prf": { "status": "APTO" | "COM_RESSALVAS" | "CONTRAINDICADO", "notes": "..." },
+    "bmac": { "status": "APTO" | "COM_RESSALVAS" | "CONTRAINDICADO", "notes": "..." }
+  },
+  "key_reasons": ["motivo1", "motivo2"],
+  "requested_exams": {
+    "required": ["exame1", "exame2"],
+    "optional": ["exame3"]
+  },
+  "next_steps": {
+    "what_to_do_now": "Descrição do próximo passo",
+    "timeline": "Prazo sugerido"
   }
-  
-  formatted += "\n" + "=".repeat(50) + "\n";
-  formatted += "LEMBRETE FINAL: Personalize 100% baseado nas respostas acima. Não use lista genérica.\n";
-  
-  return formatted;
+}`;
 }
 
 function formatLabResultsForAnalysis(labResults: any): string {
@@ -408,7 +432,7 @@ function formatLabResultsForAnalysis(labResults: any): string {
   formatted += "1. Resumo dos exames analisados\n";
   formatted += "2. Principais alterações identificadas\n";
   formatted += "3. Impacto biológico na resposta aos ortobiológicos\n";
-  formatted += "4. Classificação final atualizada: APTO PARA ORTOBIOLÓGICO, NÃO APTO AGORA – NECESSITA PREPARO BIOLÓGICO, ou CONTRAINDICADO / ADIAR\n";
+  formatted += "4. Classificação final atualizada: APTO, APTO_COM_PREPARO, NAO_APTO, ou INDEFINIDO\n";
   formatted += "5. Recomendações gerais (não medicamentosas)\n";
   formatted += "6. Quando reavaliar / próximos passos\n\n";
   
@@ -428,16 +452,49 @@ function formatLabResultsForAnalysis(labResults: any): string {
   return formatted;
 }
 
+// Tenta parsear JSON estruturado da resposta
+function parseStructuredResponse(text: string): any {
+  try {
+    // Tenta encontrar um bloco JSON na resposta
+    const jsonMatch = text.match(/\{[\s\S]*"eligibility"[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.eligibility) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.log("Could not parse structured JSON from response, using fallback parsing");
+  }
+  
+  // Tenta extrair JSON de blocos de código
+  try {
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      const parsed = JSON.parse(codeBlockMatch[1].trim());
+      if (parsed.eligibility) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.log("Could not parse JSON from code block");
+  }
+
+  return null;
+}
+
 function parseClassification(text: string): string {
   const upperText = text.toUpperCase();
-  if (upperText.includes("APTO PARA ORTOBIOLÓGICO") || upperText.includes("APTO PARA PRP")) {
+  if (upperText.includes("APTO_COM_PREPARO") || upperText.includes("APTO COM PREPARO")) {
+    return "APTO_COM_PREPARO";
+  } else if (upperText.includes("NAO_APTO") || upperText.includes("NÃO APTO") || upperText.includes("CONTRAINDICADO")) {
+    return "NAO_APTO";
+  } else if (upperText.includes("INDEFINIDO")) {
+    return "INDEFINIDO";
+  } else if (upperText.includes("APTO")) {
     return "APTO";
-  } else if (upperText.includes("CONTRAINDICADO") || upperText.includes("ADIAR")) {
-    return "CONTRAINDICADO";
-  } else if (upperText.includes("NÃO APTO") || upperText.includes("NECESSITA PREPARO")) {
-    return "NAO_APTO_PREPARO";
   }
-  return "NAO_APTO_PREPARO";
+  return "INDEFINIDO";
 }
 
 interface ExamGroup {
@@ -474,33 +531,6 @@ function parseRecommendedExams(text: string): ExamGroup[] {
     }
   }
   
-  // Se não encontrou formato estruturado, tenta extrair de forma mais flexível
-  // mas APENAS exames explicitamente mencionados, sem fallback genérico
-  if (examGroups.length === 0) {
-    console.log("Formato estruturado não encontrado, tentando extração flexível...");
-    
-    // Procura por padrões alternativos como "Exames:" ou listas com "-"
-    const examSectionMatch = text.match(/(?:exames?\s+recomendados?|solicita[çr]\s+exames?)[\s:]+([^]*?)(?=orient|alert|conclus|$)/i);
-    
-    if (examSectionMatch) {
-      const examSection = examSectionMatch[1];
-      const lines = examSection.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('-') || line.startsWith('•') || line.match(/^\d+\./))
-        .map(line => line.replace(/^[-•\d.]\s*/, '').trim())
-        .filter(line => line.length > 3 && !line.toLowerCase().includes('justificativa'));
-      
-      if (lines.length > 0) {
-        examGroups.push({
-          axis: "Exames Personalizados",
-          exams: lines,
-          justification: "Baseado na análise individual do questionário"
-        });
-      }
-    }
-  }
-  
-  // Log para debug - sem fallback genérico
   console.log(`Exames extraídos: ${examGroups.length} grupos, total ${examGroups.reduce((acc, g) => acc + g.exams.length, 0)} exames`);
   
   return examGroups;
