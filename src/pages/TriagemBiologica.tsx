@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye } from "lucide-react";
+import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code } from "lucide-react";
 import { format } from "date-fns";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
@@ -22,7 +22,7 @@ import { ptBR } from "date-fns/locale";
 interface QuestionBlock {
   id: string;
   title: string;
-  questions: string[];
+  questions: { key: string; label: string }[];
 }
 
 interface UploadedFile {
@@ -46,84 +46,55 @@ interface ExamGroup {
   justification: string;
 }
 
+// Estrutura de resposta esperada do Assistant
+interface TriagemAnalysisResult {
+  eligibility: {
+    overall_status: "APTO" | "APTO_COM_PREPARO" | "NAO_APTO" | "INDEFINIDO";
+    prp: { status: string; notes?: string };
+    prf: { status: string; notes?: string };
+    bmac: { status: string; notes?: string };
+  };
+  key_reasons: string[];
+  requested_exams: {
+    required: string[];
+    optional: string[];
+  };
+  next_steps: {
+    what_to_do_now: string;
+    timeline?: string;
+  };
+  raw_json?: any;
+}
+
 const questionBlocks: QuestionBlock[] = [
-  {
-    id: "dorCicatrizacao",
-    title: "DOR E CICATRIZAÇÃO",
-    questions: [
-      "Dor persistente há mais de 3 meses?",
-      "Dificuldade de cicatrização em feridas ou cirurgias?",
-      "Histórico de lesões que não melhoraram com tratamento convencional?"
-    ]
-  },
-  {
-    id: "inflamacaoSistemica",
-    title: "INFLAMAÇÃO SISTÊMICA",
-    questions: [
-      "Inchaço frequente em articulações ou músculos?",
-      "Diagnóstico de doença autoimune (artrite, lúpus etc.)?",
-      "Rigidez matinal maior que 30 minutos?",
-      "Infecções recorrentes (gripes, infecções urinárias etc.)?"
-    ]
-  },
-  {
-    id: "metabolismoEnergetico",
-    title: "METABOLISMO ENERGÉTICO",
-    questions: [
-      "Fadiga frequente ou cansaço excessivo?",
-      "Cãibras musculares frequentes?",
-      "Sono não reparador?",
-      "Dificuldade de concentração / \"névoa mental\"?"
-    ]
-  },
-  {
-    id: "ferroAnemia",
-    title: "FERRO E ANEMIA",
-    questions: [
-      "Diagnóstico prévio de anemia?",
-      "Tonturas ou falta de ar ao esforço leve?",
-      "Palidez em pele, unhas ou mucosas?",
-      "Dieta restritiva (vegetariano/vegano)?"
-    ]
-  },
-  {
-    id: "metabolismoGlicemico",
-    title: "METABOLISMO GLICÊMICO",
-    questions: [
-      "Diabetes ou pré-diabetes?",
-      "Vontade excessiva por doces?",
-      "Gordura abdominal?",
-      "Histórico familiar de diabetes?"
-    ]
-  },
   {
     id: "eixoHormonal",
     title: "EIXO HORMONAL",
     questions: [
-      "Sintomas de disfunção tireoidiana?",
-      "Homens: redução de libido ou força?",
-      "Mulheres: ciclos menstruais irregulares?",
-      "Uso de reposição hormonal?"
+      { key: "sintomas_tireoide", label: "Sintomas de disfunção tireoidiana?" },
+      { key: "homem_baixa_libido_forca", label: "Homens: redução de libido ou força?" },
+      { key: "mulher_ciclo_irregular", label: "Mulheres: ciclos menstruais irregulares?" },
+      { key: "reposicao_hormonal", label: "Uso de reposição hormonal?" }
     ]
   },
   {
     id: "medicamentos",
     title: "USO DE MEDICAMENTOS",
     questions: [
-      "Uso de anti-inflamatórios nos últimos 7 dias?",
-      "Uso de corticoides (oral ou infiltração) nos últimos 3 meses?",
-      "Uso contínuo de anticoagulantes/antiagregantes?",
-      "Uso de medicamentos imunossupressores?"
+      { key: "antiinflamatorios_7_dias", label: "Uso de anti-inflamatórios nos últimos 7 dias?" },
+      { key: "corticoide_3_meses", label: "Uso de corticoides (oral ou infiltração) nos últimos 3 meses?" },
+      { key: "anticoagulantes_antiagregantes", label: "Uso contínuo de anticoagulantes/antiagregantes?" },
+      { key: "imunossupressores", label: "Uso de medicamentos imunossupressores?" }
     ]
   },
   {
     id: "estiloVida",
     title: "ESTILO DE VIDA",
     questions: [
-      "Atividade física regular (≥3x/semana)?",
-      "Consumo regular de álcool (>2x/semana)?",
-      "Tabagismo atual ou recente (<1 ano)?",
-      "Exposição solar adequada ou suplementação de vitamina D?"
+      { key: "atividade_fisica_regular", label: "Atividade física regular (≥3x/semana)?" },
+      { key: "alcool_regular", label: "Consumo regular de álcool (>2x/semana)?" },
+      { key: "tabagismo_recente", label: "Tabagismo atual ou recente (<1 ano)?" },
+      { key: "vitamina_d_exposicao_ou_suplementacao", label: "Exposição solar adequada ou suplementação de vitamina D?" }
     ]
   }
 ];
@@ -131,8 +102,10 @@ const questionBlocks: QuestionBlock[] = [
 export default function TriagemBiologica() {
   const queryClient = useQueryClient();
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [answers, setAnswers] = useState<Record<string, Record<string, boolean>>>({});
-  const [analysis, setAnalysis] = useState<string>("");
+  const [answers, setAnswers] = useState<Record<string, boolean>>({});
+  const [analysisResult, setAnalysisResult] = useState<TriagemAnalysisResult | null>(null);
+  const [rawAnalysisJson, setRawAnalysisJson] = useState<string>("");
+  const [showRawJson, setShowRawJson] = useState(false);
   const [classification, setClassification] = useState<string>("");
   const [recommendedExams, setRecommendedExams] = useState<ExamGroup[]>([]);
   const [patientOrientations, setPatientOrientations] = useState<string>("");
@@ -181,13 +154,12 @@ export default function TriagemBiologica() {
     enabled: !!selectedPatientId
   });
 
-  // Initialize answers
+  // Initialize answers with flat keys
   useEffect(() => {
-    const initialAnswers: Record<string, Record<string, boolean>> = {};
+    const initialAnswers: Record<string, boolean> = {};
     questionBlocks.forEach(block => {
-      initialAnswers[block.id] = {};
       block.questions.forEach(q => {
-        initialAnswers[block.id][q] = false;
+        initialAnswers[q.key] = false;
       });
     });
     setAnswers(initialAnswers);
@@ -201,16 +173,25 @@ export default function TriagemBiologica() {
     setExtractionWarnings([]);
     setLabResultsText("");
     setLabInterpretation("");
+    setAnalysisResult(null);
+    setRawAnalysisJson("");
   }, [selectedPatientId]);
 
-  const handleAnswerChange = (blockId: string, question: string, checked: boolean) => {
+  const handleAnswerChange = (key: string, checked: boolean) => {
     setAnswers(prev => ({
       ...prev,
-      [blockId]: {
-        ...prev[blockId],
-        [question]: checked
-      }
+      [key]: checked
     }));
+  };
+
+  // Monta o JSON cru para envio (SEM interpretações)
+  const buildRawQuestionnaire = () => {
+    return {
+      mode: "TRIAGEM",
+      patient_id: selectedPatientId,
+      answers: { ...answers },
+      provided_exams: []
+    };
   };
 
   const handleAnalyze = async () => {
@@ -221,14 +202,21 @@ export default function TriagemBiologica() {
 
     setIsAnalyzing(true);
     try {
+      const rawQuestionnaire = buildRawQuestionnaire();
+      
       const { data, error } = await supabase.functions.invoke('triagem-prp', {
-        body: { questionnaireData: answers, action: "questionnaire" }
+        body: { rawQuestionnaire, action: "questionnaire" }
       });
 
       if (error) throw error;
 
-      setAnalysis(data.analysis);
-      setClassification(data.classification);
+      // Parse structured response
+      if (data.structuredResult) {
+        setAnalysisResult(data.structuredResult);
+        setRawAnalysisJson(JSON.stringify(data.structuredResult, null, 2));
+      }
+      
+      setClassification(data.classification || data.structuredResult?.eligibility?.overall_status || "");
       setRecommendedExams(data.recommendedExams || []);
       setPatientOrientations(data.patientOrientations || "");
 
@@ -237,9 +225,9 @@ export default function TriagemBiologica() {
         .from("prp_screenings")
         .insert({
           patient_id: selectedPatientId,
-          questionnaire_responses: answers,
-          analysis_result: data.analysis,
-          classification: data.classification,
+          questionnaire_responses: rawQuestionnaire,
+          analysis_result: data.rawAnalysis || JSON.stringify(data.structuredResult),
+          classification: data.classification || data.structuredResult?.eligibility?.overall_status,
           recommended_exams: data.recommendedExams,
           patient_orientations: data.patientOrientations
         });
@@ -262,7 +250,6 @@ export default function TriagemBiologica() {
       return;
     }
 
-    // If no files, go directly to analysis
     if (uploadedFiles.length === 0) {
       setConsolidatedText(labResultsText);
       setExtractedTexts([]);
@@ -273,7 +260,6 @@ export default function TriagemBiologica() {
 
     setIsExtractingText(true);
     try {
-      // Prepare image data for OCR
       const imageUrls = uploadedFiles.map(file => ({
         url: file.url,
         fileName: file.name
@@ -300,7 +286,6 @@ export default function TriagemBiologica() {
         toast.success("Texto extraído com sucesso!");
       }
 
-      // Open preview modal
       setPreviewModalOpen(true);
     } catch (error) {
       console.error("Error extracting text:", error);
@@ -316,7 +301,6 @@ export default function TriagemBiologica() {
       return;
     }
 
-    // Get latest screening
     const latestScreening = screenings?.[0];
     if (!latestScreening) {
       toast.error("Realize a triagem primeiro antes de inserir resultados");
@@ -341,14 +325,12 @@ export default function TriagemBiologica() {
 
       setLabInterpretation(data.analysis);
 
-      // Prepare attached files info
       const attachedFilesInfo = uploadedFiles.map(f => ({
         id: f.id,
         name: f.name,
         uploadedAt: f.uploadedAt.toISOString()
       }));
 
-      // Save lab results
       const { error: saveError } = await supabase
         .from("prp_lab_results")
         .insert({
@@ -362,7 +344,6 @@ export default function TriagemBiologica() {
 
       if (saveError) throw saveError;
 
-      // Update screening classification if changed
       if (data.classification) {
         await supabase
           .from("prp_screenings")
@@ -381,11 +362,9 @@ export default function TriagemBiologica() {
   };
 
   const handleAnalyzeLabResults = async () => {
-    // If there are files, extract text first
     if (uploadedFiles.length > 0) {
       await handleExtractText();
     } else if (labResultsText.trim()) {
-      // If only manual text, show preview
       setConsolidatedText("");
       setExtractedTexts([]);
       setExtractionWarnings([]);
@@ -400,13 +379,47 @@ export default function TriagemBiologica() {
     setPrintPreviewOpen(true);
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "APTO":
+        return <Badge className="bg-emerald-500 text-white text-sm px-3 py-1"><CheckCircle2 className="w-4 h-4 mr-1" /> APTO</Badge>;
+      case "APTO_COM_PREPARO":
+        return <Badge className="bg-amber-500 text-white text-sm px-3 py-1"><AlertTriangle className="w-4 h-4 mr-1" /> APTO COM PREPARO</Badge>;
+      case "NAO_APTO":
+      case "CONTRAINDICADO":
+        return <Badge className="bg-red-500 text-white text-sm px-3 py-1"><XCircle className="w-4 h-4 mr-1" /> NÃO APTO</Badge>;
+      case "INDEFINIDO":
+        return <Badge className="bg-gray-500 text-white text-sm px-3 py-1"><Info className="w-4 h-4 mr-1" /> INDEFINIDO</Badge>;
+      default:
+        return <Badge variant="outline" className="text-sm px-3 py-1">{status || "Aguardando"}</Badge>;
+    }
+  };
+
+  const getProcedureIcon = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "APTO":
+      case "LIBERADO":
+        return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
+      case "APTO_COM_PREPARO":
+      case "COM_RESSALVAS":
+        return <AlertTriangle className="w-5 h-5 text-amber-500" />;
+      case "NAO_APTO":
+      case "CONTRAINDICADO":
+        return <XCircle className="w-5 h-5 text-red-500" />;
+      default:
+        return <Info className="w-5 h-5 text-gray-400" />;
+    }
+  };
+
   const getClassificationBadge = (cls: string) => {
-    switch (cls) {
+    switch (cls?.toUpperCase()) {
       case "APTO":
         return <Badge className="bg-emerald-500 text-white"><CheckCircle2 className="w-3 h-3 mr-1" /> APTO PARA ORTOBIOLÓGICO</Badge>;
       case "NAO_APTO_PREPARO":
+      case "APTO_COM_PREPARO":
         return <Badge className="bg-amber-500 text-white"><AlertTriangle className="w-3 h-3 mr-1" /> NECESSITA PREPARO BIOLÓGICO</Badge>;
       case "CONTRAINDICADO":
+      case "NAO_APTO":
         return <Badge className="bg-red-500 text-white"><XCircle className="w-3 h-3 mr-1" /> CONTRAINDICADO / ADIAR</Badge>;
       default:
         return null;
@@ -505,19 +518,19 @@ export default function TriagemBiologica() {
                           <h3 className="text-sm font-semibold text-primary mb-3">{block.title}</h3>
                           <div className="space-y-3">
                             {block.questions.map(question => (
-                              <div key={question} className="flex items-start space-x-3">
+                              <div key={question.key} className="flex items-start space-x-3">
                                 <Checkbox
-                                  id={`${block.id}-${question}`}
-                                  checked={answers[block.id]?.[question] || false}
+                                  id={question.key}
+                                  checked={answers[question.key] || false}
                                   onCheckedChange={(checked) => 
-                                    handleAnswerChange(block.id, question, checked as boolean)
+                                    handleAnswerChange(question.key, checked as boolean)
                                   }
                                 />
                                 <Label 
-                                  htmlFor={`${block.id}-${question}`}
+                                  htmlFor={question.key}
                                   className="text-sm text-foreground/80 leading-tight cursor-pointer"
                                 >
-                                  {question}
+                                  {question.label}
                                 </Label>
                               </div>
                             ))}
@@ -546,30 +559,171 @@ export default function TriagemBiologica() {
                 </CardContent>
               </Card>
 
-              {/* Analysis Result */}
-              <Card className="bg-card/95 backdrop-blur border-border/50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Análise Biológica da Triagem</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analysis ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        {getClassificationBadge(classification)}
-                      </div>
-                      <ScrollArea className="h-[450px] pr-4">
-                        <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">
-                          {analysis}
+              {/* Analysis Result - Cards */}
+              <div className="space-y-4">
+                {analysisResult ? (
+                  <>
+                    {/* Card 1: Status Geral */}
+                    <Card className="bg-card/95 backdrop-blur border-border/50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <Stethoscope className="w-4 h-4" />
+                          Status Geral
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-center py-4">
+                          {getStatusBadge(analysisResult.eligibility?.overall_status)}
                         </div>
-                      </ScrollArea>
+                      </CardContent>
+                    </Card>
+
+                    {/* Card 2: Elegibilidade por Procedimento */}
+                    <Card className="bg-card/95 backdrop-blur border-border/50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium">Elegibilidade por Procedimento</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="flex flex-col items-center p-3 rounded-lg bg-background/50">
+                            {getProcedureIcon(analysisResult.eligibility?.prp?.status)}
+                            <span className="text-sm font-medium mt-2">PRP</span>
+                            <span className="text-xs text-muted-foreground">{analysisResult.eligibility?.prp?.status || "—"}</span>
+                          </div>
+                          <div className="flex flex-col items-center p-3 rounded-lg bg-background/50">
+                            {getProcedureIcon(analysisResult.eligibility?.prf?.status)}
+                            <span className="text-sm font-medium mt-2">PRF</span>
+                            <span className="text-xs text-muted-foreground">{analysisResult.eligibility?.prf?.status || "—"}</span>
+                          </div>
+                          <div className="flex flex-col items-center p-3 rounded-lg bg-background/50">
+                            {getProcedureIcon(analysisResult.eligibility?.bmac?.status)}
+                            <span className="text-sm font-medium mt-2">BMAC</span>
+                            <span className="text-xs text-muted-foreground">{analysisResult.eligibility?.bmac?.status || "—"}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Card 3: Exames Necessários */}
+                    <Card className="bg-card/95 backdrop-blur border-border/50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <FlaskConical className="w-4 h-4" />
+                          Exames Necessários
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {(analysisResult.requested_exams?.required?.length > 0 || analysisResult.requested_exams?.optional?.length > 0) ? (
+                          <div className="space-y-3">
+                            {analysisResult.requested_exams?.required?.length > 0 && (
+                              <div>
+                                <span className="text-xs font-semibold text-red-500 uppercase">Obrigatórios</span>
+                                <ul className="mt-1 space-y-1">
+                                  {analysisResult.requested_exams.required.map((exam, idx) => (
+                                    <li key={idx} className="text-sm flex items-center gap-2">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                      {exam}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {analysisResult.requested_exams?.optional?.length > 0 && (
+                              <div>
+                                <span className="text-xs font-semibold text-amber-500 uppercase">Opcionais</span>
+                                <ul className="mt-1 space-y-1">
+                                  {analysisResult.requested_exams.optional.map((exam, idx) => (
+                                    <li key={idx} className="text-sm flex items-center gap-2">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                      {exam}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Nenhum exame adicional necessário</p>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Card 4: Motivo Principal */}
+                    {analysisResult.key_reasons?.length > 0 && (
+                      <Card className="bg-card/95 backdrop-blur border-border/50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base font-medium flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4" />
+                            Motivo Principal
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm">{analysisResult.key_reasons[0]}</p>
+                          {analysisResult.key_reasons.length > 1 && (
+                            <ul className="mt-2 space-y-1">
+                              {analysisResult.key_reasons.slice(1).map((reason, idx) => (
+                                <li key={idx} className="text-sm text-muted-foreground">• {reason}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Card 5: Próximo Passo */}
+                    {analysisResult.next_steps?.what_to_do_now && (
+                      <Card className="bg-card/95 backdrop-blur border-border/50 border-primary/30">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base font-medium flex items-center gap-2 text-primary">
+                            <ArrowRight className="w-4 h-4" />
+                            Próximo Passo
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm font-medium">{analysisResult.next_steps.what_to_do_now}</p>
+                          {analysisResult.next_steps.timeline && (
+                            <p className="text-xs text-muted-foreground mt-1">{analysisResult.next_steps.timeline}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Botão Ver JSON (opcional) */}
+                    <div className="flex justify-end">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setShowRawJson(!showRawJson)}
+                        className="text-xs"
+                      >
+                        <Code className="w-3 h-3 mr-1" />
+                        {showRawJson ? "Ocultar JSON" : "Ver JSON"}
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="h-[500px] flex items-center justify-center text-muted-foreground text-sm">
-                      Preencha o questionário e clique em "Enviar para Análise" para ver os resultados
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+
+                    {showRawJson && (
+                      <Card className="bg-background/50">
+                        <CardContent className="pt-4">
+                          <ScrollArea className="h-[200px]">
+                            <pre className="text-xs font-mono whitespace-pre-wrap">{rawAnalysisJson}</pre>
+                          </ScrollArea>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
+                ) : (
+                  <Card className="bg-card/95 backdrop-blur border-border/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-medium">Análise Biológica da Triagem</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[400px] flex items-center justify-center text-muted-foreground text-sm">
+                        Preencha o questionário e clique em "Enviar para Análise" para ver os resultados
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </TabsContent>
 
@@ -713,11 +867,11 @@ export default function TriagemBiologica() {
                   <CardTitle className="text-base font-medium">Orientações ao Paciente</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {analysis ? (
+                  {analysisResult ? (
                     <>
                       <ScrollArea className="h-[200px] pr-4">
                         <div className="text-sm text-foreground/80 whitespace-pre-wrap">
-                          {patientOrientations || "Orientações disponíveis na análise completa."}
+                          {patientOrientations || analysisResult.next_steps?.what_to_do_now || "Orientações disponíveis na análise completa."}
                         </div>
                       </ScrollArea>
                       <Button 
@@ -761,11 +915,9 @@ export default function TriagemBiologica() {
                             </div>
                             {getClassificationBadge(screening.classification || "")}
                           </div>
-                          <ScrollArea className="h-[200px]">
-                            <div className="text-sm text-foreground/80 whitespace-pre-wrap">
-                              {screening.analysis_result}
-                            </div>
-                          </ScrollArea>
+                          <div className="text-sm text-muted-foreground">
+                            Questionário salvo • Clique para ver detalhes
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -798,7 +950,7 @@ export default function TriagemBiologica() {
         onOpenChange={setPrintPreviewOpen}
         type={printPreviewType}
         patientName={selectedPatient?.full_name || ""}
-        content={printPreviewType === "exams" ? recommendedExams : (patientOrientations || analysis)}
+        content={printPreviewType === "exams" ? recommendedExams : (patientOrientations || "")}
       />
 
       {/* Extracted Text Preview Modal */}
