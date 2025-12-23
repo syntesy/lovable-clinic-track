@@ -4,23 +4,23 @@
 export const fisioRegenScoreSettings = {
   // Janelas de tempo em dias para medicações
   windows_days: {
-    aspirin_critical: 7,
-    nsaid_nonselective_critical: 5,
-    p2y12_critical: 7,
-    systemic_corticosteroid_critical: 14,
-    local_corticosteroid_target_critical: 21,
+    aspirin_critical: 5,              // AAS - recuperação funcional plaquetária
+    nsaid_nonselective_critical: 5,   // AINE não seletivo
+    p2y12_critical: 7,                // Clopidogrel/Ticagrelor - janela conservadora
+    systemic_corticosteroid_critical: 21,       // Evita sabotagem da fase inflamatória
+    local_corticosteroid_target_critical: 21,   // Corticoide local no alvo
   },
   
   // Thresholds para exames laboratoriais
   thresholds: {
     platelets: {
-      block_below: 100000,      // Abaixo disso = bloqueio
-      good_below: 150000,       // Acima disso = pontuação máxima
-      borderline_below: 120000, // Entre block e good = borderline
+      block_below: 100000,      // <100k = bloqueio automático (segurança + baixa eficácia)
+      good_below: 150000,       // ≥150k = ideal
+      borderline_below: 100000, // 100-149k = limítrofe (pontuação intermediária)
     },
     hba1c: {
-      good_max: 5.7,      // Até esse valor = pontuação máxima
-      borderline_max: 6.5, // Entre good e borderline = parcial
+      good_max: 7.5,       // ≤7.5 = bom ambiente biológico
+      borderline_max: 8.5, // 7.6-8.5 = risco moderado (flag); >8.5 = baixo potencial regenerativo
     },
   },
   
