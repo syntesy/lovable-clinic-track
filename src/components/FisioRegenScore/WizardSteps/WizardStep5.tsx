@@ -1,0 +1,196 @@
+import { FisioRegenFormData, TissueIntegrityGrade, TissueSubstrateViabilityGrade, TissueBiologicStageGrade, PriorOrthobiologicAttempts } from "@/types/fisioregen-score";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Layers, AlertCircle } from "lucide-react";
+
+interface WizardStep5Props {
+  formData: FisioRegenFormData;
+  updateFormData: <K extends keyof FisioRegenFormData>(field: K, value: FisioRegenFormData[K]) => void;
+}
+
+export function WizardStep5({ formData, updateFormData }: WizardStep5Props) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+        <Layers className="h-5 w-5 text-muted-foreground mt-0.5" />
+        <div>
+          <p className="font-medium">Prontidão Tecidual</p>
+          <p className="text-sm text-muted-foreground">
+            Avaliação do estado do tecido-alvo e tentativas prévias de tratamento.
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        {/* Integridade Tecidual */}
+        <div className="p-4 border rounded-lg space-y-3">
+          <Label className="font-medium">Grau de Integridade Tecidual (0-15 pts)</Label>
+          <RadioGroup
+            value={formData.tissue_integrity_grade}
+            onValueChange={(val) => updateFormData("tissue_integrity_grade", val as TissueIntegrityGrade)}
+            className="grid grid-cols-2 gap-2"
+          >
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="preserved" id="ti_preserved" />
+              <Label htmlFor="ti_preserved" className="cursor-pointer text-sm">
+                Preservada (+15)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="moderate" id="ti_moderate" />
+              <Label htmlFor="ti_moderate" className="cursor-pointer text-sm">
+                Moderada (+10)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="severe" id="ti_severe" />
+              <Label htmlFor="ti_severe" className="cursor-pointer text-sm">
+                Grave (+4)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="complete_rupture" id="ti_rupture" />
+              <Label htmlFor="ti_rupture" className="cursor-pointer text-sm">
+                Ruptura completa (0)
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {/* Viabilidade do Substrato */}
+        <div className="p-4 border rounded-lg space-y-3">
+          <Label className="font-medium">Viabilidade do Substrato (0-15 pts)</Label>
+          <RadioGroup
+            value={formData.tissue_substrate_viability_grade}
+            onValueChange={(val) => updateFormData("tissue_substrate_viability_grade", val as TissueSubstrateViabilityGrade)}
+            className="grid grid-cols-2 gap-2"
+          >
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="viable" id="sv_viable" />
+              <Label htmlFor="sv_viable" className="cursor-pointer text-sm">
+                Viável (+15)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="moderate_changes" id="sv_moderate" />
+              <Label htmlFor="sv_moderate" className="cursor-pointer text-sm">
+                Alterações moderadas (+8)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="severe" id="sv_severe" />
+              <Label htmlFor="sv_severe" className="cursor-pointer text-sm">
+                Grave (+2)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="collapse" id="sv_collapse" />
+              <Label htmlFor="sv_collapse" className="cursor-pointer text-sm">
+                Colapso (0)
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {/* Estágio Biológico */}
+        <div className="p-4 border rounded-lg space-y-3">
+          <Label className="font-medium">Estágio Biológico (0-10 pts)</Label>
+          <RadioGroup
+            value={formData.tissue_biologic_stage_grade}
+            onValueChange={(val) => updateFormData("tissue_biologic_stage_grade", val as TissueBiologicStageGrade)}
+            className="space-y-2"
+          >
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="responsive" id="bs_responsive" />
+              <Label htmlFor="bs_responsive" className="cursor-pointer text-sm">
+                Responsivo (+10)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="advanced_low_matrix" id="bs_advanced" />
+              <Label htmlFor="bs_advanced" className="cursor-pointer text-sm">
+                Avançado / baixa matriz (+5)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="very_advanced" id="bs_very_advanced" />
+              <Label htmlFor="bs_very_advanced" className="cursor-pointer text-sm">
+                Muito avançado (0)
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {/* Tentativas Prévias */}
+        <div className="p-4 border rounded-lg space-y-3">
+          <Label className="font-medium">Tentativas Prévias de Ortobiológicos (0-5 pts)</Label>
+          <RadioGroup
+            value={formData.prior_orthobiologic_attempts}
+            onValueChange={(val) => updateFormData("prior_orthobiologic_attempts", val as PriorOrthobiologicAttempts)}
+            className="space-y-2"
+          >
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="first" id="po_first" />
+              <Label htmlFor="po_first" className="cursor-pointer text-sm">
+                Primeira tentativa (+5)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="failed_once" id="po_failed_once" />
+              <Label htmlFor="po_failed_once" className="cursor-pointer text-sm">
+                Falhou 1x anteriormente (+2)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="failed_2plus" id="po_failed_2plus" />
+              <Label htmlFor="po_failed_2plus" className="cursor-pointer text-sm">
+                Falhou 2+ vezes (0)
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {/* Bloqueios Estruturais */}
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-4">
+          <div className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-medium">Bloqueios Estruturais</span>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label htmlFor="block_rupture" className="font-medium">
+                Ruptura completa ou avulsão
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Lesão estrutural que impede o tratamento ortobiológico
+              </p>
+            </div>
+            <Switch
+              id="block_rupture"
+              checked={formData.structural_block_complete_rupture_or_avulsion}
+              onCheckedChange={(checked) => updateFormData("structural_block_complete_rupture_or_avulsion", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label htmlFor="block_collapse" className="font-medium">
+                Colapso ósseo ou osteonecrose
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Comprometimento ósseo grave no local
+              </p>
+            </div>
+            <Switch
+              id="block_collapse"
+              checked={formData.structural_block_bone_collapse_or_osteonecrosis}
+              onCheckedChange={(checked) => updateFormData("structural_block_bone_collapse_or_osteonecrosis", checked)}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
