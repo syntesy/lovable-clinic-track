@@ -6,71 +6,91 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Process base64 in chunks to prevent memory issues with large audio files
-function processBase64Chunks(base64String: string, chunkSize = 32768): Uint8Array {
-  const chunks: Uint8Array[] = [];
-  let position = 0;
+// Decode base64 safely handling large strings
+function decodeBase64(base64String: string): Uint8Array {
+  // Use atob to decode the entire base64 string at once
+  // This is safe because atob handles the decoding correctly
+  const binaryString = atob(base64String);
+  const length = binaryString.length;
+  const bytes = new Uint8Array(length);
   
-  while (position < base64String.length) {
-    const chunk = base64String.slice(position, position + chunkSize);
-    const binaryChunk = atob(chunk);
-    const bytes = new Uint8Array(binaryChunk.length);
-    
-    for (let i = 0; i < binaryChunk.length; i++) {
-      bytes[i] = binaryChunk.charCodeAt(i);
-    }
-    
-    chunks.push(bytes);
-    position += chunkSize;
+  for (let i = 0; i < length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-
-  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return result;
+  
+  return bytes;
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { audio, mimeType } = await req.json();
     
     if (!audio) {
-      throw new Error('No audio data provided');
+      console.error('No audio data provided');
+      return new Response(
+        JSON.stringify({ error: 'No audio data provided' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     console.log('Processing audio transcription...');
     console.log('MIME type:', mimeType);
+    console.log('Base64 length:', audio.length);
 
-    // Process audio in chunks to handle large files
-    const binaryAudio = processBase64Chunks(audio);
+    // Decode base64 to binary
+    const binaryAudio = decodeBase64(audio);
     console.log('Audio size:', binaryAudio.length, 'bytes');
+    console.log('Audio size (MB):', (binaryAudio.length / (1024 * 1024)).toFixed(2));
+
+    // Validate audio size (OpenAI Whisper limit is 25MB)
+    const maxSizeMB = 25;
+    if (binaryAudio.length > maxSizeMB * 1024 * 1024) {
+      console.error('Audio file too large:', binaryAudio.length);
+      return new Response(
+        JSON.stringify({ error: `Arquivo de áudio muito grande. Máximo: ${maxSizeMB}MB` }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     // Determine file extension from mime type
-    const extension = mimeType?.includes('webm') ? 'webm' : 
-                      mimeType?.includes('mp4') ? 'mp4' : 
-                      mimeType?.includes('mp3') ? 'mp3' : 'webm';
+    let extension = 'webm';
+    if (mimeType) {
+      if (mimeType.includes('webm')) extension = 'webm';
+      else if (mimeType.includes('mp4')) extension = 'mp4';
+      else if (mimeType.includes('mp3') || mimeType.includes('mpeg')) extension = 'mp3';
+      else if (mimeType.includes('wav')) extension = 'wav';
+      else if (mimeType.includes('ogg')) extension = 'ogg';
+    }
 
+    console.log('Using file extension:', extension);
+
+    // Create a new ArrayBuffer to satisfy TypeScript types
+    const newBuffer = new ArrayBuffer(binaryAudio.length);
+    const newView = new Uint8Array(newBuffer);
+    newView.set(binaryAudio);
+    
+    // Create blob from ArrayBuffer
+    const blob = new Blob([newBuffer], { type: mimeType || 'audio/webm' });
+    
     // Prepare form data for OpenAI Whisper API
     const formData = new FormData();
-    const arrayBuffer = binaryAudio.buffer.slice(
-      binaryAudio.byteOffset,
-      binaryAudio.byteOffset + binaryAudio.byteLength
-    ) as ArrayBuffer;
-    const blob = new Blob([arrayBuffer], { type: mimeType || 'audio/webm' });
     formData.append('file', blob, `audio.${extension}`);
     formData.append('model', 'whisper-1');
     formData.append('language', 'pt'); // Portuguese
     formData.append('response_format', 'text');
+
+    console.log('Sending to OpenAI Whisper API...');
 
     // Send to OpenAI Whisper API
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -83,12 +103,31 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${errorText}`);
+      console.error('OpenAI API error:', response.status, errorText);
+      
+      // Parse error for better messages
+      let userMessage = 'Erro ao transcrever áudio';
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.error?.message) {
+          userMessage = errorJson.error.message;
+        }
+      } catch {
+        userMessage = errorText || 'Erro desconhecido da API';
+      }
+      
+      return new Response(
+        JSON.stringify({ error: userMessage }),
+        { 
+          status: response.status, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     const text = await response.text();
-    console.log('Transcription completed, length:', text.length);
+    console.log('Transcription completed successfully');
+    console.log('Transcription length:', text.length, 'characters');
 
     return new Response(
       JSON.stringify({ text }),
@@ -97,7 +136,8 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     console.error('Transcription error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    
     return new Response(
       JSON.stringify({ error: errorMessage }),
       {
