@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, FileText, User } from "lucide-react";
+import { MACProtocolFormData, safeParseFloat } from "@/types/forms";
 
 const ProtocoloMAC = () => {
   const { id } = useParams();
@@ -19,7 +20,7 @@ const ProtocoloMAC = () => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usesPhotosensitizer, setUsesPhotosensitizer] = useState(false);
-  const { register, handleSubmit, watch } = useForm();
+  const { register, handleSubmit, watch } = useForm<MACProtocolFormData>();
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patient", id],
@@ -35,7 +36,7 @@ const ProtocoloMAC = () => {
     },
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: MACProtocolFormData) => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from("mac_protocols").insert([

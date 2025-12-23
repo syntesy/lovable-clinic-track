@@ -12,13 +12,13 @@ export interface AuditLogParams {
 }
 
 export function useAuditLog() {
-  const logAction = useCallback(async (params: AuditLogParams) => {
+  const logAction = useCallback(async (params: AuditLogParams): Promise<boolean> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         console.warn("Tentativa de log sem usuário autenticado");
-        return null;
+        return false;
       }
 
       const { error } = await supabase
@@ -32,19 +32,24 @@ export function useAuditLog() {
           old_data: params.oldData || null,
           new_data: params.newData || null,
           ip_address: null,
-          user_agent: navigator.userAgent,
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
           additional_info: params.additionalInfo || null,
         });
 
       if (error) {
         console.error("Erro ao registrar log de auditoria:", error);
-        return null;
+        // Em ambiente de produção, poderia enviar para um serviço de monitoramento
+        // Para compliance, é importante que erros de auditoria não passem despercebidos
+        if (import.meta.env.PROD) {
+          console.error("[AUDIT_FAILURE]", { params, error });
+        }
+        return false;
       }
 
       return true;
     } catch (error) {
       console.error("Erro ao registrar log de auditoria:", error);
-      return null;
+      return false;
     }
   }, []);
 
