@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Printer, ArrowLeft, FileText, Ban } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface ExamGroup {
   axis: string;
@@ -34,7 +33,7 @@ export function PrintPreviewModal({
   content,
   date = new Date()
 }: PrintPreviewModalProps) {
-  const formattedDate = format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const formattedDate = format(date, "dd 'de' MMMM 'de' yyyy");
   const formattedDateShort = format(date, "dd/MM/yyyy");
 
   // Check if content is the new RequestedExam[] format

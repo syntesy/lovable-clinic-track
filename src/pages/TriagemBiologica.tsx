@@ -20,7 +20,6 @@ import { format } from "date-fns";
 import { PrintPreviewModal, RequestedExam } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
-import { ptBR } from "date-fns/locale";
 
 interface UploadedFile {
   id: string;
@@ -1555,7 +1554,7 @@ export default function TriagemBiologica() {
                         <CardContent className="pt-4">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
                             <div className="text-sm font-medium">
-                              {format(new Date(screening.screening_date), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                              {format(new Date(screening.screening_date), "dd 'de' MMMM 'de' yyyy 'às' HH:mm")}
                             </div>
                             {getClassificationBadge(screening.classification || "")}
                           </div>

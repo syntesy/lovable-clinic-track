@@ -21,7 +21,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
@@ -349,7 +348,7 @@ const DetalhePaciente = () => {
                               <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4 text-muted-foreground" />
                                 <span className="text-sm text-muted-foreground">
-                                  {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                  {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy")}
                                 </span>
                               </div>
                               <p className="mt-2 text-foreground">{session.clinical_observations || "Sem observações"}</p>
