@@ -7,11 +7,15 @@ import { cn } from "@/lib/utils";
 
 const ToastProvider = ToastPrimitives.Provider;
 
+const ToastViewportComponent = ToastPrimitives.Viewport as React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport> & React.RefAttributes<HTMLOListElement>
+>;
+
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Viewport
+  <ToastViewportComponent
     ref={ref}
     className={cn(
       "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
@@ -37,19 +41,31 @@ const toastVariants = cva(
   },
 );
 
+const ToastRootComponent = ToastPrimitives.Root as React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & React.RefAttributes<HTMLLIElement>
+>;
+
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
-  return <ToastPrimitives.Root ref={ref} className={cn(toastVariants({ variant }), className)} {...props} />;
+>(({ className, variant, children, ...props }, ref) => {
+  return (
+    <ToastRootComponent ref={ref} className={cn(toastVariants({ variant }), className)} {...props}>
+      {children}
+    </ToastRootComponent>
+  );
 });
 Toast.displayName = ToastPrimitives.Root.displayName;
+
+const ToastActionComponent = ToastPrimitives.Action as React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action> & React.RefAttributes<HTMLButtonElement>
+>;
 
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Action
+  <ToastActionComponent
     ref={ref}
     className={cn(
       "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors group-[.destructive]:border-muted/40 hover:bg-secondary group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 group-[.destructive]:focus:ring-destructive disabled:pointer-events-none disabled:opacity-50",
@@ -60,11 +76,15 @@ const ToastAction = React.forwardRef<
 ));
 ToastAction.displayName = ToastPrimitives.Action.displayName;
 
+const ToastCloseComponent = ToastPrimitives.Close as React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close> & React.RefAttributes<HTMLButtonElement>
+>;
+
 const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Close
+  <ToastCloseComponent
     ref={ref}
     className={cn(
       "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity group-hover:opacity-100 group-[.destructive]:text-red-300 hover:text-foreground group-[.destructive]:hover:text-red-50 focus:opacity-100 focus:outline-none focus:ring-2 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
@@ -74,23 +94,35 @@ const ToastClose = React.forwardRef<
     {...props}
   >
     <X className="h-4 w-4" />
-  </ToastPrimitives.Close>
+  </ToastCloseComponent>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
+
+const ToastTitleComponent = ToastPrimitives.Title as React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title> & React.RefAttributes<HTMLDivElement>
+>;
 
 const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
->(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title ref={ref} className={cn("text-sm font-semibold", className)} {...props} />
+>(({ className, children, ...props }, ref) => (
+  <ToastTitleComponent ref={ref} className={cn("text-sm font-semibold", className)} {...props}>
+    {children}
+  </ToastTitleComponent>
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
+
+const ToastDescriptionComponent = ToastPrimitives.Description as React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description> & React.RefAttributes<HTMLDivElement>
+>;
 
 const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
->(({ className, ...props }, ref) => (
-  <ToastPrimitives.Description ref={ref} className={cn("text-sm opacity-90", className)} {...props} />
+>(({ className, children, ...props }, ref) => (
+  <ToastDescriptionComponent ref={ref} className={cn("text-sm opacity-90", className)} {...props}>
+    {children}
+  </ToastDescriptionComponent>
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
