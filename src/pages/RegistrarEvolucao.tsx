@@ -176,6 +176,17 @@ const RegistrarEvolucao = () => {
             treatment_time: data.treatment_time_total ? parseFloat(data.treatment_time_total) : null,
             pharmaceutical_used: data.pharmaceutical_used,
             associated_techniques: data.associated_techniques,
+            // Exam results
+            hemoglobin: examResults.hemoglobin ? parseFloat(examResults.hemoglobin) : null,
+            hematocrit: examResults.hematocrit ? parseFloat(examResults.hematocrit) : null,
+            platelets: examResults.platelets ? parseFloat(examResults.platelets) : null,
+            leukocytes: examResults.leukocytes ? parseFloat(examResults.leukocytes) : null,
+            pcr: examResults.pcr ? parseFloat(examResults.pcr) : null,
+            glucose: examResults.glucose ? parseFloat(examResults.glucose) : null,
+            hba1c: examResults.hba1c ? parseFloat(examResults.hba1c) : null,
+            exam_observations: examResults.observations || null,
+            aptitude_status: evaluationResult ? (evaluationResult.apt ? "apt" : "not_apt") : null,
+            selected_protocols: selectedProtocols.length > 0 ? selectedProtocols : null,
           },
         ])
         .select()
