@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Upload, FileText, Thermometer, Edit, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import AudioRecorder from "@/components/AudioRecorder";
 
 const ProntuarioClinico = () => {
   const { id } = useParams();
@@ -255,9 +256,17 @@ const ProntuarioClinico = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Anamnese</Label>
+            <div className="flex items-center justify-between">
+              <Label>Anamnese</Label>
+              <AudioRecorder 
+                onTranscription={(text) => {
+                  setAnamnesis(prev => prev ? `${prev}\n\n${text}` : text);
+                }}
+                maxDurationMinutes={45}
+              />
+            </div>
             <Textarea
-              className="border-input min-h-[100px]"
+              className="border-input min-h-[150px]"
               placeholder="Histórico clínico detalhado do paciente..."
               value={anamnesis}
               onChange={(e) => setAnamnesis(e.target.value)}
