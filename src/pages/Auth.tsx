@@ -2,15 +2,19 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "lucide-react";
+import { User, Shield } from "lucide-react";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logLogin } = useAuditLog();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,12 +29,56 @@ export default function Auth() {
     if (error) {
       setError(error.message);
       toast({
-        title: "Login failed",
+        title: "Falha no login",
         description: error.message,
         variant: "destructive",
       });
     } else {
+      // Registrar log de login
+      await logLogin();
       navigate("/pacientes");
+    }
+
+    setLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    if (!fullName.trim()) {
+      setError("Nome completo é obrigatório");
+      setLoading(false);
+      return;
+    }
+
+    const redirectUrl = `${window.location.origin}/`;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      toast({
+        title: "Falha no cadastro",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Cadastro realizado!",
+        description: "Verifique seu email para confirmar o cadastro.",
+      });
+      setIsSignUp(false);
     }
 
     setLoading(false);
@@ -111,7 +159,7 @@ export default function Auth() {
             border: "1px solid rgba(255, 255, 255, 0.05)",
           }}
         >
-          {/* Título LOG-IN */}
+          {/* Título */}
           <h1
             style={{
               color: "#FFFFFF",
@@ -119,16 +167,78 @@ export default function Auth() {
               fontWeight: 600,
               letterSpacing: "3px",
               textAlign: "center",
-              marginBottom: "40px",
+              marginBottom: "30px",
               fontFamily: "Inter, sans-serif",
             }}
           >
-            LOG-IN
+            {isSignUp ? "CADASTRO" : "LOG-IN"}
           </h1>
 
-          <form onSubmit={handleLogin}>
-            {/* Campo Username */}
-            <div style={{ marginBottom: "30px" }}>
+          {/* Badge de segurança */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              marginBottom: "30px",
+              padding: "8px 16px",
+              backgroundColor: "rgba(74, 108, 247, 0.1)",
+              borderRadius: "20px",
+              border: "1px solid rgba(74, 108, 247, 0.2)",
+            }}
+          >
+            <Shield style={{ width: "14px", height: "14px", color: "#4A6CF7" }} />
+            <span
+              style={{
+                color: "rgba(255, 255, 255, 0.7)",
+                fontSize: "11px",
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Conformidade LGPD • Auditoria CFM
+            </span>
+          </div>
+
+          <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
+            {/* Campo Nome (apenas no cadastro) */}
+            {isSignUp && (
+              <div style={{ marginBottom: "25px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    color: "#FFFFFF",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    marginBottom: "8px",
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  Nome Completo
+                </label>
+                <input
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  style={{
+                    width: "100%",
+                    backgroundColor: "transparent",
+                    border: "none",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+                    padding: "12px 0",
+                    color: "#FFFFFF",
+                    fontSize: "14px",
+                    outline: "none",
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Campo Email */}
+            <div style={{ marginBottom: "25px" }}>
               <label
                 style={{
                   display: "block",
@@ -139,11 +249,11 @@ export default function Auth() {
                   fontFamily: "Inter, sans-serif",
                 }}
               >
-                Username
+                Email
               </label>
               <input
                 type="email"
-                placeholder="Who are you ?"
+                placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -162,7 +272,7 @@ export default function Auth() {
             </div>
 
             {/* Campo Password */}
-            <div style={{ marginBottom: "35px" }}>
+            <div style={{ marginBottom: "30px" }}>
               <label
                 style={{
                   display: "block",
@@ -173,14 +283,15 @@ export default function Auth() {
                   fontFamily: "Inter, sans-serif",
                 }}
               >
-                Password
+                Senha
               </label>
               <input
                 type="password"
-                placeholder="Prove that it is true"
+                placeholder={isSignUp ? "Mínimo 6 caracteres" : "Sua senha"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
                 style={{
                   width: "100%",
                   backgroundColor: "transparent",
@@ -210,7 +321,7 @@ export default function Auth() {
               </p>
             )}
 
-            {/* Botão Login */}
+            {/* Botão principal */}
             <button
               type="submit"
               disabled={loading}
@@ -238,48 +349,34 @@ export default function Auth() {
                 e.currentTarget.style.backgroundColor = "#4A6CF7";
               }}
             >
-              {loading ? "Loading..." : "Login"}
+              {loading ? "Aguarde..." : isSignUp ? "Cadastrar" : "Entrar"}
             </button>
           </form>
 
-          {/* Links do rodapé */}
+          {/* Link para alternar entre login e cadastro */}
           <div
             style={{
               marginTop: "25px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
+              textAlign: "center",
             }}
           >
             <button
               type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError("");
+              }}
               style={{
                 background: "none",
                 border: "none",
-                color: "rgba(255, 255, 255, 0.5)",
-                fontSize: "12px",
+                color: "rgba(255, 255, 255, 0.7)",
+                fontSize: "13px",
                 cursor: "pointer",
-                textAlign: "left",
-                padding: 0,
                 fontFamily: "Inter, sans-serif",
+                textDecoration: "underline",
               }}
             >
-              Lost your password?
-            </button>
-            <button
-              type="button"
-              style={{
-                background: "none",
-                border: "none",
-                color: "rgba(255, 255, 255, 0.5)",
-                fontSize: "12px",
-                cursor: "pointer",
-                textAlign: "left",
-                padding: 0,
-                fontFamily: "Inter, sans-serif",
-              }}
-            >
-              Don't have an account?
+              {isSignUp ? "Já tem conta? Faça login" : "Não tem conta? Cadastre-se"}
             </button>
           </div>
 
@@ -289,7 +386,7 @@ export default function Auth() {
               display: "flex",
               justifyContent: "center",
               gap: "8px",
-              marginTop: "30px",
+              marginTop: "25px",
             }}
           >
             <div
@@ -297,7 +394,7 @@ export default function Auth() {
                 width: "8px",
                 height: "8px",
                 borderRadius: "50%",
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                backgroundColor: isSignUp ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.6)",
               }}
             />
             <div
@@ -305,15 +402,7 @@ export default function Auth() {
                 width: "8px",
                 height: "8px",
                 borderRadius: "50%",
-                backgroundColor: "rgba(255, 255, 255, 0.6)",
-              }}
-            />
-            <div
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                backgroundColor: isSignUp ? "rgba(255, 255, 255, 0.6)" : "rgba(255, 255, 255, 0.3)",
               }}
             />
           </div>
