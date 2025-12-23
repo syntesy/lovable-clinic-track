@@ -964,19 +964,29 @@ export type Database = {
       }
       treatment_sessions: {
         Row: {
+          aptitude_status: string | null
           associated_techniques: string | null
           clinical_observations: string | null
           created_at: string
+          exam_observations: string | null
           function_score: number | null
+          glucose: number | null
+          hba1c: number | null
+          hematocrit: number | null
+          hemoglobin: number | null
           id: string
           immediate_response: string | null
           improvement_percentage: number | null
+          leukocytes: number | null
           light_type: string | null
           mobility_score: number | null
           next_session_plan: string | null
           other_techniques_description: string | null
           patient_id: string
+          pcr: number | null
           pharmaceutical_used: string | null
+          platelets: number | null
+          selected_protocols: string[] | null
           session_date: string
           session_description: string | null
           session_number: number
@@ -991,19 +1001,29 @@ export type Database = {
           vas_on_day: number | null
         }
         Insert: {
+          aptitude_status?: string | null
           associated_techniques?: string | null
           clinical_observations?: string | null
           created_at?: string
+          exam_observations?: string | null
           function_score?: number | null
+          glucose?: number | null
+          hba1c?: number | null
+          hematocrit?: number | null
+          hemoglobin?: number | null
           id?: string
           immediate_response?: string | null
           improvement_percentage?: number | null
+          leukocytes?: number | null
           light_type?: string | null
           mobility_score?: number | null
           next_session_plan?: string | null
           other_techniques_description?: string | null
           patient_id: string
+          pcr?: number | null
           pharmaceutical_used?: string | null
+          platelets?: number | null
+          selected_protocols?: string[] | null
           session_date: string
           session_description?: string | null
           session_number: number
@@ -1018,19 +1038,29 @@ export type Database = {
           vas_on_day?: number | null
         }
         Update: {
+          aptitude_status?: string | null
           associated_techniques?: string | null
           clinical_observations?: string | null
           created_at?: string
+          exam_observations?: string | null
           function_score?: number | null
+          glucose?: number | null
+          hba1c?: number | null
+          hematocrit?: number | null
+          hemoglobin?: number | null
           id?: string
           immediate_response?: string | null
           improvement_percentage?: number | null
+          leukocytes?: number | null
           light_type?: string | null
           mobility_score?: number | null
           next_session_plan?: string | null
           other_techniques_description?: string | null
           patient_id?: string
+          pcr?: number | null
           pharmaceutical_used?: string | null
+          platelets?: number | null
+          selected_protocols?: string[] | null
           session_date?: string
           session_description?: string | null
           session_number?: number
