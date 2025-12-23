@@ -7,7 +7,6 @@ import { Upload, X, FileText, Image, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface UploadedFile {
   id: string;
@@ -190,7 +189,7 @@ export function ExamFileUpload({ patientId, onFilesChange, files }: ExamFileUplo
                       <div className="overflow-hidden">
                         <p className="text-sm truncate">{file.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(file.uploadedAt, "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          {format(file.uploadedAt, "dd/MM/yyyy HH:mm")}
                         </p>
                       </div>
                     </div>
