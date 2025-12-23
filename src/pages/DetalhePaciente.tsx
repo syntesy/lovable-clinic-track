@@ -1,746 +1,431 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  Search, ChevronDown, User, Activity, FileText, 
+  FlaskConical, ClipboardList, Brain, Calendar,
+  CheckCircle2, AlertCircle, XCircle, Clock,
+  ArrowRight, TrendingUp
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, FileText, Activity, TrendingUp, AlertTriangle, FlaskConical, CheckCircle2, XCircle, AlertCircle, Clock, FileSearch } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { parseRecommendedExams, parseLabResults, type ExamGroup, type LabResult } from "@/types/screening";
-const DetalhePaciente = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
 
-  const { data: patient, isLoading } = useQuery({
-    queryKey: ["patient", id],
+const DetalhePaciente = () => {
+  const navigate = useNavigate();
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Fetch all patients for dropdown
+  const { data: patients } = useQuery({
+    queryKey: ["all-patients"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("patients")
-        .select("*")
-        .eq("id", id)
-        .single();
-
+        .select("id, full_name, age, gender, status, treated_region")
+        .order("full_name");
       if (error) throw error;
       return data;
     },
   });
 
-  const { data: protocols } = useQuery({
-    queryKey: ["patient-protocols", id],
+  // Fetch selected patient details
+  const { data: patient } = useQuery({
+    queryKey: ["patient", selectedPatientId],
     queryFn: async () => {
+      if (!selectedPatientId) return null;
       const { data, error } = await supabase
-        .from("mac_protocols")
+        .from("patients")
         .select("*")
-        .eq("patient_id", id);
-
+        .eq("id", selectedPatientId)
+        .single();
       if (error) throw error;
       return data;
     },
+    enabled: !!selectedPatientId,
   });
 
+  // Fetch sessions
   const { data: sessions } = useQuery({
-    queryKey: ["patient-sessions", id],
+    queryKey: ["patient-sessions", selectedPatientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("treatment_sessions")
         .select("*")
-        .eq("patient_id", id)
-        .order("session_date", { ascending: true });
-
+        .eq("patient_id", selectedPatientId)
+        .order("session_date", { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !!selectedPatientId,
   });
 
-  // Query for PRP screenings
+  // Fetch screenings
   const { data: screenings } = useQuery({
-    queryKey: ["patient-screenings", id],
+    queryKey: ["patient-screenings", selectedPatientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("prp_screenings")
         .select("*, prp_lab_results(*)")
-        .eq("patient_id", id)
+        .eq("patient_id", selectedPatientId)
         .order("screening_date", { ascending: false });
-
       if (error) throw error;
       return data;
     },
+    enabled: !!selectedPatientId,
   });
 
-  // Query for blood tests
-  const { data: bloodTests } = useQuery({
-    queryKey: ["patient-blood-tests", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("blood_tests")
-        .select("*")
-        .eq("patient_id", id)
-        .order("collection_date", { ascending: false });
+  const filteredPatients = patients?.filter((p) =>
+    p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-      if (error) throw error;
-      return data;
-    },
-  });
+  const selectedPatient = patients?.find((p) => p.id === selectedPatientId);
+
+  const getStatusBadge = (status: string | null) => {
+    if (status === "active") {
+      return <Badge className="bg-clinical-safe text-white text-xs">Ativo</Badge>;
+    }
+    return <Badge variant="secondary" className="text-xs">Inativo</Badge>;
+  };
 
   const getClassificationBadge = (classification: string) => {
     switch (classification?.toUpperCase()) {
       case "APTO":
-        return <Badge className="bg-emerald-500 text-white"><CheckCircle2 className="w-3 h-3 mr-1" /> APTO</Badge>;
+        return <Badge className="bg-clinical-safe text-white"><CheckCircle2 className="w-3 h-3 mr-1" /> APTO</Badge>;
       case "APTO_COM_PREPARO":
-        return <Badge className="bg-amber-500 text-white"><AlertCircle className="w-3 h-3 mr-1" /> APTO COM PREPARO</Badge>;
+        return <Badge className="bg-clinical-caution text-white"><AlertCircle className="w-3 h-3 mr-1" /> APTO COM PREPARO</Badge>;
       case "NAO_APTO":
       case "CONTRAINDICADO":
-        return <Badge className="bg-red-500 text-white"><XCircle className="w-3 h-3 mr-1" /> NÃO APTO</Badge>;
+        return <Badge className="bg-clinical-danger text-white"><XCircle className="w-3 h-3 mr-1" /> NÃO APTO</Badge>;
       default:
-        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> {classification || "Aguardando"}</Badge>;
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> Aguardando</Badge>;
     }
   };
 
-  if (isLoading) {
-    return <div className="text-center py-12">Carregando...</div>;
-  }
-
-  if (!patient) {
-    return <div className="text-center py-12">Paciente não encontrado</div>;
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/pacientes")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h2 className="text-3xl font-bold text-foreground">
-            {patient.full_name}
-          </h2>
-          <p className="text-muted-foreground">
-            {patient.age} anos • {patient.treated_region}
-          </p>
-        </div>
-        <div className="ml-auto">
-          <span
-            className={`inline-block px-3 py-1 text-sm rounded-full ${
-              patient.status === "active"
-                ? "bg-accent text-accent-foreground"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {patient.status === "active" ? "Em Tratamento" : "Alta"}
-          </span>
-        </div>
-        <Button
-          onClick={() => navigate(`/protocolo-mac/${id}`)}
-          style={{
-            backgroundColor: '#2F3F6B',
-            color: '#FFFFFF',
-            borderRadius: '12px',
-            fontWeight: 600,
-          }}
-          className="hover:opacity-90 ml-2"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Novo Protocolo MAC
-        </Button>
-      </div>
-
-      <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto">
-          <TabsTrigger value="info">Dados Clínicos</TabsTrigger>
-          <TabsTrigger value="triagem" className="flex items-center gap-1">
-            <FlaskConical className="h-3 w-3" />
-            Triagem & Exames
-          </TabsTrigger>
-          <TabsTrigger value="protocol">Protocolo MAC</TabsTrigger>
-          <TabsTrigger value="sessions">Evolução</TabsTrigger>
-          <TabsTrigger value="contraindications">Contra-Indicações</TabsTrigger>
-          <TabsTrigger value="discharge">Alta</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="info" className="space-y-4">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Identificação</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Gênero</p>
-                <p className="font-medium">{patient.gender || "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Telefone</p>
-                <p className="font-medium">{patient.phone || "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">E-mail</p>
-                <p className="font-medium">{patient.email || "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Profissão</p>
-                <p className="font-medium">{patient.profession || "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Atividade Esportiva</p>
-                <p className="font-medium">{patient.sport_activity || "—"}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Avaliação Clínica</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  Diagnóstico Clínico
-                </p>
-                <p className="text-sm">{patient.clinical_diagnosis || "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  Diagnóstico por Imagem
-                </p>
-                <p className="text-sm">{patient.imaging_diagnosis || "—"}</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Tempo de Sintomas
-                  </p>
-                  <p className="text-sm">{patient.symptoms_duration || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Classificação da Dor
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {patient.pain_type_nociceptive && (
-                      <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">
-                        Nociceptiva
-                      </span>
-                    )}
-                    {patient.pain_type_neuropathic && (
-                      <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">
-                        Neuropática
-                      </span>
-                    )}
-                    {patient.pain_type_nociplastic && (
-                      <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">
-                        Nociplástica
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Escalas Baseline</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-accent/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">EVA Inicial</p>
-                <p className="text-3xl font-bold text-foreground">
-                  {patient.initial_vas ?? "—"}
-                </p>
-              </div>
-              <div className="text-center p-4 bg-accent/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">Função Inicial</p>
-                <p className="text-3xl font-bold text-foreground">
-                  {patient.initial_function ?? "—"}
-                </p>
-              </div>
-              <div className="text-center p-4 bg-accent/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Mobilidade Inicial
-                </p>
-                <p className="text-3xl font-bold text-foreground">
-                  {patient.initial_mobility ?? "—"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Triagem & Exames Tab */}
-        <TabsContent value="triagem" className="space-y-6">
-          {/* Triagens Realizadas */}
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center">
-                <FlaskConical className="mr-2 h-5 w-5 text-primary" />
-                Triagens Biológicas Pré-PRP
-              </CardTitle>
+    <div className="min-h-screen bg-background">
+      {/* Fixed Top Header with Patient Selector */}
+      <div className="sticky top-0 z-50 bg-card border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => navigate(`/triagem-biologica?paciente=${id}`)}
+                className="w-full max-w-md justify-between bg-card border-border hover:bg-muted/50 h-12"
               >
-                Nova Triagem
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {screenings && screenings.length > 0 ? (
-                <div className="space-y-4">
-                  {screenings.map((screening) => {
-                    const recommendedExams: ExamGroup[] = parseRecommendedExams(screening.recommended_exams);
-                    const labResults: LabResult[] = parseLabResults(screening.prp_lab_results);
-                    
-                    return (
-                      <Card key={screening.id} className="bg-accent/5 border-border/50">
-                        <CardContent className="pt-4">
-                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="text-sm font-medium">
-                                {format(new Date(screening.screening_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                              </div>
-                              {getClassificationBadge(screening.classification || "")}
-                            </div>
-                          </div>
-                          
-                          {screening.analysis_result && (
-                            <div className="mb-4">
-                              <p className="text-sm text-muted-foreground mb-1">Análise</p>
-                              <p className="text-sm bg-background/50 p-3 rounded-lg">{screening.analysis_result}</p>
-                            </div>
-                          )}
-
-                          {/* Exames Solicitados */}
-                          {recommendedExams && recommendedExams.length > 0 && (
-                            <div className="mb-4">
-                              <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                                <FileSearch className="h-4 w-4" />
-                                Exames Solicitados
-                              </p>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {recommendedExams.map((exam: ExamGroup, idx: number) => (
-                                  <div key={idx} className="text-sm bg-background/50 p-2 rounded border border-border/30">
-                                    <span className="font-medium">{exam.axis}</span>
-                                    {exam.exams && exam.exams.length > 0 && (
-                                      <p className="text-xs text-muted-foreground mt-1">{exam.exams.join(", ")}</p>
-                                    )}
-                                    {exam.justification && (
-                                      <p className="text-xs text-muted-foreground mt-1">{exam.justification}</p>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Resultados de Exames */}
-                          {labResults && labResults.length > 0 && (
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                Resultados de Exames
-                              </p>
-                              <div className="space-y-2">
-                                {labResults.map((result: LabResult) => (
-                                  <div key={result.id} className="text-sm bg-emerald-500/10 p-3 rounded border border-emerald-500/20">
-                                    {result.interpretation && (
-                                      <p className="text-sm">{result.interpretation}</p>
-                                    )}
-                                    {result.updated_classification && (
-                                      <div className="mt-2">
-                                        <span className="text-xs text-muted-foreground">Classificação Atualizada: </span>
-                                        {getClassificationBadge(result.updated_classification)}
-                                      </div>
-                                    )}
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                      Registrado em {format(new Date(result.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {screening.patient_orientations && (
-                            <div className="mt-4 pt-4 border-t border-border/30">
-                              <p className="text-sm text-muted-foreground mb-1">Orientações ao Paciente</p>
-                              <p className="text-sm">{screening.patient_orientations}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FlaskConical className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">Nenhuma triagem realizada ainda</p>
-                  <Button 
-                    onClick={() => navigate(`/triagem-biologica?paciente=${id}`)}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    Iniciar Triagem
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Exames de Sangue */}
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Activity className="mr-2 h-5 w-5 text-primary" />
-                Exames Laboratoriais
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {bloodTests && bloodTests.length > 0 ? (
-                <div className="space-y-3">
-                  {bloodTests.map((test) => (
-                    <div key={test.id} className="flex items-center justify-between p-3 bg-accent/10 rounded-lg border border-border/30">
-                      <div>
-                        <p className="font-medium text-sm">{test.test_type}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Coleta: {format(new Date(test.collection_date), "dd/MM/yyyy", { locale: ptBR })}
-                        </p>
-                        {test.observations && (
-                          <p className="text-xs text-muted-foreground mt-1">{test.observations}</p>
-                        )}
-                      </div>
-                      <Badge variant="outline" className="text-xs">{test.file_name}</Badge>
+                {selectedPatient ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
                     </div>
+                    <div className="text-left">
+                      <p className="font-medium text-foreground">{selectedPatient.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedPatient.age} anos • {selectedPatient.status === "active" ? "Ativo" : "Inativo"}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">Selecionar paciente...</span>
+                )}
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0 bg-card border-border" align="start">
+              <div className="p-3 border-b border-border">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar paciente..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 bg-muted/50 border-0"
+                  />
+                </div>
+              </div>
+              <ScrollArea className="h-[300px]">
+                <div className="p-2">
+                  {filteredPatients?.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setSelectedPatientId(p.id);
+                        setIsDropdownOpen(false);
+                        setSearchQuery("");
+                      }}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">{p.full_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {p.age} anos {p.treated_region && `• ${p.treated_region}`}
+                        </p>
+                      </div>
+                      {getStatusBadge(p.status)}
+                    </button>
                   ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-6">
-                  Nenhum exame laboratorial registrado
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="protocol" className="space-y-4">
-          {protocols && protocols.length > 0 ? (
-            protocols.map((protocol) => (
-              <Card key={protocol.id} className="border-border">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FileText className="mr-2 h-5 w-5 text-primary" />
-                    Protocolo MAC
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Tipo de Luz</p>
-                      <p className="font-medium">{protocol.light_type}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Comprimento de Onda
-                      </p>
-                      <p className="font-medium">{protocol.wavelength} nm</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Potência</p>
-                      <p className="font-medium">{protocol.power} mW</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Energia Total</p>
-                      <p className="font-medium">{protocol.total_energy} J</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Fluência</p>
-                      <p className="font-medium">{protocol.fluence} J/cm²</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Tempo de Aplicação
-                      </p>
-                      <p className="font-medium">{protocol.application_time}s</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Modo</p>
-                      <p className="font-medium">{protocol.delivery_mode}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Técnica</p>
-                      <p className="font-medium">{protocol.technique}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Tecido Alvo
-                      </p>
-                      <p className="font-medium">{protocol.target_tissue}</p>
-                    </div>
-                  </div>
-                  {protocol.uses_photosensitizer && (
-                    <div className="border-t pt-4">
-                      <p className="text-sm font-semibold mb-2">
-                        Fotossensibilizador
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Tipo</p>
-                          <p className="font-medium">
-                            {protocol.photosensitizer_type}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Concentração
-                          </p>
-                          <p className="font-medium">
-                            {protocol.concentration}%
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                  {filteredPatients?.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">Nenhum paciente encontrado</p>
                   )}
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card className="p-12 text-center border-border">
-              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                Nenhum protocolo cadastrado ainda
-              </p>
-              <Button 
-                className="mt-4 bg-primary hover:bg-primary/90"
-                onClick={() => navigate(`/protocolo-mac/${id}`)}
-              >
-                Adicionar Protocolo
-              </Button>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="sessions" className="space-y-4">
-          <div className="flex justify-end mb-4">
-            <Button
-              onClick={() => navigate(`/evolucao/${id}`)}
-              style={{
-                backgroundColor: '#2F3F6B',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 600,
-              }}
-              className="hover:opacity-90"
-            >
-              <Activity className="h-4 w-4 mr-2" />
-              Registrar Evolução
-            </Button>
-          </div>
-          {sessions && sessions.length > 0 ? (
-            <div className="space-y-4">
-              {sessions.map((session) => (
-                <Card key={session.id} className="border-border">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="flex items-center">
-                        <Activity className="mr-2 h-5 w-5 text-primary" />
-                        Sessão #{session.session_number}
-                      </span>
-                      <span className="text-sm text-muted-foreground font-normal">
-                        {new Date(session.session_date).toLocaleDateString(
-                          "pt-BR"
-                        )}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center p-3 bg-accent/20 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          EVA
-                        </p>
-                        <p className="text-2xl font-bold text-foreground">
-                          {session.vas_on_day ?? "—"}
-                        </p>
-                      </div>
-                      <div className="text-center p-3 bg-accent/20 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Função
-                        </p>
-                        <p className="text-2xl font-bold text-foreground">
-                          {session.function_score ?? "—"}
-                        </p>
-                      </div>
-                      <div className="text-center p-3 bg-accent/20 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Mobilidade
-                        </p>
-                        <p className="text-2xl font-bold text-foreground">
-                          {session.mobility_score ?? "—"}
-                        </p>
-                      </div>
-                    </div>
-                    {session.session_description && (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Descrição
-                        </p>
-                        <p className="text-sm">{session.session_description}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="p-12 text-center border-border">
-              <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                Nenhuma sessão registrada ainda
-              </p>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="contraindications" className="space-y-4">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="mr-2 h-5 w-5 text-primary" />
-                Contra-Indicações por Tratamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <Tabs defaultValue="mac" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="mac">MAC</TabsTrigger>
-                  <TabsTrigger value="epi">EPI</TabsTrigger>
-                  <TabsTrigger value="prp">PRP</TabsTrigger>
-                  <TabsTrigger value="bma">BMA</TabsTrigger>
-                  <TabsTrigger value="bmac">BMAC</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="mac" className="mt-4">
-                  <div className="p-4 bg-accent/10 rounded-lg">
-                    <h4 className="font-semibold text-foreground mb-2">MAC - Método de Aceleração Cicatricial</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione aqui as contra-indicações específicas para o tratamento MAC.
-                    </p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="epi" className="mt-4">
-                  <div className="p-4 bg-accent/10 rounded-lg">
-                    <h4 className="font-semibold text-foreground mb-2">EPI - Eletrólise Percutânea Intratecidual</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione aqui as contra-indicações específicas para o tratamento EPI.
-                    </p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="prp" className="mt-4">
-                  <div className="p-4 bg-accent/10 rounded-lg">
-                    <h4 className="font-semibold text-foreground mb-2">PRP - Plasma Rico em Plaquetas</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione aqui as contra-indicações específicas para o tratamento PRP.
-                    </p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="bma" className="mt-4">
-                  <div className="p-4 bg-accent/10 rounded-lg">
-                    <h4 className="font-semibold text-foreground mb-2">BMA - Aspirado de Medula Óssea</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione aqui as contra-indicações específicas para o tratamento BMA.
-                    </p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="bmac" className="mt-4">
-                  <div className="p-4 bg-accent/10 rounded-lg">
-                    <h4 className="font-semibold text-foreground mb-2">BMAC - Concentrado de Aspirado de Medula Óssea</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione aqui as contra-indicações específicas para o tratamento BMAC.
-                    </p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="discharge" className="space-y-4">
-          {patient.status === "discharged" ? (
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="mr-2 h-5 w-5 text-primary" />
-                  Dados de Alta
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-accent/20 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      EVA Final
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">
-                      {patient.final_vas ?? "—"}
-                    </p>
-                  </div>
-                  <div className="text-center p-4 bg-accent/20 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Função Final
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">
-                      {patient.final_function ?? "—"}
-                    </p>
-                  </div>
-                  <div className="text-center p-4 bg-accent/20 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Mobilidade Final
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">
-                      {patient.final_mobility ?? "—"}
-                    </p>
-                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Total de Sessões
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {patient.total_sessions ?? "—"}
-                    </p>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {!selectedPatientId ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <User className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-medium text-foreground mb-2">Selecione um paciente</h2>
+            <p className="text-muted-foreground">Use o seletor acima para visualizar os detalhes do paciente</p>
+          </div>
+        ) : (
+          <div className="space-y-6 animate-fade-in">
+            {/* Clinical Header Card */}
+            <Card className="bg-card border-border shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="w-8 h-8 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Tempo Total
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {patient.total_treatment_days ?? "—"} dias
-                    </p>
+                  <div className="flex-1">
+                    <h1 className="text-2xl font-semibold text-foreground">{patient?.full_name}</h1>
+                    <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+                      <span>{patient?.age} anos</span>
+                      <span>•</span>
+                      <span>{patient?.gender === "M" ? "Masculino" : patient?.gender === "F" ? "Feminino" : "Não informado"}</span>
+                      {patient?.treated_region && (
+                        <>
+                          <span>•</span>
+                          <span>{patient.treated_region}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  {getStatusBadge(patient?.status || null)}
                 </div>
               </CardContent>
             </Card>
-          ) : (
-            <Card className="p-12 text-center border-border">
-              <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                Paciente ainda em tratamento
-              </p>
-              <Button className="mt-4 bg-primary hover:bg-primary/90">
-                Registrar Alta
+
+            {/* Quick Actions */}
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" className="gap-2" onClick={() => navigate(`/triagem-biologica?patient=${selectedPatientId}`)}>
+                <FlaskConical className="w-4 h-4" />
+                Iniciar Triagem Pré-PRP
               </Button>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+              <Button variant="outline" className="gap-2" onClick={() => navigate(`/relatorios?patient=${selectedPatientId}`)}>
+                <FileText className="w-4 h-4" />
+                Gerar Relatório
+              </Button>
+              <Button variant="outline" className="gap-2">
+                <ClipboardList className="w-4 h-4" />
+                Solicitar Exames
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => navigate("/agente-mac")}>
+                <Brain className="w-4 h-4" />
+                Consultar AGENTE FISIOREGEN
+              </Button>
+            </div>
+
+            {/* Tabs Navigation */}
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="bg-card border border-border p-1 h-auto">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Visão Geral
+                </TabsTrigger>
+                <TabsTrigger value="triagem" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Triagem / Scores
+                </TabsTrigger>
+                <TabsTrigger value="historico" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Histórico Clínico
+                </TabsTrigger>
+                <TabsTrigger value="exames" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Exames
+                </TabsTrigger>
+                <TabsTrigger value="relatorios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Relatórios
+                </TabsTrigger>
+                <TabsTrigger value="decisao" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  Decisão Clínica
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card className="bg-card border-border">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Diagnóstico Clínico</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-foreground">{patient?.clinical_diagnosis || "Não informado"}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Total de Sessões</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-semibold text-foreground">{sessions?.length || 0}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">EVA Inicial</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-semibold text-foreground">{patient?.initial_vas ?? "—"}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Triagem Tab */}
+              <TabsContent value="triagem" className="space-y-6">
+                {screenings && screenings.length > 0 ? (
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Score FISIOREGEN</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-6">
+                        <div className="text-5xl font-bold text-primary">78</div>
+                        <div className="flex-1">
+                          <Progress value={78} className="h-3" />
+                          <p className="text-sm text-muted-foreground mt-2">Prontidão Biológica</p>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-border">
+                        {getClassificationBadge(screenings[0]?.classification || "")}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="bg-card border-border">
+                    <CardContent className="py-12 text-center">
+                      <FlaskConical className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Nenhuma triagem realizada</p>
+                      <Button className="mt-4" onClick={() => navigate(`/triagem-biologica?patient=${selectedPatientId}`)}>
+                        Iniciar Triagem
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Histórico Tab */}
+              <TabsContent value="historico" className="space-y-4">
+                {sessions && sessions.length > 0 ? (
+                  <div className="space-y-4">
+                    {sessions.map((session, index) => (
+                      <Card key={session.id} className="bg-card border-border">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                              {session.session_number}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-foreground">{session.clinical_observations || "Sem observações"}</p>
+                              {session.vas_on_day && (
+                                <p className="mt-1 text-sm text-muted-foreground">EVA: {session.vas_on_day}</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-card border-border">
+                    <CardContent className="py-12 text-center">
+                      <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Nenhuma sessão registrada</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Exames Tab */}
+              <TabsContent value="exames">
+                <Card className="bg-card border-border">
+                  <CardContent className="py-12 text-center">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Nenhum exame anexado</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Relatórios Tab */}
+              <TabsContent value="relatorios">
+                <Card className="bg-card border-border">
+                  <CardContent className="py-12 text-center">
+                    <ClipboardList className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Nenhum relatório gerado</p>
+                    <Button className="mt-4" variant="outline" onClick={() => navigate(`/relatorios?patient=${selectedPatientId}`)}>
+                      Gerar Relatório
+                    </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Decisão Clínica Tab */}
+              <TabsContent value="decisao" className="space-y-6">
+                <Card className="bg-card border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5" />
+                      Recomendações do Sistema
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <TrendingUp className="w-5 h-5 text-clinical-safe mt-0.5" />
+                        <div>
+                          <p className="font-medium text-foreground">Paciente apresenta boa resposta ao tratamento</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Baseado nas últimas {sessions?.length || 0} sessões e evolução do quadro clínico.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <p className="text-xs text-muted-foreground text-center">
+                  Este sistema não substitui o julgamento clínico profissional.
+                </p>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
