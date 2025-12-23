@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { checkRateLimit, createRateLimitResponse, getRateLimitHeaders } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -105,6 +106,22 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting
+    const clientIP = req.headers.get('x-forwarded-for') || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+    const authHeader = req.headers.get('authorization') || '';
+    const identifier = authHeader || clientIP;
+    
+    const rateLimitResult = checkRateLimit(`analyze-prp:${identifier}`, {
+      maxRequests: 10,  // 10 análises por minuto
+      windowMs: 60 * 1000,
+    });
+    
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult.resetAt);
+    }
+
     const { questionnaireData } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -155,7 +172,11 @@ serve(async (req) => {
     const analysis = data.choices?.[0]?.message?.content || "Não foi possível gerar a análise.";
 
     return new Response(JSON.stringify({ analysis }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { 
+        ...corsHeaders, 
+        ...getRateLimitHeaders(rateLimitResult),
+        "Content-Type": "application/json" 
+      },
     });
   } catch (error) {
     console.error("Error in analyze-prp function:", error);

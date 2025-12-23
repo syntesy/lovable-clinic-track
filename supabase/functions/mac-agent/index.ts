@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import OpenAI from "https://esm.sh/openai@4.52.0";
+import { checkRateLimit, createRateLimitResponse, getRateLimitHeaders } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,6 +41,16 @@ serve(async (req) => {
         JSON.stringify({ error: "Unauthorized: Invalid or expired token" }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Rate limiting por usuário autenticado
+    const rateLimitResult = checkRateLimit(`mac-agent:${user.id}`, {
+      maxRequests: 20,  // 20 requisições por minuto para o agente
+      windowMs: 60 * 1000,
+    });
+    
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult.resetAt);
     }
 
     console.log("Authenticated user:", user.id);
@@ -153,7 +164,11 @@ serve(async (req) => {
       JSON.stringify({ reply, threadId }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          ...getRateLimitHeaders(rateLimitResult),
+          'Content-Type': 'application/json' 
+        },
       }
     );
   } catch (error) {

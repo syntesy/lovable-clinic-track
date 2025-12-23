@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { checkRateLimit, createRateLimitResponse, getRateLimitHeaders } from "../_shared/rate-limiter.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
@@ -14,6 +15,22 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting baseado no IP ou token de auth
+    const clientIP = req.headers.get('x-forwarded-for') || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+    const authHeader = req.headers.get('authorization') || '';
+    const identifier = authHeader || clientIP;
+    
+    const rateLimitResult = checkRateLimit(identifier, {
+      maxRequests: 30,  // 30 requisições por minuto para chat
+      windowMs: 60 * 1000,
+    });
+    
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult.resetAt);
+    }
+
     const { messages } = await req.json();
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -42,6 +59,7 @@ serve(async (req) => {
     return new Response(response.body, {
       headers: {
         ...corsHeaders,
+        ...getRateLimitHeaders(rateLimitResult),
         'Content-Type': 'text/event-stream',
       },
     });
