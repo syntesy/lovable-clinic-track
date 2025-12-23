@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          additional_info: Json | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          session_id: string | null
+          table_name: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          additional_info?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          session_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          additional_info?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          session_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       blood_tests: {
         Row: {
           collection_date: string
@@ -110,6 +158,47 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinical_record_versions: {
+        Row: {
+          change_reason: string | null
+          changed_by: string | null
+          clinical_record_id: string
+          created_at: string
+          data: Json
+          hash_integrity: string
+          id: string
+          version_number: number
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_by?: string | null
+          clinical_record_id: string
+          created_at?: string
+          data: Json
+          hash_integrity: string
+          id?: string
+          version_number: number
+        }
+        Update: {
+          change_reason?: string | null
+          changed_by?: string | null
+          clinical_record_id?: string
+          created_at?: string
+          data?: Json
+          hash_integrity?: string
+          id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinical_record_versions_clinical_record_id_fkey"
+            columns: ["clinical_record_id"]
+            isOneToOne: false
+            referencedRelation: "clinical_records"
             referencedColumns: ["id"]
           },
         ]
@@ -396,6 +485,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ortobiologicos_protocols_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_consents: {
+        Row: {
+          accepted: boolean
+          accepted_at: string | null
+          consent_text: string
+          consent_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          patient_id: string
+          revocation_reason: string | null
+          revoked_at: string | null
+          updated_at: string
+          user_agent: string | null
+          witness_user_id: string | null
+        }
+        Insert: {
+          accepted?: boolean
+          accepted_at?: string | null
+          consent_text: string
+          consent_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          patient_id: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          witness_user_id?: string | null
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string | null
+          consent_text?: string
+          consent_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          patient_id?: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          witness_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_consents_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -980,12 +1125,62 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          last_activity_at: string
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_integrity_hash: { Args: { data: Json }; Returns: string }
+      log_audit_action: {
+        Args: {
+          p_action: string
+          p_additional_info?: Json
+          p_new_data?: Json
+          p_old_data?: Json
+          p_record_id?: string
+          p_table_name?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
