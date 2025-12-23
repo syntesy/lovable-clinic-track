@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, FileText, Activity, TrendingUp, AlertTriangle, FlaskConical, CheckCircle2, XCircle, AlertCircle, Clock, FileSearch } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseRecommendedExams, parseLabResults, type ExamGroup, type LabResult } from "@/types/screening";
 const DetalhePaciente = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -291,8 +292,8 @@ const DetalhePaciente = () => {
               {screenings && screenings.length > 0 ? (
                 <div className="space-y-4">
                   {screenings.map((screening) => {
-                    const recommendedExams = screening.recommended_exams as any[] | null;
-                    const labResults = screening.prp_lab_results as any[] | null;
+                    const recommendedExams: ExamGroup[] = parseRecommendedExams(screening.recommended_exams);
+                    const labResults: LabResult[] = parseLabResults(screening.prp_lab_results);
                     
                     return (
                       <Card key={screening.id} className="bg-accent/5 border-border/50">
@@ -321,9 +322,12 @@ const DetalhePaciente = () => {
                                 Exames Solicitados
                               </p>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {recommendedExams.map((exam: any, idx: number) => (
+                                {recommendedExams.map((exam: ExamGroup, idx: number) => (
                                   <div key={idx} className="text-sm bg-background/50 p-2 rounded border border-border/30">
-                                    <span className="font-medium">{exam.exam || exam.name || exam}</span>
+                                    <span className="font-medium">{exam.axis}</span>
+                                    {exam.exams && exam.exams.length > 0 && (
+                                      <p className="text-xs text-muted-foreground mt-1">{exam.exams.join(", ")}</p>
+                                    )}
                                     {exam.justification && (
                                       <p className="text-xs text-muted-foreground mt-1">{exam.justification}</p>
                                     )}
@@ -341,7 +345,7 @@ const DetalhePaciente = () => {
                                 Resultados de Exames
                               </p>
                               <div className="space-y-2">
-                                {labResults.map((result: any) => (
+                                {labResults.map((result: LabResult) => (
                                   <div key={result.id} className="text-sm bg-emerald-500/10 p-3 rounded border border-emerald-500/20">
                                     {result.interpretation && (
                                       <p className="text-sm">{result.interpretation}</p>

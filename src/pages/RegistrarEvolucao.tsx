@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, Activity, User, Upload, X } from "lucide-react";
+import { TreatmentSessionFormData, safeParseFloat, safeParseInt } from "@/types/forms";
 
 const RegistrarEvolucao = () => {
   const { id } = useParams();
@@ -21,7 +22,7 @@ const RegistrarEvolucao = () => {
   const [thermographyFiles, setThermographyFiles] = useState<File[]>([]);
   const [bloodTestFiles, setBloodTestFiles] = useState<File[]>([]);
   const [selectedProtocol, setSelectedProtocol] = useState<string>("");
-  const { register, handleSubmit, watch, setValue } = useForm();
+  const { register, handleSubmit, watch, setValue } = useForm<TreatmentSessionFormData>();
 
   const { data: protocols } = useQuery({
     queryKey: ["reference-protocols"],
@@ -87,7 +88,7 @@ const RegistrarEvolucao = () => {
     }
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: TreatmentSessionFormData) => {
     setIsSubmitting(true);
     try {
       const { data: sessionData, error: sessionError } = await supabase
