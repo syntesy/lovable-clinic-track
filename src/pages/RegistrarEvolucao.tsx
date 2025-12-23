@@ -8,10 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, Activity, User, Upload, X } from "lucide-react";
+import { ArrowLeft, Activity, User, Upload, X, FileText, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { TreatmentSessionFormData, safeParseFloat, safeParseInt } from "@/types/forms";
+
+const PROTOCOL_OPTIONS = [
+  { id: "MAC", label: "MAC" },
+  { id: "EPI", label: "EPI" },
+  { id: "PRP", label: "PRP" },
+  { id: "PRF", label: "PRF" },
+  { id: "PPP", label: "PPP" },
+  { id: "BMA", label: "BMA" },
+];
 
 const RegistrarEvolucao = () => {
   const { id } = useParams();
@@ -21,23 +30,85 @@ const RegistrarEvolucao = () => {
   const [ultrasoundFiles, setUltrasoundFiles] = useState<File[]>([]);
   const [thermographyFiles, setThermographyFiles] = useState<File[]>([]);
   const [bloodTestFiles, setBloodTestFiles] = useState<File[]>([]);
-  const [selectedProtocol, setSelectedProtocol] = useState<string>("");
+  const [selectedProtocols, setSelectedProtocols] = useState<string[]>([]);
+  
+  // Exam results state
+  const [examResults, setExamResults] = useState({
+    hemoglobin: "",
+    hematocrit: "",
+    platelets: "",
+    leukocytes: "",
+    pcr: "",
+    glucose: "",
+    hba1c: "",
+    observations: "",
+  });
+  
+  // Re-evaluation state
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState<{
+    apt: boolean;
+    message: string;
+  } | null>(null);
+  
   const { register, handleSubmit, watch, setValue } = useForm<TreatmentSessionFormData>();
 
-  const { data: protocols } = useQuery({
-    queryKey: ["reference-protocols"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reference_protocols")
-        .select("*")
-        .order("nome", { ascending: true });
+  const handleProtocolChange = (protocolId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedProtocols([...selectedProtocols, protocolId]);
+    } else {
+      setSelectedProtocols(selectedProtocols.filter((p) => p !== protocolId));
+    }
+  };
 
-      if (error) throw error;
-      return data;
-    },
-  });
+  const handleReEvaluate = () => {
+    setIsEvaluating(true);
+    
+    // Simulate evaluation logic based on exam results
+    setTimeout(() => {
+      const platelets = parseFloat(examResults.platelets);
+      const hemoglobin = parseFloat(examResults.hemoglobin);
+      const pcr = parseFloat(examResults.pcr);
+      
+      let apt = true;
+      let messages: string[] = [];
+      
+      if (platelets && platelets < 100000) {
+        apt = false;
+        messages.push("Plaquetas abaixo de 100.000/mm³");
+      }
+      
+      if (hemoglobin && hemoglobin < 10) {
+        apt = false;
+        messages.push("Hemoglobina abaixo de 10 g/dL");
+      }
+      
+      if (pcr && pcr > 10) {
+        apt = false;
+        messages.push("PCR elevada (>10 mg/L)");
+      }
+      
+      if (messages.length === 0 && !platelets && !hemoglobin && !pcr) {
+        setEvaluationResult({
+          apt: true,
+          message: "Preencha os resultados dos exames para uma avaliação completa.",
+        });
+      } else if (apt) {
+        setEvaluationResult({
+          apt: true,
+          message: "Paciente apto para realizar o procedimento.",
+        });
+      } else {
+        setEvaluationResult({
+          apt: false,
+          message: `Contraindicações: ${messages.join(", ")}`,
+        });
+      }
+      
+      setIsEvaluating(false);
+    }, 1000);
+  };
 
-  const selectedProtocolData = protocols?.find(p => p.id === selectedProtocol);
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patient", id],
@@ -99,14 +170,9 @@ const RegistrarEvolucao = () => {
             session_number: data.session_number ? parseInt(data.session_number) : 1,
             session_date: data.session_date,
             vas_on_day: data.vas_on_day ? parseFloat(data.vas_on_day) : null,
-            session_description: null,
+            session_description: selectedProtocols.length > 0 ? selectedProtocols.join(", ") : null,
             clinical_observations: data.clinical_observations,
-            light_type: selectedProtocolData ? [
-              selectedProtocolData.tipo_luz_1,
-              selectedProtocolData.tipo_luz_2,
-              selectedProtocolData.tipo_luz_3,
-              selectedProtocolData.tipo_luz_4
-            ].filter(Boolean).join(", ") : null,
+            light_type: selectedProtocols.join(", ") || null,
             treatment_time: data.treatment_time_total ? parseFloat(data.treatment_time_total) : null,
             pharmaceutical_used: data.pharmaceutical_used,
             associated_techniques: data.associated_techniques,
@@ -255,66 +321,44 @@ const RegistrarEvolucao = () => {
 
             <div className="space-y-4">
               <Label className="text-base md:text-lg font-semibold text-foreground block">
-                Protocolo
+                Protocolo (selecione um ou mais)
               </Label>
-              <Select value={selectedProtocol} onValueChange={setSelectedProtocol}>
-                <SelectTrigger 
-                  className="w-full"
-                  style={{ backgroundColor: '#F5F6FA', border: '2px solid #3D4F7C', borderRadius: '14px' }}
-                >
-                  <SelectValue placeholder="Selecione um protocolo..." />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  {protocols?.map((protocol) => (
-                    <SelectItem key={protocol.id} value={protocol.id}>
-                      {protocol.nome || "Protocolo sem nome"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {selectedProtocolData && (
-                <div className="bg-[#F5F6FA] p-4 rounded-lg space-y-3">
-                  <p className="text-sm font-medium text-foreground">Luzes do Protocolo:</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {selectedProtocolData.tipo_luz_1 && (
-                      <div className="bg-white p-3 rounded-lg">
-                        <p className="text-xs text-[#5A6080] font-medium">1ª Luz</p>
-                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_1}</p>
-                        <p className="text-xs text-[#5A6080]">
-                          {[selectedProtocolData.tempo_luz_1, selectedProtocolData.tempo_luz_1_b, selectedProtocolData.tempo_luz_1_c].filter(Boolean).join("s / ")}s
-                        </p>
-                      </div>
-                    )}
-                    {selectedProtocolData.tipo_luz_2 && (
-                      <div className="bg-white p-3 rounded-lg">
-                        <p className="text-xs text-[#5A6080] font-medium">2ª Luz</p>
-                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_2}</p>
-                        <p className="text-xs text-[#5A6080]">
-                          {[selectedProtocolData.tempo_luz_2, selectedProtocolData.tempo_luz_2_b, selectedProtocolData.tempo_luz_2_c].filter(Boolean).join("s / ")}s
-                        </p>
-                      </div>
-                    )}
-                    {selectedProtocolData.tipo_luz_3 && (
-                      <div className="bg-white p-3 rounded-lg">
-                        <p className="text-xs text-[#5A6080] font-medium">3ª Luz</p>
-                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_3}</p>
-                        <p className="text-xs text-[#5A6080]">
-                          {[selectedProtocolData.tempo_luz_3, selectedProtocolData.tempo_luz_3_b, selectedProtocolData.tempo_luz_3_c].filter(Boolean).join("s / ")}s
-                        </p>
-                      </div>
-                    )}
-                    {selectedProtocolData.tipo_luz_4 && (
-                      <div className="bg-white p-3 rounded-lg">
-                        <p className="text-xs text-[#5A6080] font-medium">4ª Luz</p>
-                        <p className="font-semibold text-foreground text-sm">{selectedProtocolData.tipo_luz_4}</p>
-                        <p className="text-xs text-[#5A6080]">
-                          {[selectedProtocolData.tempo_luz_4, selectedProtocolData.tempo_luz_4_b, selectedProtocolData.tempo_luz_4_c].filter(Boolean).join("s / ")}s
-                        </p>
-                      </div>
-                    )}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {PROTOCOL_OPTIONS.map((protocol) => (
+                  <div
+                    key={protocol.id}
+                    className={`flex items-center space-x-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedProtocols.includes(protocol.id)
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-accent/10 hover:border-primary/50"
+                    }`}
+                    onClick={() =>
+                      handleProtocolChange(
+                        protocol.id,
+                        !selectedProtocols.includes(protocol.id)
+                      )
+                    }
+                  >
+                    <Checkbox
+                      id={`protocol-${protocol.id}`}
+                      checked={selectedProtocols.includes(protocol.id)}
+                      onCheckedChange={(checked) =>
+                        handleProtocolChange(protocol.id, checked as boolean)
+                      }
+                    />
+                    <Label
+                      htmlFor={`protocol-${protocol.id}`}
+                      className="font-semibold cursor-pointer"
+                    >
+                      {protocol.label}
+                    </Label>
                   </div>
-                </div>
+                ))}
+              </div>
+              {selectedProtocols.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Protocolos selecionados: {selectedProtocols.join(", ")}
+                </p>
               )}
             </div>
 
@@ -352,11 +396,164 @@ const RegistrarEvolucao = () => {
           </CardContent>
         </Card>
 
+        {/* Card de Resultados de Exames */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-primary" />
+              Resultados dos Exames
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="hemoglobin">Hemoglobina (g/dL)</Label>
+                <Input
+                  id="hemoglobin"
+                  type="number"
+                  step="0.1"
+                  value={examResults.hemoglobin}
+                  onChange={(e) =>
+                    setExamResults({ ...examResults, hemoglobin: e.target.value })
+                  }
+                  className="border-input"
+                  placeholder="Ex: 14.5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hematocrit">Hematócrito (%)</Label>
+                <Input
+                  id="hematocrit"
+                  type="number"
+                  step="0.1"
+                  value={examResults.hematocrit}
+                  onChange={(e) =>
+                    setExamResults({ ...examResults, hematocrit: e.target.value })
+                  }
+                  className="border-input"
+                  placeholder="Ex: 42"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="platelets">Plaquetas (/mm³)</Label>
+                <Input
+                  id="platelets"
+                  type="number"
+                  value={examResults.platelets}
+                  onChange={(e) =>
+                    setExamResults({ ...examResults, platelets: e.target.value })
+                  }
+                  className="border-input"
+                  placeholder="Ex: 250000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="leukocytes">Leucócitos (/mm³)</Label>
+                <Input
+                  id="leukocytes"
+                  type="number"
+                  value={examResults.leukocytes}
+                  onChange={(e) =>
+                    setExamResults({ ...examResults, leukocytes: e.target.value })
+                  }
+                  className="border-input"
+                  placeholder="Ex: 7000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pcr">PCR (mg/L)</Label>
+                <Input
+                  id="pcr"
+                  type="number"
+                  step="0.01"
+                  value={examResults.pcr}
+                  onChange={(e) =>
+                    setExamResults({ ...examResults, pcr: e.target.value })
+                  }
+                  className="border-input"
+                  placeholder="Ex: 3.5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="glucose">Glicose (mg/dL)</Label>
+                <Input
+                  id="glucose"
+                  type="number"
+                  value={examResults.glucose}
+                  onChange={(e) =>
+                    setExamResults({ ...examResults, glucose: e.target.value })
+                  }
+                  className="border-input"
+                  placeholder="Ex: 95"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hba1c">HbA1c (%)</Label>
+                <Input
+                  id="hba1c"
+                  type="number"
+                  step="0.1"
+                  value={examResults.hba1c}
+                  onChange={(e) =>
+                    setExamResults({ ...examResults, hba1c: e.target.value })
+                  }
+                  className="border-input"
+                  placeholder="Ex: 5.5"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="exam_observations">Observações dos Exames</Label>
+              <Textarea
+                id="exam_observations"
+                value={examResults.observations}
+                onChange={(e) =>
+                  setExamResults({ ...examResults, observations: e.target.value })
+                }
+                className="border-input min-h-[80px]"
+                placeholder="Observações sobre os resultados dos exames..."
+              />
+            </div>
+
+            {/* Botão de Reavaliação */}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              <Button
+                type="button"
+                onClick={handleReEvaluate}
+                disabled={isEvaluating}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary/10"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isEvaluating ? "animate-spin" : ""}`} />
+                {isEvaluating ? "Avaliando..." : "Avaliar Aptidão para Procedimento"}
+              </Button>
+
+              {evaluationResult && (
+                <div
+                  className={`flex items-center gap-2 p-3 rounded-lg ${
+                    evaluationResult.apt
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                  }`}
+                >
+                  {evaluationResult.apt ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5" />
+                  )}
+                  <span className="text-sm font-medium">{evaluationResult.message}</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Upload className="h-5 w-5 mr-2 text-primary" />
-              Exames e Imagens
+              Anexar Arquivos de Exames
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
