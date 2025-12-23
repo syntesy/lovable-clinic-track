@@ -1169,6 +1169,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_sessions: { Args: never; Returns: number }
       generate_integrity_hash: { Args: { data: Json }; Returns: string }
       log_audit_action: {
         Args: {

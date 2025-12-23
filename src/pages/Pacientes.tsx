@@ -3,24 +3,64 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, User, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, User, FileText, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const ITEMS_PER_PAGE = 20;
 
 const Pacientes = () => {
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: patients, isLoading } = useQuery({
-    queryKey: ["patients"],
+  // Query para contar total de pacientes
+  const { data: totalCount } = useQuery({
+    queryKey: ["patients-count", searchTerm],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
+        .from("patients")
+        .select("*", { count: "exact", head: true });
+      
+      if (searchTerm) {
+        query = query.ilike("full_name", `%${searchTerm}%`);
+      }
+      
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Query paginada de pacientes
+  const { data: patients, isLoading } = useQuery({
+    queryKey: ["patients", currentPage, searchTerm],
+    queryFn: async () => {
+      const from = currentPage * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      let query = supabase
         .from("patients")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
+      if (searchTerm) {
+        query = query.ilike("full_name", `%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
   });
+
+  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(0); // Reset para primeira página ao buscar
+  };
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -29,6 +69,7 @@ const Pacientes = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2">Pacientes</h2>
           <p className="text-sm md:text-base text-muted-foreground">
             Cadastro e acompanhamento clínico
+            {totalCount !== undefined && ` • ${totalCount} pacientes`}
           </p>
         </div>
         <Button
@@ -40,73 +81,115 @@ const Pacientes = () => {
         </Button>
       </div>
 
+      {/* Barra de busca */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar paciente por nome..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">
           Carregando...
         </div>
       ) : patients && patients.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {patients.map((patient) => (
-            <Card
-              key={patient.id}
-              className="p-4 md:p-6 hover:shadow-lg transition-shadow border-border"
-            >
-              <div className="flex items-start space-x-3 md:space-x-4">
-                <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <User className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground truncate text-sm md:text-base">
-                    {patient.full_name}
-                  </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    {patient.age} anos • {patient.gender}
-                  </p>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
-                    {patient.treated_region || "Região não especificada"}
-                  </p>
-                  <div className="mt-2 md:mt-3 flex gap-2">
-                    <span
-                      className={`inline-block px-2 py-1 text-xs rounded-full ${
-                        patient.status === "active"
-                          ? "bg-accent text-accent-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {patient.status === "active" ? "Ativo" : "Alta"}
-                    </span>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {patients.map((patient) => (
+              <Card
+                key={patient.id}
+                className="p-4 md:p-6 hover:shadow-lg transition-shadow border-border"
+              >
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <User className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                   </div>
-                  <div className="mt-2 md:mt-3">
-                    <Button
-                      size="sm"
-                      onClick={() => navigate(`/pacientes/${patient.id}`)}
-                      className="bg-primary hover:bg-primary/90 text-xs md:text-sm w-full sm:w-auto"
-                    >
-                      <FileText className="h-4 w-4 mr-1 md:mr-2" />
-                      Ver Detalhes
-                    </Button>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground truncate text-sm md:text-base">
+                      {patient.full_name}
+                    </h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      {patient.age} anos • {patient.gender}
+                    </p>
+                    <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
+                      {patient.treated_region || "Região não especificada"}
+                    </p>
+                    <div className="mt-2 md:mt-3 flex gap-2">
+                      <span
+                        className={`inline-block px-2 py-1 text-xs rounded-full ${
+                          patient.status === "active"
+                            ? "bg-accent text-accent-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {patient.status === "active" ? "Ativo" : "Alta"}
+                      </span>
+                    </div>
+                    <div className="mt-2 md:mt-3">
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/pacientes/${patient.id}`)}
+                        className="bg-primary hover:bg-primary/90 text-xs md:text-sm w-full sm:w-auto"
+                      >
+                        <FileText className="h-4 w-4 mr-1 md:mr-2" />
+                        Ver Detalhes
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Anterior
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Página {currentPage + 1} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <Card className="p-12 text-center border-border">
           <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            Nenhum paciente cadastrado
+            {searchTerm ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
           </h3>
           <p className="text-muted-foreground mb-4">
-            Comece cadastrando seu primeiro paciente
+            {searchTerm ? "Tente buscar com outro termo" : "Comece cadastrando seu primeiro paciente"}
           </p>
-          <Button
-            onClick={() => navigate("/pacientes/novo")}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Cadastrar Paciente
-          </Button>
+          {!searchTerm && (
+            <Button
+              onClick={() => navigate("/pacientes/novo")}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Cadastrar Paciente
+            </Button>
+          )}
         </Card>
       )}
     </div>
