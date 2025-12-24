@@ -415,6 +415,104 @@ export type Database = {
           },
         ]
       }
+      curations: {
+        Row: {
+          adverse_events: string | null
+          applicability: Database["public"]["Enums"]["applicability"] | null
+          article_id: string
+          authors_conclusion: string | null
+          bias_risk: Database["public"]["Enums"]["bias_risk"] | null
+          citations: Json | null
+          clinical_takeaways: string[] | null
+          comparator: string | null
+          created_at: string
+          created_by: string | null
+          design: string | null
+          evidence_level: Database["public"]["Enums"]["evidence_level"] | null
+          id: string
+          intervention: string | null
+          limitations: string | null
+          objective: string | null
+          outcomes_primary: string | null
+          outcomes_secondary: string | null
+          population: string | null
+          results_key: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sample_size: string | null
+          status: Database["public"]["Enums"]["curation_status"]
+          updated_at: string
+          version: number
+          what_changes_in_practice: string | null
+        }
+        Insert: {
+          adverse_events?: string | null
+          applicability?: Database["public"]["Enums"]["applicability"] | null
+          article_id: string
+          authors_conclusion?: string | null
+          bias_risk?: Database["public"]["Enums"]["bias_risk"] | null
+          citations?: Json | null
+          clinical_takeaways?: string[] | null
+          comparator?: string | null
+          created_at?: string
+          created_by?: string | null
+          design?: string | null
+          evidence_level?: Database["public"]["Enums"]["evidence_level"] | null
+          id?: string
+          intervention?: string | null
+          limitations?: string | null
+          objective?: string | null
+          outcomes_primary?: string | null
+          outcomes_secondary?: string | null
+          population?: string | null
+          results_key?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sample_size?: string | null
+          status?: Database["public"]["Enums"]["curation_status"]
+          updated_at?: string
+          version?: number
+          what_changes_in_practice?: string | null
+        }
+        Update: {
+          adverse_events?: string | null
+          applicability?: Database["public"]["Enums"]["applicability"] | null
+          article_id?: string
+          authors_conclusion?: string | null
+          bias_risk?: Database["public"]["Enums"]["bias_risk"] | null
+          citations?: Json | null
+          clinical_takeaways?: string[] | null
+          comparator?: string | null
+          created_at?: string
+          created_by?: string | null
+          design?: string | null
+          evidence_level?: Database["public"]["Enums"]["evidence_level"] | null
+          id?: string
+          intervention?: string | null
+          limitations?: string | null
+          objective?: string | null
+          outcomes_primary?: string | null
+          outcomes_secondary?: string | null
+          population?: string | null
+          results_key?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sample_size?: string | null
+          status?: Database["public"]["Enums"]["curation_status"]
+          updated_at?: string
+          version?: number
+          what_changes_in_practice?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "curadoria_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       epi_protocols: {
         Row: {
           application_time: number | null
@@ -1442,6 +1540,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "professional" | "viewer"
+      applicability:
+        | "alta"
+        | "moderada"
+        | "baixa"
+        | "muito_baixa"
+        | "nao_aplicavel"
+      bias_risk: "baixo" | "moderado" | "alto" | "muito_alto" | "incerto"
       curadoria_status:
         | "sem_curadoria"
         | "solicitada"
@@ -1449,6 +1554,14 @@ export type Database = {
         | "em_producao"
         | "disponivel"
         | "indeferida"
+      curation_status:
+        | "rascunho"
+        | "em_revisao"
+        | "aprovada"
+        | "disponivel"
+        | "rejeitada"
+        | "arquivada"
+      evidence_level: "ia" | "ib" | "iia" | "iib" | "iii" | "iv" | "v"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1577,6 +1690,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "professional", "viewer"],
+      applicability: [
+        "alta",
+        "moderada",
+        "baixa",
+        "muito_baixa",
+        "nao_aplicavel",
+      ],
+      bias_risk: ["baixo", "moderado", "alto", "muito_alto", "incerto"],
       curadoria_status: [
         "sem_curadoria",
         "solicitada",
@@ -1585,6 +1706,15 @@ export const Constants = {
         "disponivel",
         "indeferida",
       ],
+      curation_status: [
+        "rascunho",
+        "em_revisao",
+        "aprovada",
+        "disponivel",
+        "rejeitada",
+        "arquivada",
+      ],
+      evidence_level: ["ia", "ib", "iia", "iib", "iii", "iv", "v"],
     },
   },
 } as const
