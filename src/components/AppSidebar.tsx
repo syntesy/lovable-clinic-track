@@ -10,11 +10,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import logoFisioregen from "@/assets/logo-fisioregen.png";
+import logoRegenapp from "@/assets/logo-regenapp.png";
 
 const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
-  { title: "AGENTE FISIOREGEN", url: "/agente-mac", icon: Bot, isAgent: true },
+  { title: "AGENTE REGENAPP", url: "/agente-mac", icon: Bot, isAgent: true },
 ];
 
 export function AppSidebar() {
@@ -28,27 +28,17 @@ export function AppSidebar() {
         <div className="flex flex-col items-center mb-10">
           {!isCollapsed ? (
             <>
-              <div className="w-16 h-16 mb-4 rounded-full overflow-hidden bg-[#293E48]/50 p-1">
+              <div className="w-44 h-12 mb-2">
                 <img
-                  src={logoFisioregen}
-                  alt="Fisioterapia Regenerativa"
-                  className="w-full h-full object-contain rounded-full"
+                  src={logoRegenapp}
+                  alt="REGENAPP"
+                  className="w-full h-full object-contain"
                 />
               </div>
-              <h1 className="text-[#B7BBC0] font-semibold text-sm tracking-wide text-center leading-tight">
-                FISIOTERAPIA<br />
-                <span className="font-normal text-xs tracking-widest text-[#B7BBC0]/70">
-                  REGENERATIVA
-                </span>
-              </h1>
             </>
           ) : (
-            <div className="w-9 h-9 rounded-full overflow-hidden bg-[#293E48]/50 p-0.5">
-              <img
-                src={logoFisioregen}
-                alt="Fisioterapia Regenerativa"
-                className="w-full h-full object-contain rounded-full"
-              />
+            <div className="w-9 h-9 rounded-full overflow-hidden bg-[#293E48]/50 p-0.5 flex items-center justify-center">
+              <span className="text-[#79B997] font-bold text-xs">R</span>
             </div>
           )}
         </div>
