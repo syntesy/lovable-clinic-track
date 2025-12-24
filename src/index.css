@@ -8,75 +8,88 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 14% 94%;
-    --foreground: 220 10% 19%;
+    /* Base - #EEF1F3 */
+    --background: 210 14% 95%;
+    /* Texto principal - #2B2E34 */
+    --foreground: 220 12% 18%;
 
+    /* Cards / superfícies - #FFFFFF */
     --card: 0 0% 100%;
-    --card-foreground: 220 10% 19%;
+    --card-foreground: 220 12% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 19%;
+    --popover-foreground: 220 12% 18%;
 
-    --primary: 155 21% 47%;
+    /* Acento primário - Jade Técnico #5E8F7B */
+    --primary: 152 21% 46%;
     --primary-foreground: 0 0% 100%;
 
+    /* Acento secundário - Azul Ardósia #4A6378 */
     --secondary: 210 24% 38%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 14% 90%;
+    /* Texto secundário - #6B7280 */
+    --muted: 210 14% 92%;
     --muted-foreground: 220 9% 46%;
 
+    /* Seleções/dropdowns - Azul Ardósia #4A6378 */
     --accent: 210 24% 38%;
     --accent-foreground: 0 0% 100%;
 
+    /* Risco - #8B4A4A */
     --destructive: 0 30% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 155 30% 56%;
+    /* Positivo - #6FAF95 */
+    --success: 152 30% 56%;
     --success-foreground: 0 0% 100%;
 
+    /* Atenção - #C9A24D */
     --warning: 42 51% 55%;
-    --warning-foreground: 0 0% 100%;
+    --warning-foreground: 220 12% 18%;
 
-    --border: 210 14% 85%;
-    --input: 210 14% 94%;
-    --ring: 155 21% 47%;
+    --border: 210 14% 88%;
+    --input: 210 14% 95%;
+    --ring: 152 21% 46%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
     /* Clinical specific colors */
-    --clinical-safe: 155 30% 56%;
+    --clinical-safe: 152 30% 56%;
     --clinical-caution: 42 51% 55%;
     --clinical-danger: 0 30% 42%;
     --clinical-neutral: 220 9% 46%;
 
-    --sidebar-background: 210 24% 38%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 155 21% 47%;
+    /* Sidebar - Grafite Profundo #2B2E34 */
+    --sidebar-background: 220 12% 18%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 152 21% 46%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 24% 32%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 24% 30%;
-    --sidebar-ring: 155 21% 47%;
+    --sidebar-accent: 220 12% 24%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 12% 22%;
+    --sidebar-ring: 152 21% 46%;
   }
 
   .dark {
-    --background: 220 15% 12%;
-    --foreground: 210 14% 90%;
+    --background: 220 15% 10%;
+    --foreground: 210 14% 92%;
 
-    --card: 220 15% 16%;
-    --card-foreground: 210 14% 90%;
+    --card: 220 15% 14%;
+    --card-foreground: 210 14% 92%;
 
-    --popover: 220 15% 16%;
-    --popover-foreground: 210 14% 90%;
+    --popover: 220 15% 14%;
+    --popover-foreground: 210 14% 92%;
 
-    --primary: 155 25% 52%;
+    /* Jade Técnico - dark mode */
+    --primary: 152 25% 50%;
     --primary-foreground: 0 0% 100%;
 
+    /* Azul Ardósia - dark mode */
     --secondary: 210 24% 45%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 20%;
+    --muted: 220 15% 18%;
     --muted-foreground: 220 9% 60%;
 
     --accent: 210 24% 45%;
@@ -85,29 +98,30 @@ All colors MUST be HSL.
     --destructive: 0 30% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 155 30% 60%;
+    --success: 152 30% 58%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 42 51% 60%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 42 51% 58%;
+    --warning-foreground: 220 12% 18%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 20%;
-    --ring: 155 25% 52%;
+    --border: 220 15% 22%;
+    --input: 220 15% 18%;
+    --ring: 152 25% 50%;
 
-    --clinical-safe: 155 30% 60%;
-    --clinical-caution: 42 51% 60%;
+    --clinical-safe: 152 30% 58%;
+    --clinical-caution: 42 51% 58%;
     --clinical-danger: 0 30% 48%;
     --clinical-neutral: 220 9% 60%;
 
-    --sidebar-background: 210 24% 18%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 155 25% 52%;
+    /* Sidebar dark - Grafite mais profundo */
+    --sidebar-background: 220 15% 10%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 152 25% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 24% 25%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 24% 22%;
-    --sidebar-ring: 155 25% 52%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 220 15% 16%;
+    --sidebar-ring: 152 25% 50%;
   }
 }
 
@@ -118,12 +132,31 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Premium medical typography */
-  h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight font-medium;
+  /* Premium clinical typography - Inter */
+  h1 {
+    @apply tracking-tight font-semibold text-foreground;
+  }
+  
+  h2, h3 {
+    @apply tracking-tight font-semibold text-foreground;
+  }
+  
+  h4, h5, h6 {
+    @apply tracking-tight font-medium text-foreground;
+  }
+
+  /* Labels and captions */
+  label {
+    @apply font-medium text-foreground;
+  }
+
+  /* Improved spacing for clinical readability */
+  p {
+    @apply leading-relaxed;
   }
 }
 
@@ -142,15 +175,23 @@ All colors MUST be HSL.
   }
 
   .glass-card {
-    @apply bg-card/95 backdrop-blur-sm border border-border/50 shadow-sm;
+    @apply bg-card backdrop-blur-sm border border-border/40 rounded-xl;
+    box-shadow: 0 1px 3px 0 rgba(43, 46, 52, 0.04), 0 1px 2px -1px rgba(43, 46, 52, 0.02);
   }
 
+  /* Premium clinical shadow - soft and diffuse */
   .premium-shadow {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 1px 3px 0 rgba(43, 46, 52, 0.05), 0 1px 2px -1px rgba(43, 46, 52, 0.03);
   }
 
   .premium-shadow-lg {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 12px -2px rgba(43, 46, 52, 0.08), 0 2px 6px -2px rgba(43, 46, 52, 0.04);
+  }
+
+  /* Clinical card styling */
+  .clinical-card {
+    @apply bg-card rounded-xl border border-border/40;
+    box-shadow: 0 2px 8px -2px rgba(43, 46, 52, 0.06), 0 1px 3px -1px rgba(43, 46, 52, 0.04);
   }
 }
 
