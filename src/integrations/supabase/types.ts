@@ -269,12 +269,14 @@ export type Database = {
       }
       curadoria_articles: {
         Row: {
+          abstract: string | null
           authors: string
           created_at: string
           doi: string | null
           id: string
           interest: string
           journal: string
+          pdf_path: string | null
           pdf_url: string | null
           practice_change: string | null
           pubmed_url: string | null
@@ -285,12 +287,14 @@ export type Database = {
           year: number
         }
         Insert: {
+          abstract?: string | null
           authors: string
           created_at?: string
           doi?: string | null
           id?: string
           interest: string
           journal: string
+          pdf_path?: string | null
           pdf_url?: string | null
           practice_change?: string | null
           pubmed_url?: string | null
@@ -301,12 +305,14 @@ export type Database = {
           year: number
         }
         Update: {
+          abstract?: string | null
           authors?: string
           created_at?: string
           doi?: string | null
           id?: string
           interest?: string
           journal?: string
+          pdf_path?: string | null
           pdf_url?: string | null
           practice_change?: string | null
           pubmed_url?: string | null

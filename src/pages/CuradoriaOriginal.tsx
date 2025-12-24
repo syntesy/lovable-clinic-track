@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { CuradoriaArticle, CuradoriaStatus } from "@/types/curadoria";
 import { SolicitarCuradoriaModal } from "@/components/curadoria/SolicitarCuradoriaModal";
-import { ArrowLeft, MessageSquarePlus, AlertCircle } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus, AlertCircle, ExternalLink, FileText } from "lucide-react";
 
 export default function CuradoriaOriginal() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +13,7 @@ export default function CuradoriaOriginal() {
   const [article, setArticle] = useState<CuradoriaArticle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const fetchArticle = async () => {
     if (!id) return;
@@ -32,6 +33,15 @@ export default function CuradoriaOriginal() {
         interest: data.interest as CuradoriaArticle['interest']
       };
       setArticle(typedArticle);
+
+      // Get PDF URL from storage if pdf_path exists
+      if (data.pdf_path) {
+        const { data: urlData } = supabase.storage
+          .from("articles")
+          .getPublicUrl(data.pdf_path);
+        
+        setPdfUrl(urlData.publicUrl);
+      }
     } catch (error) {
       console.error("Error fetching article:", error);
     } finally {
@@ -45,6 +55,14 @@ export default function CuradoriaOriginal() {
 
   const canRequestCuradoria = article && 
     (article.status === "sem_curadoria" || article.status === "indeferida");
+
+  const handleOpenExternal = () => {
+    if (article?.pubmed_url) {
+      window.open(article.pubmed_url, "_blank", "noopener,noreferrer");
+    } else if (article?.doi) {
+      window.open(`https://doi.org/${article.doi}`, "_blank", "noopener,noreferrer");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -70,10 +88,14 @@ export default function CuradoriaOriginal() {
     );
   }
 
+  // Determine if we have a viewable PDF
+  const hasPdf = Boolean(pdfUrl);
+  const hasExternalUrl = Boolean(article.pubmed_url || article.doi);
+
   return (
     <div className="space-y-4">
       {/* Navigation */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-4">
         <Button 
           variant="ghost" 
           asChild
@@ -84,6 +106,12 @@ export default function CuradoriaOriginal() {
             Voltar para Curadoria
           </Link>
         </Button>
+        {hasExternalUrl && !hasPdf && (
+          <Button variant="outline" onClick={handleOpenExternal} className="gap-2">
+            <ExternalLink className="h-4 w-4" />
+            Abrir em nova aba
+          </Button>
+        )}
       </div>
 
       {/* Banner CTA */}
@@ -111,37 +139,41 @@ export default function CuradoriaOriginal() {
       {/* PDF Viewer */}
       <Card className="bg-card border-border overflow-hidden">
         <CardContent className="p-0">
-          {article.pdf_url ? (
+          {hasPdf ? (
             <div className="relative w-full" style={{ height: "calc(100vh - 250px)", minHeight: "500px" }}>
               <iframe
-                src={article.pdf_url}
+                src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
                 className="absolute inset-0 w-full h-full"
                 title={article.title}
               />
-              {/* Fallback message for blocked PDFs */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-secondary/50 opacity-0 hover:opacity-0">
-                <p className="text-muted-foreground text-center mb-4">
-                  Se o PDF não carregar, acesse diretamente:
-                </p>
-                <Button asChild variant="outline">
-                  <a href={article.pdf_url} target="_blank" rel="noopener noreferrer">
-                    Abrir PDF em nova aba
-                  </a>
-                </Button>
-              </div>
+            </div>
+          ) : article.pubmed_url ? (
+            <div className="relative w-full" style={{ height: "calc(100vh - 250px)", minHeight: "500px" }}>
+              <iframe
+                src={article.pubmed_url}
+                className="absolute inset-0 w-full h-full"
+                title={article.title}
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20">
-              <p className="text-muted-foreground text-center mb-4">
-                O PDF deste artigo não está disponível para visualização direta.
+              <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+              <h2 className="text-lg font-medium text-foreground mb-2">
+                Artigo original não disponível
+              </h2>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                O PDF deste artigo ainda não foi anexado ao sistema.
+                {article.doi && " Você pode acessá-lo através do DOI."}
               </p>
               {article.doi && (
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="gap-2">
                   <a 
                     href={`https://doi.org/${article.doi}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
+                    <ExternalLink className="h-4 w-4" />
                     Acessar via DOI
                   </a>
                 </Button>

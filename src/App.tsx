@@ -26,6 +26,8 @@ import CuradoriaDetalhe from "./pages/CuradoriaDetalhe";
 import CuradoriaOriginal from "./pages/CuradoriaOriginal";
 import AdminCuradoria from "./pages/admin/AdminCuradoria";
 import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
+import AdminArtigos from "./pages/admin/AdminArtigos";
+import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -230,6 +232,36 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <AdminCuradoriaEditor />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/artigos"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminArtigos />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/artigos/novo"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminArtigoForm />
+              </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/artigos/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminArtigoForm />
                 </Layout>
               </ProtectedRoute>
             }
