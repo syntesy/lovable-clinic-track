@@ -615,6 +615,47 @@ export type Database = {
           },
         ]
       }
+      patient_evaluation_reports: {
+        Row: {
+          created_at: string
+          generated_at: string
+          generated_by: string | null
+          id: string
+          patient_id: string
+          professional_name: string | null
+          professional_registration: string | null
+          report_content: Json
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          patient_id: string
+          professional_name?: string | null
+          professional_registration?: string | null
+          report_content: Json
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          patient_id?: string
+          professional_name?: string | null
+          professional_registration?: string | null
+          report_content?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_evaluation_reports_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null

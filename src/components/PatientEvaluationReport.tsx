@@ -1,15 +1,27 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   FileText, Download, Sparkles, AlertCircle, CheckCircle2, 
-  Target, Leaf, Clock, Heart, MessageSquare 
+  Target, Leaf, Clock, Heart, MessageSquare, History, Eye, Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoRegenapp from "@/assets/logo-regenapp.png";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PatientData {
   id: string;
@@ -23,6 +35,19 @@ interface PatientData {
 interface ScreeningData {
   classification?: string | null;
   analysis_result?: string | null;
+}
+
+interface SavedReport {
+  id: string;
+  generated_at: string;
+  professional_name: string | null;
+  professional_registration: string | null;
+  report_content: {
+    patient_name: string;
+    classification: string | null;
+    clinical_diagnosis: string | null;
+    treated_region: string | null;
+  };
 }
 
 interface PatientEvaluationReportProps {
@@ -40,6 +65,10 @@ export function PatientEvaluationReport({
 }: PatientEvaluationReportProps) {
   const [isGenerated, setIsGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
+  const [viewingReport, setViewingReport] = useState<SavedReport | null>(null);
+  const [deleteReportId, setDeleteReportId] = useState<string | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const isPRPIndicado = latestScreening?.classification?.toUpperCase() === "APTO";
@@ -47,12 +76,97 @@ export function PatientEvaluationReport({
   const isPRPNaoIndicado = latestScreening?.classification?.toUpperCase() === "NAO_APTO" || 
                           latestScreening?.classification?.toUpperCase() === "CONTRAINDICADO";
 
+  // Fetch saved reports
+  useEffect(() => {
+    if (patient?.id) {
+      fetchSavedReports();
+    }
+  }, [patient?.id]);
+
+  const fetchSavedReports = async () => {
+    if (!patient?.id) return;
+    
+    setIsLoadingReports(true);
+    try {
+      const { data, error } = await supabase
+        .from('patient_evaluation_reports')
+        .select('id, generated_at, professional_name, professional_registration, report_content')
+        .eq('patient_id', patient.id)
+        .order('generated_at', { ascending: false });
+
+      if (error) throw error;
+      setSavedReports((data || []) as SavedReport[]);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+    } finally {
+      setIsLoadingReports(false);
+    }
+  };
+
   const handleGenerate = async () => {
+    if (!patient) return;
+    
     setIsGenerating(true);
-    // Simula um pequeno delay para feedback visual
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setIsGenerated(true);
-    setIsGenerating(false);
+    
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Prepare report content
+      const reportContent = {
+        patient_name: patient.full_name,
+        patient_age: patient.age,
+        patient_gender: patient.gender,
+        classification: latestScreening?.classification || null,
+        clinical_diagnosis: patient.clinical_diagnosis,
+        treated_region: patient.treated_region,
+        generated_date: new Date().toISOString(),
+      };
+
+      // Save to database
+      const { error } = await supabase
+        .from('patient_evaluation_reports')
+        .insert({
+          patient_id: patient.id,
+          report_content: reportContent,
+          generated_by: user?.id,
+          professional_name: professionalName,
+          professional_registration: professionalRegistration,
+        });
+
+      if (error) throw error;
+
+      setIsGenerated(true);
+      toast.success("Relatório gerado e salvo no prontuário!");
+      
+      // Refresh saved reports list
+      await fetchSavedReports();
+    } catch (error) {
+      console.error('Error saving report:', error);
+      toast.error("Erro ao salvar o relatório");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDeleteReport = async () => {
+    if (!deleteReportId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('patient_evaluation_reports')
+        .delete()
+        .eq('id', deleteReportId);
+
+      if (error) throw error;
+
+      toast.success("Relatório excluído com sucesso!");
+      setDeleteReportId(null);
+      await fetchSavedReports();
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast.error("Erro ao excluir o relatório");
+    }
   };
 
   const handleExportPDF = async () => {
@@ -75,6 +189,30 @@ export function PatientEvaluationReport({
   };
 
   const currentDate = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+
+  // Get display data (either from viewing a saved report or current patient data)
+  const displayData = viewingReport ? {
+    patientName: viewingReport.report_content.patient_name,
+    classification: viewingReport.report_content.classification,
+    clinicalDiagnosis: viewingReport.report_content.clinical_diagnosis,
+    treatedRegion: viewingReport.report_content.treated_region,
+    professionalName: viewingReport.professional_name || professionalName,
+    professionalRegistration: viewingReport.professional_registration || professionalRegistration,
+    generatedDate: format(new Date(viewingReport.generated_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+  } : {
+    patientName: patient?.full_name || '',
+    classification: latestScreening?.classification,
+    clinicalDiagnosis: patient?.clinical_diagnosis,
+    treatedRegion: patient?.treated_region,
+    professionalName,
+    professionalRegistration,
+    generatedDate: currentDate,
+  };
+
+  const displayIsPRPIndicado = displayData.classification?.toUpperCase() === "APTO";
+  const displayIsPRPComPreparo = displayData.classification?.toUpperCase() === "APTO_COM_PREPARO";
+  const displayIsPRPNaoIndicado = displayData.classification?.toUpperCase() === "NAO_APTO" || 
+                                  displayData.classification?.toUpperCase() === "CONTRAINDICADO";
 
   if (!patient) {
     return (
@@ -119,7 +257,7 @@ export function PatientEvaluationReport({
               {isGenerating ? "Gerando..." : "Gerar Relatório para o Paciente"}
             </Button>
             
-            {isGenerated && (
+            {(isGenerated || viewingReport) && (
               <Button 
                 onClick={handleExportPDF} 
                 variant="outline"
@@ -130,12 +268,82 @@ export function PatientEvaluationReport({
                 Exportar PDF
               </Button>
             )}
+
+            {viewingReport && (
+              <Button 
+                onClick={() => {
+                  setViewingReport(null);
+                  setIsGenerated(false);
+                }} 
+                variant="ghost"
+                className="gap-2"
+                size="lg"
+              >
+                Fechar Visualização
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Relatório Gerado */}
-      {isGenerated && (
+      {/* Histórico de Relatórios Salvos */}
+      {savedReports.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
+              <History className="w-4 h-4 text-muted-foreground" />
+              Relatórios Salvos no Prontuário
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {savedReports.map((report) => (
+                <div 
+                  key={report.id}
+                  className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Relatório de {format(new Date(report.generated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Por: {report.professional_name || 'Profissional'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setViewingReport(report);
+                        setIsGenerated(false);
+                      }}
+                      className="gap-1"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteReportId(report.id)}
+                      className="gap-1 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Relatório Gerado ou Visualizado */}
+      {(isGenerated || viewingReport) && (
         <div 
           ref={reportRef}
           className="bg-white text-gray-900 rounded-xl shadow-lg overflow-hidden print:shadow-none"
@@ -149,7 +357,7 @@ export function PatientEvaluationReport({
                   Relatório de Avaliação e Plano Terapêutico
                 </h1>
                 <div className="space-y-1">
-                  <p className="text-lg font-medium">{patient.full_name}</p>
+                  <p className="text-lg font-medium">{displayData.patientName}</p>
                   <p className="text-white/80 text-sm">
                     {patient.age && `${patient.age} anos`}
                     {patient.gender && ` • ${patient.gender === "M" ? "Masculino" : "Feminino"}`}
@@ -168,15 +376,15 @@ export function PatientEvaluationReport({
             <div className="flex flex-wrap gap-6 text-sm">
               <div>
                 <p className="text-white/60 text-xs uppercase tracking-wide">Data de Geração</p>
-                <p className="font-medium">{currentDate}</p>
+                <p className="font-medium">{displayData.generatedDate}</p>
               </div>
               <div>
                 <p className="text-white/60 text-xs uppercase tracking-wide">Profissional</p>
-                <p className="font-medium">{professionalName}</p>
+                <p className="font-medium">{displayData.professionalName}</p>
               </div>
               <div>
                 <p className="text-white/60 text-xs uppercase tracking-wide">Registro</p>
-                <p className="font-medium">{professionalRegistration}</p>
+                <p className="font-medium">{displayData.professionalRegistration}</p>
               </div>
             </div>
           </div>
@@ -211,21 +419,21 @@ export function PatientEvaluationReport({
                 <h2 className="text-lg font-semibold text-gray-900">2. O Que Foi Identificado na Avaliação</h2>
               </div>
               <div className="pl-10 space-y-3">
-                {patient.clinical_diagnosis ? (
+                {displayData.clinicalDiagnosis ? (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                     <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Diagnóstico Clínico</p>
-                    <p className="text-gray-900 font-medium">{patient.clinical_diagnosis}</p>
+                    <p className="text-gray-900 font-medium">{displayData.clinicalDiagnosis}</p>
                   </div>
                 ) : null}
                 
-                {patient.treated_region ? (
+                {displayData.treatedRegion ? (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                     <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Região Tratada</p>
-                    <p className="text-gray-900 font-medium">{patient.treated_region}</p>
+                    <p className="text-gray-900 font-medium">{displayData.treatedRegion}</p>
                   </div>
                 ) : null}
                 
-                {!patient.clinical_diagnosis && !patient.treated_region && (
+                {!displayData.clinicalDiagnosis && !displayData.treatedRegion && (
                   <p className="text-gray-700 leading-relaxed">
                     Durante a avaliação inicial, foram analisados diversos aspectos do seu quadro clínico, 
                     incluindo histórico de dor, limitações funcionais e exames complementares. 
@@ -241,22 +449,22 @@ export function PatientEvaluationReport({
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isPRPIndicado ? 'bg-green-100' : isPRPNaoIndicado ? 'bg-amber-100' : 'bg-blue-100'
+                  displayIsPRPIndicado ? 'bg-green-100' : displayIsPRPNaoIndicado ? 'bg-amber-100' : 'bg-blue-100'
                 }`}>
                   <AlertCircle className={`w-4 h-4 ${
-                    isPRPIndicado ? 'text-green-600' : isPRPNaoIndicado ? 'text-amber-600' : 'text-blue-600'
+                    displayIsPRPIndicado ? 'text-green-600' : displayIsPRPNaoIndicado ? 'text-amber-600' : 'text-blue-600'
                   }`} />
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  3. {isPRPIndicado 
+                  3. {displayIsPRPIndicado 
                     ? "Por Que o PRP Está Indicado" 
-                    : isPRPComPreparo 
+                    : displayIsPRPComPreparo 
                       ? "Por Que Precisamos Preparar Primeiro" 
                       : "Por Que o PRP Não É Indicado Neste Momento"}
                 </h2>
               </div>
               <div className="pl-10">
-                {isPRPIndicado ? (
+                {displayIsPRPIndicado ? (
                   <div className="bg-green-50 border border-green-100 rounded-lg p-4">
                     <p className="text-gray-700 leading-relaxed">
                       <strong className="text-green-700">Boa notícia!</strong> Com base na sua avaliação atual, 
@@ -264,7 +472,7 @@ export function PatientEvaluationReport({
                       Seu organismo demonstra estar preparado para responder de forma adequada a este tipo de terapia regenerativa.
                     </p>
                   </div>
-                ) : isPRPComPreparo ? (
+                ) : displayIsPRPComPreparo ? (
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
                     <p className="text-gray-700 leading-relaxed">
                       <strong className="text-blue-700">Preparação necessária:</strong> O PRP pode ser uma excelente opção 
@@ -272,7 +480,7 @@ export function PatientEvaluationReport({
                       de alguns ajustes antes de receber o tratamento regenerativo, garantindo assim melhores resultados.
                     </p>
                   </div>
-                ) : isPRPNaoIndicado ? (
+                ) : displayIsPRPNaoIndicado ? (
                   <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
                     <p className="text-gray-700 leading-relaxed">
                       <strong className="text-amber-700">Atenção ao momento:</strong> Neste momento, o PRP não é a melhor 
@@ -458,12 +666,30 @@ export function PatientEvaluationReport({
                   <img src={logoRegenapp} alt="REGENAPP" className="h-5 w-auto opacity-60" />
                   <span>Documento gerado pelo REGENAPP</span>
                 </div>
-                <span>{currentDate}</span>
+                <span>{displayData.generatedDate}</span>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={!!deleteReportId} onOpenChange={() => setDeleteReportId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Relatório</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este relatório? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteReport} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
