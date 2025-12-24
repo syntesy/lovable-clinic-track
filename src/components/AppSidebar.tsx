@@ -28,23 +28,25 @@ export function AppSidebar() {
         <div className="flex flex-col items-center mb-10">
           {!isCollapsed ? (
             <>
-              <div className="w-16 h-16 mb-4 rounded-full overflow-hidden bg-white/10 p-1 shadow-sm">
-                <img 
-                  src={logoFisioregen} 
-                  alt="Fisioterapia Regenerativa" 
+              <div className="w-16 h-16 mb-4 rounded-full overflow-hidden bg-sidebar-accent/10 p-1">
+                <img
+                  src={logoFisioregen}
+                  alt="Fisioterapia Regenerativa"
                   className="w-full h-full object-contain rounded-full"
                 />
               </div>
-              <h1 className="text-white font-semibold text-sm tracking-wide text-center leading-tight">
+              <h1 className="text-sidebar-foreground font-semibold text-sm tracking-wide text-center leading-tight">
                 FISIOTERAPIA<br />
-                <span className="font-normal text-xs tracking-widest text-white/60">REGENERATIVA</span>
+                <span className="font-normal text-xs tracking-widest text-sidebar-foreground/70">
+                  REGENERATIVA
+                </span>
               </h1>
             </>
           ) : (
-            <div className="w-9 h-9 rounded-full overflow-hidden bg-white/10 p-0.5">
-              <img 
-                src={logoFisioregen} 
-                alt="Fisioterapia Regenerativa" 
+            <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-accent/10 p-0.5">
+              <img
+                src={logoFisioregen}
+                alt="Fisioterapia Regenerativa"
                 className="w-full h-full object-contain rounded-full"
               />
             </div>
@@ -52,9 +54,7 @@ export function AppSidebar() {
         </div>
 
         {/* Separator */}
-        {!isCollapsed && (
-          <div className="mx-2 mb-8 h-px bg-white/10" />
-        )}
+        {!isCollapsed && <div className="mx-2 mb-8 h-px bg-sidebar-border" />}
 
         {/* Navigation Menu */}
         <SidebarGroup>
@@ -65,12 +65,8 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild className="h-12">
                     <NavLink
                       to={item.url}
-                      className="
-                        flex items-center gap-3 px-4 py-3 rounded-lg
-                        text-[#6B7280] hover:text-white
-                        hover:bg-white/5 transition-all duration-200
-                      "
-                      activeClassName="bg-[#4A6378] text-white font-medium"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/15 transition-colors"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                     >
                       <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
                       {!isCollapsed && (
@@ -79,7 +75,7 @@ export function AppSidebar() {
                         </span>
                       )}
                       {!isCollapsed && item.isAgent && (
-                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-white/10 text-white/70 rounded tracking-wider">
+                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-sidebar-accent/15 text-sidebar-foreground/90 rounded tracking-wider">
                           IA
                         </span>
                       )}
