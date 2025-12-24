@@ -6,7 +6,7 @@ import {
   Search, ChevronDown, User, Activity, FileText, 
   FlaskConical, ClipboardList, Brain, Calendar,
   CheckCircle2, AlertCircle, XCircle, Clock,
-  TrendingUp, Plus, Filter, Beaker, BarChart3
+  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EditPatientModal } from "@/components/EditPatientModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
@@ -37,6 +39,7 @@ const DetalhePaciente = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedExamDate, setSelectedExamDate] = useState<string>("all");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Set patient from URL parameter on mount
   useEffect(() => {
@@ -252,9 +255,12 @@ const DetalhePaciente = () => {
             <Card className="bg-card border-border shadow-sm">
               <CardContent className="p-8">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <User className="w-10 h-10 text-primary" />
-                  </div>
+                  <Avatar className="w-20 h-20 border-4 border-primary/20 flex-shrink-0">
+                    <AvatarImage src={patient?.photo_url || undefined} alt={patient?.full_name} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                      {patient?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || <User className="w-10 h-10" />}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-3">
                       <h1 className="text-2xl font-semibold text-foreground">{patient?.full_name}</h1>
@@ -274,9 +280,25 @@ const DetalhePaciente = () => {
                       )}
                     </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setIsEditModalOpen(true)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Editar Cadastro
+                  </Button>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Edit Patient Modal */}
+            <EditPatientModal
+              patient={patient}
+              open={isEditModalOpen}
+              onOpenChange={setIsEditModalOpen}
+            />
 
             {/* Primary Action - Prontuário */}
             <Card className="bg-primary/5 border-primary/20">
