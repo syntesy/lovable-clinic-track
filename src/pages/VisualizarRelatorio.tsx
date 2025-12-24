@@ -117,11 +117,11 @@ const VisualizarRelatorio = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/relatorios")}
+            onClick={() => navigate(`/pacientes/${id}`)}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Voltar
+            Voltar ao Paciente
           </Button>
           <div className="flex gap-2">
             <Button

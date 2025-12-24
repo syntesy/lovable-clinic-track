@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, FileText, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Eye, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 interface EPIProtocol {
@@ -81,6 +82,9 @@ const emptyFormData: EPIProtocolFormData = {
 
 const ProtocolosEPI = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const patientIdFromUrl = searchParams.get("paciente");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -289,13 +293,25 @@ const ProtocolosEPI = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-            Protocolos EPI
-          </h2>
-          <p className="text-muted-foreground">
-            Protocolos de Eletrólise Percutânea Intratecidual
-          </p>
+        <div className="flex items-center gap-3">
+          {patientIdFromUrl && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/pacientes/${patientIdFromUrl}`)}
+              className="flex-shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              Protocolos EPI
+            </h2>
+            <p className="text-muted-foreground">
+              Protocolos de Eletrólise Percutânea Intratecidual
+            </p>
+          </div>
         </div>
         <Button
           onClick={handleOpenCreate}

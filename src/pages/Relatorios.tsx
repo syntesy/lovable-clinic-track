@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, FileText, Users, Activity, TrendingUp, Calendar } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Users, Activity, TrendingUp, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   Select,
@@ -16,7 +16,15 @@ import {
 
 const Relatorios = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const patientIdFromUrl = searchParams.get("paciente");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+
+  useEffect(() => {
+    if (patientIdFromUrl) {
+      setSelectedPatientId(patientIdFromUrl);
+    }
+  }, [patientIdFromUrl]);
 
   const { data: patients } = useQuery({
     queryKey: ["patients"],
@@ -199,13 +207,25 @@ const Relatorios = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground mb-2">
-          Dashboard e Relatórios
-        </h2>
-        <p className="text-muted-foreground">
-          Estatísticas e exportação de dados científicos
-        </p>
+      <div className="flex items-center gap-3">
+        {selectedPatientId && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(`/pacientes/${selectedPatientId}`)}
+            className="flex-shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
+        <div>
+          <h2 className="text-3xl font-bold text-foreground mb-2">
+            Dashboard e Relatórios
+          </h2>
+          <p className="text-muted-foreground">
+            Estatísticas e exportação de dados científicos
+          </p>
+        </div>
       </div>
 
       {/* Dashboard KPIs */}
