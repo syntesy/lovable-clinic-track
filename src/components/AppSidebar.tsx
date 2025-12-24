@@ -28,7 +28,7 @@ export function AppSidebar() {
         <div className="flex flex-col items-center mb-10">
           {!isCollapsed ? (
             <>
-              <div className="w-44 h-12 mb-2">
+              <div className="w-72 h-20 mb-2">
                 <img
                   src={logoRegenapp}
                   alt="REGENAPP"
