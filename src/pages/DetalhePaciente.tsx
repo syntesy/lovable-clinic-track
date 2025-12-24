@@ -6,7 +6,7 @@ import {
   Search, ChevronDown, User, Activity, FileText, 
   FlaskConical, ClipboardList, Brain, Calendar,
   CheckCircle2, AlertCircle, XCircle, Clock,
-  TrendingUp
+  TrendingUp, Plus, Filter
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
@@ -28,6 +36,7 @@ const DetalhePaciente = () => {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedExamDate, setSelectedExamDate] = useState<string>("all");
 
   // Set patient from URL parameter on mount
   useEffect(() => {
@@ -94,6 +103,31 @@ const DetalhePaciente = () => {
     },
     enabled: !!selectedPatientId,
   });
+
+  // Fetch blood tests (exams)
+  const { data: bloodTests } = useQuery({
+    queryKey: ["patient-blood-tests", selectedPatientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blood_tests")
+        .select("*")
+        .eq("patient_id", selectedPatientId)
+        .order("collection_date", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedPatientId,
+  });
+
+  // Get unique exam dates for filtering
+  const examDates = bloodTests
+    ? [...new Set(bloodTests.map((bt) => bt.collection_date))]
+    : [];
+
+  // Filter exams by selected date
+  const filteredExams = bloodTests?.filter((exam) =>
+    selectedExamDate === "all" ? true : exam.collection_date === selectedExamDate
+  );
 
   const filteredPatients = patients?.filter((p) =>
     p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -422,13 +456,76 @@ const DetalhePaciente = () => {
 
                 {/* Exames Tab */}
                 <TabsContent value="exames" className="mt-8">
-                  <div className="max-w-2xl">
-                    <Card className="bg-card border-border">
-                      <CardContent className="py-16 text-center">
-                        <FileText className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
-                        <p className="text-muted-foreground text-lg">Nenhum exame anexado</p>
-                      </CardContent>
-                    </Card>
+                  <div className="max-w-3xl space-y-6">
+                    {/* Header with Add Button and Filter */}
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                      <Button 
+                        onClick={() => navigate(`/triagem-biologica?paciente=${selectedPatientId}`)}
+                        className="gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Adicionar Exames
+                      </Button>
+                      
+                      {examDates.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Filter className="w-4 h-4 text-muted-foreground" />
+                          <Select value={selectedExamDate} onValueChange={setSelectedExamDate}>
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="Filtrar por data" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todas as datas</SelectItem>
+                              {examDates.map((date) => (
+                                <SelectItem key={date} value={date}>
+                                  {format(new Date(date), "dd/MM/yyyy", { locale: ptBR })}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Exams List */}
+                    {filteredExams && filteredExams.length > 0 ? (
+                      <div className="space-y-4">
+                        {filteredExams.map((exam) => (
+                          <Card key={exam.id} className="bg-card border-border">
+                            <CardContent className="p-5">
+                              <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-5 h-5 text-primary" />
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-medium text-foreground">{exam.test_type}</h4>
+                                    <Badge variant="outline" className="gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {format(new Date(exam.collection_date), "dd/MM/yyyy", { locale: ptBR })}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">{exam.file_name}</p>
+                                  {exam.observations && (
+                                    <p className="text-sm text-muted-foreground mt-2">{exam.observations}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <Card className="bg-card border-border">
+                        <CardContent className="py-16 text-center">
+                          <FileText className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
+                          <p className="text-muted-foreground text-lg mb-4">Nenhum exame registrado</p>
+                          <p className="text-sm text-muted-foreground">
+                            Adicione exames através da Triagem Biológica para acompanhar a evolução do paciente
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </TabsContent>
 
