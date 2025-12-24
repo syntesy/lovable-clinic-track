@@ -13,7 +13,7 @@ import { ArrowLeft } from "lucide-react";
 const NovoPaciente = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [skinPhototype, setSkinPhototype] = useState("");
+  const [profession, setProfession] = useState("");
   const { register, handleSubmit } = useForm();
 
   const onSubmit = async (data: any) => {
@@ -27,10 +27,8 @@ const NovoPaciente = () => {
           birth_date: data.birth_date || null,
           phone: data.phone,
           email: data.email,
-          profession: data.profession,
-          sport_activity: data.sport_activity,
+          profession: profession,
           address: data.address,
-          skin_phototype: skinPhototype,
         },
       ]);
 
@@ -123,20 +121,20 @@ const NovoPaciente = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="profession">Profissão</Label>
-                <Input
-                  id="profession"
-                  {...register("profession")}
-                  className="border-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sport_activity">Esporte / Nível de Atividade</Label>
-                <Input
-                  id="sport_activity"
-                  {...register("sport_activity")}
-                  className="border-input"
-                />
+                <Label htmlFor="profession">Profissão *</Label>
+                <Select 
+                  required
+                  onValueChange={(value) => setProfession(value)}
+                  value={profession}
+                >
+                  <SelectTrigger className="border-input">
+                    <SelectValue placeholder="Selecione a profissão" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-border z-50">
+                    <SelectItem value="Fisioterapia">Fisioterapia</SelectItem>
+                    <SelectItem value="Medicina">Medicina</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="address">Endereço</Label>
@@ -145,28 +143,6 @@ const NovoPaciente = () => {
                   {...register("address")}
                   className="border-input"
                 />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="skin_phototype">Fototipo de Pele (Fitzpatrick) *</Label>
-                <Select 
-                  required
-                  onValueChange={(value) => {
-                    setSkinPhototype(value);
-                  }}
-                  value={skinPhototype}
-                >
-                  <SelectTrigger className="border-input">
-                    <SelectValue placeholder="Selecione o fototipo" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border-border z-50">
-                    <SelectItem value="I">Fototipo I – Pele branca pálida; cabelo ruivo/loiro; olhos azuis ou verdes; presença de sardas</SelectItem>
-                    <SelectItem value="II">Fototipo II – Pele clara; cabelo ruivo/loiro; olhos azuis, verdes ou castanhos claros</SelectItem>
-                    <SelectItem value="III">Fototipo III – Branco mais escuro; qualquer cor de olho e cabelo</SelectItem>
-                    <SelectItem value="IV">Fototipo IV – Pele morena clara</SelectItem>
-                    <SelectItem value="V">Fototipo V – Pele morena escura</SelectItem>
-                    <SelectItem value="VI">Fototipo VI – Pele negra</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </CardContent>
@@ -183,7 +159,7 @@ const NovoPaciente = () => {
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || !skinPhototype}
+            disabled={isSubmitting || !profession}
             className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
           >
             {isSubmitting ? "Salvando..." : "Cadastrar Paciente"}
