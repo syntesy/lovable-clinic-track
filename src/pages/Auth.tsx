@@ -114,7 +114,7 @@ export default function Auth() {
         }}
       />
 
-      {/* Container do card com avatar flutuante */}
+      {/* Container do card */}
       <div
         style={{
           position: "relative",
@@ -124,29 +124,6 @@ export default function Auth() {
           zIndex: 10,
         }}
       >
-        {/* Logo flutuante */}
-        <div
-          style={{
-            width: "320px",
-            height: "120px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: "-40px",
-            zIndex: 20,
-          }}
-        >
-          <img
-            src={logoRegenapp}
-            alt="REGENAPP"
-            style={{
-              width: "100%",
-              height: "auto",
-              objectFit: "contain",
-            }}
-          />
-        </div>
-
         {/* Card glassmorphism */}
         <div
           style={{
@@ -155,11 +132,32 @@ export default function Auth() {
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             borderRadius: "24px",
-            padding: "60px 50px 40px 50px",
+            padding: "40px 50px 40px 50px",
             boxShadow: "0 25px 60px rgba(0, 0, 0, 0.4)",
             border: "1px solid #253441",
           }}
         >
+          {/* Logo dentro do card */}
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "30px",
+            }}
+          >
+            <img
+              src={logoRegenapp}
+              alt="REGENAPP"
+              style={{
+                width: "280px",
+                height: "auto",
+                objectFit: "contain",
+              }}
+            />
+          </div>
+
           {/* Título */}
           <h1
             style={{
