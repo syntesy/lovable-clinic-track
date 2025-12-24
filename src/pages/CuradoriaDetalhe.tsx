@@ -269,10 +269,10 @@ export default function CuradoriaDetalhe() {
           </div>
 
           {/* Disclaimer */}
-          <Card className="bg-yellow-500/10 border-yellow-500/30">
+          <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50">
             <CardContent className="flex items-start gap-3 pt-6">
-              <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-yellow-200">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
                 <strong>Aviso:</strong> Esta curadoria tem finalidade educacional. 
                 Não substitui a avaliação clínica individual nem a decisão do profissional de saúde.
               </p>
