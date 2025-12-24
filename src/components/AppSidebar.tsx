@@ -1,4 +1,4 @@
-import { Users, Bot } from "lucide-react";
+import { Users, Bot, BookOpen } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -14,6 +14,7 @@ import logoRegenapp from "@/assets/logo-regenapp.png";
 
 const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
+  { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
   { title: "AGENTE REGENAPP", url: "/agente-mac", icon: Bot, isAgent: true },
 ];
 
