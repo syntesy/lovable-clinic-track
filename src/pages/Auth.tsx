@@ -94,7 +94,7 @@ export default function Auth() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#000",
+        backgroundColor: "#1C2939",
         backgroundImage: "url('/images/dna-login-bg-clean.png?v=2')",
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -108,7 +108,7 @@ export default function Auth() {
         style={{
           position: "absolute",
           inset: 0,
-          background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.3) 100%)",
+          background: "radial-gradient(ellipse at center, transparent 30%, rgba(27, 38, 54, 0.5) 100%)",
           pointerEvents: "none",
         }}
       />
@@ -140,7 +140,7 @@ export default function Auth() {
             style={{
               width: "70px",
               height: "70px",
-              color: "#63BC94",
+              color: "#79B997",
             }}
             strokeWidth={1.5}
           />
@@ -150,19 +150,19 @@ export default function Auth() {
         <div
           style={{
             width: "min(520px, 90vw)",
-            backgroundColor: "rgba(20, 25, 40, 0.85)",
+            backgroundColor: "rgba(27, 38, 54, 0.92)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             borderRadius: "24px",
             padding: "60px 50px 40px 50px",
             boxShadow: "0 25px 60px rgba(0, 0, 0, 0.4)",
-            border: "1px solid rgba(255, 255, 255, 0.05)",
+            border: "1px solid #253441",
           }}
         >
           {/* Título */}
           <h1
             style={{
-              color: "#FFFFFF",
+              color: "#FEFEFE",
               fontSize: "24px",
               fontWeight: 600,
               letterSpacing: "3px",
@@ -183,15 +183,15 @@ export default function Auth() {
               gap: "8px",
               marginBottom: "30px",
               padding: "8px 16px",
-              backgroundColor: "rgba(99, 188, 148, 0.1)",
+              backgroundColor: "#293E48",
               borderRadius: "20px",
-              border: "1px solid rgba(99, 188, 148, 0.2)",
+              border: "1px solid #253441",
             }}
           >
-            <Shield style={{ width: "14px", height: "14px", color: "#63BC94" }} />
+            <Shield style={{ width: "14px", height: "14px", color: "#79B997" }} />
             <span
               style={{
-                color: "rgba(255, 255, 255, 0.7)",
+                color: "#B7BBC0",
                 fontSize: "11px",
                 fontFamily: "Inter, sans-serif",
               }}
@@ -207,7 +207,7 @@ export default function Auth() {
                 <label
                   style={{
                     display: "block",
-                    color: "#FFFFFF",
+                    color: "#FEFEFE",
                     fontSize: "14px",
                     fontWeight: 500,
                     marginBottom: "8px",
@@ -226,9 +226,9 @@ export default function Auth() {
                     width: "100%",
                     backgroundColor: "transparent",
                     border: "none",
-                    borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+                    borderBottom: "1px solid #253441",
                     padding: "12px 0",
-                    color: "#FFFFFF",
+                    color: "#FEFEFE",
                     fontSize: "14px",
                     outline: "none",
                     fontFamily: "Inter, sans-serif",
@@ -242,7 +242,7 @@ export default function Auth() {
               <label
                 style={{
                   display: "block",
-                  color: "#FFFFFF",
+                  color: "#FEFEFE",
                   fontSize: "14px",
                   fontWeight: 500,
                   marginBottom: "8px",
@@ -261,9 +261,9 @@ export default function Auth() {
                   width: "100%",
                   backgroundColor: "transparent",
                   border: "none",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+                  borderBottom: "1px solid #253441",
                   padding: "12px 0",
-                  color: "#FFFFFF",
+                  color: "#FEFEFE",
                   fontSize: "14px",
                   outline: "none",
                   fontFamily: "Inter, sans-serif",
@@ -276,7 +276,7 @@ export default function Auth() {
               <label
                 style={{
                   display: "block",
-                  color: "#FFFFFF",
+                  color: "#FEFEFE",
                   fontSize: "14px",
                   fontWeight: 500,
                   marginBottom: "8px",
@@ -296,9 +296,9 @@ export default function Auth() {
                   width: "100%",
                   backgroundColor: "transparent",
                   border: "none",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+                  borderBottom: "1px solid #253441",
                   padding: "12px 0",
-                  color: "#FFFFFF",
+                  color: "#FEFEFE",
                   fontSize: "14px",
                   outline: "none",
                   fontFamily: "Inter, sans-serif",
@@ -328,25 +328,25 @@ export default function Auth() {
               style={{
                 width: "100%",
                 height: "52px",
-                backgroundColor: "#63BC94",
+                backgroundColor: "#79B997",
                 border: "none",
                 borderRadius: "26px",
-                color: "#FFFFFF",
+                color: "#FEFEFE",
                 fontSize: "16px",
                 fontWeight: 500,
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.7 : 1,
                 transition: "all 0.2s ease",
                 fontFamily: "Inter, sans-serif",
-                boxShadow: "0 4px 20px rgba(99, 188, 148, 0.3)",
+                boxShadow: "0 4px 20px rgba(121, 185, 151, 0.3)",
               }}
               onMouseEnter={(e) => {
                 if (!loading) {
-                  e.currentTarget.style.backgroundColor = "#72C9A0";
+                  e.currentTarget.style.filter = "brightness(1.1)";
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#63BC94";
+                e.currentTarget.style.filter = "brightness(1)";
               }}
             >
               {loading ? "Aguarde..." : isSignUp ? "Cadastrar" : "Entrar"}
@@ -369,7 +369,7 @@ export default function Auth() {
               style={{
                 background: "none",
                 border: "none",
-                color: "rgba(255, 255, 255, 0.7)",
+                color: "#B7BBC0",
                 fontSize: "13px",
                 cursor: "pointer",
                 fontFamily: "Inter, sans-serif",
@@ -394,7 +394,7 @@ export default function Auth() {
                 width: "8px",
                 height: "8px",
                 borderRadius: "50%",
-                backgroundColor: isSignUp ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.6)",
+                backgroundColor: isSignUp ? "#253441" : "#B7BBC0",
               }}
             />
             <div
@@ -402,7 +402,7 @@ export default function Auth() {
                 width: "8px",
                 height: "8px",
                 borderRadius: "50%",
-                backgroundColor: isSignUp ? "rgba(255, 255, 255, 0.6)" : "rgba(255, 255, 255, 0.3)",
+                backgroundColor: isSignUp ? "#B7BBC0" : "#253441",
               }}
             />
           </div>

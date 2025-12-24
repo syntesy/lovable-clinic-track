@@ -8,126 +8,136 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Base - #EEF1F3 */
-    --background: 210 14% 95%;
-    /* Texto principal - #1F2328 */
-    --foreground: 216 10% 14%;
+    /* ===== TEMA NAVY + JADE ===== */
+    /* APP_BG = #1C2939 → hsl(210 31% 17%) */
+    --background: 210 31% 17%;
+    /* TEXT_WHITE = #FEFEFE → hsl(0 0% 100%) */
+    --foreground: 0 0% 100%;
 
-    /* Cards / superfícies - #FFFFFF */
-    --card: 0 0% 100%;
-    --card-foreground: 216 10% 14%;
+    /* SURFACE_PILL = #293E48 → hsl(200 28% 22%) */
+    --card: 200 28% 22%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 216 10% 14%;
+    --popover: 200 28% 22%;
+    --popover-foreground: 0 0% 100%;
 
-    /* Acento primário - Verde Jade Expressivo #63BC94 */
-    --primary: 152 40% 56%;
+    /* PRIMARY_JADE = #79B997 → hsl(148 33% 60%) */
+    --primary: 148 33% 60%;
     --primary-foreground: 0 0% 100%;
 
-    /* Acento secundário - Azul Ardósia Expressiva #597B9E */
-    --secondary: 210 28% 48%;
+    /* SURFACE_PILL = #293E48 para secondary */
+    --secondary: 200 28% 22%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Texto secundário - #6B7280 */
-    --muted: 210 14% 92%;
-    --muted-foreground: 220 9% 46%;
+    /* TEXT_MUTED = #B7BBC0 → hsl(210 6% 74%) */
+    --muted: 210 31% 16%;
+    --muted-foreground: 210 6% 74%;
 
-    /* Seleções/dropdowns - Azul Ardósia Expressiva #597B9E */
-    --accent: 210 28% 48%;
+    /* SURFACE_PILL = #293E48 para accent */
+    --accent: 200 28% 22%;
     --accent-foreground: 0 0% 100%;
 
-    /* Risco - #8B4A4A */
-    --destructive: 0 30% 42%;
+    /* Risco - tom avermelhado escuro */
+    --destructive: 0 50% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Positivo - #63BC94 */
-    --success: 152 40% 56%;
+    /* Positivo = PRIMARY_JADE */
+    --success: 148 33% 60%;
     --success-foreground: 0 0% 100%;
 
-    /* Atenção - #C9A24D */
-    --warning: 42 51% 55%;
-    --warning-foreground: 216 10% 14%;
+    /* Atenção - tom âmbar */
+    --warning: 42 70% 55%;
+    --warning-foreground: 0 0% 100%;
 
-    --border: 216 15% 85%;
-    --input: 210 14% 95%;
-    --ring: 152 40% 56%;
+    /* BORDER_LINE = #253441 → hsl(204 28% 20%) */
+    --border: 204 28% 20%;
+    /* APP_BG_DEEP = #1B2636 → hsl(213 32% 16%) */
+    --input: 213 32% 16%;
+    --ring: 148 33% 60%;
 
     --radius: 0.625rem;
 
     /* Clinical specific colors */
-    --clinical-safe: 152 40% 56%;
-    --clinical-caution: 42 51% 55%;
-    --clinical-danger: 0 30% 42%;
-    --clinical-neutral: 220 9% 46%;
+    --clinical-safe: 148 33% 60%;
+    --clinical-caution: 42 70% 55%;
+    --clinical-danger: 0 50% 45%;
+    --clinical-neutral: 210 6% 74%;
 
-    /* Sidebar - Grafite Técnico #262A30 */
-    --sidebar-background: 216 9% 17%;
-    /* Texto padrão sidebar - #B4BCC8 */
-    --sidebar-foreground: 216 14% 75%;
-    /* Item ativo - Azul Ardósia Expressiva #597B9E */
-    --sidebar-primary: 210 28% 48%;
+    /* Sidebar - APP_BG_DEEP = #1B2636 */
+    --sidebar-background: 213 32% 16%;
+    /* TEXT_MUTED = #B7BBC0 */
+    --sidebar-foreground: 210 6% 74%;
+    /* PRIMARY_JADE = #79B997 */
+    --sidebar-primary: 148 33% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    /* Fundo item ativo - Azul Ardósia Expressiva #597B9E */
-    --sidebar-accent: 210 28% 48%;
+    /* SURFACE_PILL = #293E48 para item ativo */
+    --sidebar-accent: 200 28% 22%;
     --sidebar-accent-foreground: 0 0% 100%;
-    /* Divisores - #39414D */
-    --sidebar-border: 214 15% 26%;
-    --sidebar-ring: 210 28% 48%;
+    /* BORDER_LINE = #253441 */
+    --sidebar-border: 204 28% 20%;
+    --sidebar-ring: 148 33% 60%;
   }
 
   .dark {
-    /* Background escuro tecnológico - #0F172A */
-    --background: 222 47% 11%;
-    --foreground: 210 14% 92%;
+    /* ===== TEMA NAVY + JADE (DARK = SAME) ===== */
+    /* APP_BG = #1C2939 */
+    --background: 210 31% 17%;
+    --foreground: 0 0% 100%;
 
-    --card: 222 40% 14%;
-    --card-foreground: 210 14% 92%;
+    /* SURFACE_PILL = #293E48 */
+    --card: 200 28% 22%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222 40% 14%;
-    --popover-foreground: 210 14% 92%;
+    --popover: 200 28% 22%;
+    --popover-foreground: 0 0% 100%;
 
-    /* Verde Jade Expressivo - dark mode */
-    --primary: 152 40% 58%;
+    /* PRIMARY_JADE = #79B997 */
+    --primary: 148 33% 60%;
     --primary-foreground: 0 0% 100%;
 
-    /* Azul Ardósia Expressiva - dark mode */
-    --secondary: 210 28% 48%;
+    /* SURFACE_PILL = #293E48 */
+    --secondary: 200 28% 22%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 222 30% 18%;
-    --muted-foreground: 216 14% 70%;
+    --muted: 210 31% 16%;
+    --muted-foreground: 210 6% 74%;
 
-    --accent: 210 28% 48%;
+    --accent: 200 28% 22%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 30% 48%;
+    --destructive: 0 50% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 40% 58%;
+    --success: 148 33% 60%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 42 51% 58%;
-    --warning-foreground: 222 47% 11%;
+    --warning: 42 70% 55%;
+    --warning-foreground: 0 0% 100%;
 
-    /* Divisores - #39414D */
-    --border: 214 15% 26%;
-    --input: 222 30% 18%;
-    --ring: 152 40% 58%;
+    /* BORDER_LINE = #253441 */
+    --border: 204 28% 20%;
+    /* APP_BG_DEEP = #1B2636 */
+    --input: 213 32% 16%;
+    --ring: 148 33% 60%;
 
-    --clinical-safe: 152 40% 58%;
-    --clinical-caution: 42 51% 58%;
-    --clinical-danger: 0 30% 48%;
-    --clinical-neutral: 216 14% 70%;
+    --clinical-safe: 148 33% 60%;
+    --clinical-caution: 42 70% 55%;
+    --clinical-danger: 0 50% 45%;
+    --clinical-neutral: 210 6% 74%;
 
-    /* Sidebar - Grafite Técnico #262A30 */
-    --sidebar-background: 216 9% 17%;
-    --sidebar-foreground: 216 14% 75%;
-    --sidebar-primary: 210 28% 48%;
+    /* Sidebar - APP_BG_DEEP = #1B2636 */
+    --sidebar-background: 213 32% 16%;
+    /* TEXT_MUTED = #B7BBC0 */
+    --sidebar-foreground: 210 6% 74%;
+    /* PRIMARY_JADE = #79B997 */
+    --sidebar-primary: 148 33% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 28% 48%;
+    /* SURFACE_PILL = #293E48 */
+    --sidebar-accent: 200 28% 22%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 214 15% 26%;
-    --sidebar-ring: 210 28% 48%;
+    /* BORDER_LINE = #253441 */
+    --sidebar-border: 204 28% 20%;
+    --sidebar-ring: 148 33% 60%;
   }
 }
 
