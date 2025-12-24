@@ -3,22 +3,18 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { CuradoriaArticle, CuradoriaContent, statusConfig, interestColors, CuradoriaStatus } from "@/types/curadoria";
+import { Curation, CurationStatus } from "@/types/curation";
 import { CuradoriaStatusBadge } from "@/components/curadoria/CuradoriaStatusBadge";
 import { SolicitarCuradoriaModal } from "@/components/curadoria/SolicitarCuradoriaModal";
+import { StructuredCurationView } from "@/components/curadoria/StructuredCurationView";
+import { CurationGovernanceBadge } from "@/components/curadoria/CurationGovernanceBadge";
 import { 
   ArrowLeft, 
   ExternalLink, 
   FileText, 
-  AlertTriangle,
-  Target,
-  Microscope,
-  BarChart3,
-  Stethoscope,
-  AlertCircle,
-  Award
+  AlertTriangle
 } from "lucide-react";
 
 export default function CuradoriaDetalhe() {
@@ -26,6 +22,7 @@ export default function CuradoriaDetalhe() {
   const navigate = useNavigate();
   const [article, setArticle] = useState<CuradoriaArticle | null>(null);
   const [content, setContent] = useState<CuradoriaContent | null>(null);
+  const [structuredCuration, setStructuredCuration] = useState<Curation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showRequestModal, setShowRequestModal] = useState(false);
 
@@ -49,8 +46,28 @@ export default function CuradoriaDetalhe() {
       };
       setArticle(typedArticle);
 
-      // Fetch curadoria content if available
-      if (typedArticle.status === "disponivel") {
+      // Fetch structured curation (new table)
+      const { data: curationData } = await supabase
+        .from("curations")
+        .select("*")
+        .eq("article_id", id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (curationData) {
+        setStructuredCuration({
+          ...curationData,
+          status: curationData.status as CurationStatus,
+          evidence_level: curationData.evidence_level as Curation['evidence_level'],
+          bias_risk: curationData.bias_risk as Curation['bias_risk'],
+          applicability: curationData.applicability as Curation['applicability'],
+          citations: (curationData.citations as Curation['citations']) || []
+        });
+      }
+
+      // Fetch legacy curadoria content if available (fallback)
+      if (typedArticle.status === "disponivel" && !curationData) {
         const { data: contentData } = await supabase
           .from("curadoria_content")
           .select("*")
@@ -74,6 +91,13 @@ export default function CuradoriaDetalhe() {
 
   const canRequestCuradoria = article && 
     (article.status === "sem_curadoria" || article.status === "indeferida");
+
+  // Check if we should show the structured curation
+  const hasStructuredCuration = structuredCuration !== null;
+  const showStructuredView = hasStructuredCuration && 
+    (structuredCuration.status === 'disponivel' || 
+     structuredCuration.status === 'em_revisao' || 
+     structuredCuration.status === 'aprovada');
 
   if (isLoading) {
     return (
@@ -119,6 +143,9 @@ export default function CuradoriaDetalhe() {
                   {article.interest}
                 </Badge>
                 <CuradoriaStatusBadge status={article.status} />
+                {hasStructuredCuration && (
+                  <CurationGovernanceBadge status={structuredCuration.status} />
+                )}
               </div>
               <CardTitle className="text-2xl font-bold text-foreground leading-tight">
                 {article.title}
@@ -165,108 +192,14 @@ export default function CuradoriaDetalhe() {
         </CardContent>
       </Card>
 
-      {/* Curadoria Content */}
-      {article.status === "disponivel" && content ? (
+      {/* Structured Curation View (new) */}
+      {showStructuredView && structuredCuration && (
         <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold text-foreground">Curadoria Clínica</h2>
+            <h2 className="text-xl font-semibold text-foreground">Curadoria Clínica Estruturada</h2>
           </div>
-
-          {/* Summary */}
-          {content.summary && (
-            <Card className="bg-card border-border">
-              <CardContent className="pt-6">
-                <p className="text-foreground">{content.summary}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Detailed Sections */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {content.objective && (
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Target className="h-4 w-4 text-primary" />
-                    Objetivo do Estudo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{content.objective}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {content.methodology && (
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Microscope className="h-4 w-4 text-primary" />
-                    Metodologia
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{content.methodology}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {content.main_results && (
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-primary" />
-                    Principais Resultados
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{content.main_results}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {content.clinical_applicability && (
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Stethoscope className="h-4 w-4 text-primary" />
-                    Aplicabilidade Clínica
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{content.clinical_applicability}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {content.limitations && (
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-primary" />
-                    Limitações
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{content.limitations}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {content.evidence_level && (
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Award className="h-4 w-4 text-primary" />
-                    Nível de Evidência
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{content.evidence_level}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          
+          <StructuredCurationView curation={structuredCuration} />
 
           {/* Disclaimer */}
           <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50">
@@ -279,8 +212,38 @@ export default function CuradoriaDetalhe() {
             </CardContent>
           </Card>
         </div>
-      ) : (
-        /* Status Section when no curadoria available */
+      )}
+
+      {/* Legacy Curadoria Content (fallback) */}
+      {!showStructuredView && article.status === "disponivel" && content && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-foreground">Curadoria Clínica</h2>
+          </div>
+
+          {content.summary && (
+            <Card className="bg-card border-border">
+              <CardContent className="pt-6">
+                <p className="text-foreground">{content.summary}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Disclaimer */}
+          <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50">
+            <CardContent className="flex items-start gap-3 pt-6">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <strong>Aviso:</strong> Esta curadoria tem finalidade educacional. 
+                Não substitui a avaliação clínica individual nem a decisão do profissional de saúde.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Status Section when no curadoria available */}
+      {!showStructuredView && !(article.status === "disponivel" && content) && (
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-lg">Status da Curadoria</CardTitle>
@@ -319,7 +282,7 @@ export default function CuradoriaDetalhe() {
           >
             Solicitar Curadoria
           </Button>
-        ) : article.status !== "disponivel" && (
+        ) : article.status !== "disponivel" && !showStructuredView && (
           <Button size="lg" disabled className="shadow-lg">
             Curadoria em andamento
           </Button>
@@ -332,6 +295,7 @@ export default function CuradoriaDetalhe() {
         onOpenChange={setShowRequestModal}
         articleId={article.id}
         articleTitle={article.title}
+        article={article}
         onSuccess={fetchArticle}
       />
     </div>
