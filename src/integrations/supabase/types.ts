@@ -621,6 +621,7 @@ export type Database = {
           age: number | null
           birth_date: string | null
           clinical_diagnosis: string | null
+          cpf: string | null
           created_at: string
           discharge_date: string | null
           email: string | null
@@ -657,6 +658,7 @@ export type Database = {
           age?: number | null
           birth_date?: string | null
           clinical_diagnosis?: string | null
+          cpf?: string | null
           created_at?: string
           discharge_date?: string | null
           email?: string | null
@@ -693,6 +695,7 @@ export type Database = {
           age?: number | null
           birth_date?: string | null
           clinical_diagnosis?: string | null
+          cpf?: string | null
           created_at?: string
           discharge_date?: string | null
           email?: string | null
