@@ -62,13 +62,16 @@ All colors MUST be HSL.
 
     /* Sidebar - Grafite Profundo #2B2E34 */
     --sidebar-background: 220 12% 18%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 152 21% 46%;
+    /* Texto padrão sidebar - Cinza Fumaça #6B7280 */
+    --sidebar-foreground: 220 9% 46%;
+    /* Item ativo - Azul Ardósia #4A6378 */
+    --sidebar-primary: 210 24% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 12% 24%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 12% 22%;
-    --sidebar-ring: 152 21% 46%;
+    /* Fundo item ativo - Azul Ardósia #4A6378 */
+    --sidebar-accent: 210 24% 38%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 12% 26%;
+    --sidebar-ring: 210 24% 38%;
   }
 
   .dark {
