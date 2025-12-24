@@ -276,7 +276,7 @@ const DetalhePaciente = () => {
                     <ClipboardList className="w-4 h-4" />
                     Solicitar Exames
                   </Button>
-                  <Button variant="outline" className="gap-2 h-10" onClick={() => navigate("/agente-mac")}>
+                  <Button variant="outline" className="gap-2 h-10" onClick={() => navigate(`/agente-mac?paciente=${selectedPatientId}`)}>
                     <Brain className="w-4 h-4" />
                     Consultar AGENTE FISIOREGEN
                   </Button>

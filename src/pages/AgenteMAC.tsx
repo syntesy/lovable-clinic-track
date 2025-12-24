@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Plus, MessageSquare, Trash2 } from "lucide-react";
+import { Send, Bot, User, Plus, MessageSquare, Trash2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
@@ -17,6 +18,10 @@ interface Conversation {
 }
 
 const AgenteMAC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const patientId = searchParams.get("paciente");
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -286,12 +291,24 @@ const AgenteMAC = () => {
       <div className="flex-1 flex flex-col bg-card/85 rounded-2xl overflow-hidden min-h-0">
         {/* Header */}
         <div className="p-4 md:p-6 border-b-2 border-border bg-[#F5F6FA]">
-          <h1 className="text-lg md:text-2xl font-semibold text-foreground font-inter">
-            Agente Fisioterapia Regenerativa
-          </h1>
-          <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Assistente especializado em terapias regenerativas e fotobiomodulação
-          </p>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(patientId ? `/pacientes/${patientId}` : "/pacientes")}
+              className="flex-shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-lg md:text-2xl font-semibold text-foreground font-inter">
+                Agente Fisioterapia Regenerativa
+              </h1>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                Assistente especializado em terapias regenerativas e fotobiomodulação
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Messages Area */}
