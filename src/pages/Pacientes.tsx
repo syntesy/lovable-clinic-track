@@ -158,7 +158,7 @@ const Pacientes = () => {
 
         {/* New Patient Button */}
         <Button
-          onClick={() => navigate("/novo-paciente")}
+          onClick={() => navigate("/pacientes/novo")}
           className="flex items-center gap-2"
         >
           <UserPlus className="w-4 h-4" />
