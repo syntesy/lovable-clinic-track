@@ -24,6 +24,8 @@ import FisioRegenScore from "./pages/FisioRegenScore";
 import CuradoriaClinica from "./pages/CuradoriaClinica";
 import CuradoriaDetalhe from "./pages/CuradoriaDetalhe";
 import CuradoriaOriginal from "./pages/CuradoriaOriginal";
+import AdminCuradoria from "./pages/admin/AdminCuradoria";
+import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -207,6 +209,27 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <CuradoriaOriginal />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin Routes */}
+          <Route
+            path="/admin/curadoria"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminCuradoria />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/curadoria/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminCuradoriaEditor />
                 </Layout>
               </ProtectedRoute>
             }
