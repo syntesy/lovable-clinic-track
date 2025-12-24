@@ -394,7 +394,10 @@ const DetalhePaciente = () => {
                       <Card className="bg-card border-border">
                         <CardContent className="py-16 text-center">
                           <Activity className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
-                          <p className="text-muted-foreground text-lg">Nenhuma sessão registrada</p>
+                          <p className="text-muted-foreground text-lg mb-4">Nenhuma sessão registrada</p>
+                          <Button size="lg" onClick={() => navigate(`/prontuario/${selectedPatientId}`)}>
+                            Criar Prontuário Clínico
+                          </Button>
                         </CardContent>
                       </Card>
                     )}
