@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import logoRegenapp from "@/assets/logo-regenapp.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -123,26 +124,26 @@ export default function Auth() {
           zIndex: 10,
         }}
       >
-        {/* Avatar flutuante */}
+        {/* Logo flutuante */}
         <div
           style={{
-            width: "80px",
-            height: "80px",
-            borderRadius: "50%",
+            width: "160px",
+            height: "60px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: "-40px",
+            marginBottom: "-30px",
             zIndex: 20,
           }}
         >
-          <User
+          <img
+            src={logoRegenapp}
+            alt="REGENAPP"
             style={{
-              width: "70px",
-              height: "70px",
-              color: "#79B997",
+              width: "100%",
+              height: "auto",
+              objectFit: "contain",
             }}
-            strokeWidth={1.5}
           />
         </div>
 
