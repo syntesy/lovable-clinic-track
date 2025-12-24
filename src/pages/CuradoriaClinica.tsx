@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,109 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, FileText, Sparkles, X } from "lucide-react";
-
-interface Article {
-  id: string;
-  title: string;
-  authors: string;
-  year: number;
-  journal: string;
-  interest: "PRP" | "PRF" | "PPP" | "BMP";
-  tags: string[];
-  status: "curated" | "raw";
-  practiceChange: string;
-}
-
-const mockArticles: Article[] = [
-  {
-    id: "1",
-    title: "Platelet-Rich Plasma for Knee Osteoarthritis: A Systematic Review",
-    authors: "Silva, M.J. et al.",
-    year: 2023,
-    journal: "Journal of Orthopaedic Research",
-    interest: "PRP",
-    tags: ["osteoartrite", "joelho", "revisão sistemática", "injeção intra-articular"],
-    status: "curated",
-    practiceChange: "PRP mostra superioridade ao ácido hialurônico em OA de joelho grau II-III."
-  },
-  {
-    id: "2",
-    title: "Clinical Outcomes of Leukocyte-Rich vs Leukocyte-Poor PRP in Tendinopathies",
-    authors: "Chen, L. et al.",
-    year: 2024,
-    journal: "American Journal of Sports Medicine",
-    interest: "PRP",
-    tags: ["tendinopatia", "leucócitos", "comparativo"],
-    status: "raw",
-    practiceChange: "LR-PRP pode ser mais eficaz em tendinopatias crônicas degenerativas."
-  },
-  {
-    id: "3",
-    title: "PRF Membranes in Periodontal Regeneration: A Meta-Analysis",
-    authors: "Rodrigues, A.P. et al.",
-    year: 2023,
-    journal: "Clinical Oral Investigations",
-    interest: "PRF",
-    tags: ["periodontia", "regeneração", "meta-análise", "membrana"],
-    status: "curated",
-    practiceChange: "PRF acelera cicatrização em defeitos intraósseos periodontais."
-  },
-  {
-    id: "4",
-    title: "Advanced PRF (A-PRF) vs Standard PRF in Bone Augmentation",
-    authors: "Miron, R.J. et al.",
-    year: 2022,
-    journal: "Journal of Clinical Periodontology",
-    interest: "PRF",
-    tags: ["A-PRF", "aumento ósseo", "implantes"],
-    status: "raw",
-    practiceChange: "A-PRF libera fatores de crescimento por período mais prolongado."
-  },
-  {
-    id: "5",
-    title: "Platelet-Poor Plasma in Dermatological Applications",
-    authors: "Kim, S.H. et al.",
-    year: 2024,
-    journal: "Dermatologic Surgery",
-    interest: "PPP",
-    tags: ["dermatologia", "rejuvenescimento", "cicatrizes"],
-    status: "curated",
-    practiceChange: "PPP pode ser combinado com microagulhamento para potencializar resultados."
-  },
-  {
-    id: "6",
-    title: "PPP as a Scaffold for Growth Factor Delivery in Wound Healing",
-    authors: "Martinez, C.L. et al.",
-    year: 2023,
-    journal: "Wound Repair and Regeneration",
-    interest: "PPP",
-    tags: ["cicatrização", "feridas crônicas", "scaffold"],
-    status: "raw",
-    practiceChange: "PPP serve como veículo para liberação controlada de fatores de crescimento."
-  },
-  {
-    id: "7",
-    title: "BMP-2 in Spinal Fusion: Long-Term Outcomes and Safety Profile",
-    authors: "Johnson, D.R. et al.",
-    year: 2023,
-    journal: "Spine Journal",
-    interest: "BMP",
-    tags: ["coluna", "fusão espinhal", "BMP-2", "segurança"],
-    status: "curated",
-    practiceChange: "BMP-2 apresenta taxa de fusão superior mas requer dosagem cuidadosa."
-  },
-  {
-    id: "8",
-    title: "Bone Morphogenetic Proteins in Non-Union Fractures: Current Evidence",
-    authors: "Williams, P.T. et al.",
-    year: 2024,
-    journal: "Journal of Bone and Joint Surgery",
-    interest: "BMP",
-    tags: ["pseudoartrose", "fraturas", "consolidação óssea"],
-    status: "raw",
-    practiceChange: "BMPs podem reduzir tempo de consolidação em pseudoartroses refratárias."
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { CuradoriaArticle, CuradoriaStatus, interestColors } from "@/types/curadoria";
+import { CuradoriaStatusBadge } from "@/components/curadoria/CuradoriaStatusBadge";
+import { SolicitarCuradoriaModal } from "@/components/curadoria/SolicitarCuradoriaModal";
 
 const interestOptions = [
   { value: "all", label: "Todos" },
@@ -123,19 +25,45 @@ const interestOptions = [
   { value: "BMP", label: "BMP" },
 ];
 
-const interestColors: Record<string, string> = {
-  PRP: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  PRF: "bg-rose-500/20 text-rose-400 border-rose-500/30",
-  PPP: "bg-sky-500/20 text-sky-400 border-sky-500/30",
-  BMP: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-};
-
 export default function CuradoriaClinica() {
+  const navigate = useNavigate();
+  const [articles, setArticles] = useState<CuradoriaArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [interestFilter, setInterestFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<CuradoriaArticle | null>(null);
+
+  const fetchArticles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("curadoria_articles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      // Cast the data to proper types
+      const typedArticles: CuradoriaArticle[] = (data || []).map(article => ({
+        ...article,
+        status: article.status as CuradoriaStatus,
+        interest: article.interest as CuradoriaArticle['interest']
+      }));
+      
+      setArticles(typedArticles);
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
 
   const filteredArticles = useMemo(() => {
-    return mockArticles.filter((article) => {
+    return articles.filter((article) => {
       // Filter by interest
       if (interestFilter !== "all" && article.interest !== interestFilter) {
         return false;
@@ -156,7 +84,7 @@ export default function CuradoriaClinica() {
 
       return true;
     });
-  }, [interestFilter, searchQuery]);
+  }, [articles, interestFilter, searchQuery]);
 
   const clearFilters = () => {
     setInterestFilter("all");
@@ -164,6 +92,22 @@ export default function CuradoriaClinica() {
   };
 
   const hasActiveFilters = interestFilter !== "all" || searchQuery.trim() !== "";
+
+  const handleRequestCuradoria = (article: CuradoriaArticle) => {
+    setSelectedArticle(article);
+    setShowRequestModal(true);
+  };
+
+  const canRequestCuradoria = (status: CuradoriaStatus) => 
+    status === "sem_curadoria" || status === "indeferida";
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -260,27 +204,20 @@ export default function CuradoriaClinica() {
 
                 {/* Status Badge */}
                 <div>
-                  {article.status === "curated" ? (
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      Curadoria disponível
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30">
-                      Sem curadoria
-                    </Badge>
-                  )}
+                  <CuradoriaStatusBadge status={article.status} />
                 </div>
 
                 {/* Insight Clínico */}
-                <div className="bg-secondary/30 rounded-lg p-3 border border-border">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">
-                    Insight clínico
-                  </p>
-                  <p className="text-sm text-foreground">
-                    {article.practiceChange}
-                  </p>
-                </div>
+                {article.practice_change && (
+                  <div className="bg-secondary/30 rounded-lg p-3 border border-border">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Insight clínico
+                    </p>
+                    <p className="text-sm text-foreground">
+                      {article.practice_change}
+                    </p>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -288,19 +225,28 @@ export default function CuradoriaClinica() {
                     variant="outline" 
                     size="sm" 
                     className="flex-1"
-                    disabled
+                    onClick={() => navigate(`/curadoria/${article.id}/original`)}
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Ler artigo original
                   </Button>
-                  {article.status === "curated" ? (
+                  {article.status === "disponivel" ? (
                     <Button 
                       size="sm" 
                       className="flex-1"
-                      disabled
+                      onClick={() => navigate(`/curadoria/${article.id}`)}
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Ver curadoria
+                    </Button>
+                  ) : canRequestCuradoria(article.status) ? (
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleRequestCuradoria(article)}
+                    >
+                      Solicitar curadoria
                     </Button>
                   ) : (
                     <Button 
@@ -309,7 +255,7 @@ export default function CuradoriaClinica() {
                       className="flex-1"
                       disabled
                     >
-                      Solicitar curadoria
+                      Curadoria em andamento
                     </Button>
                   )}
                 </div>
@@ -317,6 +263,17 @@ export default function CuradoriaClinica() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Request Modal */}
+      {selectedArticle && (
+        <SolicitarCuradoriaModal
+          open={showRequestModal}
+          onOpenChange={setShowRequestModal}
+          articleId={selectedArticle.id}
+          articleTitle={selectedArticle.title}
+          onSuccess={fetchArticles}
+        />
       )}
     </div>
   );

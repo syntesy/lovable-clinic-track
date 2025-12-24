@@ -267,6 +267,154 @@ export type Database = {
           },
         ]
       }
+      curadoria_articles: {
+        Row: {
+          authors: string
+          created_at: string
+          doi: string | null
+          id: string
+          interest: string
+          journal: string
+          pdf_url: string | null
+          practice_change: string | null
+          pubmed_url: string | null
+          status: Database["public"]["Enums"]["curadoria_status"]
+          tags: string[] | null
+          title: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          authors: string
+          created_at?: string
+          doi?: string | null
+          id?: string
+          interest: string
+          journal: string
+          pdf_url?: string | null
+          practice_change?: string | null
+          pubmed_url?: string | null
+          status?: Database["public"]["Enums"]["curadoria_status"]
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          authors?: string
+          created_at?: string
+          doi?: string | null
+          id?: string
+          interest?: string
+          journal?: string
+          pdf_url?: string | null
+          practice_change?: string | null
+          pubmed_url?: string | null
+          status?: Database["public"]["Enums"]["curadoria_status"]
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      curadoria_content: {
+        Row: {
+          article_id: string
+          clinical_applicability: string | null
+          created_at: string
+          created_by: string | null
+          evidence_level: string | null
+          id: string
+          limitations: string | null
+          main_results: string | null
+          methodology: string | null
+          objective: string | null
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          clinical_applicability?: string | null
+          created_at?: string
+          created_by?: string | null
+          evidence_level?: string | null
+          id?: string
+          limitations?: string | null
+          main_results?: string | null
+          methodology?: string | null
+          objective?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          clinical_applicability?: string | null
+          created_at?: string
+          created_by?: string | null
+          evidence_level?: string | null
+          id?: string
+          limitations?: string | null
+          main_results?: string | null
+          methodology?: string | null
+          objective?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curadoria_content_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "curadoria_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curadoria_requests: {
+        Row: {
+          article_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          interest: string
+          purpose: string | null
+          status: Database["public"]["Enums"]["curadoria_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          interest: string
+          purpose?: string | null
+          status?: Database["public"]["Enums"]["curadoria_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          interest?: string
+          purpose?: string | null
+          status?: Database["public"]["Enums"]["curadoria_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curadoria_requests_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "curadoria_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       epi_protocols: {
         Row: {
           application_time: number | null
@@ -1294,6 +1442,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "professional" | "viewer"
+      curadoria_status:
+        | "sem_curadoria"
+        | "solicitada"
+        | "em_analise"
+        | "em_producao"
+        | "disponivel"
+        | "indeferida"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1422,6 +1577,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "professional", "viewer"],
+      curadoria_status: [
+        "sem_curadoria",
+        "solicitada",
+        "em_analise",
+        "em_producao",
+        "disponivel",
+        "indeferida",
+      ],
     },
   },
 } as const
