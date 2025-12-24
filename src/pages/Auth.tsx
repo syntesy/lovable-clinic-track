@@ -140,7 +140,7 @@ export default function Auth() {
             style={{
               width: "70px",
               height: "70px",
-              color: "#5B7FFF",
+              color: "#63BC94",
             }}
             strokeWidth={1.5}
           />
@@ -183,12 +183,12 @@ export default function Auth() {
               gap: "8px",
               marginBottom: "30px",
               padding: "8px 16px",
-              backgroundColor: "rgba(74, 108, 247, 0.1)",
+              backgroundColor: "rgba(99, 188, 148, 0.1)",
               borderRadius: "20px",
-              border: "1px solid rgba(74, 108, 247, 0.2)",
+              border: "1px solid rgba(99, 188, 148, 0.2)",
             }}
           >
-            <Shield style={{ width: "14px", height: "14px", color: "#4A6CF7" }} />
+            <Shield style={{ width: "14px", height: "14px", color: "#63BC94" }} />
             <span
               style={{
                 color: "rgba(255, 255, 255, 0.7)",
@@ -328,7 +328,7 @@ export default function Auth() {
               style={{
                 width: "100%",
                 height: "52px",
-                backgroundColor: "#4A6CF7",
+                backgroundColor: "#63BC94",
                 border: "none",
                 borderRadius: "26px",
                 color: "#FFFFFF",
@@ -338,15 +338,15 @@ export default function Auth() {
                 opacity: loading ? 0.7 : 1,
                 transition: "all 0.2s ease",
                 fontFamily: "Inter, sans-serif",
-                boxShadow: "0 4px 20px rgba(74, 108, 247, 0.3)",
+                boxShadow: "0 4px 20px rgba(99, 188, 148, 0.3)",
               }}
               onMouseEnter={(e) => {
                 if (!loading) {
-                  e.currentTarget.style.backgroundColor = "#5B7FFF";
+                  e.currentTarget.style.backgroundColor = "#72C9A0";
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#4A6CF7";
+                e.currentTarget.style.backgroundColor = "#63BC94";
               }}
             >
               {loading ? "Aguarde..." : isSignUp ? "Cadastrar" : "Entrar"}
