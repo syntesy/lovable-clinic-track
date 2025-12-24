@@ -10,121 +10,124 @@ All colors MUST be HSL.
   :root {
     /* Base - #EEF1F3 */
     --background: 210 14% 95%;
-    /* Texto principal - #2B2E34 */
-    --foreground: 220 12% 18%;
+    /* Texto principal - #1F2328 */
+    --foreground: 216 10% 14%;
 
     /* Cards / superfícies - #FFFFFF */
     --card: 0 0% 100%;
-    --card-foreground: 220 12% 18%;
+    --card-foreground: 216 10% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 12% 18%;
+    --popover-foreground: 216 10% 14%;
 
-    /* Acento primário - Jade Técnico #5E8F7B */
-    --primary: 152 21% 46%;
+    /* Acento primário - Verde Jade Expressivo #63BC94 */
+    --primary: 152 40% 56%;
     --primary-foreground: 0 0% 100%;
 
-    /* Acento secundário - Azul Ardósia #4A6378 */
-    --secondary: 210 24% 38%;
+    /* Acento secundário - Azul Ardósia Expressiva #597B9E */
+    --secondary: 210 28% 48%;
     --secondary-foreground: 0 0% 100%;
 
     /* Texto secundário - #6B7280 */
     --muted: 210 14% 92%;
     --muted-foreground: 220 9% 46%;
 
-    /* Seleções/dropdowns - Azul Ardósia #4A6378 */
-    --accent: 210 24% 38%;
+    /* Seleções/dropdowns - Azul Ardósia Expressiva #597B9E */
+    --accent: 210 28% 48%;
     --accent-foreground: 0 0% 100%;
 
     /* Risco - #8B4A4A */
     --destructive: 0 30% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Positivo - #6FAF95 */
-    --success: 152 30% 56%;
+    /* Positivo - #63BC94 */
+    --success: 152 40% 56%;
     --success-foreground: 0 0% 100%;
 
     /* Atenção - #C9A24D */
     --warning: 42 51% 55%;
-    --warning-foreground: 220 12% 18%;
+    --warning-foreground: 216 10% 14%;
 
-    --border: 210 14% 88%;
+    --border: 216 15% 85%;
     --input: 210 14% 95%;
-    --ring: 152 21% 46%;
+    --ring: 152 40% 56%;
 
     --radius: 0.625rem;
 
     /* Clinical specific colors */
-    --clinical-safe: 152 30% 56%;
+    --clinical-safe: 152 40% 56%;
     --clinical-caution: 42 51% 55%;
     --clinical-danger: 0 30% 42%;
     --clinical-neutral: 220 9% 46%;
 
-    /* Sidebar - Grafite Profundo #2B2E34 */
-    --sidebar-background: 220 12% 18%;
-    /* Texto padrão sidebar - Cinza Fumaça #6B7280 */
-    --sidebar-foreground: 220 9% 46%;
-    /* Item ativo - Azul Ardósia #4A6378 */
-    --sidebar-primary: 210 24% 38%;
+    /* Sidebar - Grafite Técnico #262A30 */
+    --sidebar-background: 216 9% 17%;
+    /* Texto padrão sidebar - #B4BCC8 */
+    --sidebar-foreground: 216 14% 75%;
+    /* Item ativo - Azul Ardósia Expressiva #597B9E */
+    --sidebar-primary: 210 28% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    /* Fundo item ativo - Azul Ardósia #4A6378 */
-    --sidebar-accent: 210 24% 38%;
+    /* Fundo item ativo - Azul Ardósia Expressiva #597B9E */
+    --sidebar-accent: 210 28% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 12% 26%;
-    --sidebar-ring: 210 24% 38%;
+    /* Divisores - #39414D */
+    --sidebar-border: 216 15% 26%;
+    --sidebar-ring: 210 28% 48%;
   }
 
   .dark {
-    --background: 220 15% 10%;
+    /* Background escuro tecnológico - #0F172A */
+    --background: 222 47% 11%;
     --foreground: 210 14% 92%;
 
-    --card: 220 15% 14%;
+    --card: 222 40% 14%;
     --card-foreground: 210 14% 92%;
 
-    --popover: 220 15% 14%;
+    --popover: 222 40% 14%;
     --popover-foreground: 210 14% 92%;
 
-    /* Jade Técnico - dark mode */
-    --primary: 152 25% 50%;
+    /* Verde Jade Expressivo - dark mode */
+    --primary: 152 40% 58%;
     --primary-foreground: 0 0% 100%;
 
-    /* Azul Ardósia - dark mode */
-    --secondary: 210 24% 45%;
+    /* Azul Ardósia Expressiva - dark mode */
+    --secondary: 210 28% 52%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 9% 60%;
+    --muted: 222 30% 18%;
+    --muted-foreground: 216 14% 70%;
 
-    --accent: 210 24% 45%;
+    --accent: 210 28% 52%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 30% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 30% 58%;
+    --success: 152 40% 58%;
     --success-foreground: 0 0% 100%;
 
     --warning: 42 51% 58%;
-    --warning-foreground: 220 12% 18%;
+    --warning-foreground: 222 47% 11%;
 
-    --border: 220 15% 22%;
-    --input: 220 15% 18%;
-    --ring: 152 25% 50%;
+    /* Divisores - #39414D */
+    --border: 216 15% 26%;
+    --input: 222 30% 18%;
+    --ring: 152 40% 58%;
 
-    --clinical-safe: 152 30% 58%;
+    --clinical-safe: 152 40% 58%;
     --clinical-caution: 42 51% 58%;
     --clinical-danger: 0 30% 48%;
-    --clinical-neutral: 220 9% 60%;
+    --clinical-neutral: 216 14% 70%;
 
-    /* Sidebar dark - Grafite mais profundo */
-    --sidebar-background: 220 15% 10%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 152 25% 50%;
+    /* Sidebar dark - Grafite Técnico #262A30 */
+    --sidebar-background: 216 9% 17%;
+    --sidebar-foreground: 216 14% 75%;
+    --sidebar-primary: 210 28% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 220 15% 16%;
-    --sidebar-ring: 152 25% 50%;
+    --sidebar-accent: 210 28% 52%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 216 15% 26%;
+    --sidebar-ring: 210 28% 52%;
   }
 }
 
