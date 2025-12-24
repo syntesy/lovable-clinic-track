@@ -22,8 +22,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 33% 17%;
 
-    /* PRIMARY GREEN #63BC94 */
-    --primary: 153 39% 56%;
+    /* PRIMARY GREEN #4B705D */
+    --primary: 149 20% 37%;
     --primary-foreground: 0 0% 100%;
 
     /* Cards secundários #F6F8FA */
@@ -43,7 +43,7 @@ All colors MUST be HSL.
     --destructive-foreground: 0 0% 100%;
 
     /* Positivo = PRIMARY GREEN */
-    --success: 153 39% 56%;
+    --success: 149 20% 37%;
     --success-foreground: 0 0% 100%;
 
     /* Atenção - tom âmbar */
@@ -54,12 +54,12 @@ All colors MUST be HSL.
     --border: 214 14% 89%;
     /* Input background */
     --input: 0 0% 100%;
-    --ring: 153 39% 56%;
+    --ring: 149 20% 37%;
 
     --radius: 0.625rem;
 
     /* Clinical specific colors */
-    --clinical-safe: 153 39% 56%;
+    --clinical-safe: 149 20% 37%;
     --clinical-caution: 38 92% 50%;
     --clinical-danger: 0 72% 51%;
     --clinical-neutral: 215 16% 47%;
@@ -67,12 +67,12 @@ All colors MUST be HSL.
     /* Sidebar escura #1E293B */
     --sidebar-background: 222 33% 17%;
     --sidebar-foreground: 215 20% 75%;
-    --sidebar-primary: 153 39% 56%;
+    --sidebar-primary: 149 20% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 33% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 217 33% 24%;
-    --sidebar-ring: 153 39% 56%;
+    --sidebar-ring: 149 20% 37%;
   }
 
   .dark {
@@ -86,7 +86,7 @@ All colors MUST be HSL.
     --popover: 217 33% 24%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 153 39% 56%;
+    --primary: 149 20% 37%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 24%;
@@ -101,7 +101,7 @@ All colors MUST be HSL.
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 153 39% 56%;
+    --success: 149 20% 37%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
@@ -109,9 +109,9 @@ All colors MUST be HSL.
 
     --border: 217 33% 24%;
     --input: 217 33% 24%;
-    --ring: 153 39% 56%;
+    --ring: 149 20% 37%;
 
-    --clinical-safe: 153 39% 56%;
+    --clinical-safe: 149 20% 37%;
     --clinical-caution: 38 92% 50%;
     --clinical-danger: 0 72% 51%;
     --clinical-neutral: 215 20% 65%;
@@ -119,12 +119,12 @@ All colors MUST be HSL.
     /* Sidebar escura */
     --sidebar-background: 222 33% 17%;
     --sidebar-foreground: 215 20% 75%;
-    --sidebar-primary: 153 39% 56%;
+    --sidebar-primary: 149 20% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 33% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 217 33% 24%;
-    --sidebar-ring: 153 39% 56%;
+    --sidebar-ring: 149 20% 37%;
   }
 }
 
