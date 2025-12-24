@@ -15,6 +15,7 @@ import ProtocolosMenu from "./pages/ProtocolosMenu";
 import ProtocolosMAC from "./pages/ProtocolosMAC";
 import ProtocolosEPI from "./pages/ProtocolosEPI";
 import ProtocolosOrtobiologicos from "./pages/ProtocolosOrtobiologicos";
+import ProtocolosOndasChoque from "./pages/ProtocolosOndasChoque";
 import Relatorios from "./pages/Relatorios";
 import VisualizarRelatorio from "./pages/VisualizarRelatorio";
 import ProtocoloMAC from "./pages/ProtocoloMAC";
@@ -127,6 +128,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <ProtocolosOrtobiologicos />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/protocolos/ondas-choque"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProtocolosOndasChoque />
                 </Layout>
               </ProtectedRoute>
             }

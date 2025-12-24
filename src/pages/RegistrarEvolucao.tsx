@@ -16,6 +16,7 @@ import { TreatmentSessionFormData, safeParseFloat, safeParseInt } from "@/types/
 const PROTOCOL_OPTIONS = [
   { id: "MAC", label: "MAC" },
   { id: "EPI", label: "EPI" },
+  { id: "ONDAS_CHOQUE", label: "Ondas de Choque" },
   { id: "PRP", label: "PRP" },
   { id: "PRF", label: "PRF" },
   { id: "PPP", label: "PPP" },

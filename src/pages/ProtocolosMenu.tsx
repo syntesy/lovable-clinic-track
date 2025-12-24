@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Zap, Activity, Syringe } from "lucide-react";
+import { Zap, Activity, Syringe, Waves } from "lucide-react";
 
 const ProtocolosMenu = () => {
   const navigate = useNavigate();
@@ -30,6 +30,14 @@ const ProtocolosMenu = () => {
       path: "/protocolos/ortobiologicos",
       color: "#4A5D8A",
     },
+    {
+      title: "ONDAS DE CHOQUE",
+      subtitle: "Terapia por Ondas de Choque",
+      description: "Protocolos de ondas de choque radial e focada",
+      icon: Waves,
+      path: "/protocolos/ondas-choque",
+      color: "#0891B2",
+    },
   ];
 
   return (
@@ -43,7 +51,7 @@ const ProtocolosMenu = () => {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {protocolOptions.map((option) => (
           <Card
             key={option.title}
