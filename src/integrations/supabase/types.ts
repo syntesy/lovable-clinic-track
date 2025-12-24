@@ -640,6 +640,7 @@ export type Database = {
           pain_type_nociceptive: boolean | null
           pain_type_nociplastic: boolean | null
           phone: string | null
+          photo_url: string | null
           previous_treatments: string | null
           profession: string | null
           skin_phototype: string | null
@@ -675,6 +676,7 @@ export type Database = {
           pain_type_nociceptive?: boolean | null
           pain_type_nociplastic?: boolean | null
           phone?: string | null
+          photo_url?: string | null
           previous_treatments?: string | null
           profession?: string | null
           skin_phototype?: string | null
@@ -710,6 +712,7 @@ export type Database = {
           pain_type_nociceptive?: boolean | null
           pain_type_nociplastic?: boolean | null
           phone?: string | null
+          photo_url?: string | null
           previous_treatments?: string | null
           profession?: string | null
           skin_phototype?: string | null

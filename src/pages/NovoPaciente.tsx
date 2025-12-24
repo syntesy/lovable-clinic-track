@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { PatientPhotoUpload } from "@/components/PatientPhotoUpload";
 
 const NovoPaciente = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profession, setProfession] = useState("");
-  const { register, handleSubmit } = useForm();
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const { register, handleSubmit, control } = useForm();
+  
+  const fullName = useWatch({ control, name: "full_name", defaultValue: "" });
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -29,6 +33,7 @@ const NovoPaciente = () => {
           email: data.email,
           profession: profession,
           address: data.address,
+          photo_url: photoUrl,
         },
       ]);
 
@@ -66,7 +71,14 @@ const NovoPaciente = () => {
           <CardHeader>
             <CardTitle>Dados Cadastrais</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            <div className="flex justify-center pb-4 border-b border-border">
+              <PatientPhotoUpload
+                photoUrl={photoUrl}
+                onPhotoChange={setPhotoUrl}
+                patientName={fullName}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="full_name">Nome Completo *</Label>
