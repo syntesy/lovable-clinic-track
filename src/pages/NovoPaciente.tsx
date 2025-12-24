@@ -32,6 +32,7 @@ const NovoPaciente = () => {
           phone: data.phone,
           email: data.email,
           profession: profession,
+          cpf: data.cpf || null,
           address: data.address,
           photo_url: photoUrl,
         },
@@ -147,6 +148,15 @@ const NovoPaciente = () => {
                     <SelectItem value="Medicina">Medicina</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cpf">CPF</Label>
+                <Input
+                  id="cpf"
+                  {...register("cpf")}
+                  placeholder="000.000.000-00"
+                  className="border-input"
+                />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="address">Endereço</Label>
