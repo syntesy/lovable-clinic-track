@@ -21,6 +21,8 @@ export interface CuradoriaArticle {
   doi?: string;
   pubmed_url?: string;
   pdf_url?: string;
+  pdf_path?: string;
+  abstract?: string;
   status: CuradoriaStatus;
   practice_change?: string;
   created_at: string;
