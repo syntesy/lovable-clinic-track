@@ -21,6 +21,7 @@ import ProtocoloMAC from "./pages/ProtocoloMAC";
 import AgenteMAC from "./pages/AgenteMAC";
 import TriagemBiologica from "./pages/TriagemBiologica";
 import FisioRegenScore from "./pages/FisioRegenScore";
+import CuradoriaClinica from "./pages/CuradoriaClinica";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -174,6 +175,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <FisioRegenScore />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/curadoria"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CuradoriaClinica />
                 </Layout>
               </ProtectedRoute>
             }
