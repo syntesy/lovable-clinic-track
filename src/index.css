@@ -8,136 +8,123 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* ===== TEMA NAVY + JADE ===== */
-    /* APP_BG = #1C2939 → hsl(210 31% 17%) */
-    --background: 210 31% 17%;
-    /* TEXT_WHITE = #FEFEFE → hsl(0 0% 100%) */
-    --foreground: 0 0% 100%;
+    /* ===== TEMA LIGHT CLÍNICO REGENAPP ===== */
+    /* Fundo principal #EEF1F3 */
+    --background: 210 17% 95%;
+    /* Texto escuro para contraste */
+    --foreground: 222 33% 17%;
 
-    /* SURFACE_PILL = #293E48 → hsl(200 28% 22%) */
-    --card: 200 28% 22%;
-    --card-foreground: 0 0% 100%;
+    /* Cards principais #FFFFFF */
+    --card: 0 0% 100%;
+    --card-foreground: 222 33% 17%;
 
-    --popover: 200 28% 22%;
-    --popover-foreground: 0 0% 100%;
+    /* Popover branco */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 33% 17%;
 
-    /* PRIMARY_JADE = #79B997 → hsl(148 33% 60%) */
-    --primary: 148 33% 60%;
+    /* PRIMARY GREEN #63BC94 */
+    --primary: 153 39% 56%;
     --primary-foreground: 0 0% 100%;
 
-    /* SURFACE_PILL = #293E48 para secondary */
-    --secondary: 200 28% 22%;
-    --secondary-foreground: 0 0% 100%;
+    /* Cards secundários #F6F8FA */
+    --secondary: 210 25% 98%;
+    --secondary-foreground: 222 33% 17%;
 
-    /* TEXT_MUTED = #B7BBC0 → hsl(210 6% 74%) */
-    --muted: 210 31% 16%;
-    --muted-foreground: 210 6% 74%;
+    /* Muted para textos secundários */
+    --muted: 210 17% 95%;
+    --muted-foreground: 215 16% 47%;
 
-    /* SURFACE_PILL = #293E48 para accent */
-    --accent: 200 28% 22%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent sutil */
+    --accent: 210 25% 98%;
+    --accent-foreground: 222 33% 17%;
 
-    /* Risco - tom avermelhado escuro */
-    --destructive: 0 50% 45%;
+    /* Risco - tom avermelhado */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Positivo = PRIMARY_JADE */
-    --success: 148 33% 60%;
+    /* Positivo = PRIMARY GREEN */
+    --success: 153 39% 56%;
     --success-foreground: 0 0% 100%;
 
     /* Atenção - tom âmbar */
-    --warning: 42 70% 55%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* BORDER_LINE = #253441 → hsl(204 28% 20%) */
-    --border: 204 28% 20%;
-    /* APP_BG_DEEP = #1B2636 → hsl(213 32% 16%) */
-    --input: 213 32% 16%;
-    --ring: 148 33% 60%;
+    /* Bordas sutis */
+    --border: 214 14% 89%;
+    /* Input background */
+    --input: 0 0% 100%;
+    --ring: 153 39% 56%;
 
     --radius: 0.625rem;
 
     /* Clinical specific colors */
-    --clinical-safe: 148 33% 60%;
-    --clinical-caution: 42 70% 55%;
-    --clinical-danger: 0 50% 45%;
-    --clinical-neutral: 210 6% 74%;
+    --clinical-safe: 153 39% 56%;
+    --clinical-caution: 38 92% 50%;
+    --clinical-danger: 0 72% 51%;
+    --clinical-neutral: 215 16% 47%;
 
-    /* Sidebar - APP_BG_DEEP = #1B2636 */
-    --sidebar-background: 213 32% 16%;
-    /* TEXT_MUTED = #B7BBC0 */
-    --sidebar-foreground: 210 6% 74%;
-    /* PRIMARY_JADE = #79B997 */
-    --sidebar-primary: 148 33% 60%;
+    /* Sidebar escura #1E293B */
+    --sidebar-background: 222 33% 17%;
+    --sidebar-foreground: 215 20% 75%;
+    --sidebar-primary: 153 39% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    /* SURFACE_PILL = #293E48 para item ativo */
-    --sidebar-accent: 200 28% 22%;
+    --sidebar-accent: 217 33% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
-    /* BORDER_LINE = #253441 */
-    --sidebar-border: 204 28% 20%;
-    --sidebar-ring: 148 33% 60%;
+    --sidebar-border: 217 33% 24%;
+    --sidebar-ring: 153 39% 56%;
   }
 
   .dark {
-    /* ===== TEMA NAVY + JADE (DARK = SAME) ===== */
-    /* APP_BG = #1C2939 */
-    --background: 210 31% 17%;
-    --foreground: 0 0% 100%;
+    /* ===== TEMA DARK CLÍNICO REGENAPP ===== */
+    --background: 222 33% 17%;
+    --foreground: 0 0% 98%;
 
-    /* SURFACE_PILL = #293E48 */
-    --card: 200 28% 22%;
-    --card-foreground: 0 0% 100%;
+    --card: 217 33% 24%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 200 28% 22%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 217 33% 24%;
+    --popover-foreground: 0 0% 98%;
 
-    /* PRIMARY_JADE = #79B997 */
-    --primary: 148 33% 60%;
+    --primary: 153 39% 56%;
     --primary-foreground: 0 0% 100%;
 
-    /* SURFACE_PILL = #293E48 */
-    --secondary: 200 28% 22%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 217 33% 24%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 210 31% 16%;
-    --muted-foreground: 210 6% 74%;
+    --muted: 222 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 200 28% 22%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 217 33% 24%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 50% 45%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 148 33% 60%;
+    --success: 153 39% 56%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 42 70% 55%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* BORDER_LINE = #253441 */
-    --border: 204 28% 20%;
-    /* APP_BG_DEEP = #1B2636 */
-    --input: 213 32% 16%;
-    --ring: 148 33% 60%;
+    --border: 217 33% 24%;
+    --input: 217 33% 24%;
+    --ring: 153 39% 56%;
 
-    --clinical-safe: 148 33% 60%;
-    --clinical-caution: 42 70% 55%;
-    --clinical-danger: 0 50% 45%;
-    --clinical-neutral: 210 6% 74%;
+    --clinical-safe: 153 39% 56%;
+    --clinical-caution: 38 92% 50%;
+    --clinical-danger: 0 72% 51%;
+    --clinical-neutral: 215 20% 65%;
 
-    /* Sidebar - APP_BG_DEEP = #1B2636 */
-    --sidebar-background: 213 32% 16%;
-    /* TEXT_MUTED = #B7BBC0 */
-    --sidebar-foreground: 210 6% 74%;
-    /* PRIMARY_JADE = #79B997 */
-    --sidebar-primary: 148 33% 60%;
+    /* Sidebar escura */
+    --sidebar-background: 222 33% 17%;
+    --sidebar-foreground: 215 20% 75%;
+    --sidebar-primary: 153 39% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    /* SURFACE_PILL = #293E48 */
-    --sidebar-accent: 200 28% 22%;
+    --sidebar-accent: 217 33% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
-    /* BORDER_LINE = #253441 */
-    --sidebar-border: 204 28% 20%;
-    --sidebar-ring: 148 33% 60%;
+    --sidebar-border: 217 33% 24%;
+    --sidebar-ring: 153 39% 56%;
   }
 }
 
