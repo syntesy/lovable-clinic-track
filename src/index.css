@@ -71,7 +71,7 @@ All colors MUST be HSL.
     --sidebar-accent: 210 28% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
     /* Divisores - #39414D */
-    --sidebar-border: 216 15% 26%;
+    --sidebar-border: 214 15% 26%;
     --sidebar-ring: 210 28% 48%;
   }
 
@@ -91,13 +91,13 @@ All colors MUST be HSL.
     --primary-foreground: 0 0% 100%;
 
     /* Azul Ardósia Expressiva - dark mode */
-    --secondary: 210 28% 52%;
+    --secondary: 210 28% 48%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 222 30% 18%;
     --muted-foreground: 216 14% 70%;
 
-    --accent: 210 28% 52%;
+    --accent: 210 28% 48%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 30% 48%;
@@ -110,7 +110,7 @@ All colors MUST be HSL.
     --warning-foreground: 222 47% 11%;
 
     /* Divisores - #39414D */
-    --border: 216 15% 26%;
+    --border: 214 15% 26%;
     --input: 222 30% 18%;
     --ring: 152 40% 58%;
 
@@ -119,15 +119,15 @@ All colors MUST be HSL.
     --clinical-danger: 0 30% 48%;
     --clinical-neutral: 216 14% 70%;
 
-    /* Sidebar dark - Grafite Técnico #262A30 */
+    /* Sidebar - Grafite Técnico #262A30 */
     --sidebar-background: 216 9% 17%;
     --sidebar-foreground: 216 14% 75%;
-    --sidebar-primary: 210 28% 52%;
+    --sidebar-primary: 210 28% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 28% 52%;
+    --sidebar-accent: 210 28% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 216 15% 26%;
-    --sidebar-ring: 210 28% 52%;
+    --sidebar-border: 214 15% 26%;
+    --sidebar-ring: 210 28% 48%;
   }
 }
 
