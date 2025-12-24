@@ -1,4 +1,4 @@
-import { Users, FileText, BarChart3, Bot } from "lucide-react";
+import { Users, Bot } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -14,8 +14,6 @@ import logoFisioregen from "@/assets/logo-fisioregen.png";
 
 const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
-  { title: "Protocolos", url: "/protocolos", icon: FileText },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "AGENTE FISIOREGEN", url: "/agente-mac", icon: Bot, isAgent: true },
 ];
 

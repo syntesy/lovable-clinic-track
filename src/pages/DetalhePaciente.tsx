@@ -6,7 +6,7 @@ import {
   Search, ChevronDown, User, Activity, FileText, 
   FlaskConical, ClipboardList, Brain, Calendar,
   CheckCircle2, AlertCircle, XCircle, Clock,
-  TrendingUp, Plus, Filter
+  TrendingUp, Plus, Filter, Beaker, BarChart3
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -334,6 +334,9 @@ const DetalhePaciente = () => {
                   <TabsTrigger value="exames" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Exames
                   </TabsTrigger>
+                  <TabsTrigger value="protocolos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                    Protocolos
+                  </TabsTrigger>
                   <TabsTrigger value="relatorios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Relatórios
                   </TabsTrigger>
@@ -529,16 +532,66 @@ const DetalhePaciente = () => {
                   </div>
                 </TabsContent>
 
+                {/* Protocolos Tab */}
+                <TabsContent value="protocolos" className="mt-8">
+                  <div className="max-w-3xl space-y-6">
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <Card 
+                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigate(`/protocolos/mac?paciente=${selectedPatientId}`)}
+                      >
+                        <CardContent className="p-6 text-center">
+                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                            <Beaker className="w-7 h-7 text-primary" />
+                          </div>
+                          <h4 className="font-medium text-foreground mb-1">Protocolo MAC</h4>
+                          <p className="text-sm text-muted-foreground">Modulação Avançada Celular</p>
+                        </CardContent>
+                      </Card>
+                      <Card 
+                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigate(`/protocolos/epi?paciente=${selectedPatientId}`)}
+                      >
+                        <CardContent className="p-6 text-center">
+                          <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
+                            <Activity className="w-7 h-7 text-orange-500" />
+                          </div>
+                          <h4 className="font-medium text-foreground mb-1">Protocolos EPI</h4>
+                          <p className="text-sm text-muted-foreground">Eletrólise Percutânea</p>
+                        </CardContent>
+                      </Card>
+                      <Card 
+                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigate(`/protocolos/ortobiologicos?paciente=${selectedPatientId}`)}
+                      >
+                        <CardContent className="p-6 text-center">
+                          <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                            <FlaskConical className="w-7 h-7 text-emerald-500" />
+                          </div>
+                          <h4 className="font-medium text-foreground mb-1">Ortobiológicos</h4>
+                          <p className="text-sm text-muted-foreground">PRP, PRF, BMAC</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </TabsContent>
+
                 {/* Relatórios Tab */}
                 <TabsContent value="relatorios" className="mt-8">
-                  <div className="max-w-2xl">
+                  <div className="max-w-3xl space-y-6">
+                    <div className="flex justify-end">
+                      <Button onClick={() => navigate(`/relatorios?paciente=${selectedPatientId}`)} className="gap-2">
+                        <Plus className="w-4 h-4" />
+                        Gerar Novo Relatório
+                      </Button>
+                    </div>
                     <Card className="bg-card border-border">
                       <CardContent className="py-16 text-center">
-                        <ClipboardList className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
+                        <BarChart3 className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
                         <p className="text-muted-foreground text-lg mb-4">Nenhum relatório gerado</p>
-                        <Button size="lg" variant="outline" onClick={() => navigate(`/relatorios?patient=${selectedPatientId}`)}>
-                          Gerar Relatório
-                        </Button>
+                        <p className="text-sm text-muted-foreground">
+                          Gere relatórios clínicos para documentar a evolução do paciente
+                        </p>
                       </CardContent>
                     </Card>
                   </div>
