@@ -31,6 +31,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { EditPatientModal } from "@/components/EditPatientModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PatientEvaluationReport } from "@/components/PatientEvaluationReport";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
@@ -600,22 +601,34 @@ const DetalhePaciente = () => {
 
                 {/* Relatórios Tab */}
                 <TabsContent value="relatorios" className="mt-8">
-                  <div className="max-w-3xl space-y-6">
-                    <div className="flex justify-end">
-                      <Button onClick={() => navigate(`/relatorios?paciente=${selectedPatientId}`)} className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        Gerar Novo Relatório
-                      </Button>
+                  <div className="max-w-4xl space-y-6">
+                    {/* Relatório de Avaliação e Plano Terapêutico - Novo Bloco Isolado */}
+                    <PatientEvaluationReport 
+                      patient={patient}
+                      latestScreening={screenings?.[0]}
+                      professionalName="Profissional Responsável"
+                      professionalRegistration="CREFITO-XX/XXXXX-F"
+                    />
+                    
+                    {/* Seção de Outros Relatórios (existente) */}
+                    <div className="pt-6 border-t border-border">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-medium text-foreground">Outros Relatórios</h3>
+                        <Button variant="outline" onClick={() => navigate(`/relatorios?paciente=${selectedPatientId}`)} className="gap-2">
+                          <Plus className="w-4 h-4" />
+                          Gerar Novo Relatório
+                        </Button>
+                      </div>
+                      <Card className="bg-card border-border">
+                        <CardContent className="py-12 text-center">
+                          <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                          <p className="text-muted-foreground mb-2">Nenhum relatório adicional gerado</p>
+                          <p className="text-sm text-muted-foreground">
+                            Gere relatórios clínicos para documentar a evolução do paciente
+                          </p>
+                        </CardContent>
+                      </Card>
                     </div>
-                    <Card className="bg-card border-border">
-                      <CardContent className="py-16 text-center">
-                        <BarChart3 className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
-                        <p className="text-muted-foreground text-lg mb-4">Nenhum relatório gerado</p>
-                        <p className="text-sm text-muted-foreground">
-                          Gere relatórios clínicos para documentar a evolução do paciente
-                        </p>
-                      </CardContent>
-                    </Card>
                   </div>
                 </TabsContent>
 
