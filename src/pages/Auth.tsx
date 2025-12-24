@@ -127,12 +127,12 @@ export default function Auth() {
         {/* Logo flutuante */}
         <div
           style={{
-            width: "160px",
-            height: "60px",
+            width: "320px",
+            height: "120px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: "-30px",
+            marginBottom: "-40px",
             zIndex: 20,
           }}
         >
