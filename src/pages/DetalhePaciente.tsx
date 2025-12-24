@@ -244,6 +244,22 @@ const DetalhePaciente = () => {
               </CardContent>
             </Card>
 
+            {/* Primary Action - Prontuário */}
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold text-foreground">Prontuário Clínico</h3>
+                    <p className="text-sm text-muted-foreground">Anamnese, diagnóstico e escalas do paciente</p>
+                  </div>
+                  <Button size="lg" className="gap-2" onClick={() => navigate(`/prontuario/${selectedPatientId}`)}>
+                    <ClipboardList className="w-5 h-5" />
+                    Acessar Prontuário
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Quick Actions */}
             <Card className="bg-card/50 border-border">
               <CardContent className="p-4">
