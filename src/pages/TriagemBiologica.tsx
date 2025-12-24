@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code, Ban } from "lucide-react";
+import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code, Ban, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { PrintPreviewModal, RequestedExam } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
@@ -147,6 +147,7 @@ const initialLabExams: LabExamValues = {
 
 export default function TriagemBiologica() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const patientIdFromUrl = searchParams.get("paciente");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
@@ -563,11 +564,23 @@ export default function TriagemBiologica() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Triagem Biológica Pré-PRP</h1>
-          <p className="text-sm mt-1" style={{ color: '#5A6080' }}>
-            Avaliação clínico-biológica para terapias ortobiológicas (PRP, PRF, BMAC)
-          </p>
+        <div className="flex items-center gap-3">
+          {selectedPatientId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/pacientes/${selectedPatientId}`)}
+              className="flex-shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Triagem Biológica Pré-PRP</h1>
+            <p className="text-sm mt-1" style={{ color: '#5A6080' }}>
+              Avaliação clínico-biológica para terapias ortobiológicas (PRP, PRF, BMAC)
+            </p>
+          </div>
         </div>
       </div>
 
