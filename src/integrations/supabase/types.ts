@@ -415,10 +415,52 @@ export type Database = {
           },
         ]
       }
+      curation_versions: {
+        Row: {
+          change_reason: string | null
+          created_at: string
+          created_by: string | null
+          curation_id: string
+          data: Json
+          id: string
+          status: Database["public"]["Enums"]["curation_status"]
+          version_number: number
+        }
+        Insert: {
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          curation_id: string
+          data: Json
+          id?: string
+          status: Database["public"]["Enums"]["curation_status"]
+          version_number: number
+        }
+        Update: {
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          curation_id?: string
+          data?: Json
+          id?: string
+          status?: Database["public"]["Enums"]["curation_status"]
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curation_versions_curation_id_fkey"
+            columns: ["curation_id"]
+            isOneToOne: false
+            referencedRelation: "curations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curations: {
         Row: {
           adverse_events: string | null
           applicability: Database["public"]["Enums"]["applicability"] | null
+          approval_declaration: boolean | null
           article_id: string
           authors_conclusion: string | null
           bias_risk: Database["public"]["Enums"]["bias_risk"] | null
@@ -428,6 +470,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           design: string | null
+          design_type: Database["public"]["Enums"]["study_design"] | null
           evidence_level: Database["public"]["Enums"]["evidence_level"] | null
           id: string
           intervention: string | null
@@ -436,6 +479,8 @@ export type Database = {
           outcomes_primary: string | null
           outcomes_secondary: string | null
           population: string | null
+          practice_impact: string | null
+          rejection_reason: string | null
           results_key: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -448,6 +493,7 @@ export type Database = {
         Insert: {
           adverse_events?: string | null
           applicability?: Database["public"]["Enums"]["applicability"] | null
+          approval_declaration?: boolean | null
           article_id: string
           authors_conclusion?: string | null
           bias_risk?: Database["public"]["Enums"]["bias_risk"] | null
@@ -457,6 +503,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           design?: string | null
+          design_type?: Database["public"]["Enums"]["study_design"] | null
           evidence_level?: Database["public"]["Enums"]["evidence_level"] | null
           id?: string
           intervention?: string | null
@@ -465,6 +512,8 @@ export type Database = {
           outcomes_primary?: string | null
           outcomes_secondary?: string | null
           population?: string | null
+          practice_impact?: string | null
+          rejection_reason?: string | null
           results_key?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -477,6 +526,7 @@ export type Database = {
         Update: {
           adverse_events?: string | null
           applicability?: Database["public"]["Enums"]["applicability"] | null
+          approval_declaration?: boolean | null
           article_id?: string
           authors_conclusion?: string | null
           bias_risk?: Database["public"]["Enums"]["bias_risk"] | null
@@ -486,6 +536,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           design?: string | null
+          design_type?: Database["public"]["Enums"]["study_design"] | null
           evidence_level?: Database["public"]["Enums"]["evidence_level"] | null
           id?: string
           intervention?: string | null
@@ -494,6 +545,8 @@ export type Database = {
           outcomes_primary?: string | null
           outcomes_secondary?: string | null
           population?: string | null
+          practice_impact?: string | null
+          rejection_reason?: string | null
           results_key?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -1556,12 +1609,22 @@ export type Database = {
         | "indeferida"
       curation_status:
         | "rascunho"
+        | "em_producao"
         | "em_revisao"
         | "aprovada"
         | "disponivel"
         | "rejeitada"
         | "arquivada"
       evidence_level: "ia" | "ib" | "iia" | "iib" | "iii" | "iv" | "v"
+      study_design:
+        | "rct"
+        | "cohort"
+        | "case_control"
+        | "case_series"
+        | "systematic_review"
+        | "meta_analysis"
+        | "observational"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1708,6 +1771,7 @@ export const Constants = {
       ],
       curation_status: [
         "rascunho",
+        "em_producao",
         "em_revisao",
         "aprovada",
         "disponivel",
@@ -1715,6 +1779,16 @@ export const Constants = {
         "arquivada",
       ],
       evidence_level: ["ia", "ib", "iia", "iib", "iii", "iv", "v"],
+      study_design: [
+        "rct",
+        "cohort",
+        "case_control",
+        "case_series",
+        "systematic_review",
+        "meta_analysis",
+        "observational",
+        "other",
+      ],
     },
   },
 } as const
