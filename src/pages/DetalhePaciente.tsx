@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Search, ChevronDown, User, Activity, FileText, 
@@ -24,9 +24,17 @@ import { format } from "date-fns";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
+  const { id: patientIdFromUrl } = useParams();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Set patient from URL parameter on mount
+  useEffect(() => {
+    if (patientIdFromUrl && patientIdFromUrl !== selectedPatientId) {
+      setSelectedPatientId(patientIdFromUrl);
+    }
+  }, [patientIdFromUrl]);
 
   // Fetch all patients for dropdown
   const { data: patients } = useQuery({
@@ -165,6 +173,7 @@ const DetalhePaciente = () => {
                           setSelectedPatientId(p.id);
                           setIsDropdownOpen(false);
                           setSearchQuery("");
+                          navigate(`/pacientes/${p.id}`);
                         }}
                         className="w-full flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors text-left"
                       >
@@ -239,11 +248,11 @@ const DetalhePaciente = () => {
             <Card className="bg-card/50 border-border">
               <CardContent className="p-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button variant="outline" className="gap-2 h-10" onClick={() => navigate(`/triagem-biologica?patient=${selectedPatientId}`)}>
+                  <Button variant="outline" className="gap-2 h-10" onClick={() => navigate(`/triagem-biologica?paciente=${selectedPatientId}`)}>
                     <FlaskConical className="w-4 h-4" />
                     Iniciar Triagem Pré-PRP
                   </Button>
-                  <Button variant="outline" className="gap-2 h-10" onClick={() => navigate(`/relatorios?patient=${selectedPatientId}`)}>
+                  <Button variant="outline" className="gap-2 h-10" onClick={() => navigate(`/relatorios?paciente=${selectedPatientId}`)}>
                     <FileText className="w-4 h-4" />
                     Gerar Relatório
                   </Button>
@@ -345,7 +354,7 @@ const DetalhePaciente = () => {
                         <CardContent className="py-16 text-center">
                           <FlaskConical className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
                           <p className="text-muted-foreground text-lg mb-4">Nenhuma triagem realizada</p>
-                          <Button size="lg" onClick={() => navigate(`/triagem-biologica?patient=${selectedPatientId}`)}>
+                          <Button size="lg" onClick={() => navigate(`/triagem-biologica?paciente=${selectedPatientId}`)}>
                             Iniciar Triagem
                           </Button>
                         </CardContent>
