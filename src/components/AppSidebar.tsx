@@ -22,31 +22,28 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className="border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))]"
-    >
+    <Sidebar collapsible="icon" className="border-r border-[#39414D] bg-[#262A30]">
       <SidebarContent className="px-4 py-8">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-10">
           {!isCollapsed ? (
             <>
-              <div className="w-16 h-16 mb-4 rounded-full overflow-hidden bg-[hsl(var(--sidebar-accent))]/10 p-1">
+              <div className="w-16 h-16 mb-4 rounded-full overflow-hidden bg-white/10 p-1">
                 <img
                   src={logoFisioregen}
                   alt="Fisioterapia Regenerativa"
                   className="w-full h-full object-contain rounded-full"
                 />
               </div>
-              <h1 className="text-[hsl(var(--sidebar-foreground))] font-semibold text-sm tracking-wide text-center leading-tight">
+              <h1 className="text-[#B4BCC8] font-semibold text-sm tracking-wide text-center leading-tight">
                 FISIOTERAPIA<br />
-                <span className="font-normal text-xs tracking-widest text-[hsl(var(--sidebar-foreground))]/70">
+                <span className="font-normal text-xs tracking-widest text-[#B4BCC8]/70">
                   REGENERATIVA
                 </span>
               </h1>
             </>
           ) : (
-            <div className="w-9 h-9 rounded-full overflow-hidden bg-[hsl(var(--sidebar-accent))]/10 p-0.5">
+            <div className="w-9 h-9 rounded-full overflow-hidden bg-white/10 p-0.5">
               <img
                 src={logoFisioregen}
                 alt="Fisioterapia Regenerativa"
@@ -57,7 +54,7 @@ export function AppSidebar() {
         </div>
 
         {/* Separator */}
-        {!isCollapsed && <div className="mx-2 mb-8 h-px bg-[hsl(var(--sidebar-border))]" />}
+        {!isCollapsed && <div className="mx-2 mb-8 h-px bg-[#39414D]" />}
 
         {/* Navigation Menu */}
         <SidebarGroup>
@@ -68,8 +65,8 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild className="h-12">
                     <NavLink
                       to={item.url}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-[hsl(var(--sidebar-foreground))] hover:text-[hsl(var(--sidebar-accent-foreground))] hover:bg-[hsl(var(--sidebar-accent))]/15 transition-colors"
-                      activeClassName="bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-accent-foreground))] font-medium"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-[#B4BCC8] hover:text-white hover:bg-[#597B9E]/15 transition-colors"
+                      activeClassName="bg-[#597B9E] text-white font-medium"
                     >
                       <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
                       {!isCollapsed && (
@@ -78,7 +75,7 @@ export function AppSidebar() {
                         </span>
                       )}
                       {!isCollapsed && item.isAgent && (
-                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-[hsl(var(--sidebar-accent))]/15 text-[hsl(var(--sidebar-foreground))]/90 rounded tracking-wider">
+                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-white/10 text-[#B4BCC8] rounded tracking-wider">
                           IA
                         </span>
                       )}
