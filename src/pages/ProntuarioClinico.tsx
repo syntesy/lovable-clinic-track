@@ -169,6 +169,7 @@ const ProntuarioClinico = () => {
       await queryClient.invalidateQueries({ queryKey: ["clinical-record", id] });
 
       toast.success("Prontuário salvo com sucesso!");
+      navigate(`/pacientes/${id}`);
       setHasChanges(false);
     } catch (error) {
       console.error("Erro ao salvar prontuário:", error);
@@ -205,7 +206,7 @@ const ProntuarioClinico = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/pacientes")}
+            onClick={() => navigate(`/pacientes/${id}`)}
             className="flex-shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
