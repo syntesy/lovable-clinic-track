@@ -421,6 +421,57 @@ export type Database = {
           },
         ]
       }
+      curation_jobs: {
+        Row: {
+          article_id: string
+          created_at: string
+          curation_id: string | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          progress: number
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          curation_id?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          progress?: number
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          curation_id?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          progress?: number
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curation_jobs_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "curadoria_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curation_jobs_curation_id_fkey"
+            columns: ["curation_id"]
+            isOneToOne: false
+            referencedRelation: "curations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curation_versions: {
         Row: {
           change_reason: string | null
@@ -465,6 +516,8 @@ export type Database = {
       curations: {
         Row: {
           adverse_events: string | null
+          ai_coverage: string | null
+          ai_notes: string | null
           applicability: Database["public"]["Enums"]["applicability"] | null
           approval_declaration: boolean | null
           article_id: string
@@ -478,6 +531,7 @@ export type Database = {
           design: string | null
           design_type: Database["public"]["Enums"]["study_design"] | null
           evidence_level: Database["public"]["Enums"]["evidence_level"] | null
+          generated_by: string | null
           id: string
           intervention: string | null
           limitations: string | null
@@ -498,6 +552,8 @@ export type Database = {
         }
         Insert: {
           adverse_events?: string | null
+          ai_coverage?: string | null
+          ai_notes?: string | null
           applicability?: Database["public"]["Enums"]["applicability"] | null
           approval_declaration?: boolean | null
           article_id: string
@@ -511,6 +567,7 @@ export type Database = {
           design?: string | null
           design_type?: Database["public"]["Enums"]["study_design"] | null
           evidence_level?: Database["public"]["Enums"]["evidence_level"] | null
+          generated_by?: string | null
           id?: string
           intervention?: string | null
           limitations?: string | null
@@ -531,6 +588,8 @@ export type Database = {
         }
         Update: {
           adverse_events?: string | null
+          ai_coverage?: string | null
+          ai_notes?: string | null
           applicability?: Database["public"]["Enums"]["applicability"] | null
           approval_declaration?: boolean | null
           article_id?: string
@@ -544,6 +603,7 @@ export type Database = {
           design?: string | null
           design_type?: Database["public"]["Enums"]["study_design"] | null
           evidence_level?: Database["public"]["Enums"]["evidence_level"] | null
+          generated_by?: string | null
           id?: string
           intervention?: string | null
           limitations?: string | null

@@ -1,7 +1,7 @@
 export type EvidenceLevel = 'ia' | 'ib' | 'iia' | 'iib' | 'iii' | 'iv' | 'v';
 export type BiasRisk = 'baixo' | 'moderado' | 'alto' | 'muito_alto' | 'incerto';
 export type Applicability = 'alta' | 'moderada' | 'baixa' | 'muito_baixa' | 'nao_aplicavel';
-export type CurationStatus = 'rascunho' | 'em_revisao' | 'aprovada' | 'disponivel' | 'rejeitada' | 'arquivada';
+export type CurationStatus = 'rascunho' | 'em_producao' | 'em_revisao' | 'aprovada' | 'disponivel' | 'rejeitada' | 'arquivada';
 
 export interface Citation {
   doi?: string;
@@ -90,6 +90,12 @@ export const curationStatusConfig: Record<CurationStatus, {
     label: 'Rascunho',
     color: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
     badgeText: 'Rascunho IA — não revisado',
+    isAIDraft: true
+  },
+  'em_producao': {
+    label: 'Em produção',
+    color: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    badgeText: 'Gerando curadoria...',
     isAIDraft: true
   },
   'em_revisao': {

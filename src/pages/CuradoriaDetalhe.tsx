@@ -1,35 +1,53 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { CuradoriaArticle, CuradoriaContent, statusConfig, interestColors, CuradoriaStatus } from "@/types/curadoria";
+import { CuradoriaArticle, statusConfig, interestColors, CuradoriaStatus } from "@/types/curadoria";
 import { Curation, CurationStatus } from "@/types/curation";
 import { CuradoriaStatusBadge } from "@/components/curadoria/CuradoriaStatusBadge";
-import { SolicitarCuradoriaModal } from "@/components/curadoria/SolicitarCuradoriaModal";
 import { StructuredCurationView } from "@/components/curadoria/StructuredCurationView";
 import { CurationGovernanceBadge } from "@/components/curadoria/CurationGovernanceBadge";
+import { toast } from "sonner";
 import { 
   ArrowLeft, 
   ExternalLink, 
   FileText, 
-  AlertTriangle
+  AlertTriangle,
+  Bot,
+  Loader2,
+  Settings,
+  ShieldCheck
 } from "lucide-react";
+
+interface CurationJob {
+  id: string;
+  article_id: string;
+  curation_id: string | null;
+  status: "queued" | "running" | "done" | "error";
+  progress: number;
+  error_message: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+}
 
 export default function CuradoriaDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [article, setArticle] = useState<CuradoriaArticle | null>(null);
-  const [content, setContent] = useState<CuradoriaContent | null>(null);
   const [structuredCuration, setStructuredCuration] = useState<Curation | null>(null);
+  const [activeJob, setActiveJob] = useState<CurationJob | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const fetchArticle = async () => {
+  const fetchData = useCallback(async () => {
     if (!id) return;
     
     try {
+      // Fetch article
       const { data: articleData, error: articleError } = await supabase
         .from("curadoria_articles")
         .select("*")
@@ -38,7 +56,6 @@ export default function CuradoriaDetalhe() {
 
       if (articleError) throw articleError;
       
-      // Cast the status to CuradoriaStatus
       const typedArticle: CuradoriaArticle = {
         ...articleData,
         status: articleData.status as CuradoriaStatus,
@@ -46,7 +63,7 @@ export default function CuradoriaDetalhe() {
       };
       setArticle(typedArticle);
 
-      // Fetch structured curation (new table)
+      // Fetch latest curation
       const { data: curationData } = await supabase
         .from("curations")
         .select("*")
@@ -66,38 +83,118 @@ export default function CuradoriaDetalhe() {
         });
       }
 
-      // Fetch legacy curadoria content if available (fallback)
-      if (typedArticle.status === "disponivel" && !curationData) {
-        const { data: contentData } = await supabase
-          .from("curadoria_content")
-          .select("*")
-          .eq("article_id", id)
-          .single();
+      // Fetch active job
+      const { data: jobData } = await supabase
+        .from("curation_jobs")
+        .select("*")
+        .eq("article_id", id)
+        .in("status", ["queued", "running"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-        if (contentData) {
-          setContent(contentData);
-        }
+      if (jobData) {
+        setActiveJob(jobData as CurationJob);
+      } else {
+        setActiveJob(null);
       }
+
+      // Check if admin
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .single();
+        setIsAdmin(!!roleData);
+      }
+
     } catch (error) {
-      console.error("Error fetching article:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchArticle();
   }, [id]);
 
-  const canRequestCuradoria = article && 
-    (article.status === "sem_curadoria" || article.status === "indeferida");
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  // Check if we should show the structured curation
-  const hasStructuredCuration = structuredCuration !== null;
-  const showStructuredView = hasStructuredCuration && 
-    (structuredCuration.status === 'disponivel' || 
-     structuredCuration.status === 'em_revisao' || 
-     structuredCuration.status === 'aprovada');
+  // Polling for active job
+  useEffect(() => {
+    if (!activeJob || !["queued", "running"].includes(activeJob.status)) return;
+
+    const interval = setInterval(async () => {
+      const { data: jobData } = await supabase
+        .from("curation_jobs")
+        .select("*")
+        .eq("id", activeJob.id)
+        .single();
+
+      if (jobData) {
+        const job = jobData as CurationJob;
+        setActiveJob(job);
+
+        // If job completed, refresh all data
+        if (job.status === "done" || job.status === "error") {
+          clearInterval(interval);
+          fetchData();
+          if (job.status === "done") {
+            toast.success("Curadoria gerada com sucesso!");
+          } else if (job.error_message) {
+            toast.error(`Erro: ${job.error_message}`);
+          }
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [activeJob, fetchData]);
+
+  const handleGenerateCuration = async () => {
+    if (!id || isGenerating) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Você precisa estar logado");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-curation-job", {
+        body: { articleId: id, userId: user.id }
+      });
+
+      if (error) throw error;
+
+      if (data.alreadyRunning) {
+        toast.info("Já existe um job em andamento");
+        setActiveJob(data.job);
+      } else {
+        toast.success("Geração iniciada!");
+        setActiveJob(data.job);
+      }
+    } catch (error) {
+      console.error("Error starting curation job:", error);
+      toast.error("Erro ao iniciar geração");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Determine UI state
+  const hasActiveJob = activeJob && ["queued", "running"].includes(activeJob.status);
+  const hasCuration = structuredCuration !== null;
+  const curationStatus = structuredCuration?.status;
+  
+  const showEmptyState = !hasCuration && !hasActiveJob;
+  const showGenerating = hasActiveJob;
+  const showDraft = hasCuration && (curationStatus === "em_producao" || curationStatus === "em_revisao");
+  const showApproved = hasCuration && curationStatus === "disponivel";
 
   if (isLoading) {
     return (
@@ -143,7 +240,7 @@ export default function CuradoriaDetalhe() {
                   {article.interest}
                 </Badge>
                 <CuradoriaStatusBadge status={article.status} />
-                {hasStructuredCuration && (
+                {hasCuration && (
                   <CurationGovernanceBadge status={structuredCuration.status} />
                 )}
               </div>
@@ -154,7 +251,7 @@ export default function CuradoriaDetalhe() {
                 {article.authors} · {article.year} · {article.journal}
               </p>
               <div className="flex flex-wrap gap-2">
-                {article.tags.map((tag, index) => (
+                {article.tags?.map((tag, index) => (
                   <Badge 
                     key={index} 
                     variant="secondary" 
@@ -192,9 +289,140 @@ export default function CuradoriaDetalhe() {
         </CardContent>
       </Card>
 
-      {/* Structured Curation View (new) */}
-      {showStructuredView && structuredCuration && (
+      {/* Abstract Section */}
+      {article.abstract && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Resumo do Artigo (Abstract)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground whitespace-pre-wrap">{article.abstract}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Generating State */}
+      {showGenerating && activeJob && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="py-8">
+            <div className="flex flex-col items-center justify-center space-y-6">
+              <div className="relative">
+                <Bot className="h-16 w-16 text-primary animate-pulse" />
+                <Loader2 className="h-6 w-6 text-primary absolute -bottom-1 -right-1 animate-spin" />
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-xl font-semibold text-foreground">
+                  Gerando curadoria...
+                </h3>
+                <p className="text-muted-foreground">
+                  {activeJob.status === "queued" 
+                    ? "Aguardando na fila..." 
+                    : "Analisando artigo com IA..."}
+                </p>
+              </div>
+              <div className="w-full max-w-md space-y-2">
+                <Progress value={activeJob.progress} className="h-2" />
+                <p className="text-center text-sm text-muted-foreground">
+                  {activeJob.progress}% concluído
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {showEmptyState && (
+        <Card className="bg-card border-border">
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center space-y-6 text-center">
+              <div className="rounded-full bg-muted p-4">
+                <Bot className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-foreground">
+                  Ainda não existe curadoria para este artigo
+                </h3>
+                <p className="text-muted-foreground max-w-md">
+                  Gere uma curadoria estruturada usando IA para extrair os principais 
+                  insights clínicos deste artigo.
+                </p>
+              </div>
+              <Button 
+                size="lg" 
+                onClick={handleGenerateCuration}
+                disabled={isGenerating}
+                className="gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Iniciando...
+                  </>
+                ) : (
+                  <>
+                    <Bot className="h-4 w-4" />
+                    Gerar Curadoria (IA)
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Draft/Review State */}
+      {showDraft && structuredCuration && (
         <div className="space-y-6">
+          {/* Draft Warning */}
+          <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800/50">
+            <CardContent className="flex items-start gap-3 pt-6">
+              <Bot className="h-5 w-5 text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Rascunho gerado por IA.</strong> Conteúdo educacional. 
+                  Não substitui avaliação clínica. Publicação depende de revisão do especialista.
+                </p>
+              </div>
+              {isAdmin && (
+                <Button variant="outline" size="sm" asChild className="shrink-0">
+                  <Link to={`/admin/curadoria/${structuredCuration.id}`}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Revisar no Backoffice
+                  </Link>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-foreground">Curadoria Clínica Estruturada</h2>
+            <Badge variant="outline" className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30">
+              Rascunho IA
+            </Badge>
+          </div>
+          
+          <StructuredCurationView curation={structuredCuration} />
+        </div>
+      )}
+
+      {/* Approved/Published State */}
+      {showApproved && structuredCuration && (
+        <div className="space-y-6">
+          {/* Approved Badge */}
+          <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50">
+            <CardContent className="flex items-start gap-3 pt-6">
+              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                <strong>Revisado por especialista.</strong> Esta curadoria foi verificada e aprovada 
+                para publicação.
+              </p>
+            </CardContent>
+          </Card>
+
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold text-foreground">Curadoria Clínica Estruturada</h2>
           </div>
@@ -214,90 +442,19 @@ export default function CuradoriaDetalhe() {
         </div>
       )}
 
-      {/* Legacy Curadoria Content (fallback) */}
-      {!showStructuredView && article.status === "disponivel" && content && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold text-foreground">Curadoria Clínica</h2>
-          </div>
-
-          {content.summary && (
-            <Card className="bg-card border-border">
-              <CardContent className="pt-6">
-                <p className="text-foreground">{content.summary}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Disclaimer */}
-          <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50">
-            <CardContent className="flex items-start gap-3 pt-6">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                <strong>Aviso:</strong> Esta curadoria tem finalidade educacional. 
-                Não substitui a avaliação clínica individual nem a decisão do profissional de saúde.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Status Section when no curadoria available */}
-      {!showStructuredView && !(article.status === "disponivel" && content) && (
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-lg">Status da Curadoria</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <CuradoriaStatusBadge status={article.status} />
-              <span className="text-sm text-muted-foreground">
-                Atualizado em {new Date(article.updated_at).toLocaleDateString('pt-BR')}
-              </span>
-            </div>
-            <p className="text-muted-foreground">
-              {statusConfig[article.status].description}
-            </p>
-
-            {/* Practice Change Insight */}
-            {article.practice_change && (
-              <div className="bg-secondary/30 rounded-lg p-4 border border-border mt-4">
-                <p className="text-xs font-medium text-muted-foreground mb-1">
-                  Insight clínico preliminar
-                </p>
-                <p className="text-sm text-foreground">{article.practice_change}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Fixed CTA Footer */}
-      <div className="sticky bottom-4 flex justify-end">
-        {canRequestCuradoria ? (
+      {/* Fixed CTA Footer - Only show when appropriate */}
+      {showEmptyState && !isGenerating && !hasActiveJob && (
+        <div className="sticky bottom-4 flex justify-end">
           <Button 
             size="lg" 
-            onClick={() => setShowRequestModal(true)}
-            className="shadow-lg"
+            onClick={handleGenerateCuration}
+            className="shadow-lg gap-2"
           >
-            Solicitar Curadoria
+            <Bot className="h-4 w-4" />
+            Gerar Curadoria (IA)
           </Button>
-        ) : article.status !== "disponivel" && !showStructuredView && (
-          <Button size="lg" disabled className="shadow-lg">
-            Curadoria em andamento
-          </Button>
-        )}
-      </div>
-
-      {/* Request Modal */}
-      <SolicitarCuradoriaModal
-        open={showRequestModal}
-        onOpenChange={setShowRequestModal}
-        articleId={article.id}
-        articleTitle={article.title}
-        article={article}
-        onSuccess={fetchArticle}
-      />
+        </div>
+      )}
     </div>
   );
 }
