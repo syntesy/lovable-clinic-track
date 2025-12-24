@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, ChevronDown, User, Users, Activity, TrendingDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, ChevronDown, User, Users, Activity, TrendingDown, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Pacientes = () => {
@@ -96,16 +97,18 @@ const Pacientes = () => {
 
   return (
     <div className="space-y-8">
-      {/* Patient Selector Dropdown */}
-      <div className="relative max-w-md">
-        <div
-          className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        >
-          <User className="w-5 h-5 text-primary" />
-          <span className="text-muted-foreground flex-1">Selecionar paciente...</span>
-          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-        </div>
+      {/* Patient Selector and New Patient Button */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        {/* Patient Selector Dropdown */}
+        <div className="relative flex-1 max-w-md">
+          <div
+            className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <User className="w-5 h-5 text-primary" />
+            <span className="text-muted-foreground flex-1">Selecionar paciente...</span>
+            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+          </div>
 
         {isDropdownOpen && (
           <div className="absolute z-50 w-full mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
@@ -151,8 +154,17 @@ const Pacientes = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
 
+        {/* New Patient Button */}
+        <Button
+          onClick={() => navigate("/novo-paciente")}
+          className="flex items-center gap-2"
+        >
+          <UserPlus className="w-4 h-4" />
+          Novo Paciente
+        </Button>
+      </div>
       {/* Dashboard Title */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">
