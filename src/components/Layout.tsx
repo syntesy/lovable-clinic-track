@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <img 
                   src={logoHeader} 
                   alt="REGENAPP" 
-                  className="h-8 md:h-10 w-auto"
+                  className="h-16 md:h-20 w-auto"
                 />
               </div>
               <Button
