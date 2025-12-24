@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import logoHeader from "@/assets/logo-header.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -40,9 +41,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <header className="h-14 md:h-16 border-b border-border bg-card flex items-center justify-between px-3 md:px-6 sticky top-0 z-10">
               <div className="flex items-center min-w-0">
                 <SidebarTrigger className="mr-2 md:mr-4 flex-shrink-0" />
-                <h1 className="font-inter font-semibold truncate text-sm md:text-xl text-foreground">
-                  REGENAPP
-                </h1>
+                <img 
+                  src={logoHeader} 
+                  alt="REGENAPP" 
+                  className="h-8 md:h-10 w-auto"
+                />
               </div>
               <Button
                 variant="ghost"
