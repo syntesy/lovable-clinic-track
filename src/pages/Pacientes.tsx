@@ -1,197 +1,244 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, User, FileText, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, ChevronDown, User, Users, Activity, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const ITEMS_PER_PAGE = 20;
 
 const Pacientes = () => {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Query para contar total de pacientes
-  const { data: totalCount } = useQuery({
-    queryKey: ["patients-count", searchTerm],
+  // Fetch all patients for dropdown
+  const { data: patients } = useQuery({
+    queryKey: ["patients-dropdown"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("patients")
-        .select("*", { count: "exact", head: true });
-      
-      if (searchTerm) {
-        query = query.ilike("full_name", `%${searchTerm}%`);
-      }
-      
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
-    },
-  });
-
-  // Query paginada de pacientes
-  const { data: patients, isLoading } = useQuery({
-    queryKey: ["patients", currentPage, searchTerm],
-    queryFn: async () => {
-      const from = currentPage * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
-
-      let query = supabase
-        .from("patients")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (searchTerm) {
-        query = query.ilike("full_name", `%${searchTerm}%`);
-      }
-
-      const { data, error } = await query;
+        .select("id, full_name, age, gender, status")
+        .order("full_name", { ascending: true });
       if (error) throw error;
       return data;
     },
   });
 
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+  // Total patients count
+  const { data: totalPatients } = useQuery({
+    queryKey: ["dashboard-total-patients"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("patients")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(0); // Reset para primeira página ao buscar
+  // Active patients count
+  const { data: activePatients } = useQuery({
+    queryKey: ["dashboard-active-patients"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("patients")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Orthobiologics protocols count by type
+  const { data: ortobiologicosStats } = useQuery({
+    queryKey: ["dashboard-ortobiologicos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ortobiologicos_protocols")
+        .select("therapy_type");
+      if (error) throw error;
+      
+      const counts: Record<string, number> = {};
+      data?.forEach((item) => {
+        const type = item.therapy_type || "Outros";
+        counts[type] = (counts[type] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
+  // Average EVA at discharge
+  const { data: averageEva } = useQuery({
+    queryKey: ["dashboard-average-eva"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("patients")
+        .select("final_vas")
+        .not("final_vas", "is", null);
+      if (error) throw error;
+      
+      if (!data || data.length === 0) return null;
+      const sum = data.reduce((acc, p) => acc + (p.final_vas || 0), 0);
+      return (sum / data.length).toFixed(1);
+    },
+  });
+
+  const filteredPatients = patients?.filter((p) =>
+    p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSelectPatient = (patientId: string) => {
+    setIsDropdownOpen(false);
+    setSearchQuery("");
+    navigate(`/pacientes/${patientId}`);
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2">Pacientes</h2>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Cadastro e acompanhamento clínico
-            {totalCount !== undefined && ` • ${totalCount} pacientes`}
-          </p>
-        </div>
-        <Button
-          onClick={() => navigate("/pacientes/novo")}
-          className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+    <div className="space-y-8">
+      {/* Patient Selector Dropdown */}
+      <div className="relative max-w-md">
+        <div
+          className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors"
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         >
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Paciente
-        </Button>
-      </div>
-
-      {/* Barra de busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar paciente por nome..."
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Carregando...
+          <User className="w-5 h-5 text-primary" />
+          <span className="text-muted-foreground flex-1">Selecionar paciente...</span>
+          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
         </div>
-      ) : patients && patients.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-            {patients.map((patient) => (
-              <Card
-                key={patient.id}
-                className="p-4 md:p-6 hover:shadow-lg transition-shadow border-border"
-              >
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <User className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate text-sm md:text-base">
-                      {patient.full_name}
-                    </h3>
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      {patient.age} anos • {patient.gender}
-                    </p>
-                    <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
-                      {patient.treated_region || "Região não especificada"}
-                    </p>
-                    <div className="mt-2 md:mt-3 flex gap-2">
-                      <span
-                        className={`inline-block px-2 py-1 text-xs rounded-full ${
-                          patient.status === "active"
-                            ? "bg-accent text-accent-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {patient.status === "active" ? "Ativo" : "Alta"}
-                      </span>
-                    </div>
-                    <div className="mt-2 md:mt-3">
-                      <Button
-                        size="sm"
-                        onClick={() => navigate(`/pacientes/${patient.id}`)}
-                        className="bg-primary hover:bg-primary/90 text-xs md:text-sm w-full sm:w-auto"
-                      >
-                        <FileText className="h-4 w-4 mr-1 md:mr-2" />
-                        Ver Detalhes
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
 
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Anterior
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Página {currentPage + 1} de {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={currentPage >= totalPages - 1}
-              >
-                Próxima
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+        {isDropdownOpen && (
+          <div className="absolute z-50 w-full mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+            <div className="p-3 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                  autoFocus
+                />
+              </div>
             </div>
-          )}
-        </>
-      ) : (
-        <Card className="p-12 text-center border-border">
-          <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            {searchTerm ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            {searchTerm ? "Tente buscar com outro termo" : "Comece cadastrando seu primeiro paciente"}
-          </p>
-          {!searchTerm && (
-            <Button
-              onClick={() => navigate("/pacientes/novo")}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Cadastrar Paciente
-            </Button>
-          )}
+            <div className="max-h-64 overflow-y-auto">
+              {filteredPatients && filteredPatients.length > 0 ? (
+                filteredPatients.map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={() => handleSelectPatient(p.id)}
+                    className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{p.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.age} anos • {p.gender}
+                      </p>
+                    </div>
+                    {p.status === "active" && (
+                      <Badge variant="secondary" className="text-xs">Ativo</Badge>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-muted-foreground text-sm">
+                  Nenhum paciente encontrado
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Dashboard Title */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">
+          Dashboard Clínico – Ortobiológicos
+        </h1>
+        <p className="text-muted-foreground">
+          Indicadores consolidados de acompanhamento e desfechos clínicos
+        </p>
+      </div>
+
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Patients */}
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pacientes atendidos
+            </CardTitle>
+            <Users className="w-5 h-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-foreground">
+              {totalPatients ?? "—"}
+            </div>
+          </CardContent>
         </Card>
-      )}
+
+        {/* Active Patients */}
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Em tratamento ativo
+            </CardTitle>
+            <Activity className="w-5 h-5 text-accent" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl font-bold text-foreground">
+                {activePatients ?? "—"}
+              </span>
+              <Badge variant="secondary" className="text-xs">Ativo</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Orthobiologics by Type */}
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pacientes por técnica (Ortobiológicos)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {ortobiologicosStats && Object.keys(ortobiologicosStats).length > 0 ? (
+              <div className="space-y-2">
+                {Object.entries(ortobiologicosStats).map(([type, count]) => (
+                  <div key={type} className="flex items-center justify-between">
+                    <span className="text-sm text-foreground">{type}</span>
+                    <span className="text-sm font-semibold text-foreground">{count}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhum protocolo registrado</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Average EVA at Discharge */}
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              EVA média na alta
+            </CardTitle>
+            <TrendingDown className="w-5 h-5 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-foreground">
+              {averageEva ?? "—"}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Média da escala de dor (EVA) no momento da alta clínica
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
