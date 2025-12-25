@@ -31,13 +31,6 @@ interface SolicitarCuradoriaModalProps {
   onSuccess?: () => void;
 }
 
-const interestOptions: { value: CuradoriaInterest; label: string }[] = [
-  { value: "PRP", label: "PRP - Plasma Rico em Plaquetas" },
-  { value: "PRF", label: "PRF - Fibrina Rica em Plaquetas" },
-  { value: "PPP", label: "PPP - Plasma Pobre em Plaquetas" },
-  { value: "BMP", label: "BMP - Proteínas Morfogenéticas Ósseas" },
-  { value: "Outro", label: "Outro" },
-];
 
 const purposeOptions: { value: CuradoriaPurpose; label: string }[] = [
   { value: "pratica_clinica", label: "Prática clínica" },
@@ -53,17 +46,13 @@ export function SolicitarCuradoriaModal({
   article,
   onSuccess,
 }: SolicitarCuradoriaModalProps) {
-  const [interest, setInterest] = useState<CuradoriaInterest | "">("");
+  
   const [purpose, setPurpose] = useState<CuradoriaPurpose | "">("");
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
 
   const handleSubmit = async () => {
-    if (!interest) {
-      toast.error("Selecione o interesse principal");
-      return;
-    }
 
     setIsSubmitting(true);
     setIsGeneratingDraft(true);
@@ -79,7 +68,7 @@ export function SolicitarCuradoriaModal({
       const { error: requestError } = await supabase.from("curadoria_requests").insert({
         article_id: articleId,
         user_id: user.id,
-        interest: interest,
+        interest: article?.interest || 'Outro',
         purpose: purpose || null,
         comment: comment || null,
         status: "solicitada",
@@ -138,7 +127,6 @@ export function SolicitarCuradoriaModal({
       onSuccess?.();
       
       // Reset form
-      setInterest("");
       setPurpose("");
       setComment("");
     } catch (error: any) {
@@ -178,21 +166,6 @@ export function SolicitarCuradoriaModal({
             <p className="text-sm text-foreground">{articleTitle}</p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="interest">Interesse principal *</Label>
-            <Select value={interest} onValueChange={(value) => setInterest(value as CuradoriaInterest)}>
-              <SelectTrigger className="bg-card border-border">
-                <SelectValue placeholder="Selecione o interesse" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {interestOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="purpose">Finalidade do uso (opcional)</Label>
