@@ -272,6 +272,7 @@ export default function CuradoriaClinica() {
           onOpenChange={setShowRequestModal}
           articleId={selectedArticle.id}
           articleTitle={selectedArticle.title}
+          article={selectedArticle}
           onSuccess={fetchArticles}
         />
       )}

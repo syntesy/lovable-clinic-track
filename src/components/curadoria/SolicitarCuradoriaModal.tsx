@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { CuradoriaInterest, CuradoriaPurpose, CuradoriaArticle } from "@/types/curadoria";
+import { CuradoriaPurpose, CuradoriaArticle } from "@/types/curadoria";
 import { Bot, Loader2 } from "lucide-react";
 
 interface SolicitarCuradoriaModalProps {
@@ -30,7 +31,6 @@ interface SolicitarCuradoriaModalProps {
   article?: CuradoriaArticle;
   onSuccess?: () => void;
 }
-
 
 const purposeOptions: { value: CuradoriaPurpose; label: string }[] = [
   { value: "pratica_clinica", label: "Prática clínica" },
@@ -46,16 +46,13 @@ export function SolicitarCuradoriaModal({
   article,
   onSuccess,
 }: SolicitarCuradoriaModalProps) {
-  
+  const navigate = useNavigate();
   const [purpose, setPurpose] = useState<CuradoriaPurpose | "">("");
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
 
   const handleSubmit = async () => {
-
     setIsSubmitting(true);
-    setIsGeneratingDraft(true);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -76,65 +73,41 @@ export function SolicitarCuradoriaModal({
 
       if (requestError) throw requestError;
 
-      // Generate AI draft if we have article data
-      if (article) {
-        toast.info("Gerando rascunho com IA...", { duration: 5000 });
-        
-        try {
-          const { data: draftData, error: draftError } = await supabase.functions.invoke(
-            'generate-curation-draft',
-            {
-              body: { article }
-            }
-          );
+      // Start the curation job (unified flow with progress)
+      const { data, error } = await supabase.functions.invoke("generate-curation-job", {
+        body: { articleId, userId: user.id }
+      });
 
-          if (draftError) {
-            console.error("Error generating draft:", draftError);
-            toast.warning("Curadoria solicitada, mas o rascunho automático não pôde ser gerado.");
-          } else if (draftData?.curation) {
-            // Save the AI-generated draft to curations table
-            const { error: curationError } = await supabase.from("curations").insert({
-              article_id: articleId,
-              status: 'em_revisao',
-              created_by: user.id,
-              ...draftData.curation,
-              clinical_takeaways: draftData.curation.clinical_takeaways || [],
-              citations: []
-            });
-
-            if (curationError) {
-              console.error("Error saving curation:", curationError);
-              toast.warning("Rascunho gerado, mas houve um erro ao salvar.");
-            } else {
-              toast.success("Rascunho de curadoria gerado com sucesso!");
-            }
-          }
-        } catch (aiError) {
-          console.error("AI generation error:", aiError);
-          // Continue without AI draft - request is still valid
-        }
+      if (error) {
+        console.error("Error starting curation job:", error);
+        // Continue anyway - the request was created
+        toast.warning("Solicitação registrada, mas houve um erro ao iniciar a geração automática.");
+      } else if (data?.job) {
+        toast.success("Curadoria em geração! Você será redirecionado para acompanhar o progresso.");
       }
 
-      // Update article status to 'solicitada' if it was 'sem_curadoria'
+      // Update article status
       await supabase
         .from("curadoria_articles")
-        .update({ status: "solicitada" })
-        .eq("id", articleId)
-        .eq("status", "sem_curadoria");
+        .update({ status: "em_producao" })
+        .eq("id", articleId);
 
-      toast.success("Curadoria solicitada com sucesso!");
+      // Close modal and redirect to detail page
       onOpenChange(false);
       onSuccess?.();
       
       // Reset form
       setPurpose("");
       setComment("");
+
+      // Navigate to detail page to see progress
+      navigate(`/curadoria/${articleId}`);
+
     } catch (error: any) {
       console.error("Error requesting curadoria:", error);
       toast.error("Erro ao solicitar curadoria. Tente novamente.");
     } finally {
       setIsSubmitting(false);
-      setIsGeneratingDraft(false);
     }
   };
 
@@ -165,7 +138,6 @@ export function SolicitarCuradoriaModal({
             <p className="text-xs font-medium text-muted-foreground mb-1">Artigo</p>
             <p className="text-sm text-foreground">{articleTitle}</p>
           </div>
-
 
           <div className="space-y-2">
             <Label htmlFor="purpose">Finalidade do uso (opcional)</Label>
@@ -200,13 +172,11 @@ export function SolicitarCuradoriaModal({
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isGeneratingDraft ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Gerando rascunho...
+                Iniciando geração...
               </>
-            ) : isSubmitting ? (
-              "Enviando..."
             ) : (
               "Confirmar solicitação"
             )}
