@@ -6,7 +6,7 @@ import {
   Search, ChevronDown, User, Activity, FileText, 
   FlaskConical, ClipboardList, Brain, Calendar,
   CheckCircle2, AlertCircle, XCircle, Clock,
-  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves
+  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -605,6 +605,18 @@ const DetalhePaciente = () => {
                           </div>
                           <h4 className="font-medium text-foreground mb-1">Ondas de Choque</h4>
                           <p className="text-sm text-muted-foreground">Radial e Focada</p>
+                        </CardContent>
+                      </Card>
+                      <Card 
+                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigate(`/protocolos/injetaveis?paciente=${selectedPatientId}`)}
+                      >
+                        <CardContent className="p-6 text-center">
+                          <div className="w-14 h-14 rounded-full bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
+                            <Syringe className="w-7 h-7 text-violet-500" />
+                          </div>
+                          <h4 className="font-medium text-foreground mb-1">Injetáveis</h4>
+                          <p className="text-sm text-muted-foreground">Terapias Injetáveis</p>
                         </CardContent>
                       </Card>
                     </div>
