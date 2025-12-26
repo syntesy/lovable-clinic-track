@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, FileText, Sparkles, X } from "lucide-react";
+import { Search, FileText, Sparkles, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CuradoriaArticle, CuradoriaStatus, interestColors } from "@/types/curadoria";
 import { CuradoriaStatusBadge } from "@/components/curadoria/CuradoriaStatusBadge";
@@ -253,9 +253,10 @@ export default function CuradoriaClinica() {
                       variant="secondary" 
                       size="sm" 
                       className="flex-1"
-                      disabled
+                      onClick={() => navigate(`/curadoria/${article.id}`)}
                     >
-                      Curadoria em andamento
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Ver progresso
                     </Button>
                   )}
                 </div>
