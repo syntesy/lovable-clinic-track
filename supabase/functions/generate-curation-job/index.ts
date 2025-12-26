@@ -371,12 +371,12 @@ Gere uma curadoria estruturada completa para este artigo.`;
     
     await updateJob(supabase, jobId, { progress: 80 });
 
-    // Step 4: Update curation record
+    // Step 4: Update curation record - set as "disponivel" (published)
     const { error: updateError } = await supabase
       .from("curations")
       .update({
         ...validatedData,
-        status: "em_revisao",
+        status: "disponivel",
         ai_coverage: aiCoverage,
         ai_notes: aiCoverage === "low" 
           ? "Curadoria gerada com base limitada. Texto do PDF não disponível." 
@@ -392,10 +392,10 @@ Gere uma curadoria estruturada completa para este artigo.`;
 
     await updateJob(supabase, jobId, { progress: 90 });
 
-    // Update article status
+    // Update article status to "disponivel" (curation ready)
     await supabase
       .from("curadoria_articles")
-      .update({ status: "em_analise" })
+      .update({ status: "disponivel" })
       .eq("id", article.id);
 
     // Step 5: Complete job
