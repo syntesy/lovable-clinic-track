@@ -38,6 +38,14 @@ const ProtocolosMenu = () => {
       path: "/protocolos/ondas-choque",
       color: "#0891B2",
     },
+    {
+      title: "INJETÁVEIS",
+      subtitle: "Terapias Injetáveis",
+      description: "Protocolos de aplicações injetáveis terapêuticas",
+      icon: Syringe,
+      path: "/protocolos/injetaveis",
+      color: "#7C3AED",
+    },
   ];
 
   return (
