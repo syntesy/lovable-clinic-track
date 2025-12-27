@@ -25,6 +25,7 @@ import FisioRegenScore from "./pages/FisioRegenScore";
 import CuradoriaClinica from "./pages/CuradoriaClinica";
 import CuradoriaDetalhe from "./pages/CuradoriaDetalhe";
 import CuradoriaOriginal from "./pages/CuradoriaOriginal";
+import Partners from "./pages/Partners";
 import AdminCuradoria from "./pages/admin/AdminCuradoria";
 import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import AdminArtigos from "./pages/admin/AdminArtigos";
@@ -222,6 +223,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <CuradoriaOriginal />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/partners"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Partners />
                 </Layout>
               </ProtectedRoute>
             }
