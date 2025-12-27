@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_name: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_name: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_name?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -59,6 +83,36 @@ export type Database = {
           user_agent?: string | null
           user_email?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      billing_history: {
+        Row: {
+          amount: number
+          billing_date: string
+          created_at: string
+          id: string
+          plan: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          billing_date: string
+          created_at?: string
+          id?: string
+          plan: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          billing_date?: string
+          created_at?: string
+          id?: string
+          plan?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1332,6 +1386,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_plan: string
+          id: string
+          next_renewal_date: string | null
+          scheduled_effective_date: string | null
+          scheduled_plan_change: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_plan?: string
+          id?: string
+          next_renewal_date?: string | null
+          scheduled_effective_date?: string | null
+          scheduled_plan_change?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_plan?: string
+          id?: string
+          next_renewal_date?: string | null
+          scheduled_effective_date?: string | null
+          scheduled_plan_change?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       thermography_images: {
         Row: {
