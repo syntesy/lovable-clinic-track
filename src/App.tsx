@@ -26,6 +26,7 @@ import CuradoriaClinica from "./pages/CuradoriaClinica";
 import CuradoriaDetalhe from "./pages/CuradoriaDetalhe";
 import CuradoriaOriginal from "./pages/CuradoriaOriginal";
 import Partners from "./pages/Partners";
+import Subscription from "./pages/Subscription";
 import AdminCuradoria from "./pages/admin/AdminCuradoria";
 import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import AdminArtigos from "./pages/admin/AdminArtigos";
@@ -233,6 +234,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Partners />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account/subscription"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Subscription />
                 </Layout>
               </ProtectedRoute>
             }
