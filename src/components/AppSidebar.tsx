@@ -29,8 +29,8 @@ const adminMenuItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = state === "collapsed" && !isMobile;
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
