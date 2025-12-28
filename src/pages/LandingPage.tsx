@@ -17,6 +17,9 @@ import {
   Check,
   Sparkles,
   Crown,
+  Tag,
+  Percent,
+  ShoppingBag,
 } from "lucide-react";
 import logoRegenapp from "@/assets/logo-regenapp.png";
 import mockupScore from "@/assets/mockup-score-clinico.png";
@@ -543,6 +546,106 @@ export default function LandingPage() {
             O REGENAPP não executa procedimentos nem define condutas. Ele oferece
             suporte técnico para decisões clínicas mais seguras.
           </p>
+        </div>
+      </section>
+
+      {/* Parcerias com Fornecedores */}
+      <section className="py-16 md:py-20 bg-gradient-to-b from-background to-primary/5">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="text-center mb-10 md:mb-12">
+            <div className="inline-flex items-center justify-center gap-2 mb-4 px-4 py-2 rounded-full bg-primary/10">
+              <Percent className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-primary">Benefício exclusivo</span>
+            </div>
+            <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+              Parcerias com fornecedores
+            </h2>
+            <p className="mx-auto max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
+              Usuários do REGENAPP têm acesso a <strong className="text-foreground">descontos exclusivos</strong> na 
+              compra de insumos e materiais para procedimentos regenerativos em nossa rede de parceiros.
+            </p>
+          </div>
+
+          {/* Categorias de parceiros */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+            {[
+              { icon: Tag, title: "Ortobiológicos / PRP", desc: "Kits, tubos e materiais para coleta e processamento" },
+              { icon: ShoppingBag, title: "Agulhas e materiais invasivos", desc: "Agulhas, cânulas e acessórios para procedimentos guiados" },
+              { icon: Tag, title: "Ultrassom e acessórios", desc: "Gel, capas e consumíveis para ultrassonografia" },
+              { icon: ShoppingBag, title: "Descartáveis e assepsia", desc: "Luvas, campos e materiais de proteção" },
+              { icon: Tag, title: "Equipamentos", desc: "Equipamentos para reabilitação e fisioterapia" },
+              { icon: ShoppingBag, title: "Suplementação", desc: "Suplementos e produtos para recovery clínico" },
+            ].map((item, index) => (
+              <div 
+                key={index}
+                className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-md transition-all"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
+                  <item.icon className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cupom destaque */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 p-6 md:p-8">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+            
+            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Como funciona?
+                </h3>
+                <p className="text-muted-foreground max-w-xl">
+                  Ao acessar nossa aba de parceiros dentro do app, utilize o cupom exclusivo 
+                  <span className="font-bold text-primary"> REGENAPP </span> 
+                  para garantir descontos e condições especiais em sua compra.
+                </p>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-xl tracking-wider shadow-lg">
+                  REGENAPP
+                </div>
+                <span className="text-xs text-muted-foreground">Seu cupom de desconto</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Benefícios */}
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            <div className="text-center p-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3">
+                <Percent className="h-6 w-6 text-primary" />
+              </div>
+              <h4 className="font-semibold text-foreground mb-1">Descontos exclusivos</h4>
+              <p className="text-sm text-muted-foreground">Preços especiais para assinantes</p>
+            </div>
+            <div className="text-center p-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3">
+                <Handshake className="h-6 w-6 text-primary" />
+              </div>
+              <h4 className="font-semibold text-foreground mb-1">Fornecedores confiáveis</h4>
+              <p className="text-sm text-muted-foreground">Parceiros selecionados com critério</p>
+            </div>
+            <div className="text-center p-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3">
+                <ShoppingBag className="h-6 w-6 text-primary" />
+              </div>
+              <h4 className="font-semibold text-foreground mb-1">Compra direta</h4>
+              <p className="text-sm text-muted-foreground">Acesse o site do parceiro pelo app</p>
+            </div>
+          </div>
+
+          <div className="mt-10 text-center">
+            <Button size="lg" onClick={handleSignup}>
+              Criar conta e acessar parceiros
+            </Button>
+          </div>
         </div>
       </section>
 
