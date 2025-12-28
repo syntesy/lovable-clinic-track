@@ -19,6 +19,11 @@ import {
   Crown,
 } from "lucide-react";
 import logoRegenapp from "@/assets/logo-regenapp.png";
+import mockupScore from "@/assets/mockup-score-clinico.png";
+import mockupAvaliacao from "@/assets/mockup-avaliacao-clinica.png";
+import mockupRelatorios from "@/assets/mockup-relatorios.png";
+import mockupProtocolos from "@/assets/mockup-protocolos.png";
+import mockupDashboard from "@/assets/mockup-dashboard.png";
 
 const features = [
   {
@@ -255,11 +260,226 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Funcionalidades Section */}
-      <section className="py-16 md:py-20">
+      {/* SEÇÃO VISUAL - FUNCIONALIDADES EM USO */}
+      
+      {/* 1) Score Clínico - Destaque Principal */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-secondary/30">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
+            <div className="order-2 lg:order-1">
+              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+                Scores clínicos para apoio à decisão
+              </h2>
+              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
+                O REGENAPP utiliza scores clínicos estruturados para apoiar a avaliação, 
+                o preparo do paciente e a tomada de decisão, sempre como suporte técnico 
+                e nunca como substituição do julgamento profissional.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Score visual com indicador de elegibilidade</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Avaliação por domínios clínicos</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Identificação de bloqueios e alertas</span>
+                </li>
+              </ul>
+            </div>
+            <div className="order-1 lg:order-2">
+              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
+                <img 
+                  src={mockupScore} 
+                  alt="Score clínico REGENAPP" 
+                  className="w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Exemplo ilustrativo de score clínico no REGENAPP
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2) Avaliação Clínica e Questionário */}
+      <section className="py-16 md:py-24 bg-secondary/50">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
+            <div className="order-1">
+              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
+                <img 
+                  src={mockupAvaliacao} 
+                  alt="Avaliação clínica estruturada" 
+                  className="w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Exemplo ilustrativo de questionário clínico
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="order-2">
+              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+                Avaliação clínica estruturada
+              </h2>
+              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
+                Questionários organizados por caso, com registro sistematizado das 
+                informações clínicas e histórico rastreável.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Fluxo passo a passo intuitivo</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Campos estruturados por especialidade</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Histórico completo de avaliações</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3) Relatórios Clínicos */}
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
+            <div className="order-2 lg:order-1">
+              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+                Relatórios técnicos e documentação
+              </h2>
+              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
+                Relatórios clínicos claros e padronizados, com versões simples ou 
+                completas em PDF, adequados para prontuário e registro clínico.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Exportação em PDF profissional</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Cabeçalho institucional personalizável</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Linguagem adequada para prontuário</span>
+                </li>
+              </ul>
+            </div>
+            <div className="order-1 lg:order-2">
+              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
+                <img 
+                  src={mockupRelatorios} 
+                  alt="Relatórios clínicos" 
+                  className="w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Exemplo ilustrativo de relatório clínico
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4) Protocolos Clínicos */}
+      <section className="py-16 md:py-24 bg-secondary/50">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
+            <div className="order-1">
+              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
+                <img 
+                  src={mockupProtocolos} 
+                  alt="Protocolos clínicos padronizados" 
+                  className="w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Exemplo ilustrativo de biblioteca de protocolos
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="order-2">
+              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+                Protocolos clínicos padronizados
+              </h2>
+              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
+                Protocolos organizados por procedimento e contexto clínico, 
+                com base em evidência e consenso.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Biblioteca categorizada por tipo de terapia</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Busca e filtros avançados</span>
+                </li>
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                  <span>Atualização conforme evidência científica</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5) Visão Geral do App - Dashboard */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-secondary/30 to-background">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="text-center mb-10 md:mb-12">
+            <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+              Tudo em um único ambiente clínico
+            </h2>
+            <p className="mx-auto max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
+              O REGENAPP centraliza avaliação, decisão, documentação e acompanhamento 
+              em um único sistema integrado e profissional.
+            </p>
+          </div>
+          <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl mx-auto max-w-5xl">
+            <img 
+              src={mockupDashboard} 
+              alt="Dashboard REGENAPP" 
+              className="w-full h-auto"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+              <p className="text-xs text-muted-foreground text-center">
+                Exemplo ilustrativo do painel principal do REGENAPP
+              </p>
+            </div>
+          </div>
+          <div className="mt-10 text-center">
+            <Button size="lg" onClick={handleSignup}>
+              Comece agora gratuitamente
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Funcionalidades Section - Lista compacta */}
+      <section className="py-16 md:py-20 border-t border-border/40">
         <div className="container mx-auto max-w-6xl px-4">
           <h2 className="mb-10 text-center text-2xl font-semibold md:mb-12 md:text-3xl">
-            Funcionalidades do REGENAPP
+            Todas as funcionalidades
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
             {features.map((feature, index) => (
