@@ -52,13 +52,13 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#253441] bg-[#1B2636]">
-      <SidebarContent className="px-4 py-8">
+    <Sidebar collapsible="icon" className="border-r border-[#253441] bg-[#1B2636] data-[state=open]:w-64 md:data-[state=open]:w-72">
+      <SidebarContent className="px-3 md:px-4 py-6 md:py-8">
         {/* Logo Section */}
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center mb-8 md:mb-10">
           {!isCollapsed ? (
             <>
-              <div className="w-72 h-20 mb-2">
+              <div className="w-48 md:w-72 h-14 md:h-20 mb-2">
                 <img
                   src={logoRegenapp}
                   alt="REGENAPP"
@@ -82,20 +82,20 @@ export function AppSidebar() {
             <SidebarMenu className="space-y-3">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="h-12">
+                  <SidebarMenuButton asChild className="h-10 md:h-12">
                     <NavLink
                       to={item.url}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-[#B7BBC0] hover:text-[#FEFEFE] hover:bg-[#293E48]/50 transition-colors"
+                      className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg text-[#B7BBC0] hover:text-[#FEFEFE] hover:bg-[#293E48]/50 transition-colors"
                       activeClassName="bg-[#293E48] text-[#FEFEFE] font-medium"
                     >
                       <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
                       {!isCollapsed && (
-                        <span className="text-[13px] tracking-wide font-normal">
+                        <span className="text-[12px] md:text-[13px] tracking-wide font-normal truncate">
                           {item.title}
                         </span>
                       )}
                       {!isCollapsed && item.isAgent && (
-                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-[#293E48] text-[#79B997] rounded tracking-wider border border-[#253441]">
+                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-[#293E48] text-[#79B997] rounded tracking-wider border border-[#253441] flex-shrink-0">
                           IA
                         </span>
                       )}
