@@ -20,6 +20,8 @@ import { format } from "date-fns";
 import { PrintPreviewModal, RequestedExam } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
+import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
+import { Tables } from "@/integrations/supabase/types";
 
 interface UploadedFile {
   id: string;
@@ -174,6 +176,10 @@ export default function TriagemBiologica() {
   const [consolidatedText, setConsolidatedText] = useState("");
   const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
+
+  // State for screening detail modal
+  const [selectedScreening, setSelectedScreening] = useState<Tables<"prp_screenings"> | null>(null);
+  const [screeningDetailOpen, setScreeningDetailOpen] = useState(false);
 
   // Fetch patients
   const { data: patients, isLoading: loadingPatients } = useQuery({
@@ -1537,7 +1543,14 @@ export default function TriagemBiologica() {
                 ) : screenings && screenings.length > 0 ? (
                   <div className="space-y-4">
                     {screenings.map(screening => (
-                      <Card key={screening.id} className="bg-background/50">
+                      <Card 
+                        key={screening.id} 
+                        className="bg-background/50 cursor-pointer hover:bg-background/80 hover:shadow-md transition-all"
+                        onClick={() => {
+                          setSelectedScreening(screening);
+                          setScreeningDetailOpen(true);
+                        }}
+                      >
                         <CardContent className="pt-4">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
                             <div className="text-sm font-medium">
@@ -1545,7 +1558,7 @@ export default function TriagemBiologica() {
                             </div>
                             {getClassificationBadge(screening.classification || "")}
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-primary hover:underline">
                             Questionário salvo • Clique para ver detalhes
                           </div>
                         </CardContent>
@@ -1592,6 +1605,13 @@ export default function TriagemBiologica() {
         warnings={extractionWarnings}
         manualText={labResultsText}
         onConfirm={handleConfirmAndAnalyze}
+      />
+
+      {/* Screening Detail Modal */}
+      <ScreeningDetailModal
+        open={screeningDetailOpen}
+        onOpenChange={setScreeningDetailOpen}
+        screening={selectedScreening}
       />
     </div>
   );
