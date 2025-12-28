@@ -1,0 +1,106 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Salad, Pill, Sparkles, Calendar, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface PatientPrescriptionsListProps {
+  patientId: string;
+}
+
+const prescriptionTypes = {
+  alimentar: { label: 'Cuidados Alimentares', icon: Salad, color: 'bg-green-500' },
+  medicamentosa: { label: 'Medicações', icon: Pill, color: 'bg-blue-500' },
+  suplementar: { label: 'Suplementos', icon: Sparkles, color: 'bg-purple-500' }
+};
+
+export function PatientPrescriptionsList({ patientId }: PatientPrescriptionsListProps) {
+  const { data: prescriptions, isLoading } = useQuery({
+    queryKey: ['patient-prescriptions', patientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('patient_prescriptions')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!patientId
+  });
+
+  if (isLoading) {
+    return <div className="text-muted-foreground text-center py-8">Carregando prescrições...</div>;
+  }
+
+  if (!prescriptions || prescriptions.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="py-8 text-center">
+          <Pill className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
+          <p className="text-muted-foreground">Nenhuma prescrição cadastrada</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {prescriptions.map((prescription) => {
+        const typeInfo = prescriptionTypes[prescription.prescription_type as keyof typeof prescriptionTypes];
+        const Icon = typeInfo?.icon || Pill;
+
+        return (
+          <Card key={prescription.id} className="border-border/50">
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-lg ${typeInfo?.color} bg-opacity-20 flex items-center justify-center`}>
+                    <Icon className={`h-4 w-4 ${typeInfo?.color.replace('bg-', 'text-')}`} />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-medium">{prescription.title}</CardTitle>
+                    <CardDescription className="flex items-center gap-2 text-xs">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {typeInfo?.label}
+                  </Badge>
+                  {prescription.is_visible_to_patient ? (
+                    <Badge variant="secondary" className="text-xs">
+                      <Eye className="h-3 w-3 mr-1" />
+                      Visível
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                      <EyeOff className="h-3 w-3 mr-1" />
+                      Oculto
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-foreground whitespace-pre-wrap line-clamp-3">
+                {prescription.content}
+              </p>
+              {prescription.notes && (
+                <p className="text-xs text-muted-foreground mt-2 italic">
+                  Obs: {prescription.notes}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}

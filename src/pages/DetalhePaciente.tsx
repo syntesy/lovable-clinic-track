@@ -6,7 +6,7 @@ import {
   Search, ChevronDown, User, Activity, FileText, 
   FlaskConical, ClipboardList, Brain, Calendar,
   CheckCircle2, AlertCircle, XCircle, Clock,
-  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe
+  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ import { ptBR } from "date-fns/locale";
 import { EditPatientModal } from "@/components/EditPatientModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PatientEvaluationReport } from "@/components/PatientEvaluationReport";
+import { PrescriptionFormModal } from "@/components/patient/PrescriptionFormModal";
+import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ const DetalhePaciente = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedExamDate, setSelectedExamDate] = useState<string>("all");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
 
   // Set patient from URL parameter on mount
   useEffect(() => {
@@ -301,6 +304,14 @@ const DetalhePaciente = () => {
               onOpenChange={setIsEditModalOpen}
             />
 
+            {/* Prescription Form Modal */}
+            <PrescriptionFormModal
+              open={isPrescriptionModalOpen}
+              onOpenChange={setIsPrescriptionModalOpen}
+              patientId={selectedPatientId!}
+              patientName={patient?.full_name || ''}
+            />
+
             {/* Primary Action - Prontuário */}
             <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-6">
@@ -362,6 +373,9 @@ const DetalhePaciente = () => {
                   </TabsTrigger>
                   <TabsTrigger value="relatorios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Relatórios
+                  </TabsTrigger>
+                  <TabsTrigger value="prescricoes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                    Prescrições
                   </TabsTrigger>
                   <TabsTrigger value="decisao" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Decisão Clínica
@@ -653,6 +667,26 @@ const DetalhePaciente = () => {
                         </CardContent>
                       </Card>
                     </div>
+                  </div>
+                </TabsContent>
+
+                {/* Prescrições Tab */}
+                <TabsContent value="prescricoes" className="mt-8">
+                  <div className="max-w-4xl space-y-6">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-lg font-medium text-foreground">Prescrições e Orientações</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Gerencie cuidados alimentares, medicações e suplementação
+                        </p>
+                      </div>
+                      <Button onClick={() => setIsPrescriptionModalOpen(true)} className="gap-2">
+                        <Plus className="w-4 h-4" />
+                        Nova Prescrição
+                      </Button>
+                    </div>
+
+                    <PatientPrescriptionsList patientId={selectedPatientId!} />
                   </div>
                 </TabsContent>
 
