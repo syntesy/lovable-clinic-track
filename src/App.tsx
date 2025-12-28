@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PatientAuthProvider } from "./contexts/PatientAuthContext";
+import { PatientProtectedRoute } from "./components/patient/PatientProtectedRoute";
 import Auth from "./pages/Auth";
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
@@ -27,24 +29,39 @@ import CuradoriaDetalhe from "./pages/CuradoriaDetalhe";
 import CuradoriaOriginal from "./pages/CuradoriaOriginal";
 import Partners from "./pages/Partners";
 import Subscription from "./pages/Subscription";
+import PatientsManage from "./pages/PatientsManage";
 import AdminCuradoria from "./pages/admin/AdminCuradoria";
 import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import AdminArtigos from "./pages/admin/AdminArtigos";
 import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+// Patient Portal Pages
+import PatientLogin from "./pages/patient/PatientLogin";
+import PatientHome from "./pages/patient/PatientHome";
+import PatientReports from "./pages/patient/PatientReports";
+import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
+import PatientPartners from "./pages/patient/PatientPartners";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<LandingPage />} />
+      <PatientAuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<LandingPage />} />
+            
+            {/* Patient Portal Routes */}
+            <Route path="/patient/login" element={<PatientLogin />} />
+            <Route path="/patient/home" element={<PatientProtectedRoute><PatientHome /></PatientProtectedRoute>} />
+            <Route path="/patient/reports" element={<PatientProtectedRoute><PatientReports /></PatientProtectedRoute>} />
+            <Route path="/patient/prescriptions" element={<PatientProtectedRoute><PatientPrescriptions /></PatientProtectedRoute>} />
+            <Route path="/patient/partners" element={<PatientProtectedRoute><PatientPartners /></PatientProtectedRoute>} />
           <Route
             path="/pacientes"
             element={
@@ -300,9 +317,19 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          {/* Patient Management for Professionals */}
+          <Route
+            path="/patients/manage"
+            element={
+              <ProtectedRoute>
+                <PatientsManage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </PatientAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
