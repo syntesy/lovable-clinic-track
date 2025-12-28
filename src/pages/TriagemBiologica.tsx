@@ -661,32 +661,6 @@ export default function TriagemBiologica() {
                       <div>
                         <h3 className="text-sm font-semibold text-primary mb-3">A) IDENTIFICAÇÃO DO CASO</h3>
                         <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="idade">Idade</Label>
-                              <Input
-                                id="idade"
-                                type="number"
-                                placeholder="Ex: 45"
-                                value={answers.idade ?? ""}
-                                onChange={(e) => setAnswers(prev => ({ ...prev, idade: e.target.value ? parseInt(e.target.value) : null }))}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="sexo">Sexo</Label>
-                              <Select value={answers.sexo} onValueChange={(v) => setAnswers(prev => ({ ...prev, sexo: v }))}>
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="M">Masculino</SelectItem>
-                                  <SelectItem value="F">Feminino</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
                           <div>
                             <Label>Região principal</Label>
                             <Select value={answers.regiao_principal} onValueChange={(v) => setAnswers(prev => ({ ...prev, regiao_principal: v }))}>
