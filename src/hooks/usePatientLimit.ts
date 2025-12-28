@@ -7,6 +7,7 @@ interface PatientLimitInfo {
   maxPatients: number;
   canAddPatient: boolean;
   isUnlimited: boolean;
+  isAdmin: boolean;
 }
 
 export function usePatientLimit() {
@@ -21,9 +22,20 @@ export function usePatientLimit() {
           activePatients: 0,
           maxPatients: 0,
           canAddPatient: false,
-          isUnlimited: false
+          isUnlimited: false,
+          isAdmin: false
         };
       }
+
+      // Check if user is admin - admins have full access
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      const isAdmin = Boolean(adminRole);
 
       const { data, error } = await supabase.rpc('check_patient_limit', {
         user_id: user.id
@@ -36,21 +48,36 @@ export function usePatientLimit() {
 
       if (!data || data.length === 0) {
         return {
-          currentPlan: 'basic',
+          currentPlan: isAdmin ? 'pro' : 'basic',
           activePatients: 0,
-          maxPatients: 0,
-          canAddPatient: false,
-          isUnlimited: false
+          maxPatients: isAdmin ? -1 : 0,
+          canAddPatient: isAdmin,
+          isUnlimited: isAdmin,
+          isAdmin
         };
       }
 
       const result = data[0];
+      
+      // Admins always have unlimited access
+      if (isAdmin) {
+        return {
+          currentPlan: 'pro',
+          activePatients: result.active_patients,
+          maxPatients: -1,
+          canAddPatient: true,
+          isUnlimited: true,
+          isAdmin: true
+        };
+      }
+
       return {
         currentPlan: result.current_plan,
         activePatients: result.active_patients,
         maxPatients: result.max_patients,
         canAddPatient: result.can_add_patient,
-        isUnlimited: result.max_patients === -1
+        isUnlimited: result.max_patients === -1,
+        isAdmin: false
       };
     }
   });
