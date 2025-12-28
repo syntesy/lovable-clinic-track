@@ -31,6 +31,7 @@ import AdminCuradoria from "./pages/admin/AdminCuradoria";
 import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import AdminArtigos from "./pages/admin/AdminArtigos";
 import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
+import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,7 +44,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Navigate to="/pacientes" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route
             path="/pacientes"
             element={
