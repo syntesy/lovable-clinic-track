@@ -911,6 +911,42 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          coupon_code: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          product_type: string
+          website_url: string
+        }
+        Insert: {
+          coupon_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          product_type: string
+          website_url: string
+        }
+        Update: {
+          coupon_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          product_type?: string
+          website_url?: string
+        }
+        Relationships: []
+      }
       patient_consents: {
         Row: {
           accepted: boolean
@@ -1040,6 +1076,7 @@ export type Database = {
           generated_at: string
           generated_by: string | null
           id: string
+          is_visible_to_patient: boolean | null
           patient_id: string
           professional_name: string | null
           professional_registration: string | null
@@ -1050,6 +1087,7 @@ export type Database = {
           generated_at?: string
           generated_by?: string | null
           id?: string
+          is_visible_to_patient?: boolean | null
           patient_id: string
           professional_name?: string | null
           professional_registration?: string | null
@@ -1060,6 +1098,7 @@ export type Database = {
           generated_at?: string
           generated_by?: string | null
           id?: string
+          is_visible_to_patient?: boolean | null
           patient_id?: string
           professional_name?: string | null
           professional_registration?: string | null
@@ -1068,6 +1107,132 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "patient_evaluation_reports_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_name: string
+          id: string
+          patient_id: string
+          professional_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_name: string
+          id?: string
+          patient_id: string
+          professional_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_name?: string
+          id?: string
+          patient_id?: string
+          professional_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_events_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_portal_access: {
+        Row: {
+          cpf_hash: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_login_at: string | null
+          login_surname: string
+          patient_id: string
+          professional_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cpf_hash: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          login_surname: string
+          patient_id: string
+          professional_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          cpf_hash?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          login_surname?: string
+          patient_id?: string
+          professional_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_portal_access_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_prescriptions: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_visible_to_patient: boolean | null
+          notes: string | null
+          patient_id: string
+          prescription_type: string
+          professional_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_visible_to_patient?: boolean | null
+          notes?: string | null
+          patient_id: string
+          prescription_type: string
+          professional_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_visible_to_patient?: boolean | null
+          notes?: string | null
+          patient_id?: string
+          prescription_type?: string
+          professional_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_prescriptions_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -1722,6 +1887,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      authenticate_patient: {
+        Args: { p_cpf: string; p_surname: string }
+        Returns: {
+          patient_id: string
+          patient_name: string
+          professional_id: string
+        }[]
+      }
+      check_patient_limit: {
+        Args: { user_id: string }
+        Returns: {
+          active_patients: number
+          can_add_patient: boolean
+          current_plan: string
+          max_patients: number
+        }[]
+      }
       cleanup_expired_sessions: { Args: never; Returns: number }
       generate_integrity_hash: { Args: { data: Json }; Returns: string }
       has_role: {
@@ -1748,7 +1930,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "professional" | "viewer"
+      app_role: "admin" | "professional" | "viewer" | "patient"
       applicability:
         | "alta"
         | "moderada"
@@ -1908,7 +2090,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "professional", "viewer"],
+      app_role: ["admin", "professional", "viewer", "patient"],
       applicability: [
         "alta",
         "moderada",
