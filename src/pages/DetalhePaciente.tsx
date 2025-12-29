@@ -34,6 +34,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PatientEvaluationReport } from "@/components/PatientEvaluationReport";
 import { PrescriptionFormModal } from "@/components/patient/PrescriptionFormModal";
 import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
+import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
+import { Tables } from "@/integrations/supabase/types";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
@@ -44,6 +46,8 @@ const DetalhePaciente = () => {
   const [selectedExamDate, setSelectedExamDate] = useState<string>("all");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [selectedScreening, setSelectedScreening] = useState<Tables<"prp_screenings"> | null>(null);
+  const [isScreeningModalOpen, setIsScreeningModalOpen] = useState(false);
 
   // Set patient from URL parameter on mount
   useEffect(() => {
@@ -455,42 +459,90 @@ const DetalhePaciente = () => {
 
                 {/* Histórico Tab */}
                 <TabsContent value="historico" className="mt-8">
-                  <div className="space-y-4 max-w-3xl">
-                    {sessions && sessions.length > 0 ? (
-                      sessions.map((session) => (
-                        <Card key={session.id} className="bg-card border-border">
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-5">
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-lg flex-shrink-0">
-                                {session.session_number}
-                              </div>
-                              <div className="flex-1 space-y-2">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Calendar className="w-4 h-4" />
-                                  <span className="text-sm">
-                                    {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy")}
-                                  </span>
+                  <div className="space-y-8 max-w-3xl">
+                    {/* Histórico de Triagens */}
+                    {screenings && screenings.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                          <FlaskConical className="w-5 h-5 text-primary" />
+                          Histórico de Triagens
+                        </h3>
+                        {screenings.map((screening) => (
+                          <Card 
+                            key={screening.id} 
+                            className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+                            onClick={() => {
+                              setSelectedScreening(screening);
+                              setIsScreeningModalOpen(true);
+                            }}
+                          >
+                            <CardContent className="p-6">
+                              <div className="flex items-start gap-5">
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <FlaskConical className="w-5 h-5 text-primary" />
                                 </div>
-                                <p className="text-foreground">{session.clinical_observations || "Sem observações"}</p>
-                                {session.vas_on_day && (
-                                  <p className="text-sm text-muted-foreground">EVA: {session.vas_on_day}</p>
-                                )}
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Calendar className="w-4 h-4" />
+                                      <span className="text-sm">
+                                        {format(new Date(screening.screening_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                      </span>
+                                    </div>
+                                    {getClassificationBadge(screening.classification || "")}
+                                  </div>
+                                  <p className="text-foreground font-medium">Triagem de Ortobiológicos</p>
+                                  <p className="text-sm text-muted-foreground">Clique para ver avaliação completa</p>
+                                </div>
                               </div>
-                            </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Histórico de Sessões */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-primary" />
+                        Sessões de Tratamento
+                      </h3>
+                      {sessions && sessions.length > 0 ? (
+                        sessions.map((session) => (
+                          <Card key={session.id} className="bg-card border-border">
+                            <CardContent className="p-6">
+                              <div className="flex items-start gap-5">
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-lg flex-shrink-0">
+                                  {session.session_number}
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Calendar className="w-4 h-4" />
+                                    <span className="text-sm">
+                                      {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                    </span>
+                                  </div>
+                                  <p className="text-foreground">{session.clinical_observations || "Sem observações"}</p>
+                                  {session.vas_on_day && (
+                                    <p className="text-sm text-muted-foreground">EVA: {session.vas_on_day}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <Card className="bg-card border-border">
+                          <CardContent className="py-12 text-center">
+                            <Activity className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-muted-foreground mb-4">Nenhuma sessão registrada</p>
+                            <Button onClick={() => navigate(`/prontuario/${selectedPatientId}`)}>
+                              Criar Prontuário Clínico
+                            </Button>
                           </CardContent>
                         </Card>
-                      ))
-                    ) : (
-                      <Card className="bg-card border-border">
-                        <CardContent className="py-16 text-center">
-                          <Activity className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
-                          <p className="text-muted-foreground text-lg mb-4">Nenhuma sessão registrada</p>
-                          <Button size="lg" onClick={() => navigate(`/prontuario/${selectedPatientId}`)}>
-                            Criar Prontuário Clínico
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -686,7 +738,7 @@ const DetalhePaciente = () => {
                       </Button>
                     </div>
 
-                    <PatientPrescriptionsList patientId={selectedPatientId!} />
+                    <PatientPrescriptionsList patientId={selectedPatientId!} patientName={patient?.full_name || "Paciente"} />
                   </div>
                 </TabsContent>
 
@@ -724,6 +776,13 @@ const DetalhePaciente = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de detalhe de triagem */}
+      <ScreeningDetailModal
+        open={isScreeningModalOpen}
+        onOpenChange={setIsScreeningModalOpen}
+        screening={selectedScreening}
+      />
     </div>
   );
 };
