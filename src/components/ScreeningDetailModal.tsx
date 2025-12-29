@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertTriangle, CheckCircle2, XCircle, ClipboardList, Pill, Activity, Heart, Apple, Moon, Ban, Check, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle, ClipboardList, Pill, Activity, Heart, Apple, Moon, Ban, Check, X, FileText } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 
 interface ScreeningDetailModalProps {
@@ -558,22 +558,77 @@ export function ScreeningDetailModal({
               </Card>
             )}
 
-            {/* Análise da Triagem */}
-            {analysisResult && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-primary" />
-                    Análise e Recomendações
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-md">
-                    {analysisResult}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Análise da Triagem - exibe apenas texto legível, ignora JSON */}
+            {analysisResult && (() => {
+              // Tenta detectar se é JSON e extrair apenas os textos relevantes
+              try {
+                const parsed = JSON.parse(analysisResult);
+                const keyReasons = parsed?.key_reasons || [];
+                const requestedExams = parsed?.requested_exams?.required || [];
+                const hasContent = keyReasons.length > 0 || requestedExams.length > 0;
+                
+                if (!hasContent) return null;
+                
+                return (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-primary" />
+                        Análise e Recomendações
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {keyReasons.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Principais Motivos:</p>
+                          <ul className="space-y-1">
+                            {keyReasons.map((reason: string, idx: number) => (
+                              <li key={idx} className="text-sm flex items-center gap-2">
+                                <AlertTriangle className="w-3 h-3 text-amber-500" />
+                                {reason}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {requestedExams.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Exames Solicitados:</p>
+                          <ul className="space-y-1">
+                            {requestedExams.map((exam: string, idx: number) => (
+                              <li key={idx} className="text-sm flex items-center gap-2">
+                                <FileText className="w-3 h-3 text-blue-500" />
+                                {exam}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              } catch {
+                // Se não for JSON, exibe como texto simples (se não estiver vazio)
+                if (analysisResult.trim()) {
+                  return (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-primary" />
+                          Análise e Recomendações
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-md">
+                          {analysisResult}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                }
+                return null;
+              }
+            })()}
 
             <Separator />
 
