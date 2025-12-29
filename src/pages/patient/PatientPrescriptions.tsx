@@ -3,10 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { PatientLayout } from '@/components/patient/PatientLayout';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Pill, Heart, Sparkles, Calendar, FileDown } from 'lucide-react';
+import { Pill, Heart, Sparkles, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import logoRegenapp from '@/assets/logo-regenapp.png';
@@ -24,7 +23,6 @@ const prescriptionTypes = {
 
 export default function PatientPrescriptions() {
   const { session } = usePatientAuth();
-  const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
 
   const { data: prescriptions, isLoading } = useQuery({
     queryKey: ['patient-prescriptions', session?.patientId],
@@ -54,7 +52,6 @@ export default function PatientPrescriptions() {
   });
 
   const getPrescriptionsByType = (type: string) => {
-    // Handle both new and legacy types
     if (type === 'cuidados_gerais') {
       return prescriptions?.filter(p => p.prescription_type === 'cuidados_gerais' || p.prescription_type === 'alimentar') || [];
     }
@@ -74,6 +71,8 @@ export default function PatientPrescriptions() {
       return;
     }
 
+    const formattedDate = format(new Date(prescription.created_at), "dd / MM / yyyy", { locale: ptBR });
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -83,7 +82,7 @@ export default function PatientPrescriptions() {
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
           
           @page { 
-            margin: 15mm; 
+            margin: 20mm; 
             size: A4;
           }
           
@@ -100,118 +99,110 @@ export default function PatientPrescriptions() {
             background: #FFFFFF;
             padding: 0;
             margin: 0;
-            min-height: 100vh;
           }
           
-          .document-container {
+          .document {
             width: 100%;
             min-height: 100vh;
-            padding: 40px;
+            padding: 50px 60px;
             display: flex;
             flex-direction: column;
           }
           
           .header {
             text-align: center;
-            padding-bottom: 24px;
-            margin-bottom: 24px;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
             border-bottom: 1px solid #797E88;
           }
           
           .header img {
-            height: 60px;
-            margin-bottom: 8px;
+            height: 80px;
+            margin-bottom: 12px;
           }
           
           .header-app-name {
-            font-size: 14px;
-            color: #797E88;
-            font-weight: 500;
-            letter-spacing: 2px;
+            font-size: 16px;
+            color: #051F41;
+            font-weight: 600;
+            letter-spacing: 4px;
             text-transform: uppercase;
           }
           
-          .identification-block {
-            background: #FFFFFF;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 24px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
+          .identification {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 50px;
+            gap: 40px;
           }
           
-          .field-group label {
-            display: block;
-            font-size: 11px;
+          .field {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+          }
+          
+          .field-label {
+            font-size: 14px;
             font-weight: 600;
             color: #051F41;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 4px;
+            white-space: nowrap;
           }
           
-          .field-group span {
-            display: block;
+          .field-value {
             font-size: 16px;
             color: #797E88;
-            font-weight: 500;
+            padding-bottom: 2px;
+            border-bottom: 1px solid #797E88;
+            min-width: 200px;
+          }
+          
+          .field-value.name {
+            flex: 1;
+            min-width: 300px;
+          }
+          
+          .section {
+            margin-bottom: 40px;
           }
           
           .section-title {
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 16px;
+            font-weight: 700;
             color: #051F41;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
           }
           
-          .prescription-block {
-            background: #FFFFFF;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            flex: 1;
-            min-height: 200px;
-          }
-          
-          .prescription-content {
-            white-space: pre-wrap;
-            font-size: 14px;
-            line-height: 1.8;
+          .section-content {
+            font-size: 15px;
+            line-height: 2;
             color: #051F41;
-          }
-          
-          .observations-block {
-            background: #FFFFFF;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 24px;
+            white-space: pre-wrap;
           }
           
           .observations-content {
-            font-size: 13px;
-            line-height: 1.7;
+            font-size: 14px;
+            line-height: 1.8;
             color: #797E88;
-            font-style: italic;
           }
           
-          .disclaimer {
+          .footer {
             margin-top: auto;
-            padding-top: 24px;
-            border-top: 1px solid #E5E7EB;
+            padding-top: 40px;
+            border-top: 1px solid #797E88;
             text-align: center;
           }
           
-          .disclaimer p {
+          .footer p {
             font-size: 10px;
             color: #797E88;
             line-height: 1.6;
-            max-width: 500px;
+            max-width: 450px;
             margin: 0 auto;
           }
           
@@ -220,43 +211,43 @@ export default function PatientPrescriptions() {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            .document-container {
+            .document {
               padding: 0;
             }
           }
         </style>
       </head>
       <body>
-        <div class="document-container">
+        <div class="document">
           <div class="header">
-            <img src="${logoRegenapp}" alt="REGENAPP Logo" />
+            <img src="${logoRegenapp}" alt="REGENAPP" />
             <div class="header-app-name">REGENAPP</div>
           </div>
           
-          <div class="identification-block">
-            <div class="field-group">
-              <label>Nome</label>
-              <span>${session?.patientName || 'Paciente'}</span>
+          <div class="identification">
+            <div class="field" style="flex: 1;">
+              <span class="field-label">NOME:</span>
+              <span class="field-value name">${session?.patientName || 'Paciente'}</span>
             </div>
-            <div class="field-group">
-              <label>Data</label>
-              <span>${format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
+            <div class="field">
+              <span class="field-label">DATA:</span>
+              <span class="field-value">${formattedDate}</span>
             </div>
           </div>
           
-          <div class="section-title">Prescrição</div>
-          <div class="prescription-block">
-            <div class="prescription-content">${prescription.content}</div>
+          <div class="section">
+            <h2 class="section-title">Prescrição</h2>
+            <div class="section-content">${prescription.content}</div>
           </div>
           
           ${prescription.notes ? `
-          <div class="section-title">Observações</div>
-          <div class="observations-block">
+          <div class="section">
+            <h2 class="section-title">Observações</h2>
             <div class="observations-content">${prescription.notes}</div>
           </div>
           ` : ""}
           
-          <div class="disclaimer">
+          <div class="footer">
             <p>
               Este documento foi gerado pelo REGENAPP como apoio à prática clínica.
               Siga exclusivamente as orientações do seu profissional de saúde.
@@ -276,111 +267,148 @@ export default function PatientPrescriptions() {
   };
 
   const renderPrescriptionDocument = (prescription: any) => {
-    const typeInfo = prescriptionTypes[prescription.prescription_type as keyof typeof prescriptionTypes];
+    const formattedDate = format(new Date(prescription.created_at), "dd / MM / yyyy", { locale: ptBR });
 
     return (
-      <Card key={prescription.id} className="overflow-hidden border" style={{ borderColor: '#E5E7EB' }}>
-        {/* Document Header */}
-        <div className="text-center py-4 border-b" style={{ borderColor: '#797E88' }}>
-          <img src={logoRegenapp} alt="REGENAPP Logo" className="h-10 mx-auto mb-1" />
-          <p className="text-[10px] tracking-widest uppercase" style={{ color: '#797E88' }}>
-            REGENAPP
-          </p>
-        </div>
+      <div key={prescription.id} className="mb-8">
+        {/* Paper Document */}
+        <div 
+          className="bg-white mx-auto"
+          style={{ 
+            maxWidth: '680px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            padding: '40px 48px',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '500px',
+          }}
+        >
+          {/* Header */}
+          <div className="text-center pb-5 mb-6" style={{ borderBottom: '1px solid #797E88' }}>
+            <img src={logoRegenapp} alt="REGENAPP" className="h-14 mx-auto mb-2" />
+            <p 
+              className="text-xs font-semibold tracking-[4px] uppercase"
+              style={{ color: '#051F41' }}
+            >
+              REGENAPP
+            </p>
+          </div>
 
-        <CardContent className="p-5 space-y-4">
-          {/* Identification Block */}
-          <div 
-            className="grid grid-cols-2 gap-3 p-4 rounded-xl border"
-            style={{ borderColor: '#E5E7EB' }}
-          >
-            <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: '#051F41' }}>
-                Nome
-              </label>
-              <span className="text-sm font-medium" style={{ color: '#797E88' }}>
+          {/* Identification - Paper Style */}
+          <div className="flex flex-wrap justify-between items-end mb-8 gap-4">
+            <div className="flex items-baseline gap-2 flex-1 min-w-[200px]">
+              <span 
+                className="text-xs font-semibold uppercase whitespace-nowrap"
+                style={{ color: '#051F41' }}
+              >
+                NOME:
+              </span>
+              <span 
+                className="text-sm pb-0.5 flex-1"
+                style={{ 
+                  color: '#797E88',
+                  borderBottom: '1px solid #797E88',
+                }}
+              >
                 {session?.patientName || 'Paciente'}
               </span>
             </div>
-            <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: '#051F41' }}>
-                Data
-              </label>
-              <span className="text-sm font-medium flex items-center gap-1" style={{ color: '#797E88' }}>
-                <Calendar className="h-3 w-3" />
-                {format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}
+            <div className="flex items-baseline gap-2">
+              <span 
+                className="text-xs font-semibold uppercase whitespace-nowrap"
+                style={{ color: '#051F41' }}
+              >
+                DATA:
+              </span>
+              <span 
+                className="text-sm pb-0.5"
+                style={{ 
+                  color: '#797E88',
+                  borderBottom: '1px solid #797E88',
+                  minWidth: '100px'
+                }}
+              >
+                {formattedDate}
               </span>
             </div>
           </div>
 
-          {/* Prescription Block */}
-          <div>
-            <h3 className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#051F41' }}>
-              Prescrição
-            </h3>
-            <div 
-              className="p-4 rounded-xl border min-h-[100px]"
-              style={{ borderColor: '#E5E7EB' }}
+          {/* Prescription Section */}
+          <div className="mb-6 flex-1">
+            <h2 
+              className="text-xs font-bold uppercase tracking-[2px] mb-3"
+              style={{ color: '#051F41' }}
             >
-              <p className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: '#051F41' }}>
-                {prescription.content}
-              </p>
-            </div>
+              Prescrição
+            </h2>
+            <p 
+              className="text-sm leading-7 whitespace-pre-wrap"
+              style={{ color: '#051F41' }}
+            >
+              {prescription.content}
+            </p>
           </div>
 
-          {/* Observations Block */}
+          {/* Observations Section */}
           {prescription.notes && (
-            <div>
-              <h3 className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#051F41' }}>
-                Observações
-              </h3>
-              <div 
-                className="p-4 rounded-xl border"
-                style={{ borderColor: '#E5E7EB' }}
+            <div className="mb-6">
+              <h2 
+                className="text-xs font-bold uppercase tracking-[2px] mb-3"
+                style={{ color: '#051F41' }}
               >
-                <p className="text-sm italic leading-relaxed" style={{ color: '#797E88' }}>
-                  {prescription.notes}
-                </p>
-              </div>
+                Observações
+              </h2>
+              <p 
+                className="text-sm leading-6"
+                style={{ color: '#797E88' }}
+              >
+                {prescription.notes}
+              </p>
             </div>
           )}
 
-          {/* Disclaimer */}
-          <div className="pt-3 border-t text-center" style={{ borderColor: '#E5E7EB' }}>
-            <p className="text-[9px] leading-relaxed max-w-sm mx-auto" style={{ color: '#797E88' }}>
+          {/* Footer Disclaimer */}
+          <div 
+            className="mt-auto pt-5 text-center"
+            style={{ borderTop: '1px solid #797E88' }}
+          >
+            <p 
+              className="text-[9px] leading-4 max-w-sm mx-auto"
+              style={{ color: '#797E88' }}
+            >
               Este documento foi gerado pelo REGENAPP como apoio à prática clínica.
               Siga exclusivamente as orientações do seu profissional de saúde.
               O REGENAPP não substitui a consulta ou o julgamento profissional.
             </p>
           </div>
+        </div>
 
-          {/* Export Button */}
+        {/* Export Button - Outside the document */}
+        <div className="flex justify-center mt-4">
           <Button 
             onClick={() => handleExportPDF(prescription)}
             variant="outline" 
-            className="w-full gap-2"
+            className="gap-2"
             style={{ borderColor: '#051F41', color: '#051F41' }}
           >
             <FileDown className="w-4 h-4" />
             Exportar PDF
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   };
 
   const EmptyState = () => (
-    <Card className="border-border/50">
-      <CardContent className="py-12 text-center">
-        <Pill className="h-12 w-12 mx-auto mb-4" style={{ color: '#797E88' }} />
-        <h3 className="text-lg font-medium mb-1" style={{ color: '#051F41' }}>
-          Nenhuma prescrição disponível
-        </h3>
-        <p style={{ color: '#797E88' }}>
-          Quando seu profissional criar prescrições, elas aparecerão aqui.
-        </p>
-      </CardContent>
-    </Card>
+    <div className="bg-white rounded-lg border border-border/50 py-12 text-center">
+      <Pill className="h-12 w-12 mx-auto mb-4" style={{ color: '#797E88' }} />
+      <h3 className="text-lg font-medium mb-1" style={{ color: '#051F41' }}>
+        Nenhuma prescrição disponível
+      </h3>
+      <p style={{ color: '#797E88' }}>
+        Quando seu profissional criar prescrições, elas aparecerão aqui.
+      </p>
+    </div>
   );
 
   return (
@@ -406,23 +434,23 @@ export default function PatientPrescriptions() {
               <TabsTrigger value="suplementacoes">Suplementações</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="todas" className="space-y-4 mt-4">
+            <TabsContent value="todas" className="space-y-4 mt-6">
               {prescriptions.map(renderPrescriptionDocument)}
             </TabsContent>
             
-            <TabsContent value="cuidados_gerais" className="space-y-4 mt-4">
+            <TabsContent value="cuidados_gerais" className="space-y-4 mt-6">
               {getPrescriptionsByType('cuidados_gerais').length > 0 
                 ? getPrescriptionsByType('cuidados_gerais').map(renderPrescriptionDocument)
                 : <EmptyState />}
             </TabsContent>
             
-            <TabsContent value="medicacoes" className="space-y-4 mt-4">
+            <TabsContent value="medicacoes" className="space-y-4 mt-6">
               {getPrescriptionsByType('medicacoes').length > 0 
                 ? getPrescriptionsByType('medicacoes').map(renderPrescriptionDocument)
                 : <EmptyState />}
             </TabsContent>
             
-            <TabsContent value="suplementacoes" className="space-y-4 mt-4">
+            <TabsContent value="suplementacoes" className="space-y-4 mt-6">
               {getPrescriptionsByType('suplementacoes').length > 0 
                 ? getPrescriptionsByType('suplementacoes').map(renderPrescriptionDocument)
                 : <EmptyState />}
