@@ -281,28 +281,6 @@ const Partners = () => {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Category Chips */}
-        <div className="flex-1 overflow-x-auto">
-          <div className="flex gap-2 pb-2">
-            {CATEGORIES.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
-                  ${
-                    selectedCategory === category
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }
-                `}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Sort Dropdown */}
         <div className="flex-shrink-0 w-full sm:w-48">
           <Select
