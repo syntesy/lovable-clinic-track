@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.generate-curation-job]
 verify_jwt = false
+
+[functions.translate-to-portuguese]
+verify_jwt = false
+
+[functions.transcribe-audio]
+verify_jwt = false
