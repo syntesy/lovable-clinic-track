@@ -1240,6 +1240,47 @@ export type Database = {
           },
         ]
       }
+      patient_procedures: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          patient_id: string
+          procedure_date: string
+          procedure_name: string
+          procedure_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_id: string
+          procedure_date?: string
+          procedure_name: string
+          procedure_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          procedure_date?: string
+          procedure_name?: string
+          procedure_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_procedures_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null

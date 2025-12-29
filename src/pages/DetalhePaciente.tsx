@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Search, ChevronDown, User, Activity, FileText, 
   FlaskConical, ClipboardList, Brain, Calendar,
   CheckCircle2, AlertCircle, XCircle, Clock,
-  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill
+  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,10 +35,12 @@ import { PatientEvaluationReport } from "@/components/PatientEvaluationReport";
 import { PrescriptionFormModal } from "@/components/patient/PrescriptionFormModal";
 import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
+import { AddProcedureModal } from "@/components/AddProcedureModal";
 import { Tables } from "@/integrations/supabase/types";
 
 const DetalhePaciente = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { id: patientIdFromUrl } = useParams();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +50,7 @@ const DetalhePaciente = () => {
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [selectedScreening, setSelectedScreening] = useState<Tables<"prp_screenings"> | null>(null);
   const [isScreeningModalOpen, setIsScreeningModalOpen] = useState(false);
+  const [isProcedureModalOpen, setIsProcedureModalOpen] = useState(false);
 
   // Set patient from URL parameter on mount
   useEffect(() => {
@@ -124,6 +127,21 @@ const DetalhePaciente = () => {
         .select("*")
         .eq("patient_id", selectedPatientId)
         .order("collection_date", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedPatientId,
+  });
+
+  // Fetch patient procedures
+  const { data: procedures } = useQuery({
+    queryKey: ["patient-procedures", selectedPatientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("patient_procedures")
+        .select("*")
+        .eq("patient_id", selectedPatientId)
+        .order("procedure_date", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -391,16 +409,58 @@ const DetalhePaciente = () => {
                         <p className="text-foreground text-lg">{patient?.clinical_diagnosis || "Não informado"}</p>
                       </CardContent>
                     </Card>
-                    <Card className="bg-card border-border">
+                    
+                    {/* Procedimentos Realizados */}
+                    <Card className="bg-card border-border col-span-1 sm:col-span-2 lg:col-span-1">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                          Total de Sessões
-                        </CardTitle>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                            Procedimentos Realizados
+                          </CardTitle>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 w-7 p-0"
+                            onClick={() => setIsProcedureModalOpen(true)}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <p className="text-4xl font-bold text-foreground">{sessions?.length || 0}</p>
+                        {procedures && procedures.length > 0 ? (
+                          <div className="space-y-2">
+                            <p className="text-3xl font-bold text-foreground mb-3">{procedures.length}</p>
+                            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                              {procedures.slice(0, 8).map((proc) => (
+                                <Badge key={proc.id} variant="secondary" className="text-xs">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  {proc.procedure_name}
+                                </Badge>
+                              ))}
+                              {procedures.length > 8 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{procedures.length - 8} mais
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-2">
+                            <p className="text-muted-foreground text-sm mb-2">Nenhum procedimento</p>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setIsProcedureModalOpen(true)}
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Registrar
+                            </Button>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
+                    
                     <Card className="bg-card border-border">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -774,6 +834,16 @@ const DetalhePaciente = () => {
         open={isScreeningModalOpen}
         onOpenChange={setIsScreeningModalOpen}
         screening={selectedScreening}
+      />
+
+      {/* Modal de adicionar procedimento */}
+      <AddProcedureModal
+        open={isProcedureModalOpen}
+        onOpenChange={setIsProcedureModalOpen}
+        patientId={selectedPatientId || ""}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["patient-procedures", selectedPatientId] });
+        }}
       />
     </div>
   );
