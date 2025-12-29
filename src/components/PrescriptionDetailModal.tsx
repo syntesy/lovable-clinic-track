@@ -44,7 +44,11 @@ export function PrescriptionDetailModal({
 
   if (!prescription) return null;
 
-  const formattedDate = format(new Date(prescription.created_at), "dd / MM / yyyy", { locale: ptBR });
+  const formattedDate = format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR });
+  const displayPatientName = patientName || "—";
+  const displayDate = formattedDate || "—";
+  const displayProfessionalName = professionalName || "Nome do Profissional";
+  const displayProfessionalSpecialty = professionalSpecialty || "Especialidade";
 
   const handleExportPDF = () => {
     const printWindow = window.open("", "_blank");
@@ -57,12 +61,12 @@ export function PrescriptionDetailModal({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Prescrição - ${patientName}</title>
+        <title>Prescrição - ${displayPatientName}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
           
           @page { 
-            margin: 20mm; 
+            margin: 15mm; 
             size: A4;
           }
           
@@ -74,146 +78,111 @@ export function PrescriptionDetailModal({
           
           body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            line-height: 1.6; 
+            line-height: 1.5; 
             color: #051F41;
             background: #FFFFFF;
             padding: 0;
             margin: 0;
           }
           
-          .document {
+          .paper {
             width: 100%;
             min-height: 100vh;
-            padding: 50px 60px;
+            padding: 48px;
             display: flex;
             flex-direction: column;
+            background: #FFFFFF;
           }
           
-          /* CABEÇALHO */
-          .header {
+          /* LOGO */
+          .logo-section {
             text-align: center;
-            padding-bottom: 30px;
-            margin-bottom: 40px;
-            border-bottom: 1px solid #797E88;
+            padding-bottom: 18px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #D6D9DE;
           }
           
-          .header img {
-            height: 80px;
+          .logo-section img {
+            height: 56px;
+          }
+          
+          /* CAIXA IDENTIFICAÇÃO */
+          .identification-box {
+            background: #F2F3F5;
+            border: 1px solid #D6D9DE;
+            border-radius: 24px;
+            padding: 22px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+          }
+          
+          .id-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          
+          .id-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #051F41;
+          }
+          
+          .id-value {
+            font-size: 13px;
+            font-weight: 400;
+            color: #797E88;
+          }
+          
+          /* SEÇÕES */
+          .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #051F41;
             margin-bottom: 12px;
           }
           
-          .header-app-name {
-            font-size: 16px;
-            color: #051F41;
-            font-weight: 600;
-            letter-spacing: 4px;
-            text-transform: uppercase;
+          .content-box {
+            background: #F2F3F5;
+            border: 1px solid #D6D9DE;
+            border-radius: 24px;
+            padding: 22px;
+            margin-bottom: 24px;
           }
           
-          /* IDENTIFICAÇÃO */
-          .identification {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 50px;
-            gap: 40px;
+          .prescription-box {
+            min-height: 260px;
           }
           
-          .field {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
+          .observations-box {
+            min-height: 120px;
           }
           
-          .field-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #051F41;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-          }
-          
-          .field-value {
-            font-size: 16px;
+          .content-text {
+            font-size: 13px;
+            font-weight: 400;
             color: #797E88;
-            padding-bottom: 2px;
-            border-bottom: 1px solid #797E88;
-            min-width: 200px;
-          }
-          
-          .field-value.name {
-            flex: 1;
-            min-width: 300px;
-          }
-          
-          /* PRESCRIÇÃO */
-          .section {
-            margin-bottom: 40px;
-          }
-          
-          .section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #051F41;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-          }
-          
-          .section-content {
-            font-size: 15px;
-            line-height: 2;
-            color: #051F41;
             white-space: pre-wrap;
+            line-height: 1.6;
           }
           
-          /* OBSERVAÇÕES */
-          .observations-content {
-            font-size: 14px;
-            line-height: 1.8;
-            color: #797E88;
+          /* PROFISSIONAL */
+          .professional-section {
+            margin-top: 26px;
           }
           
-          /* ASSINATURA */
-          .signature {
-            margin-top: auto;
-            padding-top: 60px;
-            text-align: left;
-          }
-          
-          .signature-line {
-            width: 280px;
-            border-top: 1px solid #051F41;
-            padding-top: 12px;
-          }
-          
-          .signature-name {
-            font-size: 16px;
-            font-weight: 600;
+          .professional-name {
+            font-size: 13px;
+            font-weight: 400;
             color: #051F41;
           }
           
-          .signature-specialty {
-            font-size: 14px;
+          .professional-specialty {
+            font-size: 13px;
+            font-weight: 400;
             color: #797E88;
-            margin-top: 4px;
-          }
-          
-          /* RODAPÉ */
-          .footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 1px solid #797E88;
-            text-align: center;
-          }
-          
-          .footer p {
-            font-size: 10px;
-            color: #797E88;
-            line-height: 1.6;
-            max-width: 450px;
-            margin: 0 auto;
+            margin-top: 2px;
           }
           
           @media print {
@@ -221,63 +190,47 @@ export function PrescriptionDetailModal({
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            .document {
+            .paper {
               padding: 0;
             }
           }
         </style>
       </head>
       <body>
-        <div class="document">
-          <!-- CABEÇALHO -->
-          <div class="header">
+        <div class="paper">
+          <!-- LOGO -->
+          <div class="logo-section">
             <img src="${logoRegenapp}" alt="REGENAPP" />
-            <div class="header-app-name">REGENAPP</div>
           </div>
           
           <!-- IDENTIFICAÇÃO -->
-          <div class="identification">
-            <div class="field" style="flex: 1;">
-              <span class="field-label">NOME:</span>
-              <span class="field-value name">${patientName}</span>
+          <div class="identification-box">
+            <div class="id-column">
+              <span class="id-label">NOME:</span>
+              <span class="id-value">${displayPatientName}</span>
             </div>
-            <div class="field">
-              <span class="field-label">DATA:</span>
-              <span class="field-value">${formattedDate}</span>
+            <div class="id-column" style="text-align: right;">
+              <span class="id-label">DATA:</span>
+              <span class="id-value">${displayDate}</span>
             </div>
           </div>
           
           <!-- PRESCRIÇÃO -->
-          <div class="section">
-            <h2 class="section-title">Prescrição</h2>
-            <div class="section-content">${prescription.content}</div>
+          <div class="section-title">PRESCRIÇÃO</div>
+          <div class="content-box prescription-box">
+            <div class="content-text">${prescription.content || ""}</div>
           </div>
           
-          ${prescription.notes ? `
           <!-- OBSERVAÇÕES -->
-          <div class="section">
-            <h2 class="section-title">Observações</h2>
-            <div class="observations-content">${prescription.notes}</div>
+          <div class="section-title">OBSERVAÇÕES</div>
+          <div class="content-box observations-box">
+            <div class="content-text">${prescription.notes || ""}</div>
           </div>
-          ` : ""}
           
-          <!-- ASSINATURA -->
-          ${professionalName ? `
-          <div class="signature">
-            <div class="signature-line">
-              <div class="signature-name">${professionalName}</div>
-              ${professionalSpecialty ? `<div class="signature-specialty">${professionalSpecialty}</div>` : ""}
-            </div>
-          </div>
-          ` : ""}
-          
-          <!-- RODAPÉ -->
-          <div class="footer">
-            <p>
-              Este documento foi gerado pelo REGENAPP como apoio à prática clínica.
-              Siga exclusivamente as orientações do seu profissional de saúde.
-              O REGENAPP não substitui a consulta ou o julgamento profissional.
-            </p>
+          <!-- PROFISSIONAL -->
+          <div class="professional-section">
+            <div class="professional-name">${displayProfessionalName}</div>
+            <div class="professional-specialty">${displayProfessionalSpecialty}</div>
           </div>
         </div>
       </body>
@@ -326,137 +279,99 @@ export function PrescriptionDetailModal({
         </DialogHeader>
 
         {/* Paper Document - A4 Style */}
-        <div className="mx-6 my-4">
+        <div className="mx-4 sm:mx-6 my-4">
           <div 
             className="bg-white mx-auto"
             style={{ 
               maxWidth: '680px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-              aspectRatio: '210 / 297',
-              padding: '48px 56px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              borderRadius: '20px',
+              padding: '48px',
               display: 'flex',
               flexDirection: 'column',
             }}
           >
-            {/* Header */}
-            <div className="text-center pb-6 mb-8" style={{ borderBottom: '1px solid #797E88' }}>
-              <img src={logoRegenapp} alt="REGENAPP" className="h-16 mx-auto mb-3" />
-              <p 
-                className="text-sm font-semibold tracking-[4px] uppercase"
-                style={{ color: '#051F41' }}
-              >
-                REGENAPP
-              </p>
+            {/* LOGO */}
+            <div 
+              className="text-center pb-[18px] mb-[28px]"
+              style={{ borderBottom: '1px solid #D6D9DE' }}
+            >
+              <img src={logoRegenapp} alt="REGENAPP" className="h-14 mx-auto" />
             </div>
 
-            {/* Identification - Paper Style */}
-            <div className="flex justify-between items-end mb-10 gap-8">
-              <div className="flex items-baseline gap-2 flex-1">
-                <span 
-                  className="text-sm font-semibold uppercase whitespace-nowrap"
-                  style={{ color: '#051F41' }}
-                >
+            {/* CAIXA IDENTIFICAÇÃO */}
+            <div 
+              className="flex justify-between mb-6"
+              style={{ 
+                background: '#F2F3F5',
+                border: '1px solid #D6D9DE',
+                borderRadius: '24px',
+                padding: '22px',
+              }}
+            >
+              <div className="flex flex-col gap-1">
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#051F41' }}>
                   NOME:
                 </span>
-                <span 
-                  className="text-base pb-0.5 flex-1"
-                  style={{ 
-                    color: '#797E88',
-                    borderBottom: '1px solid #797E88',
-                    minWidth: '180px'
-                  }}
-                >
-                  {patientName}
+                <span style={{ fontSize: '13px', fontWeight: 400, color: '#797E88' }}>
+                  {displayPatientName}
                 </span>
               </div>
-              <div className="flex items-baseline gap-2">
-                <span 
-                  className="text-sm font-semibold uppercase whitespace-nowrap"
-                  style={{ color: '#051F41' }}
-                >
+              <div className="flex flex-col gap-1 text-right">
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#051F41' }}>
                   DATA:
                 </span>
-                <span 
-                  className="text-base pb-0.5"
-                  style={{ 
-                    color: '#797E88',
-                    borderBottom: '1px solid #797E88',
-                    minWidth: '120px'
-                  }}
-                >
-                  {formattedDate}
+                <span style={{ fontSize: '13px', fontWeight: 400, color: '#797E88' }}>
+                  {displayDate}
                 </span>
               </div>
             </div>
 
-            {/* Prescription Section */}
-            <div className="mb-8 flex-1">
-              <h2 
-                className="text-sm font-bold uppercase tracking-[2px] mb-4"
-                style={{ color: '#051F41' }}
-              >
-                Prescrição
-              </h2>
-              <p 
-                className="text-[15px] leading-8 whitespace-pre-wrap"
-                style={{ color: '#051F41' }}
-              >
-                {prescription.content}
+            {/* PRESCRIÇÃO */}
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#051F41', marginBottom: '12px' }}>
+              PRESCRIÇÃO
+            </div>
+            <div 
+              style={{ 
+                background: '#F2F3F5',
+                border: '1px solid #D6D9DE',
+                borderRadius: '24px',
+                padding: '22px',
+                minHeight: '260px',
+                marginBottom: '24px',
+              }}
+            >
+              <p style={{ fontSize: '13px', fontWeight: 400, color: '#797E88', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                {prescription.content || ""}
               </p>
             </div>
 
-            {/* Observations Section */}
-            {prescription.notes && (
-              <div className="mb-8">
-                <h2 
-                  className="text-sm font-bold uppercase tracking-[2px] mb-4"
-                  style={{ color: '#051F41' }}
-                >
-                  Observações
-                </h2>
-                <p 
-                  className="text-sm leading-7"
-                  style={{ color: '#797E88' }}
-                >
-                  {prescription.notes}
-                </p>
-              </div>
-            )}
-
-            {/* Signature */}
-            {professionalName && (
-              <div className="mt-auto pt-12">
-                <div 
-                  className="pt-3"
-                  style={{ 
-                    borderTop: '1px solid #051F41',
-                    width: '240px'
-                  }}
-                >
-                  <p className="font-semibold" style={{ color: '#051F41' }}>
-                    {professionalName}
-                  </p>
-                  {professionalSpecialty && (
-                    <p className="text-sm mt-1" style={{ color: '#797E88' }}>
-                      {professionalSpecialty}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Footer Disclaimer */}
+            {/* OBSERVAÇÕES */}
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#051F41', marginBottom: '12px' }}>
+              OBSERVAÇÕES
+            </div>
             <div 
-              className="mt-auto pt-6 text-center"
-              style={{ borderTop: '1px solid #797E88' }}
+              style={{ 
+                background: '#F2F3F5',
+                border: '1px solid #D6D9DE',
+                borderRadius: '24px',
+                padding: '22px',
+                minHeight: '120px',
+                marginBottom: '26px',
+              }}
             >
-              <p 
-                className="text-[10px] leading-5 max-w-md mx-auto"
-                style={{ color: '#797E88' }}
-              >
-                Este documento foi gerado pelo REGENAPP como apoio à prática clínica.
-                Siga exclusivamente as orientações do seu profissional de saúde.
-                O REGENAPP não substitui a consulta ou o julgamento profissional.
+              <p style={{ fontSize: '13px', fontWeight: 400, color: '#797E88', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                {prescription.notes || ""}
+              </p>
+            </div>
+
+            {/* PROFISSIONAL - SEM CAIXA, SEM CONTORNO */}
+            <div>
+              <p style={{ fontSize: '13px', fontWeight: 400, color: '#051F41' }}>
+                {displayProfessionalName}
+              </p>
+              <p style={{ fontSize: '13px', fontWeight: 400, color: '#797E88', marginTop: '2px' }}>
+                {displayProfessionalSpecialty}
               </p>
             </div>
           </div>
