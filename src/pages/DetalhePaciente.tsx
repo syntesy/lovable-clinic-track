@@ -8,6 +8,7 @@ import {
   CheckCircle2, AlertCircle, XCircle, Clock,
   TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle
 } from "lucide-react";
+import { FisioRegenScoreWizard } from "@/components/FisioRegenScore/FisioRegenScoreWizard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -471,39 +472,9 @@ const DetalhePaciente = () => {
                   </div>
                 </TabsContent>
 
-                {/* Triagem Tab */}
+                {/* Triagem Tab - Score Clínico */}
                 <TabsContent value="triagem" className="mt-8">
-                  <div className="max-w-2xl">
-                    {screenings && screenings.length > 0 ? (
-                      <Card className="bg-card border-border">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-xl">Score FISIOREGEN</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <div className="flex items-center gap-8">
-                            <div className="text-6xl font-bold text-primary">78</div>
-                            <div className="flex-1 space-y-2">
-                              <Progress value={78} className="h-4" />
-                              <p className="text-sm text-muted-foreground">Prontidão Biológica</p>
-                            </div>
-                          </div>
-                          <div className="pt-4 border-t border-border">
-                            {getClassificationBadge(screenings[0]?.classification || "")}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <Card className="bg-card border-border">
-                        <CardContent className="py-16 text-center">
-                          <FlaskConical className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
-                          <p className="text-muted-foreground text-lg mb-4">Nenhuma triagem realizada</p>
-                          <Button size="lg" onClick={() => navigate(`/triagem-biologica?paciente=${selectedPatientId}`)}>
-                            Iniciar Triagem
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
+                  <FisioRegenScoreWizard />
                 </TabsContent>
 
                 {/* Histórico Tab */}
