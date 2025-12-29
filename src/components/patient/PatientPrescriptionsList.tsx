@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Salad, Pill, Sparkles, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Heart, Pill, Sparkles, Calendar, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PrescriptionDetailModal } from '@/components/PrescriptionDetailModal';
@@ -14,9 +14,13 @@ interface PatientPrescriptionsListProps {
 }
 
 const prescriptionTypes = {
-  alimentar: { label: 'Cuidados Alimentares', icon: Salad, color: 'bg-green-500' },
+  cuidados_gerais: { label: 'Cuidados Gerais', icon: Heart, color: 'bg-rose-500' },
+  medicacoes: { label: 'Medicações', icon: Pill, color: 'bg-blue-500' },
+  suplementacoes: { label: 'Suplementações', icon: Sparkles, color: 'bg-amber-500' },
+  // Legacy types for backwards compatibility
+  alimentar: { label: 'Cuidados Gerais', icon: Heart, color: 'bg-rose-500' },
   medicamentosa: { label: 'Medicações', icon: Pill, color: 'bg-blue-500' },
-  suplementar: { label: 'Suplementos', icon: Sparkles, color: 'bg-purple-500' }
+  suplementar: { label: 'Suplementações', icon: Sparkles, color: 'bg-amber-500' }
 };
 
 export function PatientPrescriptionsList({ patientId, patientName = "Paciente" }: PatientPrescriptionsListProps) {
@@ -83,7 +87,7 @@ export function PatientPrescriptionsList({ patientId, patientName = "Paciente" }
                       <Icon className={`h-4 w-4 ${typeInfo?.color.replace('bg-', 'text-')}`} />
                     </div>
                     <div>
-                      <CardTitle className="text-sm font-medium">{prescription.title}</CardTitle>
+                      <CardTitle className="text-sm font-medium">{typeInfo?.label || prescription.prescription_type}</CardTitle>
                       <CardDescription className="flex items-center gap-2 text-xs">
                         <Calendar className="h-3 w-3" />
                         {format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}
