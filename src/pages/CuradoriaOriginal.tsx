@@ -34,13 +34,19 @@ export default function CuradoriaOriginal() {
       };
       setArticle(typedArticle);
 
-      // Get PDF URL from storage if pdf_path exists
+      // Get PDF URL - check if it's a storage path or public folder path
       if (data.pdf_path) {
-        const { data: urlData } = supabase.storage
-          .from("articles")
-          .getPublicUrl(data.pdf_path);
-        
-        setPdfUrl(urlData.publicUrl);
+        // If path starts with /articles/, it's in the public folder
+        if (data.pdf_path.startsWith('/articles/')) {
+          setPdfUrl(data.pdf_path);
+        } else {
+          // Otherwise try to get from Supabase storage
+          const { data: urlData } = supabase.storage
+            .from("articles")
+            .getPublicUrl(data.pdf_path);
+          
+          setPdfUrl(urlData.publicUrl);
+        }
       }
     } catch (error) {
       console.error("Error fetching article:", error);
