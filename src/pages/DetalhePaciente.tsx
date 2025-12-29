@@ -340,14 +340,6 @@ const DetalhePaciente = () => {
                     <FlaskConical className="w-4 h-4" />
                     Iniciar Triagem Pré-PRP
                   </Button>
-                  <Button variant="outline" className="gap-2 h-10" onClick={() => navigate(`/relatorios?paciente=${selectedPatientId}`)}>
-                    <FileText className="w-4 h-4" />
-                    Gerar Relatório
-                  </Button>
-                  <Button variant="outline" className="gap-2 h-10">
-                    <ClipboardList className="w-4 h-4" />
-                    Solicitar Exames
-                  </Button>
                   <Button variant="outline" className="gap-2 h-10" onClick={() => navigate(`/agente-mac?paciente=${selectedPatientId}`)}>
                     <Brain className="w-4 h-4" />
                     Consultar AGENTE FISIOREGEN
