@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CuradoriaArticle, statusConfig, interestColors, CuradoriaStatus } from "@/types/curadoria";
 import { Curation, CurationStatus } from "@/types/curation";
 import { CuradoriaStatusBadge } from "@/components/curadoria/CuradoriaStatusBadge";
-import { StructuredCurationView } from "@/components/curadoria/StructuredCurationView";
+import { ScientificCurationCard, exampleCurationData } from "@/components/curadoria/ScientificCurationCard";
 import { CurationGovernanceBadge } from "@/components/curadoria/CurationGovernanceBadge";
 import { toast } from "sonner";
 import { 
@@ -405,7 +405,7 @@ export default function CuradoriaDetalhe() {
             </Badge>
           </div>
           
-          <StructuredCurationView curation={structuredCuration} />
+          <ScientificCurationCard data={exampleCurationData} />
         </div>
       )}
 
@@ -427,7 +427,7 @@ export default function CuradoriaDetalhe() {
             <h2 className="text-xl font-semibold text-foreground">Curadoria Clínica Estruturada</h2>
           </div>
           
-          <StructuredCurationView curation={structuredCuration} />
+          <ScientificCurationCard data={exampleCurationData} />
 
           {/* Disclaimer */}
           <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50">
