@@ -3,13 +3,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Salad, Pill, Sparkles } from 'lucide-react';
+import { Loader2, Heart, Pill, Sparkles } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface PrescriptionFormModalProps {
   open: boolean;
@@ -19,18 +19,20 @@ interface PrescriptionFormModalProps {
 }
 
 const prescriptionTypes = [
-  { value: 'alimentar', label: 'Cuidados Alimentares', icon: Salad, description: 'Orientações de preparo do solo e alimentação' },
-  { value: 'medicamentosa', label: 'Medicações', icon: Pill, description: 'Prescrição de medicamentos' },
-  { value: 'suplementar', label: 'Suplementos', icon: Sparkles, description: 'Vitaminas e suplementação' },
+  { value: 'cuidados_gerais', label: 'Cuidados Gerais', icon: Heart, description: 'Orientações gerais de cuidados' },
+  { value: 'medicacoes', label: 'Medicações', icon: Pill, description: 'Prescrição de medicamentos' },
+  { value: 'suplementacoes', label: 'Suplementações', icon: Sparkles, description: 'Vitaminas e suplementação' },
 ];
 
 export function PrescriptionFormModal({ open, onOpenChange, patientId, patientName }: PrescriptionFormModalProps) {
   const queryClient = useQueryClient();
   const [prescriptionType, setPrescriptionType] = useState('');
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [notes, setNotes] = useState('');
   const [isVisibleToPatient, setIsVisibleToPatient] = useState(true);
+  const [prescriptionDate] = useState(new Date());
+
+  const selectedTypeLabel = prescriptionTypes.find(t => t.value === prescriptionType)?.label || 'Prescrição';
 
   const createPrescriptionMutation = useMutation({
     mutationFn: async () => {
@@ -41,7 +43,7 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
         patient_id: patientId,
         professional_id: user.id,
         prescription_type: prescriptionType,
-        title,
+        title: selectedTypeLabel,
         content,
         notes: notes || null,
         is_visible_to_patient: isVisibleToPatient
@@ -62,7 +64,6 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
 
   const resetForm = () => {
     setPrescriptionType('');
-    setTitle('');
     setContent('');
     setNotes('');
     setIsVisibleToPatient(true);
@@ -75,10 +76,6 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
       toast.error('Selecione o tipo de prescrição');
       return;
     }
-    if (!title.trim()) {
-      toast.error('Informe o título');
-      return;
-    }
     if (!content.trim()) {
       toast.error('Informe o conteúdo da prescrição');
       return;
@@ -86,8 +83,6 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
 
     createPrescriptionMutation.mutate();
   };
-
-  const selectedType = prescriptionTypes.find(t => t.value === prescriptionType);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -100,6 +95,20 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Informações do Paciente e Data */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border border-border">
+            <div>
+              <Label className="text-xs text-muted-foreground">Paciente</Label>
+              <p className="font-medium text-foreground">{patientName}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Data da Prescrição</Label>
+              <p className="font-medium text-foreground">
+                {format(prescriptionDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
+            </div>
+          </div>
+
           {/* Tipo de Prescrição */}
           <div className="space-y-3">
             <Label>Tipo de Prescrição *</Label>
@@ -131,39 +140,22 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
             </div>
           </div>
 
-          {/* Título */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
-            <Input
-              id="title"
-              placeholder={
-                prescriptionType === 'alimentar' ? 'Ex: Orientações alimentares pré-procedimento' :
-                prescriptionType === 'medicamentosa' ? 'Ex: Prescrição de anti-inflamatório' :
-                prescriptionType === 'suplementar' ? 'Ex: Protocolo de suplementação' :
-                'Título da prescrição'
-              }
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
           {/* Conteúdo */}
           <div className="space-y-2">
-            <Label htmlFor="content">Conteúdo da Prescrição *</Label>
             <Textarea
               id="content"
               placeholder={
-                prescriptionType === 'alimentar' 
-                  ? 'Descreva as orientações alimentares...\n\nExemplo:\n- Evitar alimentos processados\n- Aumentar consumo de vegetais verdes\n- Hidratação: mínimo 2L de água/dia' 
-                  : prescriptionType === 'medicamentosa'
+                prescriptionType === 'cuidados_gerais' 
+                  ? 'Descreva os cuidados gerais...\n\nExemplo:\n- Repouso relativo\n- Evitar atividades de impacto\n- Aplicar gelo local por 15 min, 3x ao dia' 
+                  : prescriptionType === 'medicacoes'
                   ? 'Descreva a prescrição medicamentosa...\n\nExemplo:\n1. Medicamento X - 500mg - 1x ao dia por 7 dias\n2. Medicamento Y - 200mg - 2x ao dia por 5 dias'
-                  : prescriptionType === 'suplementar'
+                  : prescriptionType === 'suplementacoes'
                   ? 'Descreva a suplementação...\n\nExemplo:\n1. Vitamina D3 - 5000 UI - 1x ao dia\n2. Ômega 3 - 1000mg - 2x ao dia\n3. Colágeno tipo II - 40mg - em jejum'
                   : 'Descreva o conteúdo da prescrição...'
               }
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={8}
+              rows={10}
               className="resize-none"
             />
           </div>
@@ -203,7 +195,7 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={createPrescriptionMutation.isPending || !prescriptionType || !title || !content}
+            disabled={createPrescriptionMutation.isPending || !prescriptionType || !content}
           >
             {createPrescriptionMutation.isPending ? (
               <>
