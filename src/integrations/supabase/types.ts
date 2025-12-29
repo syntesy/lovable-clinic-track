@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string
+          severity: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          severity?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          severity?: string
+        }
+        Relationships: []
+      }
       app_events: {
         Row: {
           created_at: string
@@ -911,6 +941,33 @@ export type Database = {
           },
         ]
       }
+      partner_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          partner_id: string
+          patient_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          partner_id: string
+          patient_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          partner_id?: string
+          patient_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           coupon_code: string | null
@@ -1624,6 +1681,45 @@ export type Database = {
           scheduled_effective_date?: string | null
           scheduled_plan_change?: string | null
           status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
           updated_at?: string
           user_id?: string
         }

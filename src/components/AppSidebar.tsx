@@ -25,6 +25,7 @@ const menuItems = [
 ];
 
 const adminMenuItems = [
+  { title: "Dashboard", url: "/admin", icon: ShieldCheck },
   { title: "Gerenciar Artigos", url: "/admin/artigos", icon: FileText },
   { title: "Revisão de Curadorias", url: "/admin/curadoria", icon: Settings },
 ];
