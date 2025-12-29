@@ -6,13 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Printer, Send, Eye, EyeOff, Salad, Pill, Sparkles } from "lucide-react";
+import { FileDown, Send, Eye, EyeOff, Heart, Pill, Sparkles } from "lucide-react";
 import logoRegenapp from "@/assets/logo-regenapp.png";
 
 interface PrescriptionDetailModalProps {
@@ -28,13 +27,19 @@ interface PrescriptionDetailModalProps {
     created_at: string;
   } | null;
   patientName: string;
+  professionalName?: string;
+  professionalSpecialty?: string;
   onVisibilityChange?: () => void;
 }
 
 const prescriptionTypes = {
-  alimentar: { label: "Cuidados Alimentares", icon: Salad, color: "text-green-600" },
+  cuidados_gerais: { label: "Cuidados Gerais", icon: Heart, color: "text-rose-600" },
+  medicacoes: { label: "Medicações", icon: Pill, color: "text-blue-600" },
+  suplementacoes: { label: "Suplementações", icon: Sparkles, color: "text-amber-600" },
+  // Legacy types for backwards compatibility
+  alimentar: { label: "Cuidados Gerais", icon: Heart, color: "text-rose-600" },
   medicamentosa: { label: "Medicações", icon: Pill, color: "text-blue-600" },
-  suplementar: { label: "Suplementos", icon: Sparkles, color: "text-purple-600" },
+  suplementar: { label: "Suplementações", icon: Sparkles, color: "text-amber-600" },
 };
 
 export function PrescriptionDetailModal({
@@ -42,6 +47,8 @@ export function PrescriptionDetailModal({
   onOpenChange,
   prescription,
   patientName,
+  professionalName = "",
+  professionalSpecialty = "",
   onVisibilityChange,
 }: PrescriptionDetailModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -49,12 +56,8 @@ export function PrescriptionDetailModal({
   if (!prescription) return null;
 
   const typeInfo = prescriptionTypes[prescription.prescription_type as keyof typeof prescriptionTypes];
-  const Icon = typeInfo?.icon || Pill;
 
-  const handlePrint = () => {
-    const printContent = document.getElementById("prescription-print-content");
-    if (!printContent) return;
-
+  const handleExportPDF = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast.error("Não foi possível abrir a janela de impressão");
@@ -65,7 +68,7 @@ export function PrescriptionDetailModal({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Receituário - ${patientName}</title>
+        <title>Prescrição - ${patientName}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
           
@@ -76,219 +79,214 @@ export function PrescriptionDetailModal({
           
           * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
           }
           
           body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
             line-height: 1.6; 
-            color: #1e293b;
-            max-width: 100%;
+            color: #051F41;
+            background: #FFFFFF;
+            padding: 0;
             margin: 0;
-            padding: 30px;
-            background: #fff;
+            min-height: 100vh;
           }
           
-          .prescription-container {
-            border: 2px solid #4B705D;
-            border-radius: 12px;
-            padding: 30px;
-            position: relative;
-            min-height: calc(100vh - 60px);
+          .document-container {
+            width: 100%;
+            min-height: 100vh;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
           }
           
-          .header { 
-            text-align: center; 
-            padding-bottom: 20px; 
-            margin-bottom: 25px;
-            border-bottom: 2px solid #4B705D;
+          /* HEADER */
+          .header {
+            text-align: center;
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #797E88;
           }
           
-          .header img { 
-            height: 70px; 
+          .header img {
+            height: 60px;
+            margin-bottom: 8px;
           }
           
-          .date-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #4B705D 0%, #5d8a6f 100%);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
+          .header-app-name {
+            font-size: 14px;
+            color: #797E88;
             font-weight: 500;
-          }
-          
-          .patient-section {
-            background: linear-gradient(135deg, #f0f4f2 0%, #e8eeeb 100%);
-            padding: 20px 24px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            border-left: 4px solid #4B705D;
-          }
-          
-          .patient-label {
-            font-size: 11px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #4B705D;
+          }
+          
+          /* BLOCO IDENTIFICAÇÃO */
+          .identification-block {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          
+          .field-group label {
+            display: block;
+            font-size: 11px;
             font-weight: 600;
+            color: #051F41;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 4px;
           }
           
-          .patient-name { 
-            font-size: 20px;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0;
+          .field-group span {
+            display: block;
+            font-size: 16px;
+            color: #797E88;
+            font-weight: 500;
           }
           
-          .prescription-type-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 18px;
-            background: #4B705D;
-            color: white;
-            border-radius: 25px;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+          /* BLOCO PRESCRIÇÃO */
+          .section-title {
+            font-size: 13px;
             font-weight: 600;
-            margin-bottom: 16px;
+            color: #051F41;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
           }
           
-          .prescription-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: #1e293b;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed #cbd5e1;
+          .prescription-block {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            flex: 1;
+            min-height: 200px;
           }
           
           .prescription-content {
             white-space: pre-wrap;
-            font-size: 15px;
-            line-height: 1.9;
-            padding: 24px;
-            background: #fafbfc;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 25px;
-            color: #334155;
-          }
-          
-          .notes-section {
-            background: linear-gradient(135deg, #fef9e7 0%, #fdf6e3 100%);
-            border: 1px solid #f0d78c;
-            border-radius: 10px;
-            padding: 16px 20px;
-            margin-bottom: 25px;
-          }
-          
-          .notes-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #b8860b;
-            font-weight: 600;
-            margin-bottom: 6px;
-          }
-          
-          .notes-content {
             font-size: 14px;
-            color: #6b5a00;
+            line-height: 1.8;
+            color: #051F41;
+          }
+          
+          /* BLOCO OBSERVAÇÕES */
+          .observations-block {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+          }
+          
+          .observations-content {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #797E88;
             font-style: italic;
           }
           
-          .footer {
+          /* BLOCO PROFISSIONAL */
+          .professional-block {
+            margin-bottom: 32px;
+          }
+          
+          .professional-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #051F41;
+            margin-bottom: 4px;
+          }
+          
+          .professional-specialty {
+            font-size: 14px;
+            color: #797E88;
+          }
+          
+          /* AVISOS DE RESPONSABILIDADE */
+          .disclaimer {
             margin-top: auto;
-            padding-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid #E5E7EB;
             text-align: center;
           }
           
-          .signature-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-          }
-          
-          .signature-line {
-            width: 280px;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4B705D, #4B705D, transparent);
-            margin-top: 50px;
-          }
-          
-          .signature-text {
-            font-size: 12px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          
-          .footer-badge {
-            margin-top: 20px;
-            padding: 8px 20px;
-            background: #f1f5f3;
-            border-radius: 20px;
+          .disclaimer p {
             font-size: 10px;
-            color: #4B705D;
-            font-weight: 500;
-            letter-spacing: 0.5px;
+            color: #797E88;
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto;
           }
           
           @media print {
-            body { 
-              padding: 0; 
+            body {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            .prescription-container {
-              border: 2px solid #4B705D;
-              min-height: auto;
+            .document-container {
+              padding: 0;
             }
           }
         </style>
       </head>
       <body>
-        <div class="prescription-container">
-          <div class="date-badge">
-            ${format(new Date(prescription.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-          </div>
-          
+        <div class="document-container">
+          <!-- HEADER -->
           <div class="header">
-            <img src="${logoRegenapp}" alt="RegenApp Logo" />
+            <img src="${logoRegenapp}" alt="REGENAPP Logo" />
+            <div class="header-app-name">REGENAPP</div>
           </div>
           
-          <div class="patient-section">
-            <div class="patient-label">Paciente</div>
-            <h2 class="patient-name">${patientName}</h2>
+          <!-- BLOCO IDENTIFICAÇÃO -->
+          <div class="identification-block">
+            <div class="field-group">
+              <label>Nome</label>
+              <span>${patientName}</span>
+            </div>
+            <div class="field-group">
+              <label>Data</label>
+              <span>${format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
+            </div>
           </div>
           
-          <div class="prescription-type-badge">
-            ${typeInfo?.label || prescription.prescription_type}
+          <!-- BLOCO PRESCRIÇÃO -->
+          <div class="section-title">Prescrição</div>
+          <div class="prescription-block">
+            <div class="prescription-content">${prescription.content}</div>
           </div>
-          
-          <div class="prescription-title">${prescription.title}</div>
-          
-          <div class="prescription-content">${prescription.content}</div>
           
           ${prescription.notes ? `
-            <div class="notes-section">
-              <div class="notes-label">Observações</div>
-              <div class="notes-content">${prescription.notes}</div>
-            </div>
+          <!-- BLOCO OBSERVAÇÕES -->
+          <div class="section-title">Observações</div>
+          <div class="observations-block">
+            <div class="observations-content">${prescription.notes}</div>
+          </div>
           ` : ""}
           
-          <div class="footer">
-            <div class="signature-area">
-              <div class="signature-line"></div>
-              <div class="signature-text">Assinatura e Carimbo do Profissional</div>
-            </div>
-            <div class="footer-badge">Documento gerado pelo Sistema RegenApp</div>
+          <!-- BLOCO PROFISSIONAL -->
+          ${professionalName ? `
+          <div class="professional-block">
+            <div class="professional-name">${professionalName}</div>
+            ${professionalSpecialty ? `<div class="professional-specialty">${professionalSpecialty}</div>` : ""}
+          </div>
+          ` : ""}
+          
+          <!-- AVISOS DE RESPONSABILIDADE -->
+          <div class="disclaimer">
+            <p>
+              Este documento foi gerado pelo REGENAPP como apoio à prática clínica.
+              Siga exclusivamente as orientações do seu profissional de saúde.
+              O REGENAPP não substitui a consulta ou o julgamento profissional.
+            </p>
           </div>
         </div>
       </body>
@@ -329,93 +327,115 @@ export function PrescriptionDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto border-2 border-primary/20 p-6">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-primary">
-            <Icon className={`w-5 h-5`} />
-            Receituário
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="flex items-center gap-2" style={{ color: '#051F41' }}>
+            Documento de Prescrição
           </DialogTitle>
         </DialogHeader>
 
-        {/* A4 Paper Preview - 210mm x 297mm ratio (1:1.414) */}
+        {/* Document Preview - A4 Format */}
         <div 
-          id="prescription-print-content" 
-          className="bg-white border-2 border-primary/30 rounded-lg shadow-lg mx-auto"
+          className="mx-6 bg-white border rounded-xl shadow-sm overflow-hidden"
           style={{ 
-            width: '100%',
-            maxWidth: '595px', // A4 width in pixels at 72dpi
-            aspectRatio: '210 / 297',
-            padding: '40px',
-            display: 'flex',
-            flexDirection: 'column',
+            borderColor: '#E5E7EB',
           }}
         >
-          {/* Cabeçalho do Receituário */}
-          <div className="text-center border-b-2 border-primary/30 pb-4 mb-5 relative">
-            <img src={logoRegenapp} alt="RegenApp Logo" className="h-14 mx-auto" />
-            <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs">
-              {format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}
-            </div>
-          </div>
-
-          {/* Info do Paciente */}
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-3 rounded-lg border-l-4 border-primary mb-4">
-            <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">Paciente</p>
-            <p className="font-bold text-base text-foreground">{patientName}</p>
-          </div>
-
-          {/* Tipo e Título */}
-          <div className="space-y-2 mb-4">
-            <Badge className="gap-1 bg-primary text-primary-foreground px-3 py-1 text-[10px] uppercase tracking-wide">
-              <Icon className="w-3 h-3" />
-              {typeInfo?.label || prescription.prescription_type}
-            </Badge>
-            <h3 className="text-lg font-bold text-foreground border-b border-dashed border-border pb-2">
-              {prescription.title}
-            </h3>
-          </div>
-
-          {/* Conteúdo da Prescrição */}
-          <div className="bg-secondary/30 p-4 rounded-lg border border-border flex-1 mb-4 overflow-y-auto">
-            <p className="whitespace-pre-wrap text-foreground leading-relaxed text-sm">
-              {prescription.content}
+          {/* Header */}
+          <div className="text-center py-6 border-b" style={{ borderColor: '#797E88' }}>
+            <img src={logoRegenapp} alt="REGENAPP Logo" className="h-12 mx-auto mb-2" />
+            <p className="text-xs tracking-widest uppercase" style={{ color: '#797E88' }}>
+              REGENAPP
             </p>
           </div>
 
-          {/* Observações */}
-          {prescription.notes && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800 mb-4">
-              <p className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400 font-semibold mb-0.5">
-                Observações
-              </p>
-              <p className="text-xs text-amber-900 dark:text-amber-200 italic">
-                {prescription.notes}
-              </p>
+          <div className="p-6 space-y-5">
+            {/* Identification Block */}
+            <div 
+              className="grid grid-cols-2 gap-4 p-5 rounded-xl border"
+              style={{ borderColor: '#E5E7EB' }}
+            >
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#051F41' }}>
+                  Nome
+                </label>
+                <span className="text-base font-medium" style={{ color: '#797E88' }}>
+                  {patientName}
+                </span>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: '#051F41' }}>
+                  Data
+                </label>
+                <span className="text-base font-medium" style={{ color: '#797E88' }}>
+                  {format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                </span>
+              </div>
             </div>
-          )}
 
-          {/* Rodapé com assinatura */}
-          <div className="mt-auto pt-6 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-56 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Assinatura e Carimbo do Profissional
-              </p>
+            {/* Prescription Block */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#051F41' }}>
+                Prescrição
+              </h3>
+              <div 
+                className="p-5 rounded-xl border min-h-[150px]"
+                style={{ borderColor: '#E5E7EB' }}
+              >
+                <p className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: '#051F41' }}>
+                  {prescription.content}
+                </p>
+              </div>
             </div>
-            <div className="mt-4 inline-block bg-muted/50 px-4 py-1.5 rounded-full">
-              <p className="text-[9px] text-muted-foreground tracking-wide">
-                Documento gerado pelo Sistema RegenApp
+
+            {/* Observations Block */}
+            {prescription.notes && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#051F41' }}>
+                  Observações
+                </h3>
+                <div 
+                  className="p-5 rounded-xl border"
+                  style={{ borderColor: '#E5E7EB' }}
+                >
+                  <p className="text-sm italic leading-relaxed" style={{ color: '#797E88' }}>
+                    {prescription.notes}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Professional Block */}
+            {professionalName && (
+              <div className="pt-2">
+                <p className="font-semibold" style={{ color: '#051F41' }}>
+                  {professionalName}
+                </p>
+                {professionalSpecialty && (
+                  <p className="text-sm" style={{ color: '#797E88' }}>
+                    {professionalSpecialty}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Disclaimer */}
+            <div className="pt-4 border-t text-center" style={{ borderColor: '#E5E7EB' }}>
+              <p className="text-[10px] leading-relaxed max-w-md mx-auto" style={{ color: '#797E88' }}>
+                Este documento foi gerado pelo REGENAPP como apoio à prática clínica.
+                Siga exclusivamente as orientações do seu profissional de saúde.
+                O REGENAPP não substitui a consulta ou o julgamento profissional.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Status de Visibilidade - fora do paper */}
-        <div className="flex items-center justify-center gap-2 text-sm bg-muted/50 px-4 py-2 rounded-lg mt-4">
+        {/* Visibility Status */}
+        <div className="mx-6 flex items-center justify-center gap-2 text-sm bg-muted/50 px-4 py-2 rounded-lg">
           {prescription.is_visible_to_patient ? (
             <>
-              <Eye className="w-4 h-4 text-primary" />
-              <span className="text-primary font-medium">Visível na área do paciente</span>
+              <Eye className="w-4 h-4" style={{ color: '#051F41' }} />
+              <span className="font-medium" style={{ color: '#051F41' }}>Visível na área do paciente</span>
             </>
           ) : (
             <>
@@ -425,19 +445,25 @@ export function PrescriptionDetailModal({
           )}
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="mx-6" />
 
-        {/* Ações */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={handlePrint} variant="outline" className="flex-1 gap-2 border-primary/30 hover:bg-primary/5">
-            <Printer className="w-4 h-4" />
-            Imprimir PDF
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 p-6 pt-0">
+          <Button 
+            onClick={handleExportPDF} 
+            variant="outline" 
+            className="flex-1 gap-2"
+            style={{ borderColor: '#051F41', color: '#051F41' }}
+          >
+            <FileDown className="w-4 h-4" />
+            Exportar PDF
           </Button>
           <Button
             onClick={handleToggleVisibility}
             disabled={isUpdating}
             variant={prescription.is_visible_to_patient ? "secondary" : "default"}
             className="flex-1 gap-2"
+            style={!prescription.is_visible_to_patient ? { backgroundColor: '#051F41' } : {}}
           >
             {prescription.is_visible_to_patient ? (
               <>
