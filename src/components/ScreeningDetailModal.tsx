@@ -39,7 +39,16 @@ interface QuestionnaireAnswers {
   nivel_estresse?: string;
 }
 
-// Mapeamento completo de opções para exibição
+interface QuestionnaireData {
+  answers?: QuestionnaireAnswers;
+  mode?: string;
+  patient_id?: string;
+  provided_exams?: any;
+  // Suporte para estrutura antiga direta
+  [key: string]: any;
+}
+
+// Mapeamento completo de opções para exibição (atualizado com as chaves do banco)
 const allOptions = {
   regiao_principal: {
     ombro: "Ombro",
@@ -50,6 +59,7 @@ const allOptions = {
     tornozelo_pe: "Tornozelo / Pé",
     coluna_cervical: "Coluna Cervical",
     coluna_lombar: "Coluna Lombar",
+    coluna: "Coluna",
     outro: "Outro",
   },
   procedimento_considerado: {
@@ -57,12 +67,16 @@ const allOptions = {
     prf: "PRF (Fibrina Rica em Plaquetas)",
     bmac: "BMAC (Aspirado de Medula Óssea)",
     proloterapia: "Proloterapia",
+    NAO_SEI: "Não sei / A definir",
     outro: "Outro / A definir",
   },
   tempo_dor: {
     agudo: "Agudo (< 6 semanas)",
+    "menos_6sem": "Agudo (< 6 semanas)",
     subagudo: "Subagudo (6 sem – 3 meses)",
+    "6-12sem": "Subagudo (6 sem – 3 meses)",
     cronico: "Crônico (> 3 meses)",
+    "mais_12sem": "Crônico (> 3 meses)",
   },
   qualidade_sono: {
     boa: "Boa (>7h, restaurador)",
@@ -82,36 +96,58 @@ const allOptions = {
   },
   red_flags: {
     infeccao_ativa: "Infecção ativa local ou sistêmica",
+    infeccao_ativa_febre: "Infecção ativa / Febre",
+    infeccao_pele_local: "Infecção de pele no local",
     neoplasia_ativa: "Neoplasia ativa (sólida ou hematológica)",
+    cancer_ativo: "Câncer ativo / Tratamento oncológico",
     coagulopatia_grave: "Coagulopatia grave não controlada",
+    disturbio_coagulacao: "Distúrbio de coagulação grave",
     trombocitopenia: "Trombocitopenia (<100 mil)",
+    plaquetas_baixas: "Plaquetas muito baixas (<100.000)",
     anemia_grave: "Anemia grave (Hb <10)",
+    anemia_severa: "Anemia severa (Hb <10)",
     gestacao: "Gestação",
+    gravidez_amamentacao: "Gravidez ou amamentação",
     alergia_anestesico: "Alergia conhecida a anestésico local",
+    alergia_anestesicos: "Alergia a anestésicos locais",
     instabilidade_articular: "Instabilidade articular significativa",
+    diabetes_descompensado: "Diabetes descompensado",
     nenhum: "Nenhum",
   },
   medicamentos: {
     aine_continuo: "AINEs contínuo (>7 dias)",
+    aine_7dias: "AINEs nos últimos 7 dias",
     corticoide_sistemico: "Corticoide sistêmico",
+    corticoide_oral_4sem: "Corticoide oral nas últimas 4 semanas",
     anticoagulante: "Anticoagulante oral",
+    anticoagulantes: "Anticoagulantes",
     imunossupressor: "Imunossupressor",
+    imunossupressores: "Imunossupressores",
     quimio_radio: "Quimioterapia / Radioterapia recente",
+    quimio_radioterapia: "Quimioterapia / Radioterapia",
     fluoroquinolona: "Fluoroquinolona últimos 60 dias",
+    antibiotico_fluoroquinolona: "Fluoroquinolona últimos 60 dias",
     nenhum: "Nenhum",
   },
   fatores_preparo: {
     tabagista_ativo: "Tabagista ativo",
+    tabagismo_atual: "Tabagismo atual",
     diabetes_descompensado: "Diabetes descompensado (HbA1c >8%)",
     obesidade: "Obesidade (IMC >30)",
+    obesidade_imc_elevado: "Obesidade / IMC elevado",
     infiltracao_corticoide: "Infiltração corticoide local <3 meses",
+    corticoide_local_3meses: "Infiltração de corticoide local <3 meses",
+    sem_exames_60dias: "Sem exames laboratoriais nos últimos 60 dias",
     nenhum: "Nenhum",
   },
   fatores_nutricionais: {
     vitamina_d_baixa: "Vit D baixa (<30)",
+    pouca_exposicao_solar_sem_vitamina_d: "Pouca exposição solar / Sem vitamina D",
     ferritina_baixa: "Ferritina <30",
+    cansaco_fraqueza_queda_cabelo: "Cansaço / Fraqueza / Queda de cabelo (possível ferropenia)",
     b12_baixa: "B12 <300",
     omega3_baixo: "Ômega-3 baixo / não suplementa",
+    baixo_consumo_frutas_verduras: "Baixo consumo de frutas e verduras",
     nenhum: "Nenhum / Sem dados",
   },
 };
@@ -263,7 +299,11 @@ export function ScreeningDetailModal({
 }: ScreeningDetailModalProps) {
   if (!screening) return null;
 
-  const responses = screening.questionnaire_responses as QuestionnaireAnswers;
+  // Suporta ambas as estruturas: dados diretos ou dentro de .answers
+  const rawData = screening.questionnaire_responses as QuestionnaireData;
+  const responses: QuestionnaireAnswers = rawData?.answers 
+    ? rawData.answers 
+    : (rawData as unknown as QuestionnaireAnswers);
   const classification = screening.classification || "";
   const analysisResult = screening.analysis_result || "";
 
@@ -412,31 +452,33 @@ export function ScreeningDetailModal({
     if (responses.red_flags && responses.red_flags.length > 0) {
       const criticalFlags = responses.red_flags.filter(f => f !== "nenhum");
       criticalFlags.forEach(flag => {
-        reasons.push(`⚠️ ${allOptions.red_flags[flag as keyof typeof allOptions.red_flags] || flag}`);
+        const label = allOptions.red_flags[flag as keyof typeof allOptions.red_flags] || flag;
+        reasons.push(`⚠️ ${label}`);
       });
     }
     
     if (responses.medicamentos && responses.medicamentos.length > 0) {
       const criticalMeds = responses.medicamentos.filter(m => m !== "nenhum");
-      if (criticalMeds.includes("anticoagulante")) {
-        reasons.push("💊 Uso de anticoagulante oral");
-      }
-      if (criticalMeds.includes("imunossupressor")) {
-        reasons.push("💊 Uso de imunossupressor");
-      }
-      if (criticalMeds.includes("quimio_radio")) {
-        reasons.push("💊 Quimioterapia/Radioterapia recente");
-      }
+      criticalMeds.forEach(med => {
+        const label = allOptions.medicamentos[med as keyof typeof allOptions.medicamentos] || med;
+        reasons.push(`💊 ${label}`);
+      });
     }
     
     if (responses.fatores_preparo && responses.fatores_preparo.length > 0) {
       const factors = responses.fatores_preparo.filter(f => f !== "nenhum");
-      if (factors.includes("infiltracao_corticoide")) {
-        reasons.push("💉 Infiltração de corticoide local há menos de 3 meses");
-      }
-      if (factors.includes("diabetes_descompensado")) {
-        reasons.push("🩺 Diabetes descompensado (HbA1c >8%)");
-      }
+      factors.forEach(factor => {
+        const label = allOptions.fatores_preparo[factor as keyof typeof allOptions.fatores_preparo] || factor;
+        reasons.push(`🩺 ${label}`);
+      });
+    }
+
+    if (responses.fatores_nutricionais && responses.fatores_nutricionais.length > 0) {
+      const nutritional = responses.fatores_nutricionais.filter(n => n !== "nenhum");
+      nutritional.forEach(item => {
+        const label = allOptions.fatores_nutricionais[item as keyof typeof allOptions.fatores_nutricionais] || item;
+        reasons.push(`🍎 ${label}`);
+      });
     }
     
     return reasons;
