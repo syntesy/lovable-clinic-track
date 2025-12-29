@@ -158,8 +158,7 @@ export function PrescriptionDetailModal({
       </head>
       <body>
         <div class="header">
-          <h1>RECEITUÁRIO</h1>
-          <p>Fisioterapia Regenerativa</p>
+          <img src="${logoRegenapp}" alt="RegenApp Logo" style="height: 60px;" />
         </div>
         
         <div class="date">
@@ -231,9 +230,7 @@ export function PrescriptionDetailModal({
         <div id="prescription-print-content" className="space-y-6">
           {/* Cabeçalho do Receituário */}
           <div className="text-center border-b border-primary/30 pb-4">
-            <img src={logoRegenapp} alt="Logo" className="h-12 mx-auto mb-2" />
-            <h2 className="text-xl font-semibold text-primary tracking-wide">RECEITUÁRIO</h2>
-            <p className="text-sm text-muted-foreground">Fisioterapia Regenerativa</p>
+            <img src={logoRegenapp} alt="RegenApp Logo" className="h-14 mx-auto" />
           </div>
 
           {/* Info do Paciente e Data */}
