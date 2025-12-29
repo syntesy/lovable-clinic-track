@@ -34,6 +34,7 @@ import AdminCuradoria from "./pages/admin/AdminCuradoria";
 import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import AdminArtigos from "./pages/admin/AdminArtigos";
 import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 // Patient Portal Pages
@@ -267,6 +268,16 @@ const App = () => (
             }
           />
           {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/curadoria"
             element={
