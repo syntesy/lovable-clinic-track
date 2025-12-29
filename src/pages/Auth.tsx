@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield } from "lucide-react";
+import { Shield, User } from "lucide-react";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import logoRegenapp from "@/assets/logo-regenapp.png";
 export default function Auth() {
@@ -335,6 +335,43 @@ export default function Auth() {
             borderRadius: "50%",
             backgroundColor: isSignUp ? "#B7BBC0" : "#253441"
           }} />
+          </div>
+
+          {/* Link para área do paciente */}
+          <div style={{
+            marginTop: "30px",
+            paddingTop: "20px",
+            borderTop: "1px solid #253441",
+            textAlign: "center"
+          }}>
+            <Link 
+              to="/patient/login"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                color: "#B7BBC0",
+                fontSize: "13px",
+                fontFamily: "Inter, sans-serif",
+                textDecoration: "none",
+                padding: "10px 20px",
+                borderRadius: "20px",
+                backgroundColor: "rgba(121, 185, 151, 0.1)",
+                border: "1px solid rgba(121, 185, 151, 0.3)",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = "rgba(121, 185, 151, 0.2)";
+                e.currentTarget.style.borderColor = "rgba(121, 185, 151, 0.5)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = "rgba(121, 185, 151, 0.1)";
+                e.currentTarget.style.borderColor = "rgba(121, 185, 151, 0.3)";
+              }}
+            >
+              <User style={{ width: "16px", height: "16px", color: "#79B997" }} />
+              <span>Sou Paciente</span>
+            </Link>
           </div>
         </div>
       </div>

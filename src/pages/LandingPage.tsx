@@ -756,6 +756,16 @@ export default function LandingPage() {
               Entrar
             </Button>
           </div>
+          <div className="mt-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/patient/login')}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Área do Paciente →
+            </Button>
+          </div>
         </div>
       </section>
 
