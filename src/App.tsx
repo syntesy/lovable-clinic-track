@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PatientAuthProvider } from "./contexts/PatientAuthContext";
 import { PatientProtectedRoute } from "./components/patient/PatientProtectedRoute";
 import Auth from "./pages/Auth";
+import Checkout from "./pages/Checkout";
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import DetalhePaciente from "./pages/DetalhePaciente";
@@ -55,6 +56,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/" element={<LandingPage />} />
             
             {/* Patient Portal Routes */}
