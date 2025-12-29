@@ -16,9 +16,15 @@ import {
   Award,
   Dna,
   Stethoscope,
-  BookMarked
+  BookMarked,
+  Languages,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface CriterioPontuacao {
   nome: string;
@@ -120,7 +126,49 @@ function getClassificationBadge(tipo: 'alta' | 'media' | 'baixa'): { bg: string;
   }
 }
 
+// Helper function to detect if text is in English
+function isEnglishText(text: string): boolean {
+  const englishWords = ['the', 'and', 'of', 'in', 'to', 'a', 'is', 'for', 'on', 'with', 'that', 'by', 'this', 'are', 'from', 'or', 'an', 'be', 'as', 'at', 'was', 'which', 'have', 'were', 'has', 'been', 'their', 'its', 'can', 'may', 'will', 'would', 'could', 'should', 'between', 'during', 'after', 'before', 'through', 'about', 'into', 'over', 'than', 'such', 'only', 'other', 'new', 'some', 'these', 'two', 'more', 'when', 'there', 'all', 'also', 'how', 'many', 'most', 'not', 'no', 'but', 'they', 'we', 'our', 'who', 'what', 'where', 'why', 'each', 'she', 'he', 'it', 'you'];
+  const lowerText = text.toLowerCase();
+  const words = lowerText.split(/\s+/);
+  const englishWordCount = words.filter(word => englishWords.includes(word)).length;
+  return englishWordCount >= 3;
+}
+
 export function ScientificCurationCard({ data, className }: ScientificCurationCardProps) {
+  const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+
+  const isEnglish = isEnglishText(data.titulo);
+
+  useEffect(() => {
+    const translateTitle = async () => {
+      if (isEnglish && !translatedTitle) {
+        setIsTranslating(true);
+        try {
+          const { data: result, error } = await supabase.functions.invoke('translate-to-portuguese', {
+            body: { text: data.titulo }
+          });
+          
+          if (error) throw error;
+          if (result?.translatedText) {
+            setTranslatedTitle(result.translatedText);
+          }
+        } catch (err) {
+          console.error("Translation error:", err);
+          toast.error("Erro ao traduzir título");
+        } finally {
+          setIsTranslating(false);
+        }
+      }
+    };
+    
+    translateTitle();
+  }, [data.titulo, isEnglish, translatedTitle]);
+
+  const displayTitle = showOriginal ? data.titulo : (translatedTitle || data.titulo);
+
   const criterios: CriterioPontuacao[] = [
     { nome: 'Tipo de Estudo', nota: data.tipoEstudo.peso, maximo: 5, icon: <FileText className="h-4 w-4" /> },
     { nome: 'Qualidade Metodológica', nota: data.qualidadeMetodologica.peso, maximo: 5, icon: <Scale className="h-4 w-4" /> },
@@ -138,12 +186,32 @@ export function ScientificCurationCard({ data, className }: ScientificCurationCa
       <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/10">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Award className="h-4 w-4 text-primary" />
-            <span>Classificação Científica REGENAPP</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Award className="h-4 w-4 text-primary" />
+              <span>Classificação Científica REGENAPP</span>
+            </div>
+            {isEnglish && translatedTitle && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowOriginal(!showOriginal)}
+                className="h-7 px-2 text-xs gap-1.5"
+              >
+                <Languages className="h-3.5 w-3.5" />
+                {showOriginal ? "Ver Tradução" : "Ver Original"}
+              </Button>
+            )}
           </div>
-          <CardTitle className="text-lg font-semibold text-foreground leading-tight">
-            {data.titulo}
+          <CardTitle className="text-lg font-semibold text-foreground leading-tight flex items-center gap-2">
+            {isTranslating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span>{data.titulo}</span>
+              </>
+            ) : (
+              displayTitle
+            )}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             {data.autores} · {data.revista}, {data.ano}
