@@ -391,9 +391,6 @@ const DetalhePaciente = () => {
                   <TabsTrigger value="prescricoes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Prescrições
                   </TabsTrigger>
-                  <TabsTrigger value="decisao" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-                    Decisão Clínica
-                  </TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
@@ -794,35 +791,6 @@ const DetalhePaciente = () => {
                   </div>
                 </TabsContent>
 
-                {/* Decisão Clínica Tab */}
-                <TabsContent value="decisao" className="mt-8">
-                  <div className="max-w-2xl space-y-6">
-                    <Card className="bg-card border-border">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                          <Brain className="w-5 h-5" />
-                          Recomendações do Sistema
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="p-5 bg-muted/50 rounded-lg">
-                          <div className="flex items-start gap-4">
-                            <TrendingUp className="w-6 h-6 text-clinical-safe mt-0.5 flex-shrink-0" />
-                            <div className="space-y-1">
-                              <p className="font-medium text-foreground text-lg">Paciente apresenta boa resposta ao tratamento</p>
-                              <p className="text-muted-foreground">
-                                Baseado nas últimas {sessions?.length || 0} sessões e evolução do quadro clínico.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <p className="text-xs text-muted-foreground text-center">
-                      Este sistema não substitui o julgamento clínico profissional.
-                    </p>
-                  </div>
-                </TabsContent>
               </Tabs>
             </div>
           </div>
