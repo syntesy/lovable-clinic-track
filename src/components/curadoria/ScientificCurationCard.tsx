@@ -416,16 +416,6 @@ export function ScientificCurationCard({ data, className }: ScientificCurationCa
         </CardContent>
       </Card>
 
-      {/* Disclaimer */}
-      <Card className="border-amber-500/20 bg-amber-500/5">
-        <CardContent className="flex items-start gap-3 pt-6">
-          <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            <strong>Aviso:</strong> Esta classificação científica tem finalidade educacional e de suporte à decisão clínica. 
-            Não substitui a avaliação individual do profissional de saúde.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
