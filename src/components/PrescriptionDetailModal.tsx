@@ -329,7 +329,7 @@ export function PrescriptionDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2 border-primary/20">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto border-2 border-primary/20 p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-primary">
             <Icon className={`w-5 h-5`} />
@@ -337,70 +337,92 @@ export function PrescriptionDetailModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div id="prescription-print-content" className="space-y-5">
+        {/* A4 Paper Preview - 210mm x 297mm ratio (1:1.414) */}
+        <div 
+          id="prescription-print-content" 
+          className="bg-white border-2 border-primary/30 rounded-lg shadow-lg mx-auto"
+          style={{ 
+            width: '100%',
+            maxWidth: '595px', // A4 width in pixels at 72dpi
+            aspectRatio: '210 / 297',
+            padding: '40px',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {/* Cabeçalho do Receituário */}
-          <div className="text-center border-b-2 border-primary/30 pb-4">
-            <img src={logoRegenapp} alt="RegenApp Logo" className="h-16 mx-auto" />
+          <div className="text-center border-b-2 border-primary/30 pb-4 mb-5 relative">
+            <img src={logoRegenapp} alt="RegenApp Logo" className="h-14 mx-auto" />
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs">
+              {format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}
+            </div>
           </div>
 
-          {/* Info do Paciente e Data */}
-          <div className="flex justify-between items-start gap-4">
-            <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-4 rounded-xl border-l-4 border-primary flex-1">
-              <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">Paciente</p>
-              <p className="font-bold text-lg text-foreground">{patientName}</p>
-            </div>
-            <div className="bg-primary text-primary-foreground px-4 py-3 rounded-full text-center">
-              <p className="text-xs opacity-80">Data</p>
-              <p className="font-semibold text-sm">
-                {format(new Date(prescription.created_at), "dd/MM/yyyy", { locale: ptBR })}
-              </p>
-            </div>
+          {/* Info do Paciente */}
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-3 rounded-lg border-l-4 border-primary mb-4">
+            <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">Paciente</p>
+            <p className="font-bold text-base text-foreground">{patientName}</p>
           </div>
 
           {/* Tipo e Título */}
-          <div className="space-y-3">
-            <Badge className="gap-1.5 bg-primary text-primary-foreground px-4 py-1.5 text-xs uppercase tracking-wide">
-              <Icon className="w-3.5 h-3.5" />
+          <div className="space-y-2 mb-4">
+            <Badge className="gap-1 bg-primary text-primary-foreground px-3 py-1 text-[10px] uppercase tracking-wide">
+              <Icon className="w-3 h-3" />
               {typeInfo?.label || prescription.prescription_type}
             </Badge>
-            <h3 className="text-xl font-bold text-foreground border-b border-dashed border-border pb-3">
+            <h3 className="text-lg font-bold text-foreground border-b border-dashed border-border pb-2">
               {prescription.title}
             </h3>
           </div>
 
           {/* Conteúdo da Prescrição */}
-          <div className="bg-secondary/50 p-6 rounded-xl border border-border">
-            <p className="whitespace-pre-wrap text-foreground leading-relaxed text-[15px]">
+          <div className="bg-secondary/30 p-4 rounded-lg border border-border flex-1 mb-4 overflow-y-auto">
+            <p className="whitespace-pre-wrap text-foreground leading-relaxed text-sm">
               {prescription.content}
             </p>
           </div>
 
           {/* Observações */}
           {prescription.notes && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 p-4 rounded-xl border border-amber-200 dark:border-amber-800">
-              <p className="text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400 font-semibold mb-1">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800 mb-4">
+              <p className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400 font-semibold mb-0.5">
                 Observações
               </p>
-              <p className="text-sm text-amber-900 dark:text-amber-200 italic">
+              <p className="text-xs text-amber-900 dark:text-amber-200 italic">
                 {prescription.notes}
               </p>
             </div>
           )}
 
-          {/* Status de Visibilidade */}
-          <div className="flex items-center gap-2 text-sm bg-muted/50 px-4 py-2 rounded-lg">
-            {prescription.is_visible_to_patient ? (
-              <>
-                <Eye className="w-4 h-4 text-primary" />
-                <span className="text-primary font-medium">Visível na área do paciente</span>
-              </>
-            ) : (
-              <>
-                <EyeOff className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Não visível para o paciente</span>
-              </>
-            )}
+          {/* Rodapé com assinatura */}
+          <div className="mt-auto pt-6 text-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-56 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Assinatura e Carimbo do Profissional
+              </p>
+            </div>
+            <div className="mt-4 inline-block bg-muted/50 px-4 py-1.5 rounded-full">
+              <p className="text-[9px] text-muted-foreground tracking-wide">
+                Documento gerado pelo Sistema RegenApp
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* Status de Visibilidade - fora do paper */}
+        <div className="flex items-center justify-center gap-2 text-sm bg-muted/50 px-4 py-2 rounded-lg mt-4">
+          {prescription.is_visible_to_patient ? (
+            <>
+              <Eye className="w-4 h-4 text-primary" />
+              <span className="text-primary font-medium">Visível na área do paciente</span>
+            </>
+          ) : (
+            <>
+              <EyeOff className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Não visível para o paciente</span>
+            </>
+          )}
         </div>
 
         <Separator className="my-4" />
