@@ -36,6 +36,7 @@ import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import AdminArtigos from "./pages/admin/AdminArtigos";
 import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminRegistry from "./pages/admin/AdminRegistry";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 // Patient Portal Pages
@@ -327,6 +328,14 @@ const App = () => (
                 <Layout>
                   <AdminArtigoForm />
                 </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/registry"
+            element={
+              <ProtectedRoute>
+                <AdminRegistry />
               </ProtectedRoute>
             }
           />
