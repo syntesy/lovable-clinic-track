@@ -1612,6 +1612,163 @@ export type Database = {
         }
         Relationships: []
       }
+      registry_access_logs: {
+        Row: {
+          access_details: Json | null
+          access_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          access_details?: Json | null
+          access_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          access_details?: Json | null
+          access_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      registry_aggregated_metrics: {
+        Row: {
+          aggregation_level: string
+          created_at: string
+          id: string
+          metric_data: Json
+          metric_type: string
+          period_end: string
+          period_start: string
+          sample_size: number
+          updated_at: string
+        }
+        Insert: {
+          aggregation_level?: string
+          created_at?: string
+          id?: string
+          metric_data: Json
+          metric_type: string
+          period_end: string
+          period_start: string
+          sample_size?: number
+          updated_at?: string
+        }
+        Update: {
+          aggregation_level?: string
+          created_at?: string
+          id?: string
+          metric_data?: Json
+          metric_type?: string
+          period_end?: string
+          period_start?: string
+          sample_size?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      registry_consents: {
+        Row: {
+          consent_date: string | null
+          consent_given: boolean
+          consent_version: string
+          created_at: string
+          id: string
+          lgpd_accepted: boolean
+          patient_id: string
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          consent_date?: string | null
+          consent_given?: boolean
+          consent_version?: string
+          created_at?: string
+          id?: string
+          lgpd_accepted?: boolean
+          patient_id: string
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          consent_date?: string | null
+          consent_given?: boolean
+          consent_version?: string
+          created_at?: string
+          id?: string
+          lgpd_accepted?: boolean
+          patient_id?: string
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_consents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          is_eligible: boolean
+          patient_id: string
+          professional_id: string
+          snapshot_data: Json
+          snapshot_type: string
+          snapshot_version: number
+          source_record_id: string | null
+          source_table: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_eligible?: boolean
+          patient_id: string
+          professional_id: string
+          snapshot_data: Json
+          snapshot_type: string
+          snapshot_version?: number
+          source_record_id?: string | null
+          source_table?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_eligible?: boolean
+          patient_id?: string
+          professional_id?: string
+          snapshot_data?: Json
+          snapshot_type?: string
+          snapshot_version?: number
+          source_record_id?: string | null
+          source_table?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_snapshots_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_images: {
         Row: {
           description: string | null
