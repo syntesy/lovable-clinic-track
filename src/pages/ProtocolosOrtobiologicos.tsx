@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, FileText, Pencil, Trash2, Eye, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 
 interface OrtobiologicoProtocol {
   id: string;
@@ -106,6 +107,16 @@ const ProtocolosOrtobiologicos = () => {
   const [deletingProtocol, setDeletingProtocol] = useState<OrtobiologicoProtocol | null>(null);
   const [formData, setFormData] = useState<OrtobiologicoFormData>(emptyFormData);
 
+  // Registry episode hook - non-intrusive capture
+  const { ensureActiveEpisode, captureProcedurePlan } = useRegistryEpisode(patientIdFromUrl || "");
+
+  // Ensure episode exists when patient context is available
+  useEffect(() => {
+    if (patientIdFromUrl) {
+      ensureActiveEpisode().catch(console.error);
+    }
+  }, [patientIdFromUrl]);
+
   // Migrate localStorage data on first load
   useEffect(() => {
     const migrateLocalStorage = async () => {
@@ -173,6 +184,23 @@ const ProtocolosOrtobiologicos = () => {
         pre_procedure_exams: data.pre_procedure_exams || null,
       });
       if (error) throw error;
+
+      // === REGISTRY CAPTURE: Procedure Plan (non-intrusive) ===
+      if (patientIdFromUrl) {
+        try {
+          await captureProcedurePlan(
+            data.therapy_type,
+            data.application_site || undefined,
+            data.injection_technique?.toLowerCase().includes('ultrassom'),
+            undefined, // plannedDate
+            data.total_sessions || undefined,
+            data.clinical_observations || undefined
+          );
+        } catch (registryError) {
+          // Non-blocking: log but don't fail the main operation
+          console.error("Registry capture error (non-blocking):", registryError);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ortobiologicos-protocols"] });

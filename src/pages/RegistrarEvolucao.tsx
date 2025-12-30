@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, Activity, User, Upload, X, FileText, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { TreatmentSessionFormData, safeParseFloat, safeParseInt } from "@/types/forms";
+import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 
 const PROTOCOL_OPTIONS = [
   { id: "MAC", label: "MAC" },
@@ -32,6 +33,22 @@ const RegistrarEvolucao = () => {
   const [thermographyFiles, setThermographyFiles] = useState<File[]>([]);
   const [bloodTestFiles, setBloodTestFiles] = useState<File[]>([]);
   const [selectedProtocols, setSelectedProtocols] = useState<string[]>([]);
+  
+  // Registry episode hook - non-intrusive capture
+  const { 
+    ensureActiveEpisode, 
+    captureProcedurePerformed, 
+    captureFollowup,
+    captureLabResult,
+    captureScoreSnapshot
+  } = useRegistryEpisode(id || "");
+  
+  // Ensure episode exists on mount
+  useEffect(() => {
+    if (id) {
+      ensureActiveEpisode().catch(console.error);
+    }
+  }, [id]);
   
   // Exam results state
   const [examResults, setExamResults] = useState({
@@ -229,6 +246,79 @@ const RegistrarEvolucao = () => {
           file_path: filePath,
           image_type: "blood_test",
         });
+      }
+
+      // === REGISTRY CAPTURE: Follow-up + Procedure Performed (non-intrusive) ===
+      try {
+        const sessionNumber = data.session_number ? parseInt(data.session_number) : 1;
+        // Infer timepoint based on session number
+        let timepoint: 'baseline' | '1m' | '3m' | '6m' | '12m' = 'baseline';
+        if (sessionNumber <= 1) timepoint = 'baseline';
+        else if (sessionNumber <= 4) timepoint = '1m';
+        else if (sessionNumber <= 8) timepoint = '3m';
+        else if (sessionNumber <= 12) timepoint = '6m';
+        else timepoint = '12m';
+
+        // Capture followup
+        await captureFollowup(
+          timepoint,
+          data.vas_on_day ? parseFloat(data.vas_on_day) : undefined,
+          undefined, // function_score
+          undefined, // satisfaction
+          data.clinical_observations || undefined
+        );
+
+        // Capture procedure performed if protocols selected (indicates procedure was done)
+        if (selectedProtocols.length > 0) {
+          await captureProcedurePerformed(
+            selectedProtocols[0], // Primary protocol type
+            data.session_date || new Date().toISOString().split('T')[0],
+            sessionNumber,
+            undefined, // target
+            undefined, // guidance
+            undefined, // volumeUsed
+            {
+              protocols: selectedProtocols,
+              pharmaceutical: data.pharmaceutical_used || null,
+              techniques: data.associated_techniques || null,
+            },
+            false, // adverseEvent
+            undefined, // adverseEventNotes
+            data.clinical_observations || undefined
+          );
+        }
+
+        // Capture lab result if exam data provided
+        const hasLabData = examResults.hemoglobin || examResults.platelets || examResults.pcr || examResults.hematocrit;
+        if (hasLabData) {
+          await captureLabResult(
+            {
+              hemoglobin: examResults.hemoglobin ? parseFloat(examResults.hemoglobin) : null,
+              hematocrit: examResults.hematocrit ? parseFloat(examResults.hematocrit) : null,
+              platelets: examResults.platelets ? parseFloat(examResults.platelets) : null,
+              leukocytes: examResults.leukocytes ? parseFloat(examResults.leukocytes) : null,
+              pcr: examResults.pcr ? parseFloat(examResults.pcr) : null,
+              glucose: examResults.glucose ? parseFloat(examResults.glucose) : null,
+              hba1c: examResults.hba1c ? parseFloat(examResults.hba1c) : null,
+            },
+            data.session_date,
+            'manual'
+          );
+
+          // Capture score snapshot with labs if evaluation was done
+          if (evaluationResult) {
+            await captureScoreSnapshot(
+              evaluationResult.apt ? 80 : 40,
+              evaluationResult.apt ? 'Apto' : 'Não Apto',
+              { message: evaluationResult.message },
+              [],
+              'triage_plus_labs'
+            );
+          }
+        }
+      } catch (registryError) {
+        // Non-blocking: log but don't fail the main operation
+        console.error("Registry capture error (non-blocking):", registryError);
       }
 
       toast.success("Evolução registrada com sucesso!");

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 
 interface AddProcedureModalProps {
   open: boolean;
@@ -44,6 +45,16 @@ export function AddProcedureModal({ open, onOpenChange, patientId, onSuccess }: 
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Registry episode hook - non-intrusive capture
+  const { ensureActiveEpisode, captureProcedurePerformed } = useRegistryEpisode(patientId);
+
+  // Ensure episode exists when modal opens with patient context
+  useEffect(() => {
+    if (open && patientId) {
+      ensureActiveEpisode().catch(console.error);
+    }
+  }, [open, patientId]);
+
   const handleSubmit = async () => {
     if (!procedureType) {
       toast.error("Selecione um procedimento");
@@ -63,6 +74,25 @@ export function AddProcedureModal({ open, onOpenChange, patientId, onSuccess }: 
       });
 
       if (error) throw error;
+
+      // === REGISTRY CAPTURE: Procedure Performed (non-intrusive) ===
+      try {
+        await captureProcedurePerformed(
+          selectedProcedure?.label || procedureType,
+          format(procedureDate, "yyyy-MM-dd"),
+          undefined, // sessionNumber
+          selectedProcedure?.category || undefined,
+          undefined, // guidance
+          undefined, // volumeUsed
+          undefined, // productDetails
+          false, // adverseEvent
+          undefined, // adverseEventNotes
+          notes || undefined
+        );
+      } catch (registryError) {
+        // Non-blocking: log but don't fail the main operation
+        console.error("Registry capture error (non-blocking):", registryError);
+      }
 
       toast.success("Procedimento registrado com sucesso!");
       onSuccess();
