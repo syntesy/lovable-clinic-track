@@ -1,35 +1,21 @@
 import { FlaskConical } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface RegistryEligibilityBadgeProps {
+  isEligible: boolean;
   className?: string;
-  size?: 'sm' | 'md';
 }
 
 /**
- * Badge discreto que indica que o caso contribui para evidência clínica
- * Exibido apenas quando o paciente tem consentimento ativo
+ * Selo discreto que indica elegibilidade para evidência clínica
+ * Não menciona Orthoregen ao médico
  */
-export function RegistryEligibilityBadge({ 
-  className,
-  size = 'sm' 
-}: RegistryEligibilityBadgeProps) {
+export function RegistryEligibilityBadge({ isEligible, className = '' }: RegistryEligibilityBadgeProps) {
+  if (!isEligible) return null;
+
   return (
-    <div 
-      className={cn(
-        "inline-flex items-center gap-1 text-muted-foreground",
-        size === 'sm' && "text-xs",
-        size === 'md' && "text-sm",
-        className
-      )}
-      title="Este caso contribui para evidência clínica com dados anonimizados"
-    >
-      <FlaskConical className={cn(
-        "text-green-600",
-        size === 'sm' && "h-3 w-3",
-        size === 'md' && "h-4 w-4"
-      )} />
-      <span>Contribui para evidência clínica</span>
+    <div className={`inline-flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}>
+      <FlaskConical className="h-3 w-3 text-primary/60" />
+      <span>Contribui para evidência clínica (dados anonimizados)</span>
     </div>
   );
 }

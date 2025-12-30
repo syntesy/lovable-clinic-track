@@ -1678,6 +1678,41 @@ export type Database = {
         }
         Relationships: []
       }
+      registry_consent_logs: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          episode_id: string
+          id: string
+          new_status: string
+          previous_status: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          episode_id: string
+          id?: string
+          new_status: string
+          previous_status?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          episode_id?: string
+          id?: string
+          new_status?: string
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_consent_logs_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registry_consents: {
         Row: {
           consent_date: string | null
@@ -1718,6 +1753,326 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: true
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_episodes: {
+        Row: {
+          baseline_pain_0_10: number | null
+          clinician_id: string
+          created_at: string
+          id: string
+          notes_internal: string | null
+          pain_duration: string | null
+          patient_id: string
+          planned_procedure_type: string | null
+          region_primary: string | null
+          registry_case_id: string | null
+          registry_consent_status: string
+          registry_eligible: boolean
+          registry_partner: string | null
+          safety_block: boolean
+          status: string
+          suspected_diagnosis: string | null
+          updated_at: string
+        }
+        Insert: {
+          baseline_pain_0_10?: number | null
+          clinician_id: string
+          created_at?: string
+          id?: string
+          notes_internal?: string | null
+          pain_duration?: string | null
+          patient_id: string
+          planned_procedure_type?: string | null
+          region_primary?: string | null
+          registry_case_id?: string | null
+          registry_consent_status?: string
+          registry_eligible?: boolean
+          registry_partner?: string | null
+          safety_block?: boolean
+          status?: string
+          suspected_diagnosis?: string | null
+          updated_at?: string
+        }
+        Update: {
+          baseline_pain_0_10?: number | null
+          clinician_id?: string
+          created_at?: string
+          id?: string
+          notes_internal?: string | null
+          pain_duration?: string | null
+          patient_id?: string
+          planned_procedure_type?: string | null
+          region_primary?: string | null
+          registry_case_id?: string | null
+          registry_consent_status?: string
+          registry_eligible?: boolean
+          registry_partner?: string | null
+          safety_block?: boolean
+          status?: string
+          suspected_diagnosis?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_episodes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_followups: {
+        Row: {
+          created_at: string
+          episode_id: string
+          function_score: number | null
+          id: string
+          notes: string | null
+          pain_0_10: number | null
+          patient_satisfaction_0_10: number | null
+          timepoint: string
+        }
+        Insert: {
+          created_at?: string
+          episode_id: string
+          function_score?: number | null
+          id?: string
+          notes?: string | null
+          pain_0_10?: number | null
+          patient_satisfaction_0_10?: number | null
+          timepoint?: string
+        }
+        Update: {
+          created_at?: string
+          episode_id?: string
+          function_score?: number | null
+          id?: string
+          notes?: string | null
+          pain_0_10?: number | null
+          patient_satisfaction_0_10?: number | null
+          timepoint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_followups_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_lab_orders: {
+        Row: {
+          created_at: string
+          episode_id: string
+          id: string
+          order_version: string
+          requested_tests_json: Json
+        }
+        Insert: {
+          created_at?: string
+          episode_id: string
+          id?: string
+          order_version?: string
+          requested_tests_json?: Json
+        }
+        Update: {
+          created_at?: string
+          episode_id?: string
+          id?: string
+          order_version?: string
+          requested_tests_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_lab_orders_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_lab_results: {
+        Row: {
+          collected_date: string | null
+          created_at: string
+          episode_id: string
+          id: string
+          labs_json: Json
+          source: string
+        }
+        Insert: {
+          collected_date?: string | null
+          created_at?: string
+          episode_id: string
+          id?: string
+          labs_json?: Json
+          source?: string
+        }
+        Update: {
+          collected_date?: string | null
+          created_at?: string
+          episode_id?: string
+          id?: string
+          labs_json?: Json
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_lab_results_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_procedure_plans: {
+        Row: {
+          created_at: string
+          episode_id: string
+          guidance: boolean | null
+          id: string
+          notes: string | null
+          planned_date: string | null
+          procedure_type: string | null
+          sessions_planned: number | null
+          target: string | null
+        }
+        Insert: {
+          created_at?: string
+          episode_id: string
+          guidance?: boolean | null
+          id?: string
+          notes?: string | null
+          planned_date?: string | null
+          procedure_type?: string | null
+          sessions_planned?: number | null
+          target?: string | null
+        }
+        Update: {
+          created_at?: string
+          episode_id?: string
+          guidance?: boolean | null
+          id?: string
+          notes?: string | null
+          planned_date?: string | null
+          procedure_type?: string | null
+          sessions_planned?: number | null
+          target?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_procedure_plans_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_procedures_performed: {
+        Row: {
+          adverse_event: boolean
+          adverse_event_notes: string | null
+          clinician_notes: string | null
+          created_at: string
+          episode_id: string
+          guidance: boolean | null
+          id: string
+          performed_date: string
+          procedure_type: string | null
+          product_details_json: Json | null
+          session_number: number | null
+          target: string | null
+          volume_used: number | null
+        }
+        Insert: {
+          adverse_event?: boolean
+          adverse_event_notes?: string | null
+          clinician_notes?: string | null
+          created_at?: string
+          episode_id: string
+          guidance?: boolean | null
+          id?: string
+          performed_date?: string
+          procedure_type?: string | null
+          product_details_json?: Json | null
+          session_number?: number | null
+          target?: string | null
+          volume_used?: number | null
+        }
+        Update: {
+          adverse_event?: boolean
+          adverse_event_notes?: string | null
+          clinician_notes?: string | null
+          created_at?: string
+          episode_id?: string
+          guidance?: boolean | null
+          id?: string
+          performed_date?: string
+          procedure_type?: string | null
+          product_details_json?: Json | null
+          session_number?: number | null
+          target?: string | null
+          volume_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_procedures_performed_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_score_snapshots: {
+        Row: {
+          created_at: string
+          episode_id: string
+          id: string
+          reasoning_json: Json | null
+          recommendations_json: Json | null
+          score_classification: string | null
+          score_context: string
+          score_value: number | null
+          score_version: string
+        }
+        Insert: {
+          created_at?: string
+          episode_id: string
+          id?: string
+          reasoning_json?: Json | null
+          recommendations_json?: Json | null
+          score_classification?: string | null
+          score_context?: string
+          score_value?: number | null
+          score_version?: string
+        }
+        Update: {
+          created_at?: string
+          episode_id?: string
+          id?: string
+          reasoning_json?: Json | null
+          recommendations_json?: Json | null
+          score_classification?: string | null
+          score_context?: string
+          score_value?: number | null
+          score_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_score_snapshots_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
             referencedColumns: ["id"]
           },
         ]
@@ -1765,6 +2120,56 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_triage_snapshots: {
+        Row: {
+          answers_json: Json
+          biological_soil_flags_json: Json | null
+          created_at: string
+          episode_id: string
+          id: string
+          lifestyle_flags_json: Json | null
+          medications_flags_json: Json | null
+          nutrition_flags_json: Json | null
+          red_flags_list: Json | null
+          red_flags_present: boolean
+          triage_version: string
+        }
+        Insert: {
+          answers_json?: Json
+          biological_soil_flags_json?: Json | null
+          created_at?: string
+          episode_id: string
+          id?: string
+          lifestyle_flags_json?: Json | null
+          medications_flags_json?: Json | null
+          nutrition_flags_json?: Json | null
+          red_flags_list?: Json | null
+          red_flags_present?: boolean
+          triage_version?: string
+        }
+        Update: {
+          answers_json?: Json
+          biological_soil_flags_json?: Json | null
+          created_at?: string
+          episode_id?: string
+          id?: string
+          lifestyle_flags_json?: Json | null
+          medications_flags_json?: Json | null
+          nutrition_flags_json?: Json | null
+          red_flags_list?: Json | null
+          red_flags_present?: boolean
+          triage_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_triage_snapshots_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "registry_episodes"
             referencedColumns: ["id"]
           },
         ]

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Shield, FlaskConical } from 'lucide-react';
+import { Shield, FlaskConical, Lock } from 'lucide-react';
 
 interface RegistryConsentModalProps {
   open: boolean;
@@ -37,6 +37,7 @@ export function RegistryConsentModal({
       onOpenChange(false);
     } finally {
       setLoading(false);
+      setLgpdAccepted(false);
     }
   };
 
@@ -47,6 +48,7 @@ export function RegistryConsentModal({
       onOpenChange(false);
     } finally {
       setLoading(false);
+      setLgpdAccepted(false);
     }
   };
 
@@ -56,20 +58,26 @@ export function RegistryConsentModal({
         <DialogHeader>
           <div className="flex items-center gap-2 text-primary">
             <FlaskConical className="h-5 w-5" />
-            <DialogTitle className="text-lg">Contribuir para Evidência Clínica</DialogTitle>
+            <DialogTitle className="text-lg">Evidência Clínica (dados anonimizados)</DialogTitle>
           </div>
           <DialogDescription className="text-sm text-muted-foreground pt-2">
-            {patientName ? `Caso de ${patientName}` : 'Este caso'} pode contribuir para iniciativas científicas com dados anonimizados.
+            Deseja contribuir com evidência clínica usando dados anonimizados, respeitando a LGPD?
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-2">
+          <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-3">
             <div className="flex items-start gap-2">
               <Shield className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
               <p className="text-muted-foreground">
-                <strong className="text-foreground">Privacidade garantida:</strong> Os dados são anonimizados e agregados. 
-                Nenhuma informação individual é compartilhada.
+                <strong className="text-foreground">Privacidade garantida:</strong> Nenhum dado identificável é compartilhado. 
+                Apenas informações agregadas são utilizadas para fins científicos.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <Lock className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">LGPD:</strong> Dados anonimizados e agregados conforme legislação brasileira.
               </p>
             </div>
           </div>
