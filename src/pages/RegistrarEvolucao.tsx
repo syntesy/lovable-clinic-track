@@ -38,9 +38,7 @@ const RegistrarEvolucao = () => {
   const { 
     ensureActiveEpisode, 
     captureProcedurePerformed, 
-    captureFollowup,
-    captureLabResult,
-    captureScoreSnapshot
+    captureFollowup
   } = useRegistryEpisode(id || "");
   
   // Ensure episode exists on mount
@@ -286,35 +284,6 @@ const RegistrarEvolucao = () => {
             undefined, // adverseEventNotes
             data.clinical_observations || undefined
           );
-        }
-
-        // Capture lab result if exam data provided
-        const hasLabData = examResults.hemoglobin || examResults.platelets || examResults.pcr || examResults.hematocrit;
-        if (hasLabData) {
-          await captureLabResult(
-            {
-              hemoglobin: examResults.hemoglobin ? parseFloat(examResults.hemoglobin) : null,
-              hematocrit: examResults.hematocrit ? parseFloat(examResults.hematocrit) : null,
-              platelets: examResults.platelets ? parseFloat(examResults.platelets) : null,
-              leukocytes: examResults.leukocytes ? parseFloat(examResults.leukocytes) : null,
-              pcr: examResults.pcr ? parseFloat(examResults.pcr) : null,
-              glucose: examResults.glucose ? parseFloat(examResults.glucose) : null,
-              hba1c: examResults.hba1c ? parseFloat(examResults.hba1c) : null,
-            },
-            data.session_date,
-            'manual'
-          );
-
-          // Capture score snapshot with labs if evaluation was done
-          if (evaluationResult) {
-            await captureScoreSnapshot(
-              evaluationResult.apt ? 80 : 40,
-              evaluationResult.apt ? 'Apto' : 'Não Apto',
-              { message: evaluationResult.message },
-              [],
-              'triage_plus_labs'
-            );
-          }
         }
       } catch (registryError) {
         // Non-blocking: log but don't fail the main operation
