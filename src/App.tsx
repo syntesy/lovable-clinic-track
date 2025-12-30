@@ -36,7 +36,8 @@ import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
 import AdminArtigos from "./pages/admin/AdminArtigos";
 import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminRegistry from "./pages/admin/AdminRegistry";
+import AdminRegistryDashboard from "./pages/admin/AdminRegistryDashboard";
+import RegistryGovernance from "./pages/admin/RegistryGovernance";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 // Patient Portal Pages
@@ -335,7 +336,19 @@ const App = () => (
             path="/admin/registry"
             element={
               <ProtectedRoute>
-                <AdminRegistry />
+                <Layout>
+                  <AdminRegistryDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/registry/governance"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RegistryGovernance />
+                </Layout>
               </ProtectedRoute>
             }
           />

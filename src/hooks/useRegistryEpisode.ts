@@ -22,7 +22,7 @@ interface TriageFlags {
   medications_flags_json: Record<string, boolean>;
   biological_soil_flags_json: Record<string, boolean>;
   nutrition_flags_json: Record<string, boolean>;
-  lifestyle_flags_json: Record<string, boolean>;
+  lifestyle_flags_json: Record<string, string | boolean>;
 }
 
 /**
