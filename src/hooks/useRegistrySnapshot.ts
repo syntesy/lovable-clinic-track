@@ -12,7 +12,7 @@ export type SnapshotType =
   | 'procedimento_realizado'
   | 'follow_up';
 
-type SnapshotData = Record<string, Json | undefined>;
+type SnapshotData = Record<string, Json | undefined> | Record<string, unknown>;
 
 /**
  * Hook para capturar automaticamente snapshots do Registry
