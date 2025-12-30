@@ -28,7 +28,7 @@ export function ScoreResult({
       {/* Registry: Badge discreto se elegível */}
       {isEligible && (
         <div className="mb-4 flex justify-end">
-          <RegistryEligibilityBadge />
+          <RegistryEligibilityBadge isEligible={isEligible} />
         </div>
       )}
       
