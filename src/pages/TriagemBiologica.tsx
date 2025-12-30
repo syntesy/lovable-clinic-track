@@ -22,7 +22,7 @@ import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { Tables } from "@/integrations/supabase/types";
-import { useRegistrySnapshot } from "@/hooks/useRegistrySnapshot";
+import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 
 interface UploadedFile {
   id: string;
@@ -155,8 +155,14 @@ export default function TriagemBiologica() {
   const patientIdFromUrl = searchParams.get("paciente");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   
-  // Registry: Hook para captura de snapshots (não-intrusivo)
-  const { captureTriagemSnapshot, captureExamesSolicitadosSnapshot, captureExamesRegistradosSnapshot } = useRegistrySnapshot();
+  // Registry: Hook para captura de snapshots estruturados (não-intrusivo)
+  const { 
+    ensureActiveEpisode, 
+    captureTriageSnapshot, 
+    captureScoreSnapshot, 
+    captureLabOrder, 
+    captureLabResult 
+  } = useRegistryEpisode(selectedPatientId);
   const [answers, setAnswers] = useState<QuestionnaireAnswers>(initialAnswers);
   const [labExams, setLabExams] = useState<LabExamValues>(initialLabExams);
   const [analysisResult, setAnalysisResult] = useState<TriagemAnalysisResult | null>(null);
@@ -324,22 +330,54 @@ export default function TriagemBiologica() {
 
       if (saveError) throw saveError;
 
-      // Registry: Captura snapshot de triagem (não-intrusivo, silencioso)
-      captureTriagemSnapshot(
-        selectedPatientId,
-        rawQuestionnaire as Record<string, unknown>,
-        data.classification || data.structuredResult?.eligibility?.overall_status,
-        insertedScreening?.id
-      ).catch(() => {}); // Silencioso - não bloqueia fluxo
+      // Registry: Captura snapshots estruturados (não-intrusivo, silencioso)
+      // Extrair flags do questionário
+      const triageFlags = {
+        red_flags_present: (answers.red_flags?.length || 0) > 0,
+        red_flags_list: answers.red_flags || [],
+        medications_flags_json: {
+          NSAID_recent: answers.medicamentos?.includes('aine_7_dias') || false,
+          steroid_oral_recent: answers.medicamentos?.includes('corticoide_oral_30_dias') || false,
+          steroid_infiltration_recent: answers.medicamentos?.includes('infiltracao_3_meses') || false,
+          anticoagulant: answers.medicamentos?.includes('anticoagulante') || false,
+          immunosuppressor: answers.medicamentos?.includes('imunossupressor') || false
+        },
+        biological_soil_flags_json: {
+          no_recent_labs: answers.fatores_preparo?.includes('sem_exames_recentes') || false,
+          anemia_or_low_iron_or_low_B12: answers.fatores_preparo?.includes('anemia_ferritina_b12') || false,
+          smoker: answers.fatores_preparo?.includes('tabagista') || false,
+          high_BMI: answers.fatores_preparo?.includes('imc_elevado') || false
+        },
+        nutrition_flags_json: {
+          low_sun_vitD: answers.fatores_nutricionais?.includes('pouca_exposicao_solar') || false,
+          restrictive_diet: answers.fatores_nutricionais?.includes('dieta_restritiva') || false,
+          low_fruit_veg: answers.fatores_nutricionais?.includes('pouca_fruta_vegetal') || false
+        },
+        lifestyle_flags_json: {
+          sleep_quality: answers.qualidade_sono || 'nao_informado',
+          alcohol_gt_2wk: answers.consumo_alcool_2x_semana || false,
+          perceived_stress: answers.nivel_estresse || 'nao_informado'
+        }
+      };
 
-      // Registry: Se há exames recomendados, captura snapshot de pedido de exames
+      // Captura snapshot de triagem
+      captureTriageSnapshot(rawQuestionnaire.answers as Record<string, unknown>, triageFlags).catch(() => {});
+
+      // Captura snapshot de score (triage_only)
+      const scoreValue = data.structuredResult?.score_value || 0;
+      const scoreClassification = data.classification || data.structuredResult?.eligibility?.overall_status || '';
+      captureScoreSnapshot(
+        scoreValue,
+        scoreClassification,
+        data.structuredResult || {},
+        data.patientOrientations ? [data.patientOrientations] : [],
+        'triage_only'
+      ).catch(() => {});
+
+      // Registry: Se há exames recomendados, captura pedido de exames
       if (data.recommendedExams && data.recommendedExams.length > 0) {
         const examNames = data.recommendedExams.flatMap((g: ExamGroup) => g.exams);
-        captureExamesSolicitadosSnapshot(
-          selectedPatientId,
-          examNames,
-          insertedScreening?.id
-        ).catch(() => {}); // Silencioso
+        captureLabOrder(examNames).catch(() => {});
       }
 
       queryClient.invalidateQueries({ queryKey: ["prp_screenings", selectedPatientId] });
@@ -461,16 +499,23 @@ export default function TriagemBiologica() {
           .eq("id", latestScreening.id);
       }
 
-      // Registry: Captura snapshot de exames registrados (não-intrusivo, silencioso)
-      captureExamesRegistradosSnapshot(
-        selectedPatientId,
-        {
-          interpretation: data.analysis,
-          updated_classification: data.classification,
-          screening_id: latestScreening.id
-        },
-        insertedLabResult?.id
-      ).catch(() => {}); // Silencioso - não bloqueia fluxo
+      // Registry: Captura resultado de exames e score v2 (não-intrusivo, silencioso)
+      captureLabResult(
+        { interpretation: data.analysis, updated_classification: data.classification },
+        undefined,
+        'manual'
+      ).catch(() => {});
+
+      // Captura score com contexto triage_plus_labs
+      if (data.classification) {
+        captureScoreSnapshot(
+          0, // score value - se disponível
+          data.classification,
+          { interpretation: data.analysis },
+          [],
+          'triage_plus_labs'
+        ).catch(() => {});
+      }
 
       queryClient.invalidateQueries({ queryKey: ["prp_screenings", selectedPatientId] });
       toast.success("Resultados analisados com sucesso!");

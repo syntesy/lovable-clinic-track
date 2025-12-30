@@ -14,8 +14,7 @@ import { WizardStep5 } from "./WizardSteps/WizardStep5";
 import { WizardStep6 } from "./WizardSteps/WizardStep6";
 import { WizardStep7 } from "./WizardSteps/WizardStep7";
 import { ScoreResult } from "./ScoreResult";
-import { useRegistrySnapshot } from "@/hooks/useRegistrySnapshot";
-import { useRegistryConsent } from "@/hooks/useRegistryConsent";
+import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 import { RegistryConsentModal } from "@/components/registry/RegistryConsentModal";
 
 const STEP_TITLES = [
@@ -39,9 +38,13 @@ export function FisioRegenScoreWizard({ patientId, patientName }: FisioRegenScor
   const [formData, setFormData] = useState<FisioRegenFormData>(initialFormData);
   const [result, setResult] = useState<ComputedResult | null>(null);
   
-  // Registry: Hooks para captura e consentimento (não-intrusivo)
-  const { captureScoreSnapshot } = useRegistrySnapshot();
-  const { hasConsent, consentGiven, acceptConsent, declineConsent } = useRegistryConsent(patientId);
+  // Registry: Hook para captura e consentimento (não-intrusivo)
+  const { 
+    captureScoreSnapshot, 
+    registerConsent, 
+    consentStatus,
+    isEligible 
+  } = useRegistryEpisode(patientId);
   const [showConsentModal, setShowConsentModal] = useState(false);
 
   const totalSteps = 8;
@@ -73,21 +76,21 @@ export function FisioRegenScoreWizard({ patientId, patientName }: FisioRegenScor
     // Registry: Captura snapshot do score (silencioso, não-intrusivo)
     if (patientId) {
       captureScoreSnapshot(
-        patientId,
+        computed.biological_readiness_score,
+        computed.status,
         {
-          biological_readiness_score: computed.biological_readiness_score,
-          status: computed.status,
           bloqueio: computed.bloqueio,
           blocks: computed.triggered_blocks,
           flags: computed.triggered_flags,
           domains: computed.domains,
           formData: formData as unknown as Record<string, unknown>
         },
-        false // isUpdated = false para score inicial
+        [],
+        'triage_only'
       ).catch(() => {}); // Silencioso
       
       // Registry: Exibe modal de consentimento apenas se ainda não foi perguntado
-      if (!hasConsent) {
+      if (consentStatus === 'not_asked') {
         // Delay para não interromper a visualização do resultado
         setTimeout(() => setShowConsentModal(true), 2000);
       }
@@ -101,11 +104,11 @@ export function FisioRegenScoreWizard({ patientId, patientName }: FisioRegenScor
   };
 
   const handleAcceptConsent = async () => {
-    await acceptConsent();
+    await registerConsent(true);
   };
 
   const handleDeclineConsent = async () => {
-    await declineConsent();
+    await registerConsent(false);
   };
 
   if (result) {

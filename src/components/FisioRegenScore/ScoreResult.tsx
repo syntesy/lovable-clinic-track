@@ -1,6 +1,6 @@
 import { ComputedResult, FisioRegenFormData } from "@/types/fisioregen-score";
 import { ScoreReport } from "@/components/ScoreReport";
-import { useRegistryConsent } from "@/hooks/useRegistryConsent";
+import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 import { RegistryEligibilityBadge } from "@/components/registry/RegistryEligibilityBadge";
 
 interface ScoreResultProps {
@@ -21,7 +21,7 @@ export function ScoreResult({
   onSaveToPatientPortal
 }: ScoreResultProps) {
   // Registry: Verifica se caso é elegível para exibir badge discreto
-  const { isEligible } = useRegistryConsent(patientId);
+  const { isEligible } = useRegistryEpisode(patientId);
   
   return (
     <div className="container mx-auto py-6 px-4">
