@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -14,6 +14,9 @@ import { WizardStep5 } from "./WizardSteps/WizardStep5";
 import { WizardStep6 } from "./WizardSteps/WizardStep6";
 import { WizardStep7 } from "./WizardSteps/WizardStep7";
 import { ScoreResult } from "./ScoreResult";
+import { useRegistrySnapshot } from "@/hooks/useRegistrySnapshot";
+import { useRegistryConsent } from "@/hooks/useRegistryConsent";
+import { RegistryConsentModal } from "@/components/registry/RegistryConsentModal";
 
 const STEP_TITLES = [
   "Introdução",
@@ -26,10 +29,20 @@ const STEP_TITLES = [
   "Revisão",
 ];
 
-export function FisioRegenScoreWizard() {
+interface FisioRegenScoreWizardProps {
+  patientId?: string;
+  patientName?: string;
+}
+
+export function FisioRegenScoreWizard({ patientId, patientName }: FisioRegenScoreWizardProps = {}) {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FisioRegenFormData>(initialFormData);
   const [result, setResult] = useState<ComputedResult | null>(null);
+  
+  // Registry: Hooks para captura e consentimento (não-intrusivo)
+  const { captureScoreSnapshot } = useRegistrySnapshot();
+  const { hasConsent, consentGiven, acceptConsent, declineConsent } = useRegistryConsent(patientId);
+  const [showConsentModal, setShowConsentModal] = useState(false);
 
   const totalSteps = 8;
   const progress = ((step + 1) / totalSteps) * 100;
@@ -56,6 +69,29 @@ export function FisioRegenScoreWizard() {
   const handleGenerateScore = () => {
     const computed = calculateFisioRegenScore(formData);
     setResult(computed);
+    
+    // Registry: Captura snapshot do score (silencioso, não-intrusivo)
+    if (patientId) {
+      captureScoreSnapshot(
+        patientId,
+        {
+          biological_readiness_score: computed.biological_readiness_score,
+          status: computed.status,
+          bloqueio: computed.bloqueio,
+          blocks: computed.triggered_blocks,
+          flags: computed.triggered_flags,
+          domains: computed.domains,
+          formData: formData as unknown as Record<string, unknown>
+        },
+        false // isUpdated = false para score inicial
+      ).catch(() => {}); // Silencioso
+      
+      // Registry: Exibe modal de consentimento apenas se ainda não foi perguntado
+      if (!hasConsent) {
+        // Delay para não interromper a visualização do resultado
+        setTimeout(() => setShowConsentModal(true), 2000);
+      }
+    }
   };
 
   const handleReset = () => {
@@ -64,8 +100,34 @@ export function FisioRegenScoreWizard() {
     setStep(0);
   };
 
+  const handleAcceptConsent = async () => {
+    await acceptConsent();
+  };
+
+  const handleDeclineConsent = async () => {
+    await declineConsent();
+  };
+
   if (result) {
-    return <ScoreResult result={result} formData={formData} onReset={handleReset} />;
+    return (
+      <>
+        <ScoreResult 
+          result={result} 
+          formData={formData} 
+          patientName={patientName}
+          onReset={handleReset} 
+        />
+        
+        {/* Registry: Modal de consentimento discreto (não bloqueante) */}
+        <RegistryConsentModal
+          open={showConsentModal}
+          onOpenChange={setShowConsentModal}
+          onAccept={handleAcceptConsent}
+          onDecline={handleDeclineConsent}
+          patientName={patientName}
+        />
+      </>
+    );
   }
 
   const renderStepContent = () => {

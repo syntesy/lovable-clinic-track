@@ -22,6 +22,7 @@ import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { Tables } from "@/integrations/supabase/types";
+import { useRegistrySnapshot } from "@/hooks/useRegistrySnapshot";
 
 interface UploadedFile {
   id: string;
@@ -153,6 +154,9 @@ export default function TriagemBiologica() {
   const [searchParams] = useSearchParams();
   const patientIdFromUrl = searchParams.get("paciente");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  
+  // Registry: Hook para captura de snapshots (não-intrusivo)
+  const { captureTriagemSnapshot, captureExamesSolicitadosSnapshot, captureExamesRegistradosSnapshot } = useRegistrySnapshot();
   const [answers, setAnswers] = useState<QuestionnaireAnswers>(initialAnswers);
   const [labExams, setLabExams] = useState<LabExamValues>(initialLabExams);
   const [analysisResult, setAnalysisResult] = useState<TriagemAnalysisResult | null>(null);
@@ -305,7 +309,7 @@ export default function TriagemBiologica() {
       setPatientOrientations(data.patientOrientations || "");
 
       // Save to database
-      const { error: saveError } = await supabase
+      const { data: insertedScreening, error: saveError } = await supabase
         .from("prp_screenings")
         .insert({
           patient_id: selectedPatientId,
@@ -314,9 +318,29 @@ export default function TriagemBiologica() {
           classification: data.classification || data.structuredResult?.eligibility?.overall_status,
           recommended_exams: data.recommendedExams,
           patient_orientations: data.patientOrientations
-        });
+        })
+        .select('id')
+        .single();
 
       if (saveError) throw saveError;
+
+      // Registry: Captura snapshot de triagem (não-intrusivo, silencioso)
+      captureTriagemSnapshot(
+        selectedPatientId,
+        rawQuestionnaire as Record<string, unknown>,
+        data.classification || data.structuredResult?.eligibility?.overall_status,
+        insertedScreening?.id
+      ).catch(() => {}); // Silencioso - não bloqueia fluxo
+
+      // Registry: Se há exames recomendados, captura snapshot de pedido de exames
+      if (data.recommendedExams && data.recommendedExams.length > 0) {
+        const examNames = data.recommendedExams.flatMap((g: ExamGroup) => g.exams);
+        captureExamesSolicitadosSnapshot(
+          selectedPatientId,
+          examNames,
+          insertedScreening?.id
+        ).catch(() => {}); // Silencioso
+      }
 
       queryClient.invalidateQueries({ queryKey: ["prp_screenings", selectedPatientId] });
       toast.success("Triagem realizada e salva com sucesso!");
@@ -415,7 +439,7 @@ export default function TriagemBiologica() {
         uploadedAt: f.uploadedAt.toISOString()
       }));
 
-      const { error: saveError } = await supabase
+      const { data: insertedLabResult, error: saveError } = await supabase
         .from("prp_lab_results")
         .insert({
           screening_id: latestScreening.id,
@@ -424,7 +448,9 @@ export default function TriagemBiologica() {
           interpretation: data.analysis,
           updated_classification: data.classification,
           attached_files: attachedFilesInfo
-        });
+        })
+        .select('id')
+        .single();
 
       if (saveError) throw saveError;
 
@@ -434,6 +460,17 @@ export default function TriagemBiologica() {
           .update({ classification: data.classification })
           .eq("id", latestScreening.id);
       }
+
+      // Registry: Captura snapshot de exames registrados (não-intrusivo, silencioso)
+      captureExamesRegistradosSnapshot(
+        selectedPatientId,
+        {
+          interpretation: data.analysis,
+          updated_classification: data.classification,
+          screening_id: latestScreening.id
+        },
+        insertedLabResult?.id
+      ).catch(() => {}); // Silencioso - não bloqueia fluxo
 
       queryClient.invalidateQueries({ queryKey: ["prp_screenings", selectedPatientId] });
       toast.success("Resultados analisados com sucesso!");
