@@ -191,6 +191,7 @@ export function RegenResultView({
           caseId={caseId}
           reportRef={reportRef}
           onSaveNote={onSaveNote}
+          onRecalculate={onRecalculate}
         />
       </div>
 

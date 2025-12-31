@@ -4,7 +4,7 @@
  */
 
 import { useState, RefObject } from "react";
-import { FileDown, Copy, Save, Printer } from "lucide-react";
+import { FileDown, Copy, Save, Printer, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import html2pdf from "html2pdf.js";
@@ -21,6 +21,7 @@ interface ResultActionsProps {
   caseId?: string;
   reportRef: RefObject<HTMLDivElement>;
   onSaveNote?: (noteContent: string) => Promise<void>;
+  onRecalculate?: () => void;
 }
 
 /**
@@ -125,10 +126,12 @@ export function ResultActions({
   caseId,
   reportRef,
   onSaveNote,
+  onRecalculate,
 }: ResultActionsProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   const handleExportPDF = async () => {
     if (!reportRef.current) return;
@@ -217,6 +220,19 @@ export function ResultActions({
 
   return (
     <div className="flex flex-wrap gap-3 print:hidden">
+      {/* Recalcular - primeiro botão quando resultado existe */}
+      {onRecalculate && (
+        <Button 
+          onClick={onRecalculate} 
+          variant="default" 
+          className="gap-2 bg-primary"
+          disabled={isRecalculating}
+        >
+          <RefreshCw className={`h-4 w-4 ${isRecalculating ? 'animate-spin' : ''}`} />
+          {isRecalculating ? "Recalculando..." : "Recalcular Resultado"}
+        </Button>
+      )}
+
       <Button onClick={handleExportPDF} variant="outline" className="gap-2" disabled={isExporting}>
         <FileDown className="h-4 w-4" />
         {isExporting ? "Exportando..." : "Exportar PDF"}
