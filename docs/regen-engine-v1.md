@@ -266,7 +266,91 @@ output.die.lab_recommendations.find(l => l.lab_code === "hemoglobin").status ===
 
 ---
 
-## 10. Changelog
+## 10. Integração UI — Resultado REGENAPP (Step 8)
+
+### Localização
+- **Componente principal:** `src/components/RegenResult/RegenResultView.tsx`
+- **Step do wizard:** `src/components/FisioRegenScore/WizardSteps/WizardStep8.tsx`
+
+### Fonte de Dados
+- **Primária (obrigatória):** `questionnaire_responses.regen_engine_outputs`
+- **Secundária (exibição):** `regen_canonical`
+- ⚠️ A UI **nunca recalcula** automaticamente — somente via botão.
+
+### Estados da UI
+| Estado | Condição | Comportamento |
+|--------|----------|---------------|
+| `loading` | Carregando dados | Skeleton placeholders |
+| `empty` | `regen_engine_outputs` inexistente | CTA "Gerar Resultado" |
+| `error` | JSON inválido | Mensagem de erro + log |
+| `outdated` | `canonicalUpdatedAt > computed_at` | Banner + botão "Recalcular" |
+| `ready` | Output válido e atualizado | Cards completos |
+
+### Stale Warning (Resultado Desatualizado)
+O sistema detecta automaticamente quando os dados foram alterados após o último cálculo:
+
+```typescript
+// Lógica de detecção
+const referenceTime = canonicalUpdatedAt || screeningUpdatedAt; // fallback
+if (referenceTime > computed_at) {
+  // Exibir banner: "Este resultado pode estar desatualizado"
+}
+```
+
+### Botão "Gerar/Recalcular Resultado"
+1. Constrói `regen_canonical` a partir do `formData` atual
+2. Executa `runRegenEngine(canonical)` 
+3. Faz **MERGE** com `questionnaire_responses` existente (não sobrescreve)
+4. Salva em `prp_screenings.questionnaire_responses.regen_engine_outputs`
+5. Atualiza `prp_screenings.updated_at`
+6. Recarrega a tela
+
+### Cards (Ordem Fixa)
+| Card | Conteúdo |
+|------|----------|
+| A - Safety | Status block/alert, reasons |
+| B - CRS | Score, classificação, confidence, fatores |
+| C - DIE | USE/REPEAT/REQUEST por exame |
+| D - BRS | Score, confidence, reason_codes |
+| E - TOG | Orientações categorizadas |
+| F - PEE | Elegibilidade por procedimento |
+| G - Data Quality | Alerts, completeness % |
+
+### Ações Disponíveis
+- **Exportar PDF** — inclui versões do motor e disclaimer
+- **Copiar para prontuário** — texto padronizado sem IA
+- **Salvar nota clínica** — persiste em `patient_events`
+- **Recalcular** — reexecuta o motor com dados atuais
+
+### Comportamento com Safety Block
+Se `safety.block = true`:
+- Cards B-F exibem: "Não calculado devido a bloqueio de segurança"
+- CTAs disponíveis: "Revisar triagem", "Encaminhar para avaliação"
+
+---
+
+## 11. Exemplo de Output
+
+Ver arquivo completo: [`docs/examples/regen_engine_outputs.sample.json`](./examples/regen_engine_outputs.sample.json)
+
+```json
+{
+  "engine_version": "regen_engine_v1.0.0",
+  "ruleset_version": "regen_rules_v1",
+  "computed_at": "2025-01-15T14:32:45.123Z",
+  "safety": { "block": false, "alert": false, "reasons": [] },
+  "crs": { "score": 72, "classification": "Conditionally Ready", ... },
+  "die": { "labs_valid_count": 4, "labs_expired_count": 1, ... },
+  "brs": { "score": 65, "confidence": "Medium", "reason_codes": ["NSAID_RECENT_7D"], ... },
+  "tog": { "guidance": [...] },
+  "pee": { "eligibility": [...] },
+  "data_quality": { "completeness_percent": 71, "alerts": [...] }
+}
+```
+
+---
+
+## 12. Changelog
 
 ### v1.0.0 (2025-01-01) - CONGELADO
 - Implementação inicial completa
@@ -274,6 +358,14 @@ output.die.lab_recommendations.find(l => l.lab_code === "hemoglobin").status ===
 - Leitura exclusiva de regen_canonical
 - 14 reason_codes definidos
 - 3 testes críticos obrigatórios
+
+### v1.0.0-ui (2025-01-15)
+- Integração com wizard (Step 8 — Resultado REGENAPP)
+- UI read-only com 7 cards fixos
+- Stale warning com fallback para `prp_screenings.updated_at`
+- Merge seguro no update (preserva dados existentes)
+- Exportação PDF auditável
+- Botão recalcular (não auto-recalcula)
 
 ---
 

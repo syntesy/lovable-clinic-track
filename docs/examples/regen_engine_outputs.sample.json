@@ -1,0 +1,182 @@
+{
+  "engine_version": "regen_engine_v1.0.0",
+  "ruleset_version": "regen_rules_v1",
+  "computed_at": "2025-01-15T14:32:45.123Z",
+  "safety": {
+    "block": false,
+    "alert": false,
+    "reasons": []
+  },
+  "crs": {
+    "score": 72,
+    "classification": "Conditionally Ready",
+    "confidence": "High",
+    "missing": [],
+    "penalties_applied": [
+      "pain_nrs_high"
+    ]
+  },
+  "die": {
+    "lab_recommendations": [
+      {
+        "lab_code": "hemoglobin",
+        "lab_name": "Hemoglobina",
+        "status": "USE",
+        "validity": "VALID",
+        "reason_code": "LABS_VALID",
+        "rationale_short": "Exame dentro da validade (45 dias)",
+        "days_since_collection": 45
+      },
+      {
+        "lab_code": "platelets",
+        "lab_name": "Plaquetas",
+        "status": "USE",
+        "validity": "VALID",
+        "reason_code": "LABS_VALID",
+        "rationale_short": "Exame dentro da validade (45 dias)",
+        "days_since_collection": 45
+      },
+      {
+        "lab_code": "leukocytes",
+        "lab_name": "Leucócitos",
+        "status": "USE",
+        "validity": "VALID",
+        "reason_code": "LABS_VALID",
+        "rationale_short": "Exame dentro da validade (45 dias)",
+        "days_since_collection": 45
+      },
+      {
+        "lab_code": "crp",
+        "lab_name": "PCR",
+        "status": "REPEAT",
+        "validity": "EXPIRED",
+        "reason_code": "LABS_EXPIRED",
+        "rationale_short": "Exame expirado (>30 dias para PCR)",
+        "days_since_collection": 60
+      },
+      {
+        "lab_code": "ferritin",
+        "lab_name": "Ferritina",
+        "status": "REQUEST",
+        "validity": "UNKNOWN",
+        "reason_code": "LABS_MISSING",
+        "rationale_short": "Exame não informado",
+        "days_since_collection": null
+      },
+      {
+        "lab_code": "vitamin_d",
+        "lab_name": "Vitamina D",
+        "status": "USE",
+        "validity": "VALID",
+        "reason_code": "LABS_VALID",
+        "rationale_short": "Exame dentro da validade (120 dias)",
+        "days_since_collection": 120
+      },
+      {
+        "lab_code": "hba1c",
+        "lab_name": "HbA1c",
+        "status": "REQUEST",
+        "validity": "UNKNOWN",
+        "reason_code": "LABS_MISSING",
+        "rationale_short": "Exame não informado",
+        "days_since_collection": null
+      },
+      {
+        "lab_code": "tsh",
+        "lab_name": "TSH",
+        "status": "REQUEST",
+        "validity": "UNKNOWN",
+        "reason_code": "LABS_MISSING",
+        "rationale_short": "Exame não informado",
+        "days_since_collection": null
+      },
+      {
+        "lab_code": "fasting_glucose",
+        "lab_name": "Glicemia de Jejum",
+        "status": "REQUEST",
+        "validity": "UNKNOWN",
+        "reason_code": "LABS_MISSING",
+        "rationale_short": "Exame não informado",
+        "days_since_collection": null
+      }
+    ],
+    "labs_valid_count": 4,
+    "labs_expired_count": 1,
+    "labs_missing_count": 4
+  },
+  "brs": {
+    "score": 65,
+    "confidence": "Medium",
+    "alerts": [
+      "Uso recente de AINE pode impactar função plaquetária"
+    ],
+    "reason_codes": [
+      "NSAID_RECENT_7D",
+      "LOW_VITAMIN_D"
+    ],
+    "penalties_applied": [
+      "nsaid_7d_penalty",
+      "vitamin_d_low_penalty"
+    ]
+  },
+  "tog": {
+    "guidance": [
+      {
+        "code": "NSAID_SUSPEND",
+        "category": "medication",
+        "title": "Suspensão de Anti-inflamatórios",
+        "description": "Considerar suspensão de AINEs 7-10 dias antes do procedimento, conforme orientação médica.",
+        "priority": "high"
+      },
+      {
+        "code": "VITAMIN_D_OPTIMIZE",
+        "category": "nutrition",
+        "title": "Otimização de Vitamina D",
+        "description": "Níveis de vitamina D podem beneficiar de otimização. Consultar sobre suplementação.",
+        "priority": "medium"
+      },
+      {
+        "code": "HYDRATION",
+        "category": "preparation",
+        "title": "Hidratação Adequada",
+        "description": "Manter boa hidratação nos dias anteriores ao procedimento.",
+        "priority": "low"
+      }
+    ]
+  },
+  "pee": {
+    "eligibility": [
+      {
+        "procedure_type": "PRP",
+        "eligibility": "Possible with adjustments",
+        "gates_triggered": [
+          "NSAID_RECENT_7D"
+        ],
+        "rationale": "Elegibilidade potencial após período de washout de AINEs"
+      },
+      {
+        "procedure_type": "PRF",
+        "eligibility": "Possible with adjustments",
+        "gates_triggered": [
+          "NSAID_RECENT_7D"
+        ],
+        "rationale": "Elegibilidade potencial após período de washout de AINEs"
+      },
+      {
+        "procedure_type": "BMAC",
+        "eligibility": "Cannot evaluate",
+        "gates_triggered": [
+          "LABS_INCOMPLETE"
+        ],
+        "rationale": "Dados laboratoriais incompletos para avaliação de BMAC"
+      }
+    ]
+  },
+  "data_quality": {
+    "alerts": [
+      "Campo essencial não preenchido: labs.ferritin",
+      "Campo essencial não preenchido: labs.hba1c"
+    ],
+    "completeness_percent": 71
+  }
+}
