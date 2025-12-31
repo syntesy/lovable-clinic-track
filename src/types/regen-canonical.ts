@@ -1,26 +1,52 @@
 /**
- * REGEN CANONICAL v1 - Estrutura canônica unificada para dados de triagem
+ * REGEN CANONICAL v1.1 - Estrutura canônica unificada para dados de triagem
  * 
  * Objetivo: Centralizar todos os dados de triagem (TriagemBiologica + FisioRegenScore)
  * em um formato padronizado, persistido em prp_screenings.questionnaire_responses.regen_canonical
  * 
  * SEM SCORE, SEM REGRAS CLÍNICAS - apenas estrutura de dados.
+ * 
+ * v1.1 - Correções:
+ * - smoking.status: enum canônico publicável (never|former|current|unknown)
+ * - labs: raw_value + parsed_value + unit + parsed_ok + notes
+ * - diagnosis: separar suspected_diagnosis de primary_clinical_diagnosis
+ * - data_quality_alerts: array de alertas de qualidade de dados
  */
 
-// Enums canônicos
-export type RegenYesNoUnknown = "yes" | "no" | "unknown";
-export type RegenSmokingStatus = "non_smoker" | "light_moderate" | "heavy" | "ex_smoker";
+// Enums canônicos PUBLICÁVEIS (padrão internacional)
+export type RegenCanonicalSmokingStatus = "never" | "former" | "current" | "unknown";
 export type RegenSmokingQuitBucket = "lt_6m" | "m6_12" | "gt_12m" | "unknown";
 export type RegenPainRegion = "shoulder" | "elbow" | "hip" | "knee" | "ankle_foot" | "spine" | "other";
 export type RegenSymptomDuration = "lt_3m" | "m3_6" | "gt_6m";
 export type RegenSteroidRoute = "oral_injection" | "local_infiltration";
 export type RegenTissueType = "tendon" | "cartilage" | "ligament" | "muscle" | "enthesis" | "other" | "unknown";
 export type RegenLesionSeverity = "mild" | "moderate" | "severe";
+export type RegenYesNoUnknown = "yes" | "no" | "unknown";
+
+// Estrutura de um exame laboratorial individual
+export interface RegenLabValue {
+  raw_value: string | null;      // Valor original como string
+  parsed_value: number | null;   // Valor parseado como número
+  unit: string | null;           // Unidade de medida
+  parsed_ok: boolean;            // Se o parsing foi bem-sucedido
+  notes: string | null;          // Observações ou motivo de falha
+}
+
+// Alerta de qualidade de dados
+export interface RegenDataQualityAlert {
+  field: string;                 // Campo afetado
+  alert_type: "conflict" | "parse_error" | "missing" | "out_of_range" | "inconsistent";
+  message: string;               // Descrição do problema
+  timestamp: string;             // Quando foi detectado
+}
 
 // Estrutura canônica completa
 export interface RegenCanonical {
   schema_version: "regen_canonical_v1";
   captured_at: string; // ISO timestamp
+  
+  // ALERTAS DE QUALIDADE DE DADOS
+  data_quality_alerts: RegenDataQualityAlert[];
   
   // SEGURANÇA BÁSICA
   safety: {
@@ -37,8 +63,7 @@ export interface RegenCanonical {
     pain_region_text: string | null; // Para "other"
     symptom_duration_bucket: RegenSymptomDuration | null;
     pain_nrs: number | null; // 0-10
-    suspected_diagnosis: string | null;
-    primary_diagnosis_free: string | null; // Diagnóstico livre profissional
+    suspected_diagnosis: string | null; // Diagnóstico suspeito (triagem)
   };
   
   // MEDICAÇÕES
@@ -54,9 +79,9 @@ export interface RegenCanonical {
     p2y12: boolean;
   };
   
-  // TABAGISMO
+  // TABAGISMO (enum canônico publicável)
   smoking: {
-    status: RegenSmokingStatus;
+    status: RegenCanonicalSmokingStatus; // never | former | current | unknown
     quit_bucket: RegenSmokingQuitBucket | null;
   };
   
@@ -73,22 +98,19 @@ export interface RegenCanonical {
   diagnosis: {
     tissue_type: RegenTissueType;
     lesion_severity: RegenLesionSeverity | null;
-    primary_diagnosis: string | null;
+    primary_clinical_diagnosis: string | null; // Diagnóstico final do profissional
   };
   
-  // LABS (estruturado)
+  // LABS (estruturado com raw + parsed)
   labs: {
-    raw_text: string | null;
-    parsed: {
-      hemoglobin: number | null;
-      hematocrit: number | null;
-      leukocytes: number | null;
-      platelets: number | null;
-      crp: number | null;
-      ferritin: number | null;
-      glucose: number | null;
-      hba1c: number | null;
-    };
+    hemoglobin: RegenLabValue;
+    hematocrit: RegenLabValue;
+    leukocytes: RegenLabValue;
+    platelets: RegenLabValue;
+    crp: RegenLabValue;
+    ferritin: RegenLabValue;
+    glucose: RegenLabValue;
+    hba1c: RegenLabValue;
     collected_date: string | null;
     source: "manual" | "ocr" | "integration" | null;
   };
@@ -128,10 +150,21 @@ export interface RegenCanonical {
   };
 }
 
+// Valor de lab padrão
+export const defaultLabValue: RegenLabValue = {
+  raw_value: null,
+  parsed_value: null,
+  unit: null,
+  parsed_ok: false,
+  notes: null,
+};
+
 // Valor inicial/default para RegenCanonical
 export const defaultRegenCanonical: RegenCanonical = {
   schema_version: "regen_canonical_v1",
   captured_at: "",
+  
+  data_quality_alerts: [],
   
   safety: {
     cancer_tx_now_or_last_12m: "unknown",
@@ -147,7 +180,6 @@ export const defaultRegenCanonical: RegenCanonical = {
     symptom_duration_bucket: null,
     pain_nrs: null,
     suspected_diagnosis: null,
-    primary_diagnosis_free: null,
   },
   
   medications: {
@@ -163,7 +195,7 @@ export const defaultRegenCanonical: RegenCanonical = {
   },
   
   smoking: {
-    status: "non_smoker",
+    status: "unknown",
     quit_bucket: null,
   },
   
@@ -178,21 +210,18 @@ export const defaultRegenCanonical: RegenCanonical = {
   diagnosis: {
     tissue_type: "unknown",
     lesion_severity: null,
-    primary_diagnosis: null,
+    primary_clinical_diagnosis: null,
   },
   
   labs: {
-    raw_text: null,
-    parsed: {
-      hemoglobin: null,
-      hematocrit: null,
-      leukocytes: null,
-      platelets: null,
-      crp: null,
-      ferritin: null,
-      glucose: null,
-      hba1c: null,
-    },
+    hemoglobin: { ...defaultLabValue },
+    hematocrit: { ...defaultLabValue },
+    leukocytes: { ...defaultLabValue },
+    platelets: { ...defaultLabValue },
+    crp: { ...defaultLabValue },
+    ferritin: { ...defaultLabValue },
+    glucose: { ...defaultLabValue },
+    hba1c: { ...defaultLabValue },
     collected_date: null,
     source: null,
   },

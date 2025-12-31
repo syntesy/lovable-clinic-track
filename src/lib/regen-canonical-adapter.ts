@@ -1,20 +1,28 @@
 /**
- * REGEN CANONICAL ADAPTER
+ * REGEN CANONICAL ADAPTER v1.1
  * 
  * Mapeia campos do TriagemBiologica (questionnaire_responses) para o formato canônico.
  * Não altera, apaga ou renomeia nada do JSON original.
  * Apenas adiciona regen_canonical como uma chave adicional.
+ * 
+ * v1.1 - Correções:
+ * - smoking.status: enum canônico publicável (never|former|current|unknown)
+ * - labs: raw_value + parsed_value + unit + parsed_ok + notes
+ * - diagnosis: separar suspected_diagnosis de primary_clinical_diagnosis
+ * - data_quality_alerts: array de alertas de qualidade de dados
  */
 
 import { 
   RegenCanonical, 
   defaultRegenCanonical,
+  defaultLabValue,
   RegenPainRegion,
   RegenSymptomDuration,
-  RegenSmokingStatus,
+  RegenCanonicalSmokingStatus,
   RegenSmokingQuitBucket,
   RegenTissueType,
-  RegenYesNoUnknown,
+  RegenLabValue,
+  RegenDataQualityAlert,
 } from "@/types/regen-canonical";
 import { FisioRegenFormData } from "@/types/fisioregen-score";
 
@@ -58,6 +66,18 @@ interface TriagemQuestionnaireResponses {
   regen_canonical?: RegenCanonical; // Já pode existir
 }
 
+// Unidades padrão para cada exame
+const LAB_UNITS: Record<string, string> = {
+  hemoglobin: "g/dL",
+  hematocrit: "%",
+  leukocytes: "mil/mm³",
+  platelets: "mil/mm³",
+  crp: "mg/L",
+  ferritin: "ng/mL",
+  glucose: "mg/dL",
+  hba1c: "%",
+};
+
 // Mapeamento de região TriagemBiologica → Canonical
 const REGION_MAP: Record<string, RegenPainRegion> = {
   "joelho": "knee",
@@ -79,10 +99,110 @@ const DURATION_MAP: Record<string, RegenSymptomDuration> = {
 };
 
 /**
+ * Parseia um valor de exame para número, retornando estrutura completa
+ */
+function parseLabValue(
+  rawValue: string | undefined | null,
+  labKey: string,
+  alerts: RegenDataQualityAlert[]
+): RegenLabValue {
+  if (!rawValue || rawValue.trim() === "") {
+    return { ...defaultLabValue };
+  }
+
+  const raw = rawValue.trim();
+  // Remove caracteres não numéricos exceto ponto e vírgula
+  const normalized = raw.replace(",", ".").replace(/[^\d.]/g, "");
+  const parsed = parseFloat(normalized);
+
+  if (isNaN(parsed)) {
+    alerts.push({
+      field: `labs.${labKey}`,
+      alert_type: "parse_error",
+      message: `Não foi possível converter "${raw}" para número`,
+      timestamp: new Date().toISOString(),
+    });
+    return {
+      raw_value: raw,
+      parsed_value: null,
+      unit: LAB_UNITS[labKey] || null,
+      parsed_ok: false,
+      notes: `Parse error: "${raw}" não é um número válido`,
+    };
+  }
+
+  return {
+    raw_value: raw,
+    parsed_value: parsed,
+    unit: LAB_UNITS[labKey] || null,
+    parsed_ok: true,
+    notes: null,
+  };
+}
+
+/**
+ * Determina o status canônico de tabagismo baseado nos dados disponíveis
+ */
+function determineCanonicalSmokingStatus(
+  fatoresPreparo: string[],
+  wizardSmokingStatus?: string,
+  wizardQuitBucket?: string
+): { status: RegenCanonicalSmokingStatus; alerts: RegenDataQualityAlert[] } {
+  const alerts: RegenDataQualityAlert[] = [];
+  
+  const isCurrentFromPreparo = fatoresPreparo.includes("tabagista") || fatoresPreparo.includes("tabagismo_atual");
+  const isFormerFromWizard = wizardQuitBucket && wizardQuitBucket !== "unknown";
+  const isCurrentFromWizard = wizardSmokingStatus === "heavy" || wizardSmokingStatus === "light_moderate";
+  const isNonSmokerFromWizard = wizardSmokingStatus === "non_smoker";
+  const isExSmokerFromWizard = wizardSmokingStatus === "ex_smoker";
+
+  // Detectar conflito: current + quit_bucket preenchido
+  if ((isCurrentFromPreparo || isCurrentFromWizard) && isFormerFromWizard) {
+    alerts.push({
+      field: "smoking.status",
+      alert_type: "conflict",
+      message: "Conflito: indicado como fumante atual E ex-fumante com quit_bucket",
+      timestamp: new Date().toISOString(),
+    });
+    return { status: "unknown", alerts };
+  }
+
+  // Regra 1: fatores_preparo contém tabagismo_atual → current
+  if (isCurrentFromPreparo) {
+    return { status: "current", alerts };
+  }
+
+  // Regra 2: wizard indica fumante atual
+  if (isCurrentFromWizard) {
+    return { status: "current", alerts };
+  }
+
+  // Regra 3: wizard indica ex-fumante ou quit_bucket preenchido → former
+  if (isExSmokerFromWizard || isFormerFromWizard) {
+    return { status: "former", alerts };
+  }
+
+  // Regra 4: wizard indica não-fumante → never
+  if (isNonSmokerFromWizard) {
+    return { status: "never", alerts };
+  }
+
+  // Regra 5: nenhum dado → unknown (realmente não há informação)
+  // Se não há NENHUMA informação de tabagismo, retornamos unknown
+  if (!wizardSmokingStatus && fatoresPreparo.length === 0) {
+    return { status: "unknown", alerts };
+  }
+
+  // Se temos algum dado mas não indica fumante → never
+  return { status: "never", alerts };
+}
+
+/**
  * Converte dados do TriagemBiologica para formato canônico
  */
 export function buildRegenCanonicalFromTriagem(
-  questionnaireResponses: TriagemQuestionnaireResponses
+  questionnaireResponses: TriagemQuestionnaireResponses,
+  wizardData?: Partial<FisioRegenFormData>
 ): RegenCanonical {
   const answers = questionnaireResponses.answers || {};
   const providedExams = questionnaireResponses.provided_exams || {};
@@ -91,10 +211,37 @@ export function buildRegenCanonicalFromTriagem(
   const fatoresPreparo = answers.fatores_preparo || [];
   const fatoresNutricionais = answers.fatores_nutricionais || [];
   
+  const dataQualityAlerts: RegenDataQualityAlert[] = [];
+  
+  // Determinar status de tabagismo canônico
+  const smokingResult = determineCanonicalSmokingStatus(
+    fatoresPreparo,
+    wizardData?.smoking_status,
+    wizardData?.regen_smoking_quit_bucket
+  );
+  dataQualityAlerts.push(...smokingResult.alerts);
+  
+  // Parsear labs com raw + parsed
+  const labHemoglobin = parseLabValue(providedExams.hemoglobina, "hemoglobin", dataQualityAlerts);
+  const labHematocrit = parseLabValue(providedExams.hematocrito, "hematocrit", dataQualityAlerts);
+  const labLeukocytes = parseLabValue(providedExams.leucocitos, "leukocytes", dataQualityAlerts);
+  const labPlatelets = parseLabValue(providedExams.plaquetas, "platelets", dataQualityAlerts);
+  const labCrp = parseLabValue(providedExams.pcr, "crp", dataQualityAlerts);
+  const labFerritin = parseLabValue(providedExams.ferritina, "ferritin", dataQualityAlerts);
+  const labGlucose = parseLabValue(providedExams.glicemia, "glucose", dataQualityAlerts);
+  const labHba1c = parseLabValue(providedExams.hba1c, "hba1c", dataQualityAlerts);
+  
+  const hasAnyLab = [
+    labHemoglobin, labHematocrit, labLeukocytes, labPlatelets,
+    labCrp, labFerritin, labGlucose, labHba1c
+  ].some(lab => lab.raw_value !== null);
+  
   const canonical: RegenCanonical = {
     ...defaultRegenCanonical,
     schema_version: "regen_canonical_v1",
     captured_at: new Date().toISOString(),
+    
+    data_quality_alerts: dataQualityAlerts,
     
     // SEGURANÇA
     safety: {
@@ -105,67 +252,63 @@ export function buildRegenCanonicalFromTriagem(
       autoimmune_disease_active: redFlags.includes("doenca_autoimune_ativa"),
     },
     
-    // QUEIXA
+    // QUEIXA (suspected_diagnosis aqui)
     complaint: {
       pain_region: REGION_MAP[answers.regiao_principal || ""] || null,
       pain_region_text: answers.regiao_principal === "outro" ? "Outro" : null,
       symptom_duration_bucket: DURATION_MAP[answers.tempo_dor || ""] || null,
       pain_nrs: answers.dor_escala ?? null,
       suspected_diagnosis: answers.diagnostico_suspeito || null,
-      primary_diagnosis_free: null, // Preenchido pelo profissional
     },
     
     // MEDICAÇÕES
     medications: {
       nsaid_recent_14d: medicamentos.includes("aine_7_dias") ? "yes" : "unknown",
-      days_since_last_nsaid: null, // Não capturado diretamente
+      days_since_last_nsaid: null,
       steroid_recent: (medicamentos.includes("corticoide_oral_30_dias") || medicamentos.includes("infiltracao_3_meses")) ? "yes" : "unknown",
       steroid_route: medicamentos.includes("infiltracao_3_meses") ? "local_infiltration" : 
                      medicamentos.includes("corticoide_oral_30_dias") ? "oral_injection" : null,
       days_since_last_steroid: null,
       anticoagulant: medicamentos.includes("anticoagulante"),
       immunosuppressor: medicamentos.includes("imunossupressor"),
-      aspirin: false, // Não diferenciado no TriagemBiologica
+      aspirin: false,
       p2y12: false,
     },
     
-    // TABAGISMO
+    // TABAGISMO (enum canônico publicável)
     smoking: {
-      status: fatoresPreparo.includes("tabagista") ? "light_moderate" : "non_smoker",
-      quit_bucket: null,
+      status: smokingResult.status,
+      quit_bucket: (wizardData?.regen_smoking_quit_bucket as RegenSmokingQuitBucket) || null,
     },
     
     // COMORBIDADES
     comorbidities: {
       has_diabetes: redFlags.includes("diabetes_descompensado"),
-      has_hypertension: false, // Campo novo, não existe no TriagemBiologica atual
-      has_dyslipidemia: false, // Campo novo
+      has_hypertension: wizardData?.regen_has_hypertension ?? false,
+      has_dyslipidemia: wizardData?.regen_has_dyslipidemia ?? false,
       diabetes_uncontrolled: redFlags.includes("diabetes_descompensado"),
       renal_hepatic_disease: redFlags.includes("doenca_renal_hepatica"),
     },
     
-    // DIAGNÓSTICO
+    // DIAGNÓSTICO (primary_clinical_diagnosis separado de suspected)
     diagnosis: {
-      tissue_type: "unknown",
+      tissue_type: (wizardData?.regen_tissue_type as RegenTissueType) || "unknown",
       lesion_severity: null,
-      primary_diagnosis: null,
+      primary_clinical_diagnosis: null, // Preenchido posteriormente pelo profissional
     },
     
-    // LABS
+    // LABS (com raw + parsed)
     labs: {
-      raw_text: null,
-      parsed: {
-        hemoglobin: providedExams.hemoglobina ? parseFloat(providedExams.hemoglobina) : null,
-        hematocrit: providedExams.hematocrito ? parseFloat(providedExams.hematocrito) : null,
-        leukocytes: providedExams.leucocitos ? parseFloat(providedExams.leucocitos) : null,
-        platelets: providedExams.plaquetas ? parseFloat(providedExams.plaquetas) : null,
-        crp: providedExams.pcr ? parseFloat(providedExams.pcr) : null,
-        ferritin: providedExams.ferritina ? parseFloat(providedExams.ferritina) : null,
-        glucose: providedExams.glicemia ? parseFloat(providedExams.glicemia) : null,
-        hba1c: providedExams.hba1c ? parseFloat(providedExams.hba1c) : null,
-      },
+      hemoglobin: labHemoglobin,
+      hematocrit: labHematocrit,
+      leukocytes: labLeukocytes,
+      platelets: labPlatelets,
+      crp: labCrp,
+      ferritin: labFerritin,
+      glucose: labGlucose,
+      hba1c: labHba1c,
       collected_date: null,
-      source: Object.keys(providedExams).length > 0 ? "manual" : null,
+      source: hasAnyLab ? "manual" : null,
     },
     
     // HISTÓRICO TERAPÊUTICO
@@ -179,7 +322,7 @@ export function buildRegenCanonicalFromTriagem(
     biological_soil: {
       no_recent_labs: fatoresPreparo.includes("sem_exames_recentes"),
       anemia_or_low_iron_or_low_b12: fatoresPreparo.includes("anemia_ferritina_b12"),
-      smoker: fatoresPreparo.includes("tabagista"),
+      smoker: smokingResult.status === "current",
       high_bmi: fatoresPreparo.includes("imc_elevado"),
     },
     
@@ -214,18 +357,28 @@ export function mergeWizardFieldsToCanonical(
   canonical: RegenCanonical,
   wizardData: Partial<FisioRegenFormData>
 ): RegenCanonical {
-  const merged: RegenCanonical = { ...canonical };
+  const merged: RegenCanonical = { 
+    ...canonical,
+    data_quality_alerts: [...canonical.data_quality_alerts],
+    smoking: { ...canonical.smoking },
+    comorbidities: { ...canonical.comorbidities },
+    diagnosis: { ...canonical.diagnosis },
+  };
   
   // Smoking quit bucket
-  if (wizardData.regen_smoking_quit_bucket) {
+  if (wizardData.regen_smoking_quit_bucket && wizardData.regen_smoking_quit_bucket !== "unknown") {
     merged.smoking.quit_bucket = wizardData.regen_smoking_quit_bucket as RegenSmokingQuitBucket;
   }
   
-  // Smoking status (se wizard tem ex_smoker)
-  if (wizardData.smoking_status === "ex_smoker") {
-    merged.smoking.status = "ex_smoker";
-  } else if (wizardData.smoking_status) {
-    merged.smoking.status = wizardData.smoking_status as RegenSmokingStatus;
+  // Recalcular status de tabagismo se wizard tiver dados
+  if (wizardData.smoking_status) {
+    const smokingResult = determineCanonicalSmokingStatus(
+      [], // Não temos fatores_preparo aqui
+      wizardData.smoking_status,
+      wizardData.regen_smoking_quit_bucket
+    );
+    merged.smoking.status = smokingResult.status;
+    merged.data_quality_alerts.push(...smokingResult.alerts);
   }
   
   // Hipertensão
