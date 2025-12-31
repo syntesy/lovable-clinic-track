@@ -84,6 +84,7 @@ export interface DataQualityOutput {
 
 // Complete Engine Output
 export interface RegenEngineOutputs {
+  engine_version: "regen_engine_v1.0.0";
   ruleset_version: "regen_rules_v1";
   computed_at: string;
   safety: SafetyOutput;
@@ -97,6 +98,7 @@ export interface RegenEngineOutputs {
 
 // Default empty output
 export const defaultEngineOutputs: RegenEngineOutputs = {
+  engine_version: "regen_engine_v1.0.0",
   ruleset_version: "regen_rules_v1",
   computed_at: "",
   safety: { block: false, alert: false, reasons: [] },
