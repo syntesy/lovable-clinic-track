@@ -32,6 +32,7 @@ interface WizardStep8Props {
   existingEngineOutputs?: RegenEngineOutputs | null;
   existingCanonical?: RegenCanonical | null;
   canonicalUpdatedAt?: string;
+  screeningUpdatedAt?: string; // Fallback para stale check
   onEngineOutputsGenerated?: (outputs: RegenEngineOutputs) => void;
 }
 
@@ -44,6 +45,7 @@ export function WizardStep8({
   existingEngineOutputs,
   existingCanonical,
   canonicalUpdatedAt,
+  screeningUpdatedAt,
   onEngineOutputsGenerated,
 }: WizardStep8Props) {
   const [engineOutputs, setEngineOutputs] = useState<RegenEngineOutputs | null>(
@@ -81,15 +83,31 @@ export function WizardStep8({
       const outputs = runRegenEngine(newCanonical);
       setEngineOutputs(outputs);
 
-      // 3. Se temos screeningId, salvar no banco
+      // 3. Se temos screeningId, salvar no banco com MERGE (não sobrescrever)
       if (screeningId) {
+        // Primeiro buscar o questionnaire_responses existente
+        const { data: existingData, error: fetchError } = await supabase
+          .from("prp_screenings")
+          .select("questionnaire_responses")
+          .eq("id", screeningId)
+          .single();
+
+        if (fetchError) {
+          console.error("Error fetching existing responses:", fetchError);
+        }
+
+        // Merge com dados existentes
+        const existingResponses = (existingData?.questionnaire_responses as Record<string, unknown>) || {};
+        const mergedResponses = {
+          ...existingResponses,
+          regen_canonical: newCanonical,
+          regen_engine_outputs: outputs,
+        };
+
         const { error: updateError } = await supabase
           .from("prp_screenings")
           .update({
-            questionnaire_responses: {
-              regen_canonical: newCanonical,
-              regen_engine_outputs: outputs,
-            } as unknown as Json,
+            questionnaire_responses: mergedResponses as unknown as Json,
             updated_at: new Date().toISOString(),
           })
           .eq("id", screeningId);
@@ -180,6 +198,7 @@ export function WizardStep8({
       engineOutputs={engineOutputs}
       canonical={canonical}
       canonicalUpdatedAt={canonicalUpdatedAt}
+      screeningUpdatedAt={screeningUpdatedAt}
       patientName={patientName}
       isLoading={isLoading}
       error={error}

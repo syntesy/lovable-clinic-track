@@ -35,6 +35,7 @@ interface RegenResultViewProps {
   engineOutputs: RegenEngineOutputs | null;
   canonical?: RegenCanonical | null;
   canonicalUpdatedAt?: string;
+  screeningUpdatedAt?: string; // Fallback para stale check
   
   // Identifiers
   caseId?: string;
@@ -120,6 +121,7 @@ export function RegenResultView({
   engineOutputs,
   canonical,
   canonicalUpdatedAt,
+  screeningUpdatedAt,
   caseId,
   patientName,
   isLoading = false,
@@ -138,11 +140,12 @@ export function RegenResultView({
     if (error) return "error";
     if (!engineOutputs || !engineOutputs.computed_at) return "empty";
     
-    // Check if outdated
-    if (canonicalUpdatedAt && engineOutputs.computed_at) {
-      const canonicalTime = new Date(canonicalUpdatedAt).getTime();
+    // Check if outdated - usar canonicalUpdatedAt ou fallback para screeningUpdatedAt
+    const referenceTime = canonicalUpdatedAt || screeningUpdatedAt;
+    if (referenceTime && engineOutputs.computed_at) {
+      const refTime = new Date(referenceTime).getTime();
       const computedTime = new Date(engineOutputs.computed_at).getTime();
-      if (canonicalTime > computedTime) return "outdated";
+      if (refTime > computedTime) return "outdated";
     }
     
     return "ready";
