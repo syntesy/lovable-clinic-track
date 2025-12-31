@@ -350,7 +350,154 @@ Ver arquivo completo: [`docs/examples/regen_engine_outputs.sample.json`](./examp
 
 ---
 
-## 12. Changelog
+## 12. Checklist de Validação Manual (Pós-Login)
+
+### Pré-requisitos
+- [ ] Usuário autenticado
+- [ ] Paciente de teste criado
+- [ ] Triagem iniciada (wizard até step 7)
+
+### Cenário 1: NORMAL (Resultado Calculado com Sucesso)
+
+**Setup:**
+1. Preencher wizard steps 0-7 com dados válidos
+2. Não marcar contraindicações de segurança
+3. Informar exames laboratoriais recentes (<90 dias)
+
+**Execução:**
+1. [ ] Navegar até Step 8 (Resultado REGENAPP)
+2. [ ] Verificar empty state com CTA "Gerar Resultado"
+3. [ ] Clicar em "Gerar Resultado"
+4. [ ] Aguardar loading
+
+**Expected Outputs (Asserts):**
+```
+✅ Card Safety: status "OK" (verde), sem reasons
+✅ Card CRS: score numérico (0-100), classificação visível
+✅ Card DIE: tabela com exames categorizados (USE/REPEAT/REQUEST)
+✅ Card BRS: score numérico, reason_codes listados
+✅ Card TOG: orientações categorizadas
+✅ Card PEE: tabela de elegibilidade por procedimento
+✅ Card Data Quality: percentual de completude
+✅ Header: engine_version = "regen_engine_v1.0.0"
+✅ Header: ruleset_version = "regen_rules_v1"
+✅ Header: computed_at = timestamp recente
+✅ Botões: "Recalcular", "Exportar PDF", "Copiar", "Salvar nota" visíveis
+```
+
+---
+
+### Cenário 2: SAFETY BLOCK (Contraindicação Absoluta)
+
+**Setup:**
+1. Preencher wizard steps 0-7
+2. No step de Safety, marcar: "Tratamento oncológico atual ou últimos 12 meses" = SIM
+3. OU marcar qualquer outra contraindicação absoluta
+
+**Execução:**
+1. [ ] Navegar até Step 8
+2. [ ] Clicar em "Gerar Resultado"
+
+**Expected Outputs (Asserts):**
+```
+✅ Card Safety: status "BLOQUEADO" (vermelho)
+✅ Card Safety: reasons[] contém mensagem de bloqueio
+✅ Card CRS: exibe "Não calculado devido a bloqueio de segurança"
+✅ Card DIE: exibe "Não calculado devido a bloqueio de segurança"
+✅ Card BRS: exibe "Não calculado devido a bloqueio de segurança"
+✅ Card TOG: exibe "Não calculado devido a bloqueio de segurança"
+✅ Card PEE: exibe "Não calculado devido a bloqueio de segurança"
+✅ Card Data Quality: alerta "Avaliação bloqueada por contraindicação de segurança"
+✅ CTAs alternativos: "Revisar triagem" e/ou "Encaminhar para avaliação"
+❌ NÃO deve mostrar scores numéricos em CRS/BRS
+❌ NÃO deve mostrar elegibilidade em PEE
+```
+
+---
+
+### Cenário 3: STALE (Resultado Desatualizado)
+
+**Setup:**
+1. Ter resultado já calculado (cenário 1 executado)
+2. Voltar para steps anteriores (1-7)
+3. Alterar algum dado (ex: adicionar medicação, alterar dor)
+4. Salvar alteração (o campo `updated_at` deve ser atualizado)
+
+**Execução:**
+1. [ ] Navegar novamente até Step 8
+
+**Expected Outputs (Asserts):**
+```
+✅ Banner amarelo/amber visível no topo
+✅ Texto do banner: "Este resultado pode estar desatualizado"
+✅ Botão "Recalcular" visível no banner OU na barra de ações
+✅ Cards anteriores ainda visíveis (dados antigos)
+✅ Header computed_at: timestamp ANTERIOR à alteração
+
+Após clicar "Recalcular":
+✅ Banner desaparece
+✅ computed_at atualizado para timestamp recente
+✅ Dados refletem alterações feitas
+```
+
+---
+
+### Cenário 3b: STALE com Fallback
+
+**Condição especial:** `canonicalUpdatedAt` não existe no payload
+
+**Expected Outputs:**
+```
+✅ Sistema usa `prp_screenings.updated_at` como fallback
+✅ Lógica de stale funciona mesmo sem canonicalUpdatedAt
+```
+
+---
+
+### Validação de Persistência (DB)
+
+**Após qualquer cenário com "Gerar Resultado":**
+
+1. [ ] Consultar `prp_screenings` no banco
+2. [ ] Verificar `questionnaire_responses.regen_engine_outputs`
+
+**Asserts:**
+```sql
+-- Verificar estrutura
+SELECT 
+  questionnaire_responses->'regen_engine_outputs'->>'engine_version' as engine_v,
+  questionnaire_responses->'regen_engine_outputs'->>'ruleset_version' as ruleset_v,
+  questionnaire_responses->'regen_engine_outputs'->>'computed_at' as computed_at,
+  questionnaire_responses->'regen_engine_outputs'->'safety'->>'block' as safety_block
+FROM prp_screenings 
+WHERE id = '<screening_id>';
+
+-- Expected:
+-- engine_v = "regen_engine_v1.0.0"
+-- ruleset_v = "regen_rules_v1"
+-- computed_at = ISO timestamp (não vazio, não null)
+-- safety_block = "true" ou "false" (string)
+```
+
+---
+
+### Validação de Merge (Não Sobrescreve Dados)
+
+**Setup:**
+1. Ter screening com dados existentes em `questionnaire_responses`
+2. Gerar resultado
+
+**Assert:**
+```
+✅ Campos existentes em questionnaire_responses preservados
+✅ regen_canonical adicionado/atualizado
+✅ regen_engine_outputs adicionado/atualizado
+❌ Campos anteriores NÃO foram deletados
+```
+
+---
+
+## 13. Changelog
 
 ### v1.0.0 (2025-01-01) - CONGELADO
 - Implementação inicial completa
