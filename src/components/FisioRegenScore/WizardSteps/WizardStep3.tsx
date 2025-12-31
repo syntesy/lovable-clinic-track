@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, Heart, Activity } from "lucide-react";
 
 interface WizardStep3Props {
   formData: FisioRegenFormData;
@@ -16,9 +16,9 @@ export function WizardStep3({ formData, updateFormData }: WizardStep3Props) {
       <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
         <FlaskConical className="h-5 w-5 text-muted-foreground mt-0.5" />
         <div>
-          <p className="font-medium">Exames Laboratoriais</p>
+          <p className="font-medium">Exames Laboratoriais e Comorbidades</p>
           <p className="text-sm text-muted-foreground">
-            Informe os resultados dos exames disponíveis. Valores ausentes recebem pontuação neutra.
+            Informe os resultados dos exames disponíveis e comorbidades conhecidas.
           </p>
         </div>
       </div>
@@ -38,6 +38,42 @@ export function WizardStep3({ formData, updateFormData }: WizardStep3Props) {
             id="diabetes_known"
             checked={formData.diabetes_known}
             onCheckedChange={(checked) => updateFormData("diabetes_known", checked)}
+          />
+        </div>
+
+        {/* Hipertensão - NOVO */}
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-1 flex-1">
+            <Label htmlFor="regen_has_hypertension" className="font-medium flex items-center gap-2">
+              <Heart className="h-4 w-4 text-red-500" />
+              Pressão alta (Hipertensão)
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Paciente tem diagnóstico de hipertensão arterial
+            </p>
+          </div>
+          <Switch
+            id="regen_has_hypertension"
+            checked={formData.regen_has_hypertension}
+            onCheckedChange={(checked) => updateFormData("regen_has_hypertension", checked)}
+          />
+        </div>
+
+        {/* Dislipidemia - NOVO */}
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-1 flex-1">
+            <Label htmlFor="regen_has_dyslipidemia" className="font-medium flex items-center gap-2">
+              <Activity className="h-4 w-4 text-orange-500" />
+              Colesterol alto (Dislipidemia)
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Paciente tem diagnóstico de dislipidemia/colesterol elevado
+            </p>
+          </div>
+          <Switch
+            id="regen_has_dyslipidemia"
+            checked={formData.regen_has_dyslipidemia}
+            onCheckedChange={(checked) => updateFormData("regen_has_dyslipidemia", checked)}
           />
         </div>
 
