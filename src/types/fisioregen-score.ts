@@ -1,7 +1,9 @@
 // Tipos para FISIOREGEN SCORE
 
 export type CRPStatus = "not_available" | "normal" | "mild" | "high";
-export type SmokingStatus = "non_smoker" | "light_moderate" | "heavy";
+export type SmokingStatus = "non_smoker" | "light_moderate" | "heavy" | "ex_smoker";
+export type SmokingQuitBucket = "lt_6m" | "m6_12" | "gt_12m" | "unknown";
+export type TissueType = "tendon" | "cartilage" | "ligament" | "muscle" | "enthesis" | "other" | "unknown";
 export type TissueIntegrityGrade = "preserved" | "moderate" | "severe" | "complete_rupture";
 export type TissueSubstrateViabilityGrade = "viable" | "moderate_changes" | "severe" | "collapse";
 export type TissueBiologicStageGrade = "responsive" | "advanced_low_matrix" | "very_advanced";
@@ -79,8 +81,14 @@ export interface FisioRegenFormData {
   
   // Tela 4: Tabagismo
   smoking_status: SmokingStatus;
+  regen_smoking_quit_bucket: SmokingQuitBucket | null;
   
-  // Tela 5: Prontidão tecidual
+  // Tela 3: Comorbidades adicionais
+  regen_has_hypertension: boolean;
+  regen_has_dyslipidemia: boolean;
+  
+  // Tela 5: Prontidão tecidual (somente profissional)
+  regen_tissue_type: TissueType;
   tissue_integrity_grade: TissueIntegrityGrade;
   tissue_substrate_viability_grade: TissueSubstrateViabilityGrade;
   tissue_biologic_stage_grade: TissueBiologicStageGrade;
@@ -138,8 +146,14 @@ export const initialFormData: FisioRegenFormData = {
   
   // Tabagismo
   smoking_status: "non_smoker",
+  regen_smoking_quit_bucket: null,
   
-  // Prontidão tecidual
+  // Comorbidades adicionais
+  regen_has_hypertension: false,
+  regen_has_dyslipidemia: false,
+  
+  // Prontidão tecidual (somente profissional)
+  regen_tissue_type: "unknown",
   tissue_integrity_grade: "preserved",
   tissue_substrate_viability_grade: "viable",
   tissue_biologic_stage_grade: "responsive",
