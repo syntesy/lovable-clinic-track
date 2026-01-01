@@ -4,87 +4,35 @@
 
 ---
 
-## 1. Visão Geral
+## 1. Auditoria ETAPA 4 ✅
 
-O sistema de follow-ups permite agendar e gerenciar acompanhamentos de pacientes após procedimentos ortobiológicos, coletando dados de outcomes para análise clínica.
+### 1.1 Naming Padronizado
 
-### Características
+| Item | Valor Oficial |
+|------|---------------|
+| **Tabela** | `procedure_followups` |
+| **Hook principal** | `useFollowups` |
+| **Hook por screening** | `useFollowupsByScreening` |
+| **Componente Step 8** | `ScreeningFollowups` |
+| **Página painel** | `/followups` → `FollowupPanel.tsx` |
 
-- ✅ Criação automática de 5 follow-ups por procedimento (D7, D30, D90, D180, D365)
-- ✅ Painel centralizado para gestão de pendências
-- ✅ Formulário estruturado de outcomes
-- ✅ Integração com o Resultado REGENAPP (Step 8)
-- ✅ Marcação automática de follow-ups atrasados
-- ✅ RLS por clínico
+### 1.2 Gatilho Automático
 
----
+**Onde está definido `procedure_done`?**  
+Não existe flag `procedure_done`. A criação de um registro em `patient_procedures` implica que o procedimento foi realizado.
 
-## 2. Modelo de Dados
+**Trigger implementado:**
+- **Função:** `auto_create_followups_on_procedure()`
+- **Trigger:** `trigger_auto_create_followups` em `patient_procedures`
+- **Disparo:** `AFTER INSERT`
+- **Follow-ups criados:** D30, D90, D180, D365 (4 timepoints)
+- **Idempotência:** `ON CONFLICT (screening_id, timepoint) DO NOTHING`
 
-### Tabela: `procedure_followups`
+### 1.3 RLS/Tenant
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `id` | UUID | PK |
-| `screening_id` | UUID | FK → prp_screenings |
-| `patient_id` | UUID | FK → patients |
-| `clinician_id` | UUID | ID do profissional |
-| `timepoint` | TEXT | D7, D30, D90, D180, D365 |
-| `scheduled_for` | DATE | Data agendada |
-| `rescheduled_from` | DATE | Data original (se reagendado) |
-| `status` | TEXT | pending, completed, missed, cancelled |
-| `completed_at` | TIMESTAMPTZ | Quando foi completado |
-| `pain_score` | INTEGER | 0-10 |
-| `function_score` | INTEGER | 0-100 |
-| `function_text` | TEXT | Descrição funcional alternativa |
-| `global_change` | TEXT | much_better, better, same, worse, much_worse |
-| `adverse_event` | BOOLEAN | Houve evento adverso? |
-| `adverse_event_severity` | TEXT | mild, moderate, severe |
-| `adverse_event_description` | TEXT | Descrição do evento |
-| `notes` | TEXT | Observações |
-| `created_at` | TIMESTAMPTZ | Timestamp de criação |
-| `updated_at` | TIMESTAMPTZ | Timestamp de atualização |
+**Chave de isolamento:** `clinician_id` (UUID do profissional autenticado)
 
-### Índices
-
-- `idx_followups_screening` - por screening_id
-- `idx_followups_patient` - por patient_id
-- `idx_followups_clinician` - por clinician_id
-- `idx_followups_status` - por status
-- `idx_followups_scheduled` - por scheduled_for
-- `idx_followups_status_scheduled` - composto status + scheduled_for
-- `idx_followups_unique_timepoint` - UNIQUE (screening_id, timepoint)
-
----
-
-## 3. Funções SQL
-
-### `create_followups_for_screening`
-
-Cria automaticamente os 5 follow-ups após um procedimento.
-
-```sql
-SELECT * FROM create_followups_for_screening(
-  p_screening_id := 'uuid',
-  p_patient_id := 'uuid',
-  p_clinician_id := 'uuid',
-  p_procedure_date := CURRENT_DATE  -- opcional
-);
-```
-
-### `mark_missed_followups`
-
-Marca como "missed" todos os follow-ups pendentes com mais de 7 dias de atraso.
-
-```sql
-SELECT mark_missed_followups();
--- Retorna: quantidade de follow-ups atualizados
-```
-
----
-
-## 4. Políticas RLS
-
+**Políticas RLS:**
 | Operação | Regra |
 |----------|-------|
 | SELECT | `clinician_id = auth.uid()` |
@@ -92,100 +40,299 @@ SELECT mark_missed_followups();
 | UPDATE | `clinician_id = auth.uid()` |
 | DELETE | `clinician_id = auth.uid()` |
 
----
-
-## 5. Componentes React
-
-### Hooks
-
-| Hook | Descrição |
-|------|-----------|
-| `useFollowups(filters?)` | Lista follow-ups com filtros |
-| `useFollowupsByScreening(screeningId)` | Lista follow-ups de um screening específico |
-| `useFollowupActions()` | Ações: criar, completar, atualizar status, reagendar |
-
-### Componentes
-
-| Componente | Descrição |
-|------------|-----------|
-| `FollowupStatusBadge` | Badge colorido de status |
-| `FollowupForm` | Formulário de outcomes |
-| `FollowupList` | Lista de follow-ups |
-| `FollowupFiltersComponent` | Filtros de status e período |
-| `ScreeningFollowups` | Seção de follow-ups para Step 8 |
+**Confirmações:**
+- ✅ `/followups` requer `ProtectedRoute` (autenticação obrigatória)
+- ✅ Usuário só vê follow-ups onde `clinician_id = auth.uid()`
+- ✅ Não há acesso cross-tenant possível via API
 
 ---
 
-## 6. Páginas
+## 2. Entregáveis SQL
 
-### `/followups` - Painel de Follow-ups
+### 2.1 DDL da Tabela
 
-- Cards de estatísticas (pendentes, hoje, atrasados, concluídos)
-- Filtros por status e período
-- Lista completa de follow-ups
-- Modal para completar follow-up
+```sql
+CREATE TABLE public.procedure_followups (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  screening_id UUID NOT NULL REFERENCES public.prp_screenings(id) ON DELETE CASCADE,
+  patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+  clinician_id UUID NOT NULL,
+  
+  -- Scheduling
+  timepoint TEXT NOT NULL CHECK (timepoint IN ('D7', 'D30', 'D90', 'D180', 'D365')),
+  scheduled_for DATE NOT NULL,
+  rescheduled_from DATE,
+  
+  -- Status
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'missed', 'cancelled')),
+  completed_at TIMESTAMPTZ,
+  
+  -- Outcome data
+  pain_score INTEGER CHECK (pain_score >= 0 AND pain_score <= 10),
+  function_score INTEGER CHECK (function_score >= 0 AND function_score <= 100),
+  function_text TEXT,
+  global_change TEXT CHECK (global_change IN ('much_better', 'better', 'same', 'worse', 'much_worse')),
+  
+  -- Adverse events
+  adverse_event BOOLEAN DEFAULT false,
+  adverse_event_severity TEXT CHECK (adverse_event_severity IN ('mild', 'moderate', 'severe')),
+  adverse_event_description TEXT,
+  
+  -- Notes
+  notes TEXT,
+  
+  -- Timestamps
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-### Integração no Step 8
+-- Índices
+CREATE INDEX idx_followups_screening ON public.procedure_followups(screening_id);
+CREATE INDEX idx_followups_patient ON public.procedure_followups(patient_id);
+CREATE INDEX idx_followups_clinician ON public.procedure_followups(clinician_id);
+CREATE INDEX idx_followups_status ON public.procedure_followups(status);
+CREATE INDEX idx_followups_scheduled ON public.procedure_followups(scheduled_for);
+CREATE INDEX idx_followups_status_scheduled ON public.procedure_followups(status, scheduled_for);
+CREATE UNIQUE INDEX idx_followups_unique_timepoint ON public.procedure_followups(screening_id, timepoint);
+```
 
-No wizard de triagem (Step 8 - Resultado REGENAPP), há uma seção dedicada:
+### 2.2 RLS Policies
 
-- Lista compacta de follow-ups do screening
-- Botão "Criar Follow-ups" (se não existirem)
-- Botão "Painel" para acessar `/followups`
-- Modal para completar follow-up inline
+```sql
+ALTER TABLE public.procedure_followups ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Clinicians can view their own followups"
+ON public.procedure_followups FOR SELECT
+USING (clinician_id = auth.uid());
+
+CREATE POLICY "Clinicians can insert their own followups"
+ON public.procedure_followups FOR INSERT
+WITH CHECK (clinician_id = auth.uid());
+
+CREATE POLICY "Clinicians can update their own followups"
+ON public.procedure_followups FOR UPDATE
+USING (clinician_id = auth.uid());
+
+CREATE POLICY "Clinicians can delete their own followups"
+ON public.procedure_followups FOR DELETE
+USING (clinician_id = auth.uid());
+```
+
+### 2.3 Funções
+
+```sql
+-- Criar follow-ups manualmente (via RPC)
+CREATE OR REPLACE FUNCTION public.create_followups_for_screening(
+  p_screening_id UUID,
+  p_patient_id UUID,
+  p_clinician_id UUID,
+  p_procedure_date DATE DEFAULT CURRENT_DATE
+)
+RETURNS SETOF public.procedure_followups
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_timepoints TEXT[] := ARRAY['D7', 'D30', 'D90', 'D180', 'D365'];
+  v_days INTEGER[] := ARRAY[7, 30, 90, 180, 365];
+  v_i INTEGER;
+BEGIN
+  FOR v_i IN 1..array_length(v_timepoints, 1) LOOP
+    INSERT INTO public.procedure_followups (
+      screening_id, patient_id, clinician_id, timepoint, scheduled_for, status
+    ) VALUES (
+      p_screening_id, p_patient_id, p_clinician_id,
+      v_timepoints[v_i], p_procedure_date + v_days[v_i], 'pending'
+    )
+    ON CONFLICT (screening_id, timepoint) DO NOTHING;
+  END LOOP;
+  
+  RETURN QUERY SELECT * FROM public.procedure_followups WHERE screening_id = p_screening_id;
+END;
+$$;
+
+-- Marcar follow-ups atrasados como missed
+CREATE OR REPLACE FUNCTION public.mark_missed_followups()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_count INTEGER;
+BEGIN
+  WITH updated AS (
+    UPDATE public.procedure_followups
+    SET status = 'missed', updated_at = now()
+    WHERE status = 'pending'
+      AND scheduled_for < CURRENT_DATE - INTERVAL '7 days'
+    RETURNING id
+  )
+  SELECT COUNT(*) INTO v_count FROM updated;
+  RETURN v_count;
+END;
+$$;
+
+-- Trigger automático após INSERT em patient_procedures
+CREATE OR REPLACE FUNCTION public.auto_create_followups_on_procedure()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_screening_id UUID;
+  v_timepoints TEXT[] := ARRAY['D30', 'D90', 'D180', 'D365'];
+  v_days INTEGER[] := ARRAY[30, 90, 180, 365];
+  v_i INTEGER;
+BEGIN
+  -- Buscar o screening mais recente do paciente
+  SELECT id INTO v_screening_id
+  FROM public.prp_screenings
+  WHERE patient_id = NEW.patient_id
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+  IF v_screening_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  FOR v_i IN 1..array_length(v_timepoints, 1) LOOP
+    INSERT INTO public.procedure_followups (
+      screening_id, patient_id, clinician_id, timepoint, scheduled_for, status
+    ) VALUES (
+      v_screening_id, NEW.patient_id,
+      COALESCE(NEW.created_by, auth.uid()),
+      v_timepoints[v_i], NEW.procedure_date + v_days[v_i], 'pending'
+    )
+    ON CONFLICT (screening_id, timepoint) DO NOTHING;
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trigger_auto_create_followups
+  AFTER INSERT ON public.patient_procedures
+  FOR EACH ROW
+  EXECUTE FUNCTION public.auto_create_followups_on_procedure();
+```
 
 ---
 
-## 7. Fluxos
+## 3. Entregáveis Código
 
-### Criação de Follow-ups
+### 3.1 Hook useFollowups (Queries)
 
-```
-1. Usuário acessa Step 8 do wizard
-2. Clica em "Criar Follow-ups"
-3. Sistema chama create_followups_for_screening()
-4. 5 follow-ups são criados com datas calculadas
-5. Lista atualiza mostrando os follow-ups
-```
+```typescript
+// src/hooks/useFollowups.ts
 
-### Completar Follow-up
+// Query principal com filtros
+let query = supabase
+  .from('procedure_followups')  // ← TABELA OFICIAL
+  .select(`
+    *,
+    patient:patients(full_name, phone)
+  `)
+  .order('scheduled_for', { ascending: true });
 
-```
-1. Usuário abre follow-up pendente
-2. Preenche formulário:
-   - Dor (0-10)
-   - Função (0-100 ou texto)
-   - Mudança global (5 opções)
-   - Eventos adversos (sim/não + detalhes)
-   - Observações
-3. Clica em "Salvar como Concluído"
-4. Status muda para "completed"
-5. Lista atualiza
-```
+// Filtro por status
+if (filters?.status) {
+  query = query.eq('status', filters.status);
+}
 
-### Reagendamento
-
-```
-1. Usuário abre follow-up
-2. Clica em "Reagendar"
-3. Seleciona nova data
-4. Confirma
-5. rescheduled_from recebe data anterior
-6. scheduled_for recebe nova data
-7. status volta para "pending"
+// Filtro por período
+switch (filters.period) {
+  case 'today':
+    query = query.eq('scheduled_for', today);
+    break;
+  case 'next7days':
+    query = query.gte('scheduled_for', today).lte('scheduled_for', next7);
+    break;
+  case 'overdue':
+    query = query.eq('status', 'pending').lt('scheduled_for', overdueCutoff);
+    break;
+}
 ```
 
-### Marcação Automática de Missed
+### 3.2 Hook useFollowupsByScreening
 
+```typescript
+// src/hooks/useFollowups.ts
+
+export function useFollowupsByScreening(screeningId: string | undefined) {
+  // ...
+  const { data, error } = await supabase
+    .from('procedure_followups')  // ← TABELA OFICIAL
+    .select('*')
+    .eq('screening_id', screeningId)  // ← FILTRO POR SCREENING
+    .order('scheduled_for', { ascending: true });
+  // ...
+}
 ```
-1. Usuário acessa painel de follow-ups
-2. Sistema executa mark_missed_followups() automaticamente
-3. Follow-ups com scheduled_for < (hoje - 7 dias) são marcados como "missed"
+
+### 3.3 Step 8 - Integração com ScreeningFollowups
+
+```tsx
+// src/components/FisioRegenScore/WizardSteps/WizardStep8.tsx
+
+import { ScreeningFollowups } from "@/components/followup";
+
+// No return do componente:
+return (
+  <div className="space-y-6">
+    <RegenResultView ... />
+
+    {/* Seção de Follow-ups - só exibe se temos screening e paciente */}
+    {screeningId && patientId && (
+      <ScreeningFollowups
+        screeningId={screeningId}
+        patientId={patientId}
+      />
+    )}
+  </div>
+);
+```
+
+### 3.4 ScreeningFollowups Component
+
+```tsx
+// src/components/followup/ScreeningFollowups.tsx
+
+interface ScreeningFollowupsProps {
+  screeningId: string;
+  patientId: string;
+}
+
+export function ScreeningFollowups({ screeningId, patientId }: ScreeningFollowupsProps) {
+  const { followups, loading } = useFollowupsByScreening(screeningId);
+  // ...
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Follow-ups</CardTitle>
+        <div className="flex gap-2">
+          {!hasFollowups && (
+            <Button onClick={handleCreate}>Criar Follow-ups</Button>
+          )}
+          <Button variant="outline" onClick={() => navigate('/followups')}>
+            Painel
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <FollowupList followups={followups} ... />
+      </CardContent>
+    </Card>
+  );
+}
 ```
 
 ---
 
-## 8. Arquivos Criados/Alterados
+## 4. Arquivos Criados/Alterados
 
 ### Novos Arquivos
 
@@ -199,7 +346,7 @@ No wizard de triagem (Step 8 - Resultado REGENAPP), há uma seção dedicada:
 | `src/components/followup/FollowupFilters.tsx` | Componente de filtros |
 | `src/components/followup/ScreeningFollowups.tsx` | Seção para Step 8 |
 | `src/components/followup/index.ts` | Exports |
-| `src/pages/FollowupPanel.tsx` | Página principal |
+| `src/pages/FollowupPanel.tsx` | Página principal `/followups` |
 | `docs/followups-v1.md` | Esta documentação |
 
 ### Arquivos Alterados
@@ -211,143 +358,106 @@ No wizard de triagem (Step 8 - Resultado REGENAPP), há uma seção dedicada:
 
 ---
 
-## 9. Checklist de Validação Manual
+## 5. Checklist de Validação Manual
 
-### Pré-requisitos
-- [ ] Usuário autenticado
-- [ ] Paciente de teste com triagem (prp_screenings)
-
-### Cenário 1: Criar Follow-ups
+### Cenário 1: Trigger Automático
 
 **Execução:**
-1. [ ] Navegar até Step 8 do wizard
-2. [ ] Verificar seção "Follow-ups" visível
-3. [ ] Clicar em "Criar Follow-ups"
+1. [ ] Criar paciente de teste
+2. [ ] Criar triagem (prp_screenings) para o paciente
+3. [ ] Registrar procedimento via AddProcedureModal
+4. [ ] Consultar `procedure_followups` no banco
 
 **Expected Outputs:**
-```
-✅ Toast: "Follow-ups criados - 5 follow-ups agendados automaticamente"
-✅ Lista exibe 5 follow-ups com timepoints D7, D30, D90, D180, D365
-✅ Todos com status "Pendente"
-✅ Datas calculadas corretamente a partir de hoje
-```
-
-### Cenário 2: Completar Follow-up
-
-**Execução:**
-1. [ ] Clicar no botão de abrir um follow-up pendente
-2. [ ] Preencher dor = 3
-3. [ ] Preencher função = 80%
-4. [ ] Selecionar "Melhor" em mudança global
-5. [ ] Deixar "Eventos adversos" = Não
-6. [ ] Clicar "Salvar como Concluído"
-
-**Expected Outputs:**
-```
-✅ Modal fecha
-✅ Toast: "Follow-up concluído"
-✅ Status muda para "Concluído" (verde)
-✅ Dados de outcome exibidos no card
-```
-
-### Cenário 3: Marcar como Perdido
-
-**Execução:**
-1. [ ] Abrir follow-up pendente
-2. [ ] Clicar "Marcar como Perdido"
-
-**Expected Outputs:**
-```
-✅ Modal fecha
-✅ Toast: "Status atualizado"
-✅ Status muda para "Perdido" (vermelho)
-```
-
-### Cenário 4: Reagendar
-
-**Execução:**
-1. [ ] Abrir follow-up pendente
-2. [ ] Clicar "Reagendar"
-3. [ ] Selecionar data futura
-4. [ ] Confirmar
-
-**Expected Outputs:**
-```
-✅ Modal fecha
-✅ Toast: "Follow-up reagendado"
-✅ Nova data exibida
-✅ Badge "(reagendado)" visível
-```
-
-### Cenário 5: Painel de Follow-ups
-
-**Execução:**
-1. [ ] Navegar para `/followups`
-2. [ ] Verificar cards de estatísticas
-3. [ ] Aplicar filtros
-4. [ ] Verificar lista
-
-**Expected Outputs:**
-```
-✅ Cards mostram números corretos
-✅ Filtro por status funciona
-✅ Filtro por período funciona
-✅ Lista atualiza conforme filtros
-```
-
-### Cenário 6: Missed Automático
-
-**Setup:**
-1. Criar follow-up com scheduled_for = hoje - 10 dias (via SQL)
-
-**Execução:**
-1. [ ] Acessar `/followups`
-
-**Expected Outputs:**
-```
-✅ Follow-up aparece como "Perdido"
-✅ Toast mostra quantidade de follow-ups atualizados (se houver)
-```
-
----
-
-## 10. Validação de Banco de Dados
-
 ```sql
--- Verificar follow-ups de um screening
-SELECT 
-  timepoint,
-  scheduled_for,
-  status,
-  pain_score,
-  function_score,
-  global_change,
-  adverse_event
-FROM procedure_followups 
-WHERE screening_id = '<screening_id>'
-ORDER BY scheduled_for;
+SELECT * FROM procedure_followups WHERE patient_id = '<patient_id>';
+-- ✅ 4 registros: D30, D90, D180, D365
+-- ✅ scheduled_for = procedure_date + dias respectivos
+-- ✅ status = 'pending' para todos
+```
 
--- Expected: 5 linhas, uma para cada timepoint
+### Cenário 2: Idempotência
+
+**Execução:**
+1. [ ] Registrar segundo procedimento para o mesmo paciente
+2. [ ] Consultar `procedure_followups`
+
+**Expected Outputs:**
+```
+✅ Ainda 4 registros (não duplicou)
+✅ ON CONFLICT funcionou
+```
+
+### Cenário 3: RLS Tenant Isolation
+
+**Execução:**
+1. [ ] Logar como Profissional A
+2. [ ] Criar follow-ups para Paciente X
+3. [ ] Logar como Profissional B
+4. [ ] Tentar acessar `/followups`
+
+**Expected Outputs:**
+```
+✅ Profissional B NÃO vê follow-ups do Profissional A
+✅ Lista vazia ou apenas seus próprios follow-ups
+```
+
+### Cenário 4: Acesso à Rota
+
+**Execução:**
+1. [ ] Acessar `/followups` sem autenticação
+
+**Expected Outputs:**
+```
+✅ Redirecionado para /auth
+✅ ProtectedRoute bloqueou acesso
 ```
 
 ---
 
-## 11. Regras de Negócio
+## 6. Diagrama de Fluxo
 
-1. **Um follow-up por timepoint por screening** - Constraint unique garante
-2. **Janela de missed = 7 dias** - Após 7 dias de atraso, marca como missed
-3. **Motor clínico intocado** - Follow-ups NÃO recalculam o motor REGENAPP
-4. **RLS por clínico** - Cada profissional vê apenas seus follow-ups
-5. **Sem PII nos outcomes** - Apenas scores numéricos e categorias
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     FLUXO DE FOLLOW-UPS                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. Triagem (prp_screenings)                                   │
+│     └─> screening_id criado                                    │
+│                                                                 │
+│  2. Procedimento (patient_procedures)                          │
+│     └─> INSERT dispara trigger                                 │
+│         └─> auto_create_followups_on_procedure()               │
+│             └─> Busca screening_id mais recente                │
+│             └─> Cria 4 follow-ups (D30, D90, D180, D365)       │
+│             └─> ON CONFLICT ignora duplicatas                  │
+│                                                                 │
+│  3. Step 8 - Resultado REGENAPP                                │
+│     └─> ScreeningFollowups exibe lista                         │
+│     └─> Botão "Painel" navega para /followups                  │
+│                                                                 │
+│  4. Painel /followups                                          │
+│     └─> Lista todos follow-ups do clinician_id                 │
+│     └─> Filtros: status, período                               │
+│     └─> Ações: completar, missed, reagendar                    │
+│                                                                 │
+│  5. Automação de Missed                                        │
+│     └─> mark_missed_followups() chamada ao carregar painel     │
+│     └─> Marca como 'missed' se scheduled_for < hoje - 7 dias   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 12. Changelog
+## 7. Changelog
 
 ### v1.0.0 (2025-01-01)
-- Implementação inicial
-- Tabela procedure_followups
-- Funções create_followups_for_screening e mark_missed_followups
+- Tabela `procedure_followups` criada
+- RLS policies por `clinician_id`
+- Funções `create_followups_for_screening` e `mark_missed_followups`
+- Trigger `trigger_auto_create_followups` em `patient_procedures`
 - Componentes React completos
 - Integração com Step 8
 - Painel `/followups`
+- Documentação de auditoria ETAPA 4
