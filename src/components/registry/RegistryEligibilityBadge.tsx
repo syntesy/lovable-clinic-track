@@ -7,7 +7,7 @@ interface RegistryEligibilityBadgeProps {
 
 /**
  * Selo discreto que indica elegibilidade para evidência clínica
- * Não menciona Orthoregen ao médico
+ * Não menciona REGENAPP ao médico
  */
 export function RegistryEligibilityBadge({ isEligible, className = '' }: RegistryEligibilityBadgeProps) {
   if (!isEligible) return null;

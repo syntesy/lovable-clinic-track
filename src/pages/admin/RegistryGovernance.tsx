@@ -31,12 +31,12 @@ export default function RegistryGovernance() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Scale className="h-5 w-5 text-primary" />
-            Finalidade do Orthoregen Clinical Registry™
+            Finalidade do REGENAPP Clinical Registry™
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-muted-foreground">
           <p>
-            O Orthoregen Clinical Registry™ é uma iniciativa <strong className="text-foreground">científica e estatística</strong> destinada a:
+            O REGENAPP Clinical Registry™ é uma iniciativa <strong className="text-foreground">científica e estatística</strong> destinada a:
           </p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>Gerar evidências sobre terapias ortobiológicas (PRP, PRF, BMAC)</li>
@@ -73,7 +73,7 @@ export default function RegistryGovernance() {
               <div>
                 <p className="font-medium text-foreground">Dados Agregados</p>
                 <p className="text-sm text-muted-foreground">
-                  Parceiros institucionais (incluindo Orthoregen) têm acesso apenas a estatísticas 
+                  Parceiros institucionais têm acesso apenas a estatísticas 
                   agregadas. Nenhum dado individual de paciente ou profissional é compartilhado.
                 </p>
               </div>
@@ -114,7 +114,7 @@ export default function RegistryGovernance() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            O Orthoregen Clinical Registry™ opera em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018):
+            O REGENAPP Clinical Registry™ opera em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018):
           </p>
           <div className="grid gap-3">
             <div className="flex items-center gap-2 text-sm">
@@ -174,7 +174,7 @@ export default function RegistryGovernance() {
                 <Eye className="h-4 w-4 text-blue-600" />
               </div>
               <div>
-                <p className="font-medium text-foreground">Parceiros Institucionais (Orthoregen)</p>
+                <p className="font-medium text-foreground">Parceiros Institucionais</p>
                 <p className="text-sm text-muted-foreground">
                   Acesso restrito a dashboards agregados. Proibido acesso a pacientes, médicos, 
                   prontuários ou casos individuais.
@@ -216,7 +216,7 @@ export default function RegistryGovernance() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-muted-foreground">
-            O Orthoregen Clinical Registry™ mantém <strong className="text-foreground">total independência científica</strong>:
+            O REGENAPP Clinical Registry™ mantém <strong className="text-foreground">total independência científica</strong>:
           </p>
           <div className="grid gap-2">
             <div className="flex items-center gap-2 text-sm">
