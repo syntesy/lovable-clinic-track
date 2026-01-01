@@ -41,6 +41,7 @@ import RegistryGovernance from "./pages/admin/RegistryGovernance";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import FollowupPanel from "./pages/FollowupPanel";
+import { RegistryDashboard, RegistryExport } from "./pages/Registry";
 // Patient Portal Pages
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -363,7 +364,27 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          {/* Patient Management for Professionals */}
+          {/* Registry Analytics Routes */}
+          <Route
+            path="/registry"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RegistryDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/registry/export"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RegistryExport />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/patients/manage"
             element={
