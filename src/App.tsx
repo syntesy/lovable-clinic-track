@@ -40,6 +40,7 @@ import AdminRegistryDashboard from "./pages/admin/AdminRegistryDashboard";
 import RegistryGovernance from "./pages/admin/RegistryGovernance";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+import FollowupPanel from "./pages/FollowupPanel";
 // Patient Portal Pages
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -217,6 +218,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <FisioRegenScore />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/followups"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <FollowupPanel />
                 </Layout>
               </ProtectedRoute>
             }

@@ -8,10 +8,12 @@
  * - Se regen_engine_outputs não existe: mostra empty state com CTA "Gerar Resultado"
  * - Se existe: renderiza todos os cards
  * - Botão "Gerar Resultado" executa o motor e salva em questionnaire_responses.regen_engine_outputs
+ * - Seção de Follow-ups para acompanhamento pós-procedimento
  */
 
 import { useState, useCallback } from "react";
 import { RegenResultView } from "@/components/RegenResult";
+import { ScreeningFollowups } from "@/components/followup";
 import { RegenEngineOutputs } from "@/types/regen-engine";
 import { RegenCanonical } from "@/types/regen-canonical";
 import { runRegenEngine } from "@/lib/regen-engine";
@@ -194,17 +196,27 @@ export function WizardStep8({
   }, [patientId, engineOutputs]);
 
   return (
-    <RegenResultView
-      engineOutputs={engineOutputs}
-      canonical={canonical}
-      canonicalUpdatedAt={canonicalUpdatedAt}
-      screeningUpdatedAt={screeningUpdatedAt}
-      patientName={patientName}
-      isLoading={isLoading}
-      error={error}
-      onGenerateResult={handleGenerateResult}
-      onRecalculate={handleRecalculate}
-      onSaveNote={patientId ? handleSaveNote : undefined}
-    />
+    <div className="space-y-6">
+      <RegenResultView
+        engineOutputs={engineOutputs}
+        canonical={canonical}
+        canonicalUpdatedAt={canonicalUpdatedAt}
+        screeningUpdatedAt={screeningUpdatedAt}
+        patientName={patientName}
+        isLoading={isLoading}
+        error={error}
+        onGenerateResult={handleGenerateResult}
+        onRecalculate={handleRecalculate}
+        onSaveNote={patientId ? handleSaveNote : undefined}
+      />
+
+      {/* Seção de Follow-ups - só exibe se temos screening e paciente */}
+      {screeningId && patientId && (
+        <ScreeningFollowups
+          screeningId={screeningId}
+          patientId={patientId}
+        />
+      )}
+    </div>
   );
 }
