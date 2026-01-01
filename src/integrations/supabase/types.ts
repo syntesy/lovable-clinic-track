@@ -1452,6 +1452,87 @@ export type Database = {
         }
         Relationships: []
       }
+      procedure_followups: {
+        Row: {
+          adverse_event: boolean | null
+          adverse_event_description: string | null
+          adverse_event_severity: string | null
+          clinician_id: string
+          completed_at: string | null
+          created_at: string
+          function_score: number | null
+          function_text: string | null
+          global_change: string | null
+          id: string
+          notes: string | null
+          pain_score: number | null
+          patient_id: string
+          rescheduled_from: string | null
+          scheduled_for: string
+          screening_id: string
+          status: string
+          timepoint: string
+          updated_at: string
+        }
+        Insert: {
+          adverse_event?: boolean | null
+          adverse_event_description?: string | null
+          adverse_event_severity?: string | null
+          clinician_id: string
+          completed_at?: string | null
+          created_at?: string
+          function_score?: number | null
+          function_text?: string | null
+          global_change?: string | null
+          id?: string
+          notes?: string | null
+          pain_score?: number | null
+          patient_id: string
+          rescheduled_from?: string | null
+          scheduled_for: string
+          screening_id: string
+          status?: string
+          timepoint: string
+          updated_at?: string
+        }
+        Update: {
+          adverse_event?: boolean | null
+          adverse_event_description?: string | null
+          adverse_event_severity?: string | null
+          clinician_id?: string
+          completed_at?: string | null
+          created_at?: string
+          function_score?: number | null
+          function_text?: string | null
+          global_change?: string | null
+          id?: string
+          notes?: string | null
+          pain_score?: number | null
+          patient_id?: string
+          rescheduled_from?: string | null
+          scheduled_for?: string
+          screening_id?: string
+          status?: string
+          timepoint?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_followups_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_followups_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "prp_screenings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prp_lab_results: {
         Row: {
           attached_files: Json | null
@@ -2604,6 +2685,41 @@ export type Database = {
         }[]
       }
       cleanup_expired_sessions: { Args: never; Returns: number }
+      create_followups_for_screening: {
+        Args: {
+          p_clinician_id: string
+          p_patient_id: string
+          p_procedure_date?: string
+          p_screening_id: string
+        }
+        Returns: {
+          adverse_event: boolean | null
+          adverse_event_description: string | null
+          adverse_event_severity: string | null
+          clinician_id: string
+          completed_at: string | null
+          created_at: string
+          function_score: number | null
+          function_text: string | null
+          global_change: string | null
+          id: string
+          notes: string | null
+          pain_score: number | null
+          patient_id: string
+          rescheduled_from: string | null
+          scheduled_for: string
+          screening_id: string
+          status: string
+          timepoint: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "procedure_followups"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       generate_integrity_hash: { Args: { data: Json }; Returns: string }
       has_role: {
         Args: {
@@ -2627,6 +2743,7 @@ export type Database = {
         }
         Returns: string
       }
+      mark_missed_followups: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "professional" | "viewer" | "patient"
