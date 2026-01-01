@@ -1531,6 +1531,13 @@ export type Database = {
             referencedRelation: "prp_screenings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "procedure_followups_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "registry_case_summary_v1_1"
+            referencedColumns: ["screening_id"]
+          },
         ]
       }
       prp_lab_results: {
@@ -1574,6 +1581,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "prp_screenings"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prp_lab_results_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "registry_case_summary_v1_1"
+            referencedColumns: ["screening_id"]
           },
         ]
       }
@@ -1905,6 +1919,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      registry_exports_log: {
+        Row: {
+          created_at: string
+          export_version: string
+          exported_at: string
+          exported_by: string
+          filters_json: Json
+          id: string
+          row_count: number
+        }
+        Insert: {
+          created_at?: string
+          export_version?: string
+          exported_at?: string
+          exported_by: string
+          filters_json?: Json
+          id?: string
+          row_count?: number
+        }
+        Update: {
+          created_at?: string
+          export_version?: string
+          exported_at?: string
+          exported_by?: string
+          filters_json?: Json
+          id?: string
+          row_count?: number
+        }
+        Relationships: []
       }
       registry_followups: {
         Row: {
@@ -2664,7 +2708,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      registry_case_summary_v1_1: {
+        Row: {
+          adverse_event_any: boolean | null
+          baseline_function_score: number | null
+          baseline_pain_nrs: number | null
+          clinician_id: string | null
+          d180_function: number | null
+          d180_pain: number | null
+          d30_function: number | null
+          d30_global_change: string | null
+          d30_pain: number | null
+          d365_function: number | null
+          d365_pain: number | null
+          d90_function: number | null
+          d90_global_change: string | null
+          d90_pain: number | null
+          diagnosis: string | null
+          followup_completion_rate: number | null
+          has_d180: boolean | null
+          has_d30: boolean | null
+          has_d365: boolean | null
+          has_d90: boolean | null
+          missed_count: number | null
+          patient_id: string | null
+          procedure_type: string | null
+          responder_reason_code: string | null
+          responder_status: string | null
+          screening_created_at: string | null
+          screening_id: string | null
+          tissue_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prp_screenings_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       authenticate_patient: {
