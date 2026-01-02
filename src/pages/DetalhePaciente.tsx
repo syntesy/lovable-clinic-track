@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, ChevronDown, User, Activity, FileText, FlaskConical, ClipboardList, Brain, Calendar, CheckCircle2, AlertCircle, XCircle, Clock, TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle } from "lucide-react";
-import { FisioRegenScoreWizard } from "@/components/FisioRegenScore/FisioRegenScoreWizard";
+import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -324,8 +324,11 @@ const DetalhePaciente = () => {
                   <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Visão Geral
                   </TabsTrigger>
+                  <TabsTrigger value="avaliacao" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                    Avaliação REGENAPP
+                  </TabsTrigger>
                   <TabsTrigger value="triagem" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-                    Triagem / Scores
+                    Histórico Triagens
                   </TabsTrigger>
                   <TabsTrigger value="historico" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Histórico Clínico
@@ -426,49 +429,71 @@ const DetalhePaciente = () => {
                   </div>
                 </TabsContent>
 
-                {/* Triagem Tab - Score Clínico */}
-                <TabsContent value="triagem" className="mt-8">
-                  <FisioRegenScoreWizard />
+                {/* Avaliação REGENAPP - Aba Principal */}
+                <TabsContent value="avaliacao" className="mt-8">
+                  {selectedPatientId && (
+                    <AvaliacaoRegenapp 
+                      patientId={selectedPatientId} 
+                      patientName={patient?.full_name}
+                    />
+                  )}
                 </TabsContent>
 
-                {/* Histórico Tab */}
+                {/* Triagem Tab - Histórico de Triagens */}
+                <TabsContent value="triagem" className="mt-8">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                      <FlaskConical className="w-5 h-5 text-primary" />
+                      Histórico de Triagens
+                    </h3>
+                    {screenings && screenings.length > 0 ? (
+                      screenings.map(screening => (
+                        <Card 
+                          key={screening.id} 
+                          className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all" 
+                          onClick={() => {
+                            setSelectedScreening(screening);
+                            setIsScreeningModalOpen(true);
+                          }}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-5">
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <FlaskConical className="w-5 h-5 text-primary" />
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Calendar className="w-4 h-4" />
+                                    <span className="text-sm">
+                                      {format(new Date(screening.screening_date), "dd 'de' MMMM 'de' yyyy", {
+                                        locale: ptBR
+                                      })}
+                                    </span>
+                                  </div>
+                                  {getClassificationBadge(screening.classification || "")}
+                                </div>
+                                <p className="text-foreground font-medium">Triagem de Ortobiológicos</p>
+                                <p className="text-sm text-muted-foreground">Clique para ver avaliação completa</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="bg-card border-border">
+                        <CardContent className="py-12 text-center">
+                          <FlaskConical className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
+                          <p className="text-muted-foreground">Nenhuma triagem encontrada</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </TabsContent>
+
+                {/* Histórico Tab - apenas sessões de tratamento */}
                 <TabsContent value="historico" className="mt-8">
                   <div className="space-y-8 max-w-3xl">
-                    {/* Histórico de Triagens */}
-                    {screenings && screenings.length > 0 && <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                          <FlaskConical className="w-5 h-5 text-primary" />
-                          Histórico de Triagens
-                        </h3>
-                        {screenings.map(screening => <Card key={screening.id} className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all" onClick={() => {
-                    setSelectedScreening(screening);
-                    setIsScreeningModalOpen(true);
-                  }}>
-                            <CardContent className="p-6">
-                              <div className="flex items-start gap-5">
-                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <FlaskConical className="w-5 h-5 text-primary" />
-                                </div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                      <Calendar className="w-4 h-4" />
-                                      <span className="text-sm">
-                                        {format(new Date(screening.screening_date), "dd 'de' MMMM 'de' yyyy", {
-                                  locale: ptBR
-                                })}
-                                      </span>
-                                    </div>
-                                    {getClassificationBadge(screening.classification || "")}
-                                  </div>
-                                  <p className="text-foreground font-medium">Triagem de Ortobiológicos</p>
-                                  <p className="text-sm text-muted-foreground">Clique para ver avaliação completa</p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>)}
-                      </div>}
-
                     {/* Histórico de Sessões */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
