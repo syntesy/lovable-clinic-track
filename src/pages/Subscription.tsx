@@ -12,17 +12,20 @@ import { CreditCard, Check, X, AlertCircle, Crown, Star, Zap, Calendar } from "l
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type PlanType = "basic" | "premium" | "pro";
+type PlanType = "essencial" | "profissional" | "empresarial";
 type SubscriptionStatus = "active" | "canceled" | "past_due" | "trial";
 
 interface Plan {
   id: PlanType;
   name: string;
   price: number;
+  priceNote?: string;
   billing: string;
   badge?: string;
   icon: React.ReactNode;
   features: string[];
+  description: string;
+  idealFor?: string;
   order: number;
 }
 
@@ -48,68 +51,81 @@ interface BillingRecord {
 
 const PLANS: Plan[] = [
   {
-    id: "basic",
-    name: "Básico",
-    price: 299.00,
+    id: "essencial",
+    name: "Essencial",
+    price: 499.00,
     billing: "mensal",
     icon: <Zap className="h-6 w-6" />,
     order: 1,
+    description: "Para profissionais que querem organizar a prática clínica com segurança.",
+    idealFor: "Ideal para profissionais e clínicas de pequeno porte.",
     features: [
-      "Avaliação clínica estruturada (base)",
-      "Questionários clínicos base",
-      "Relatórios clínicos simples",
-      "Histórico básico de casos",
-      "Acesso à aba de parceiros"
+      "Triagem clínica estruturada",
+      "Questionário clínico padronizado",
+      "Organização do histórico do paciente",
+      "Score de prontidão clínica",
+      "Justificativas claras para cada resultado",
+      "Inserção de exames laboratoriais",
+      "Avaliação de prontidão biológica",
+      "Follow-up D30, D90 e D180",
+      "Histórico clínico rastreável",
+      "Estrutura auditável"
     ]
   },
   {
-    id: "premium",
-    name: "Premium",
-    price: 399.00,
+    id: "profissional",
+    name: "Profissional",
+    price: 599.00,
     billing: "mensal",
     badge: "Mais indicado",
     icon: <Star className="h-6 w-6" />,
     order: 2,
+    description: "Para clínicas que precisam acompanhar resultados com consistência.",
+    idealFor: "Indicado para clínicas com foco em acompanhamento de resultados.",
     features: [
-      "Tudo do Básico",
-      "Scores clínicos avançados",
-      "Relatórios completos em PDF",
-      "Casos e histórico ilimitados",
-      "Biblioteca científica curada",
-      "Protocolos clínicos padronizados",
-      "Benefícios ampliados com parceiros"
+      "Tudo do Essencial, mais:",
+      "Follow-up completo até D365",
+      "Registry observacional (read-only)",
+      "Análise longitudinal",
+      "Comparabilidade entre casos",
+      "Trajetória clínica visual",
+      "Estrutura para clínicas",
+      "Governança clínica avançada",
+      "Histórico de regras e critérios"
     ]
   },
   {
-    id: "pro",
-    name: "PRO",
-    price: 499.00,
+    id: "empresarial",
+    name: "Empresarial",
+    price: 519.00,
+    priceNote: "por usuário (3-9 usuários) ou R$ 459/usuário (10+)",
     billing: "mensal",
-    badge: "Máximo nível",
+    badge: "Para equipes",
     icon: <Crown className="h-6 w-6" />,
     order: 3,
+    description: "Um único plano para clínicas e redes, com valor ajustado conforme o tamanho da equipe.",
     features: [
-      "Tudo do Premium",
-      "IA de apoio à decisão clínica",
-      "Simulação de cenários e alertas de risco",
-      "Protocolos clínicos licenciados REGENAPP",
-      "Relatórios técnicos nível expert",
-      "Prioridade no suporte",
-      "Acesso antecipado a novas funcionalidades"
+      "Tudo do Profissional, mais:",
+      "Gestão de múltiplos usuários",
+      "Painel administrativo",
+      "Relatórios consolidados",
+      "Suporte prioritário",
+      "Onboarding dedicado"
     ]
   }
 ];
 
 const COMPARISON_FEATURES = [
-  { name: "Avaliação clínica estruturada", basic: true, premium: true, pro: true },
-  { name: "Relatórios simples", basic: true, premium: true, pro: true },
-  { name: "Scores avançados", basic: false, premium: true, pro: true },
-  { name: "Relatórios PDF completos", basic: false, premium: true, pro: true },
-  { name: "Biblioteca científica", basic: false, premium: true, pro: true },
-  { name: "Protocolos clínicos", basic: false, premium: true, pro: true },
-  { name: "IA de apoio clínico", basic: false, premium: false, pro: true },
-  { name: "Protocolos licenciados", basic: false, premium: false, pro: true },
-  { name: "Prioridade no suporte", basic: false, premium: false, pro: true }
+  { name: "Triagem clínica estruturada", essencial: true, profissional: true, empresarial: true },
+  { name: "Score de prontidão clínica", essencial: true, profissional: true, empresarial: true },
+  { name: "Avaliação de prontidão biológica", essencial: true, profissional: true, empresarial: true },
+  { name: "Follow-up D30, D90, D180", essencial: true, profissional: true, empresarial: true },
+  { name: "Follow-up completo até D365", essencial: false, profissional: true, empresarial: true },
+  { name: "Registry observacional", essencial: false, profissional: true, empresarial: true },
+  { name: "Análise longitudinal", essencial: false, profissional: true, empresarial: true },
+  { name: "Governança clínica avançada", essencial: false, profissional: true, empresarial: true },
+  { name: "Gestão de múltiplos usuários", essencial: false, profissional: false, empresarial: true },
+  { name: "Suporte prioritário", essencial: false, profissional: false, empresarial: true }
 ];
 
 export default function Subscription() {
@@ -462,9 +478,9 @@ export default function Subscription() {
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 font-medium">Recurso</th>
-                  <th className="text-center py-2 font-medium">Básico</th>
-                  <th className="text-center py-2 font-medium">Premium</th>
-                  <th className="text-center py-2 font-medium">PRO</th>
+                  <th className="text-center py-2 font-medium">Essencial</th>
+                  <th className="text-center py-2 font-medium">Profissional</th>
+                  <th className="text-center py-2 font-medium">Empresarial</th>
                 </tr>
               </thead>
               <tbody>
@@ -472,21 +488,21 @@ export default function Subscription() {
                   <tr key={i} className="border-b last:border-0">
                     <td className="py-2 text-muted-foreground">{feature.name}</td>
                     <td className="py-2 text-center">
-                      {feature.basic ? (
+                      {feature.essencial ? (
                         <Check className="h-4 w-4 text-green-600 mx-auto" />
                       ) : (
                         <X className="h-4 w-4 text-muted-foreground/30 mx-auto" />
                       )}
                     </td>
                     <td className="py-2 text-center">
-                      {feature.premium ? (
+                      {feature.profissional ? (
                         <Check className="h-4 w-4 text-green-600 mx-auto" />
                       ) : (
                         <X className="h-4 w-4 text-muted-foreground/30 mx-auto" />
                       )}
                     </td>
                     <td className="py-2 text-center">
-                      {feature.pro ? (
+                      {feature.empresarial ? (
                         <Check className="h-4 w-4 text-green-600 mx-auto" />
                       ) : (
                         <X className="h-4 w-4 text-muted-foreground/30 mx-auto" />
@@ -554,7 +570,7 @@ export default function Subscription() {
 
                   <Button 
                     className="w-full"
-                    variant={buttonConfig.disabled ? "outline" : plan.id === "premium" ? "default" : "secondary"}
+                    variant={buttonConfig.disabled ? "outline" : plan.id === "profissional" ? "default" : "secondary"}
                     disabled={buttonConfig.disabled}
                     onClick={() => handlePlanClick(plan)}
                   >
