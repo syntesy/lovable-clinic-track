@@ -314,7 +314,7 @@ export default function TriagemBiologica() {
       setRecommendedExams(data.recommendedExams || []);
       setPatientOrientations(data.patientOrientations || "");
 
-      // Save to database
+      // Save to database with triage_completed_at
       const { data: insertedScreening, error: saveError } = await supabase
         .from("prp_screenings")
         .insert({
@@ -323,7 +323,9 @@ export default function TriagemBiologica() {
           analysis_result: data.rawAnalysis || JSON.stringify(data.structuredResult),
           classification: data.classification || data.structuredResult?.eligibility?.overall_status,
           recommended_exams: data.recommendedExams,
-          patient_orientations: data.patientOrientations
+          patient_orientations: data.patientOrientations,
+          triage_completed_at: new Date().toISOString(), // Marca triagem como concluída
+          regen_case_status: "S0" // Estado inicial após triagem
         })
         .select('id')
         .single();

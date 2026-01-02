@@ -22,7 +22,12 @@ import { RegenCanonical, RegenLabValue, defaultLabValue } from "@/types/regen-ca
 interface LabsPanelProps {
   screeningId: string;
   canonical: RegenCanonical | null;
-  labsValidated?: Record<string, { status: string; validity_days?: number }> | null;
+  labsValidated?: Record<string, { 
+    status: string; 
+    value?: number | null;
+    date?: string | null;
+    validity_days?: number;
+  }> | null;
   labsCollectedDate?: string | null;
   onSave?: () => void;
   disabled?: boolean;
@@ -136,11 +141,22 @@ export function LabsPanel({
 
       const dieResult = computeDIE(mockCanonical);
       
-      // Mapear resultados do DIE para formato de validação
-      const newValidation: Record<string, { status: string; validity_days?: number }> = {};
+      // Mapear resultados do DIE para formato de validação (incluindo valor + data)
+      const newValidation: Record<string, { 
+        status: string; 
+        value: number | null; 
+        date: string | null;
+        validity_days?: number;
+      }> = {};
+      
       dieResult.lab_recommendations.forEach(lab => {
+        const labInput = labs[lab.lab_code as RequiredCriticalLab];
+        const parsedValue = labInput ? parseFloat(labInput.value.replace(",", ".")) : null;
+        
         newValidation[lab.lab_code] = {
           status: lab.status,
+          value: !isNaN(parsedValue as number) ? parsedValue : null,
+          date: collectedDate || null,
           validity_days: lab.days_since_collection || undefined
         };
       });
@@ -159,10 +175,16 @@ export function LabsPanel({
       
       if (error) throw error;
       
-      // Verificar se todos os labs críticos estão USE para atualizar status
-      const allValid = REQUIRED_CRITICAL_LABS.every(lab => 
-        newValidation[lab]?.status === "USE"
-      );
+      // Verificar se todos os labs críticos estão com valor + data + USE
+      const allValid = REQUIRED_CRITICAL_LABS.every(lab => {
+        const labData = newValidation[lab];
+        return labData?.status === "USE" && 
+               labData?.value !== null && 
+               labData?.value !== undefined &&
+               labData?.date !== null && 
+               labData?.date !== undefined &&
+               labData?.date !== "";
+      });
       
       if (allValid) {
         // Atualizar para S2
