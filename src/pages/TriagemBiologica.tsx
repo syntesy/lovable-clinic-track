@@ -801,19 +801,6 @@ export default function TriagemBiologica() {
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div>
-                              <Label htmlFor="dor_escala">Dor (0-10)</Label>
-                              <Input
-                                id="dor_escala"
-                                type="number"
-                                min="0"
-                                max="10"
-                                placeholder="0-10"
-                                value={answers.dor_escala ?? ""}
-                                onChange={(e) => setAnswers(prev => ({ ...prev, dor_escala: e.target.value ? parseInt(e.target.value) : null }))}
-                                className="mt-1"
-                              />
-                            </div>
                           </div>
                         </div>
                         <Separator className="mt-4" />
