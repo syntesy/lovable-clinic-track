@@ -28,6 +28,7 @@ import { RegenEngineOutputs } from "@/types/regen-engine";
 import { 
   RegenCaseStatus, 
   computeCaseStatus,
+  ValidatedLabData,
 } from "@/types/regen-case-status";
 import { runRegenEngine } from "@/lib/regen-engine";
 import { buildRegenCanonicalFromTriagem } from "@/lib/regen-canonical-adapter";
@@ -87,7 +88,7 @@ export function AvaliacaoRegenapp({
     clinical_anamnesis: screening.clinical_anamnesis,
     clinical_physical_exam: screening.clinical_physical_exam,
     clinical_diagnosis: screening.clinical_diagnosis,
-    labs_validated: screening.labs_validated as Record<string, { status: string }> | null,
+    labs_validated: screening.labs_validated as unknown as Record<string, ValidatedLabData> | null,
     regen_engine_outputs: engineOutputs
   }) : "S0";
 
@@ -96,10 +97,23 @@ export function AvaliacaoRegenapp({
     screening.canonical_updated_at && screening.engine_computed_at &&
     new Date(screening.canonical_updated_at) > new Date(screening.engine_computed_at);
 
+  /**
+   * Gera hash do canonical para auditoria
+   */
+  const generateCanonicalHash = useCallback((canonical: RegenCanonical): string => {
+    try {
+      return btoa(JSON.stringify(canonical)).slice(0, 64);
+    } catch {
+      return `hash_${Date.now()}`;
+    }
+  }, []);
+
   // Handler para gerar Score Definitivo
   const handleGenerateDefinitiveScore = useCallback(async () => {
+    // Validação de UI + Backend: só permite se status === S2
     if (!screeningId || currentStatus !== "S2") {
       toast.error("Não é possível gerar Score Definitivo neste momento.");
+      console.error("[SCORE_BLOCKED] Tentativa de gerar score com status:", currentStatus);
       return;
     }
 
@@ -113,6 +127,14 @@ export function AvaliacaoRegenapp({
         .single();
       
       if (fetchError) throw fetchError;
+
+      // 2. VALIDAÇÃO DE BACKEND: Recusar se status !== S2
+      const dbStatus = currentScreening.regen_case_status;
+      if (dbStatus !== "S2") {
+        toast.error(`Operação recusada pelo backend. Status atual: ${dbStatus}`);
+        console.error("[BACKEND_BLOCK] Score recusado. DB status:", dbStatus, "Expected: S2");
+        return;
+      }
 
       // 2. Construir canonical completo
       const responses = currentScreening.questionnaire_responses as Record<string, unknown>;
@@ -234,7 +256,8 @@ export function AvaliacaoRegenapp({
         additionalInfo: {
           engine_version: outputs.engine_version,
           ruleset_version: outputs.ruleset_version,
-          canonical_hash: canonicalHash
+          canonical_hash: canonicalHash,
+          regen_case_status: "S3"
         }
       });
 
@@ -250,6 +273,9 @@ export function AvaliacaoRegenapp({
 
   // Handler para gerar solicitação de exames
   const handleGenerateExamRequest = useCallback(async (selectedExams: string[], observations: string) => {
+    // Gerar hash do canonical atual para auditoria
+    const currentCanonicalHash = canonical ? generateCanonicalHash(canonical) : undefined;
+    
     await logAction({
       action: "EXAMS_REQUEST",
       tableName: "prp_screenings",
@@ -257,23 +283,31 @@ export function AvaliacaoRegenapp({
       additionalInfo: {
         exams_requested: selectedExams,
         observations,
-        regen_case_status: currentStatus
+        regen_case_status: currentStatus,
+        canonical_hash: currentCanonicalHash,
+        engine_version: "regen_engine_v1.0.0",
+        ruleset_version: "regen_rules_v1"
       }
     });
     toast.success("Solicitação de exames gerada!");
-  }, [screeningId, currentStatus, logAction]);
+  }, [screeningId, currentStatus, logAction, canonical, generateCanonicalHash]);
 
   // Handler para gerar pré-relatório
   const handleGeneratePreReport = useCallback(async () => {
+    const currentCanonicalHash = canonical ? generateCanonicalHash(canonical) : undefined;
+    
     await logAction({
       action: "PRE_REPORT",
       tableName: "prp_screenings",
       recordId: screeningId || undefined,
       additionalInfo: {
-        regen_case_status: currentStatus
+        regen_case_status: currentStatus,
+        canonical_hash: currentCanonicalHash,
+        engine_version: "regen_engine_v1.0.0",
+        ruleset_version: "regen_rules_v1"
       }
     });
-  }, [screeningId, currentStatus, logAction]);
+  }, [screeningId, currentStatus, logAction, canonical, generateCanonicalHash]);
 
   const handleClinicalAssessmentSave = useCallback(() => {
     refetch();

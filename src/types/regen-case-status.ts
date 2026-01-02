@@ -88,15 +88,66 @@ export function isClinicalAssessmentComplete(data: {
 }
 
 /**
- * Verifica se todos os exames críticos estão válidos (DIE = USE)
+ * Estrutura esperada para cada exame validado
  */
-export function areAllCriticalLabsValid(labsValidated: Record<string, { status: string }> | null): boolean {
+export interface ValidatedLabData {
+  status: string;        // DIE status: "USE" | "REPEAT" | "REQUEST"
+  value?: number | null; // Valor numérico do exame
+  date?: string | null;  // Data da coleta (ISO string)
+}
+
+/**
+ * Verifica se todos os exames críticos estão válidos
+ * Requisitos: valor preenchido + data preenchida + DIE = USE
+ */
+export function areAllCriticalLabsValid(labsValidated: Record<string, ValidatedLabData> | null): boolean {
   if (!labsValidated) return false;
   
   return REQUIRED_CRITICAL_LABS.every(lab => {
     const labData = labsValidated[lab];
-    return labData && labData.status === "USE";
+    if (!labData) return false;
+    
+    // Verifica os 3 requisitos obrigatórios:
+    // 1. status === "USE"
+    // 2. valor preenchido (não null/undefined)
+    // 3. data preenchida (não null/undefined/vazia)
+    const hasValidStatus = labData.status === "USE";
+    const hasValue = labData.value !== null && labData.value !== undefined;
+    const hasDate = labData.date !== null && labData.date !== undefined && labData.date !== "";
+    
+    return hasValidStatus && hasValue && hasDate;
   });
+}
+
+/**
+ * Retorna detalhes sobre qual requisito está faltando para cada exame
+ */
+export function getLabValidationDetails(labsValidated: Record<string, ValidatedLabData> | null): Record<string, {
+  isValid: boolean;
+  missingValue: boolean;
+  missingDate: boolean;
+  invalidStatus: boolean;
+}> {
+  const result: Record<string, { isValid: boolean; missingValue: boolean; missingDate: boolean; invalidStatus: boolean }> = {};
+  
+  REQUIRED_CRITICAL_LABS.forEach(lab => {
+    const labData = labsValidated?.[lab];
+    if (!labData) {
+      result[lab] = { isValid: false, missingValue: true, missingDate: true, invalidStatus: true };
+    } else {
+      const hasValue = labData.value !== null && labData.value !== undefined;
+      const hasDate = labData.date !== null && labData.date !== undefined && labData.date !== "";
+      const hasValidStatus = labData.status === "USE";
+      result[lab] = {
+        isValid: hasValue && hasDate && hasValidStatus,
+        missingValue: !hasValue,
+        missingDate: !hasDate,
+        invalidStatus: !hasValidStatus
+      };
+    }
+  });
+  
+  return result;
 }
 
 /**
@@ -108,7 +159,7 @@ export function computeCaseStatus(data: {
   clinical_anamnesis?: string | null;
   clinical_physical_exam?: string | null;
   clinical_diagnosis?: string | null;
-  labs_validated?: Record<string, { status: string }> | null;
+  labs_validated?: Record<string, ValidatedLabData> | null;
   regen_engine_outputs?: unknown;
 }): RegenCaseStatus {
   // S3: Score definitivo já existe
@@ -125,7 +176,7 @@ export function computeCaseStatus(data: {
   });
   
   // S2: Avaliação clínica completa + exames válidos
-  if (clinicalComplete && areAllCriticalLabsValid(data.labs_validated as Record<string, { status: string }> | null)) {
+  if (clinicalComplete && areAllCriticalLabsValid(data.labs_validated)) {
     return "S2";
   }
   
