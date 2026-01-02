@@ -1594,38 +1594,77 @@ export type Database = {
       prp_screenings: {
         Row: {
           analysis_result: string | null
+          canonical_hash: string | null
+          canonical_updated_at: string | null
           classification: string | null
+          clinical_anamnesis: string | null
+          clinical_assessment_by: string | null
+          clinical_assessment_completed_at: string | null
+          clinical_chief_complaint: string | null
+          clinical_diagnosis: string | null
+          clinical_physical_exam: string | null
           created_at: string
+          engine_computed_at: string | null
           id: string
+          labs_collected_date: string | null
+          labs_validated: Json | null
           patient_id: string
           patient_orientations: string | null
           questionnaire_responses: Json
           recommended_exams: Json | null
+          regen_case_status: string | null
           screening_date: string
+          triage_completed_at: string | null
           updated_at: string
         }
         Insert: {
           analysis_result?: string | null
+          canonical_hash?: string | null
+          canonical_updated_at?: string | null
           classification?: string | null
+          clinical_anamnesis?: string | null
+          clinical_assessment_by?: string | null
+          clinical_assessment_completed_at?: string | null
+          clinical_chief_complaint?: string | null
+          clinical_diagnosis?: string | null
+          clinical_physical_exam?: string | null
           created_at?: string
+          engine_computed_at?: string | null
           id?: string
+          labs_collected_date?: string | null
+          labs_validated?: Json | null
           patient_id: string
           patient_orientations?: string | null
           questionnaire_responses: Json
           recommended_exams?: Json | null
+          regen_case_status?: string | null
           screening_date?: string
+          triage_completed_at?: string | null
           updated_at?: string
         }
         Update: {
           analysis_result?: string | null
+          canonical_hash?: string | null
+          canonical_updated_at?: string | null
           classification?: string | null
+          clinical_anamnesis?: string | null
+          clinical_assessment_by?: string | null
+          clinical_assessment_completed_at?: string | null
+          clinical_chief_complaint?: string | null
+          clinical_diagnosis?: string | null
+          clinical_physical_exam?: string | null
           created_at?: string
+          engine_computed_at?: string | null
           id?: string
+          labs_collected_date?: string | null
+          labs_validated?: Json | null
           patient_id?: string
           patient_orientations?: string | null
           questionnaire_responses?: Json
           recommended_exams?: Json | null
+          regen_case_status?: string | null
           screening_date?: string
+          triage_completed_at?: string | null
           updated_at?: string
         }
         Relationships: [

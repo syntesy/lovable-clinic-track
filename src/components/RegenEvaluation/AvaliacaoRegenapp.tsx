@@ -1,0 +1,389 @@
+/**
+ * Avaliação REGENAPP - Aba Unificada
+ * 
+ * Fluxo completo: Status → Triagem (read-only) → Prontuário → Exames → Ações → Resultado
+ * Implementa máquina de estados S0 → S1 → S2 → S3
+ */
+
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
+import {
+  StatusBanner,
+  LegalDisclaimer,
+  TriageSummary,
+  ClinicalAssessmentForm,
+  LabsPanel,
+  ActionButtons,
+  ExamRequestModal,
+  PreReportModal
+} from "@/components/RegenEvaluation";
+
+import { RegenResultView } from "@/components/RegenResult";
+import { RegenCanonical } from "@/types/regen-canonical";
+import { RegenEngineOutputs } from "@/types/regen-engine";
+import { 
+  RegenCaseStatus, 
+  computeCaseStatus,
+} from "@/types/regen-case-status";
+import { runRegenEngine } from "@/lib/regen-engine";
+import { buildRegenCanonicalFromTriagem } from "@/lib/regen-canonical-adapter";
+import { useAuditLog } from "@/hooks/useAuditLog";
+import { Json } from "@/integrations/supabase/types";
+
+interface AvaliacaoRegenappProps {
+  patientId: string;
+  patientName?: string;
+  screeningId?: string;
+}
+
+export function AvaliacaoRegenapp({
+  patientId,
+  patientName,
+  screeningId: propScreeningId
+}: AvaliacaoRegenappProps) {
+  const queryClient = useQueryClient();
+  const reportRef = useRef<HTMLDivElement>(null);
+  const { logAction } = useAuditLog();
+  
+  const [examRequestModalOpen, setExamRequestModalOpen] = useState(false);
+  const [preReportModalOpen, setPreReportModalOpen] = useState(false);
+  const [isGeneratingScore, setIsGeneratingScore] = useState(false);
+
+  // Buscar triagem mais recente do paciente (ou usar a fornecida)
+  const { data: screening, isLoading: loadingScreening, refetch } = useQuery({
+    queryKey: ["screening-for-evaluation", patientId, propScreeningId],
+    queryFn: async () => {
+      let query = supabase
+        .from("prp_screenings")
+        .select("*");
+      
+      if (propScreeningId) {
+        query = query.eq("id", propScreeningId);
+      } else {
+        query = query.eq("patient_id", patientId).order("created_at", { ascending: false }).limit(1);
+      }
+      
+      const { data, error } = await query.single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!patientId
+  });
+
+  // Extrair dados do screening
+  const screeningId = screening?.id;
+  const questionnaireResponses = screening?.questionnaire_responses as Record<string, unknown> | null;
+  const canonical = (questionnaireResponses?.regen_canonical as RegenCanonical) || null;
+  const engineOutputs = (questionnaireResponses?.regen_engine_outputs as RegenEngineOutputs) || null;
+  
+  // Calcular status atual
+  const currentStatus: RegenCaseStatus = screening ? computeCaseStatus({
+    triage_completed_at: screening.triage_completed_at,
+    clinical_chief_complaint: screening.clinical_chief_complaint,
+    clinical_anamnesis: screening.clinical_anamnesis,
+    clinical_physical_exam: screening.clinical_physical_exam,
+    clinical_diagnosis: screening.clinical_diagnosis,
+    labs_validated: screening.labs_validated as Record<string, { status: string }> | null,
+    regen_engine_outputs: engineOutputs
+  }) : "S0";
+
+  // Detectar se resultado está desatualizado (stale)
+  const isStale = screening && engineOutputs && 
+    screening.canonical_updated_at && screening.engine_computed_at &&
+    new Date(screening.canonical_updated_at) > new Date(screening.engine_computed_at);
+
+  // Handler para gerar Score Definitivo
+  const handleGenerateDefinitiveScore = useCallback(async () => {
+    if (!screeningId || currentStatus !== "S2") {
+      toast.error("Não é possível gerar Score Definitivo neste momento.");
+      return;
+    }
+
+    setIsGeneratingScore(true);
+    try {
+      // 1. Buscar dados atualizados
+      const { data: currentScreening, error: fetchError } = await supabase
+        .from("prp_screenings")
+        .select("*")
+        .eq("id", screeningId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+
+      // 2. Construir canonical completo
+      const responses = currentScreening.questionnaire_responses as Record<string, unknown>;
+      const existingCanonical = (responses?.regen_canonical as RegenCanonical) || null;
+      
+      // Atualizar canonical com dados clínicos
+      const updatedCanonical: RegenCanonical = {
+        ...(existingCanonical || {} as RegenCanonical),
+        schema_version: "regen_canonical_v1",
+        captured_at: new Date().toISOString(),
+        diagnosis: {
+          ...(existingCanonical?.diagnosis || { tissue_type: "unknown", lesion_severity: null }),
+          primary_clinical_diagnosis: currentScreening.clinical_diagnosis
+        }
+      };
+
+      // 3. Executar motor
+      const outputs = runRegenEngine(updatedCanonical);
+
+      // 4. Gerar hash do canonical
+      const canonicalHash = btoa(JSON.stringify(updatedCanonical)).slice(0, 32);
+
+      // 5. Salvar resultados
+      const mergedResponses = {
+        ...responses,
+        regen_canonical: updatedCanonical,
+        regen_engine_outputs: outputs
+      };
+
+      const { error: updateError } = await supabase
+        .from("prp_screenings")
+        .update({
+          questionnaire_responses: mergedResponses as unknown as Json,
+          regen_case_status: "S3",
+          engine_computed_at: new Date().toISOString(),
+          canonical_hash: canonicalHash,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", screeningId);
+
+      if (updateError) throw updateError;
+
+      // 6. Log de auditoria
+      await logAction({
+        action: "SCORE_FINAL",
+        tableName: "prp_screenings",
+        recordId: screeningId,
+        additionalInfo: {
+          engine_version: outputs.engine_version,
+          ruleset_version: outputs.ruleset_version,
+          regen_case_status: "S3",
+          canonical_hash: canonicalHash
+        }
+      });
+
+      toast.success("Score Definitivo REGENAPP gerado com sucesso!");
+      refetch();
+    } catch (error) {
+      console.error("Error generating definitive score:", error);
+      toast.error("Erro ao gerar Score Definitivo");
+    } finally {
+      setIsGeneratingScore(false);
+    }
+  }, [screeningId, currentStatus, logAction, refetch]);
+
+  // Handler para recalcular
+  const handleRecalculate = useCallback(async () => {
+    if (!screeningId) return;
+    
+    setIsGeneratingScore(true);
+    try {
+      // Similar ao handleGenerateDefinitiveScore, mas sem verificação de status
+      const { data: currentScreening, error: fetchError } = await supabase
+        .from("prp_screenings")
+        .select("*")
+        .eq("id", screeningId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+
+      const responses = currentScreening.questionnaire_responses as Record<string, unknown>;
+      const existingCanonical = (responses?.regen_canonical as RegenCanonical) || null;
+      
+      const updatedCanonical: RegenCanonical = {
+        ...(existingCanonical || {} as RegenCanonical),
+        schema_version: "regen_canonical_v1",
+        captured_at: new Date().toISOString(),
+        diagnosis: {
+          ...(existingCanonical?.diagnosis || { tissue_type: "unknown", lesion_severity: null }),
+          primary_clinical_diagnosis: currentScreening.clinical_diagnosis
+        }
+      };
+
+      const outputs = runRegenEngine(updatedCanonical);
+      const canonicalHash = btoa(JSON.stringify(updatedCanonical)).slice(0, 32);
+
+      const mergedResponses = {
+        ...responses,
+        regen_canonical: updatedCanonical,
+        regen_engine_outputs: outputs
+      };
+
+      const { error: updateError } = await supabase
+        .from("prp_screenings")
+        .update({
+          questionnaire_responses: mergedResponses as unknown as Json,
+          engine_computed_at: new Date().toISOString(),
+          canonical_hash: canonicalHash,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", screeningId);
+
+      if (updateError) throw updateError;
+
+      await logAction({
+        action: "RECALC",
+        tableName: "prp_screenings",
+        recordId: screeningId,
+        additionalInfo: {
+          engine_version: outputs.engine_version,
+          ruleset_version: outputs.ruleset_version,
+          canonical_hash: canonicalHash
+        }
+      });
+
+      toast.success("Resultado recalculado com sucesso!");
+      refetch();
+    } catch (error) {
+      console.error("Error recalculating:", error);
+      toast.error("Erro ao recalcular resultado");
+    } finally {
+      setIsGeneratingScore(false);
+    }
+  }, [screeningId, logAction, refetch]);
+
+  // Handler para gerar solicitação de exames
+  const handleGenerateExamRequest = useCallback(async (selectedExams: string[], observations: string) => {
+    await logAction({
+      action: "EXAMS_REQUEST",
+      tableName: "prp_screenings",
+      recordId: screeningId || undefined,
+      additionalInfo: {
+        exams_requested: selectedExams,
+        observations,
+        regen_case_status: currentStatus
+      }
+    });
+    toast.success("Solicitação de exames gerada!");
+  }, [screeningId, currentStatus, logAction]);
+
+  // Handler para gerar pré-relatório
+  const handleGeneratePreReport = useCallback(async () => {
+    await logAction({
+      action: "PRE_REPORT",
+      tableName: "prp_screenings",
+      recordId: screeningId || undefined,
+      additionalInfo: {
+        regen_case_status: currentStatus
+      }
+    });
+  }, [screeningId, currentStatus, logAction]);
+
+  const handleClinicalAssessmentSave = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const handleLabsSave = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  if (loadingScreening) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!screening) {
+    return (
+      <div className="text-center py-16 text-muted-foreground">
+        <p>Nenhuma triagem encontrada para este paciente.</p>
+        <p className="text-sm mt-2">Inicie uma nova triagem para começar a avaliação.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* (A) STATUS & AVISOS */}
+      <StatusBanner 
+        status={currentStatus}
+        engineComputedAt={screening.engine_computed_at}
+        isStale={isStale || false}
+        onRecalculate={handleRecalculate}
+      />
+      
+      <LegalDisclaimer />
+
+      {/* (B) RESUMO DA TRIAGEM (READ-ONLY) */}
+      <TriageSummary 
+        canonical={canonical}
+        rawAnswers={questionnaireResponses?.answers as Record<string, unknown> | null}
+      />
+
+      {/* (C) PRONTUÁRIO DO PROFISSIONAL */}
+      <ClinicalAssessmentForm
+        screeningId={screeningId}
+        initialData={{
+          clinical_chief_complaint: screening.clinical_chief_complaint,
+          clinical_anamnesis: screening.clinical_anamnesis,
+          clinical_physical_exam: screening.clinical_physical_exam,
+          clinical_diagnosis: screening.clinical_diagnosis,
+          clinical_assessment_completed_at: screening.clinical_assessment_completed_at
+        }}
+        onSave={handleClinicalAssessmentSave}
+        disabled={currentStatus === "S3"}
+      />
+
+      {/* (D) EXAMES */}
+      <LabsPanel
+        screeningId={screeningId}
+        canonical={canonical}
+        labsValidated={screening.labs_validated as Record<string, { status: string }> | null}
+        labsCollectedDate={screening.labs_collected_date}
+        onSave={handleLabsSave}
+        disabled={currentStatus === "S3"}
+      />
+
+      {/* (E) AÇÕES */}
+      <ActionButtons
+        status={currentStatus}
+        isLoading={isGeneratingScore}
+        onGenerateExamRequest={() => setExamRequestModalOpen(true)}
+        onGeneratePreReport={() => setPreReportModalOpen(true)}
+        onGenerateDefinitiveScore={handleGenerateDefinitiveScore}
+        onRecalculate={handleRecalculate}
+      />
+
+      {/* (F) RESULTADO DEFINITIVO (CARDS) - Só exibe em S3 */}
+      {currentStatus === "S3" && engineOutputs && (
+        <div ref={reportRef}>
+          <RegenResultView
+            engineOutputs={engineOutputs}
+            canonical={canonical}
+            patientName={patientName}
+            isLoading={false}
+          />
+        </div>
+      )}
+
+      {/* MODAIS */}
+      <ExamRequestModal
+        open={examRequestModalOpen}
+        onOpenChange={setExamRequestModalOpen}
+        patientName={patientName}
+        onGenerate={handleGenerateExamRequest}
+      />
+
+      <PreReportModal
+        open={preReportModalOpen}
+        onOpenChange={setPreReportModalOpen}
+        patientName={patientName}
+        canonical={canonical}
+        clinicalAssessment={{
+          chief_complaint: screening.clinical_chief_complaint,
+          anamnesis: screening.clinical_anamnesis,
+          physical_exam: screening.clinical_physical_exam,
+          diagnosis: screening.clinical_diagnosis
+        }}
+      />
+    </div>
+  );
+}
