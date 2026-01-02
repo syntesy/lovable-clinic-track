@@ -116,12 +116,15 @@ const PLANS: Plan[] = [
       { label: "ACIMA DE 9 USUÁRIOS", price: 459, perUser: true }
     ],
     features: [
-      "Tudo do Profissional, mais:",
-      "Gestão de múltiplos usuários",
-      "Painel administrativo",
-      "Relatórios consolidados",
-      "Suporte prioritário",
-      "Onboarding dedicado"
+      "Tudo do Essencial, mais:",
+      "Follow-up completo até D365",
+      "Registry observacional (read-only)",
+      "Análise longitudinal",
+      "Comparabilidade entre casos",
+      "Trajetória clínica visual",
+      "Estrutura para clínicas",
+      "Governança clínica avançada",
+      "Histórico de regras e critérios"
     ]
   }
 ];
