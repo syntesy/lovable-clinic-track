@@ -2,12 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Search, ChevronDown, User, Activity, FileText, 
-  FlaskConical, ClipboardList, Brain, Calendar,
-  CheckCircle2, AlertCircle, XCircle, Clock,
-  TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle
-} from "lucide-react";
+import { Search, ChevronDown, User, Activity, FileText, FlaskConical, ClipboardList, Brain, Calendar, CheckCircle2, AlertCircle, XCircle, Clock, TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle } from "lucide-react";
 import { FisioRegenScoreWizard } from "@/components/FisioRegenScore/FisioRegenScoreWizard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,18 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { EditPatientModal } from "@/components/EditPatientModal";
@@ -38,11 +23,12 @@ import { PatientPrescriptionsList } from "@/components/patient/PatientPrescripti
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { AddProcedureModal } from "@/components/AddProcedureModal";
 import { Tables } from "@/integrations/supabase/types";
-
 const DetalhePaciente = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { id: patientIdFromUrl } = useParams();
+  const {
+    id: patientIdFromUrl
+  } = useParams();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -61,117 +47,122 @@ const DetalhePaciente = () => {
   }, [patientIdFromUrl]);
 
   // Fetch all patients for dropdown
-  const { data: patients } = useQuery({
+  const {
+    data: patients
+  } = useQuery({
     queryKey: ["all-patients"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("patients")
-        .select("id, full_name, age, gender, status, treated_region")
-        .order("full_name");
+      const {
+        data,
+        error
+      } = await supabase.from("patients").select("id, full_name, age, gender, status, treated_region").order("full_name");
       if (error) throw error;
       return data;
-    },
+    }
   });
 
   // Fetch selected patient details
-  const { data: patient } = useQuery({
+  const {
+    data: patient
+  } = useQuery({
     queryKey: ["patient", selectedPatientId],
     queryFn: async () => {
       if (!selectedPatientId) return null;
-      const { data, error } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("id", selectedPatientId)
-        .single();
+      const {
+        data,
+        error
+      } = await supabase.from("patients").select("*").eq("id", selectedPatientId).single();
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedPatientId,
+    enabled: !!selectedPatientId
   });
 
   // Fetch sessions
-  const { data: sessions } = useQuery({
+  const {
+    data: sessions
+  } = useQuery({
     queryKey: ["patient-sessions", selectedPatientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("treatment_sessions")
-        .select("*")
-        .eq("patient_id", selectedPatientId)
-        .order("session_date", { ascending: false });
+      const {
+        data,
+        error
+      } = await supabase.from("treatment_sessions").select("*").eq("patient_id", selectedPatientId).order("session_date", {
+        ascending: false
+      });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedPatientId,
+    enabled: !!selectedPatientId
   });
 
   // Fetch screenings
-  const { data: screenings } = useQuery({
+  const {
+    data: screenings
+  } = useQuery({
     queryKey: ["patient-screenings", selectedPatientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("prp_screenings")
-        .select("*, prp_lab_results(*)")
-        .eq("patient_id", selectedPatientId)
-        .order("screening_date", { ascending: false });
+      const {
+        data,
+        error
+      } = await supabase.from("prp_screenings").select("*, prp_lab_results(*)").eq("patient_id", selectedPatientId).order("screening_date", {
+        ascending: false
+      });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedPatientId,
+    enabled: !!selectedPatientId
   });
 
   // Fetch blood tests (exams)
-  const { data: bloodTests } = useQuery({
+  const {
+    data: bloodTests
+  } = useQuery({
     queryKey: ["patient-blood-tests", selectedPatientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("blood_tests")
-        .select("*")
-        .eq("patient_id", selectedPatientId)
-        .order("collection_date", { ascending: false });
+      const {
+        data,
+        error
+      } = await supabase.from("blood_tests").select("*").eq("patient_id", selectedPatientId).order("collection_date", {
+        ascending: false
+      });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedPatientId,
+    enabled: !!selectedPatientId
   });
 
   // Fetch patient procedures
-  const { data: procedures } = useQuery({
+  const {
+    data: procedures
+  } = useQuery({
     queryKey: ["patient-procedures", selectedPatientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("patient_procedures")
-        .select("*")
-        .eq("patient_id", selectedPatientId)
-        .order("procedure_date", { ascending: false });
+      const {
+        data,
+        error
+      } = await supabase.from("patient_procedures").select("*").eq("patient_id", selectedPatientId).order("procedure_date", {
+        ascending: false
+      });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedPatientId,
+    enabled: !!selectedPatientId
   });
 
   // Get unique exam dates for filtering
-  const examDates = bloodTests
-    ? [...new Set(bloodTests.map((bt) => bt.collection_date))]
-    : [];
+  const examDates = bloodTests ? [...new Set(bloodTests.map(bt => bt.collection_date))] : [];
 
   // Filter exams by selected date
-  const filteredExams = bloodTests?.filter((exam) =>
-    selectedExamDate === "all" ? true : exam.collection_date === selectedExamDate
-  );
-
-  const filteredPatients = patients?.filter((p) =>
-    p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const selectedPatient = patients?.find((p) => p.id === selectedPatientId);
-
+  const filteredExams = bloodTests?.filter(exam => selectedExamDate === "all" ? true : exam.collection_date === selectedExamDate);
+  const filteredPatients = patients?.filter(p => p.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const selectedPatient = patients?.find(p => p.id === selectedPatientId);
   const getStatusBadge = (status: string | null) => {
     if (status === "active") {
       return <Badge className="bg-clinical-safe text-white text-xs">Ativo</Badge>;
     }
     return <Badge variant="secondary" className="text-xs">Inativo</Badge>;
   };
-
   const getClassificationBadge = (classification: string) => {
     switch (classification?.toUpperCase()) {
       case "APTO":
@@ -185,21 +176,15 @@ const DetalhePaciente = () => {
         return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> Aguardando</Badge>;
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Fixed Top Header with Patient Selector */}
       <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-center">
             <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full max-w-lg justify-between bg-card border-border hover:bg-muted/50 h-14 px-5"
-                >
-                  {selectedPatient ? (
-                    <div className="flex items-center gap-4">
+                <Button variant="outline" className="w-full max-w-lg justify-between bg-card border-border hover:bg-muted/50 h-14 px-5">
+                  {selectedPatient ? <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                         <User className="w-5 h-5 text-primary" />
                       </div>
@@ -209,10 +194,7 @@ const DetalhePaciente = () => {
                           {selectedPatient.age} anos • {selectedPatient.status === "active" ? "Ativo" : "Inativo"}
                         </p>
                       </div>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">Selecionar paciente...</span>
-                  )}
+                    </div> : <span className="text-muted-foreground">Selecionar paciente...</span>}
                   <ChevronDown className="w-5 h-5 text-muted-foreground ml-4" />
                 </Button>
               </PopoverTrigger>
@@ -220,27 +202,17 @@ const DetalhePaciente = () => {
                 <div className="p-4 border-b border-border">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar paciente..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-muted/50 border-0 h-11"
-                    />
+                    <Input placeholder="Buscar paciente..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 bg-muted/50 border-0 h-11" />
                   </div>
                 </div>
                 <ScrollArea className="h-[320px]">
                   <div className="p-3">
-                    {filteredPatients?.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => {
-                          setSelectedPatientId(p.id);
-                          setIsDropdownOpen(false);
-                          setSearchQuery("");
-                          navigate(`/pacientes/${p.id}`);
-                        }}
-                        className="w-full flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors text-left"
-                      >
+                    {filteredPatients?.map(p => <button key={p.id} onClick={() => {
+                    setSelectedPatientId(p.id);
+                    setIsDropdownOpen(false);
+                    setSearchQuery("");
+                    navigate(`/pacientes/${p.id}`);
+                  }} className="w-full flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors text-left">
                         <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <User className="w-5 h-5 text-primary" />
                         </div>
@@ -251,11 +223,8 @@ const DetalhePaciente = () => {
                           </p>
                         </div>
                         {getStatusBadge(p.status)}
-                      </button>
-                    ))}
-                    {filteredPatients?.length === 0 && (
-                      <p className="text-center text-muted-foreground py-10">Nenhum paciente encontrado</p>
-                    )}
+                      </button>)}
+                    {filteredPatients?.length === 0 && <p className="text-center text-muted-foreground py-10">Nenhum paciente encontrado</p>}
                   </div>
                 </ScrollArea>
               </PopoverContent>
@@ -266,8 +235,7 @@ const DetalhePaciente = () => {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!selectedPatientId ? (
-          <div className="flex flex-col items-center justify-center py-32">
+        {!selectedPatientId ? <div className="flex flex-col items-center justify-center py-32">
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
               <User className="w-10 h-10 text-muted-foreground" />
             </div>
@@ -275,9 +243,7 @@ const DetalhePaciente = () => {
             <p className="text-muted-foreground text-center max-w-md">
               Use o seletor acima para visualizar os detalhes completos do paciente
             </p>
-          </div>
-        ) : (
-          <div className="space-y-8 animate-fade-in">
+          </div> : <div className="space-y-8 animate-fade-in">
             {/* Clinical Header Card */}
             <Card className="bg-card border-border shadow-sm">
               <CardContent className="p-8">
@@ -299,20 +265,13 @@ const DetalhePaciente = () => {
                       </span>
                       <span className="text-border">•</span>
                       <span>{patient?.gender === "M" ? "Masculino" : patient?.gender === "F" ? "Feminino" : "Não informado"}</span>
-                      {patient?.treated_region && (
-                        <>
+                      {patient?.treated_region && <>
                           <span className="text-border">•</span>
                           <span>{patient.treated_region}</span>
-                        </>
-                      )}
+                        </>}
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setIsEditModalOpen(true)}
-                  >
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsEditModalOpen(true)}>
                     <Pencil className="w-4 h-4" />
                     Editar Cadastro
                   </Button>
@@ -321,19 +280,10 @@ const DetalhePaciente = () => {
             </Card>
 
             {/* Edit Patient Modal */}
-            <EditPatientModal
-              patient={patient}
-              open={isEditModalOpen}
-              onOpenChange={setIsEditModalOpen}
-            />
+            <EditPatientModal patient={patient} open={isEditModalOpen} onOpenChange={setIsEditModalOpen} />
 
             {/* Prescription Form Modal */}
-            <PrescriptionFormModal
-              open={isPrescriptionModalOpen}
-              onOpenChange={setIsPrescriptionModalOpen}
-              patientId={selectedPatientId!}
-              patientName={patient?.full_name || ''}
-            />
+            <PrescriptionFormModal open={isPrescriptionModalOpen} onOpenChange={setIsPrescriptionModalOpen} patientId={selectedPatientId!} patientName={patient?.full_name || ''} />
 
             {/* Primary Action - Prontuário */}
             <Card className="bg-primary/5 border-primary/20">
@@ -345,7 +295,7 @@ const DetalhePaciente = () => {
                   </div>
                   <Button size="lg" className="gap-2" onClick={() => navigate(`/prontuario/${selectedPatientId}`)}>
                     <ClipboardList className="w-5 h-5" />
-                    Acessar Prontuário
+                    Novo Prontuário
                   </Button>
                 </div>
               </CardContent>
@@ -415,47 +365,30 @@ const DetalhePaciente = () => {
                           <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                             Procedimentos Realizados
                           </CardTitle>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 w-7 p-0"
-                            onClick={() => setIsProcedureModalOpen(true)}
-                          >
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setIsProcedureModalOpen(true)}>
                             <Plus className="w-4 h-4" />
                           </Button>
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        {procedures && procedures.length > 0 ? (
-                          <div className="space-y-2">
+                        {procedures && procedures.length > 0 ? <div className="space-y-2">
                             <p className="text-3xl font-bold text-foreground mb-3">{procedures.length}</p>
                             <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                              {procedures.slice(0, 8).map((proc) => (
-                                <Badge key={proc.id} variant="secondary" className="text-xs">
+                              {procedures.slice(0, 8).map(proc => <Badge key={proc.id} variant="secondary" className="text-xs">
                                   <CheckCircle className="w-3 h-3 mr-1" />
                                   {proc.procedure_name}
-                                </Badge>
-                              ))}
-                              {procedures.length > 8 && (
-                                <Badge variant="outline" className="text-xs">
+                                </Badge>)}
+                              {procedures.length > 8 && <Badge variant="outline" className="text-xs">
                                   +{procedures.length - 8} mais
-                                </Badge>
-                              )}
+                                </Badge>}
                             </div>
-                          </div>
-                        ) : (
-                          <div className="text-center py-2">
+                          </div> : <div className="text-center py-2">
                             <p className="text-muted-foreground text-sm mb-2">Nenhum procedimento</p>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setIsProcedureModalOpen(true)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => setIsProcedureModalOpen(true)}>
                               <Plus className="w-3 h-3 mr-1" />
                               Registrar
                             </Button>
-                          </div>
-                        )}
+                          </div>}
                       </CardContent>
                     </Card>
                     
@@ -468,26 +401,25 @@ const DetalhePaciente = () => {
                       <CardContent className="pt-0">
                         <p className="text-4xl font-bold text-foreground">
                           {(() => {
-                            // Prioriza EVA da triagem mais recente, depois fallback para patient.initial_vas
-                            const latestScreening = screenings?.[0];
-                            if (latestScreening?.questionnaire_responses) {
-                              const responses = latestScreening.questionnaire_responses as Record<string, unknown>;
-                              // Tenta extrair do regen_canonical primeiro, depois answers
-                              const canonical = responses?.regen_canonical as Record<string, unknown> | undefined;
-                              const complaint = canonical?.complaint as Record<string, unknown> | undefined;
-                              const painNrs = complaint?.pain_nrs;
-                              if (painNrs != null && (typeof painNrs === 'number' || typeof painNrs === 'string')) {
-                                return String(painNrs);
-                              }
-                              
-                              const answers = responses?.answers as Record<string, unknown> | undefined;
-                              const dorEscala = answers?.dor_escala;
-                              if (dorEscala != null && (typeof dorEscala === 'number' || typeof dorEscala === 'string')) {
-                                return String(dorEscala);
-                              }
-                            }
-                            return patient?.initial_vas != null ? String(patient.initial_vas) : "—";
-                          })()}
+                        // Prioriza EVA da triagem mais recente, depois fallback para patient.initial_vas
+                        const latestScreening = screenings?.[0];
+                        if (latestScreening?.questionnaire_responses) {
+                          const responses = latestScreening.questionnaire_responses as Record<string, unknown>;
+                          // Tenta extrair do regen_canonical primeiro, depois answers
+                          const canonical = responses?.regen_canonical as Record<string, unknown> | undefined;
+                          const complaint = canonical?.complaint as Record<string, unknown> | undefined;
+                          const painNrs = complaint?.pain_nrs;
+                          if (painNrs != null && (typeof painNrs === 'number' || typeof painNrs === 'string')) {
+                            return String(painNrs);
+                          }
+                          const answers = responses?.answers as Record<string, unknown> | undefined;
+                          const dorEscala = answers?.dor_escala;
+                          if (dorEscala != null && (typeof dorEscala === 'number' || typeof dorEscala === 'string')) {
+                            return String(dorEscala);
+                          }
+                        }
+                        return patient?.initial_vas != null ? String(patient.initial_vas) : "—";
+                      })()}
                         </p>
                       </CardContent>
                     </Card>
@@ -503,21 +435,15 @@ const DetalhePaciente = () => {
                 <TabsContent value="historico" className="mt-8">
                   <div className="space-y-8 max-w-3xl">
                     {/* Histórico de Triagens */}
-                    {screenings && screenings.length > 0 && (
-                      <div className="space-y-4">
+                    {screenings && screenings.length > 0 && <div className="space-y-4">
                         <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
                           <FlaskConical className="w-5 h-5 text-primary" />
                           Histórico de Triagens
                         </h3>
-                        {screenings.map((screening) => (
-                          <Card 
-                            key={screening.id} 
-                            className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
-                            onClick={() => {
-                              setSelectedScreening(screening);
-                              setIsScreeningModalOpen(true);
-                            }}
-                          >
+                        {screenings.map(screening => <Card key={screening.id} className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all" onClick={() => {
+                    setSelectedScreening(screening);
+                    setIsScreeningModalOpen(true);
+                  }}>
                             <CardContent className="p-6">
                               <div className="flex items-start gap-5">
                                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -528,7 +454,9 @@ const DetalhePaciente = () => {
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                       <Calendar className="w-4 h-4" />
                                       <span className="text-sm">
-                                        {format(new Date(screening.screening_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                        {format(new Date(screening.screening_date), "dd 'de' MMMM 'de' yyyy", {
+                                  locale: ptBR
+                                })}
                                       </span>
                                     </div>
                                     {getClassificationBadge(screening.classification || "")}
@@ -538,10 +466,8 @@ const DetalhePaciente = () => {
                                 </div>
                               </div>
                             </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
+                          </Card>)}
+                      </div>}
 
                     {/* Histórico de Sessões */}
                     <div className="space-y-4">
@@ -549,9 +475,7 @@ const DetalhePaciente = () => {
                         <Activity className="w-5 h-5 text-primary" />
                         Sessões de Tratamento
                       </h3>
-                      {sessions && sessions.length > 0 ? (
-                        sessions.map((session) => (
-                          <Card key={session.id} className="bg-card border-border">
+                      {sessions && sessions.length > 0 ? sessions.map(session => <Card key={session.id} className="bg-card border-border">
                             <CardContent className="p-6">
                               <div className="flex items-start gap-5">
                                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-lg flex-shrink-0">
@@ -561,20 +485,17 @@ const DetalhePaciente = () => {
                                   <div className="flex items-center gap-2 text-muted-foreground">
                                     <Calendar className="w-4 h-4" />
                                     <span className="text-sm">
-                                      {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                      {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy", {
+                                locale: ptBR
+                              })}
                                     </span>
                                   </div>
                                   <p className="text-foreground">{session.clinical_observations || "Sem observações"}</p>
-                                  {session.vas_on_day && (
-                                    <p className="text-sm text-muted-foreground">EVA: {session.vas_on_day}</p>
-                                  )}
+                                  {session.vas_on_day && <p className="text-sm text-muted-foreground">EVA: {session.vas_on_day}</p>}
                                 </div>
                               </div>
                             </CardContent>
-                          </Card>
-                        ))
-                      ) : (
-                        <Card className="bg-card border-border">
+                          </Card>) : <Card className="bg-card border-border">
                           <CardContent className="py-12 text-center">
                             <Activity className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
                             <p className="text-muted-foreground mb-4">Nenhuma sessão registrada</p>
@@ -582,8 +503,7 @@ const DetalhePaciente = () => {
                               Criar Prontuário Clínico
                             </Button>
                           </CardContent>
-                        </Card>
-                      )}
+                        </Card>}
                     </div>
                   </div>
                 </TabsContent>
@@ -593,16 +513,12 @@ const DetalhePaciente = () => {
                   <div className="max-w-3xl space-y-6">
                     {/* Header with Add Button and Filter */}
                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                      <Button 
-                        onClick={() => navigate(`/triagem-biologica?paciente=${selectedPatientId}`)}
-                        className="gap-2"
-                      >
+                      <Button onClick={() => navigate(`/triagem-biologica?paciente=${selectedPatientId}`)} className="gap-2">
                         <Plus className="w-4 h-4" />
                         Adicionar Exames
                       </Button>
                       
-                      {examDates.length > 0 && (
-                        <div className="flex items-center gap-2">
+                      {examDates.length > 0 && <div className="flex items-center gap-2">
                           <Filter className="w-4 h-4 text-muted-foreground" />
                           <Select value={selectedExamDate} onValueChange={setSelectedExamDate}>
                             <SelectTrigger className="w-[200px]">
@@ -610,22 +526,19 @@ const DetalhePaciente = () => {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">Todas as datas</SelectItem>
-                              {examDates.map((date) => (
-                                <SelectItem key={date} value={date}>
-                                  {format(new Date(date), "dd/MM/yyyy", { locale: ptBR })}
-                                </SelectItem>
-                              ))}
+                              {examDates.map(date => <SelectItem key={date} value={date}>
+                                  {format(new Date(date), "dd/MM/yyyy", {
+                            locale: ptBR
+                          })}
+                                </SelectItem>)}
                             </SelectContent>
                           </Select>
-                        </div>
-                      )}
+                        </div>}
                     </div>
 
                     {/* Exams List */}
-                    {filteredExams && filteredExams.length > 0 ? (
-                      <div className="space-y-4">
-                        {filteredExams.map((exam) => (
-                          <Card key={exam.id} className="bg-card border-border">
+                    {filteredExams && filteredExams.length > 0 ? <div className="space-y-4">
+                        {filteredExams.map(exam => <Card key={exam.id} className="bg-card border-border">
                             <CardContent className="p-5">
                               <div className="flex items-start gap-4">
                                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -636,21 +549,18 @@ const DetalhePaciente = () => {
                                     <h4 className="font-medium text-foreground">{exam.test_type}</h4>
                                     <Badge variant="outline" className="gap-1">
                                       <Calendar className="w-3 h-3" />
-                                      {format(new Date(exam.collection_date), "dd/MM/yyyy", { locale: ptBR })}
+                                      {format(new Date(exam.collection_date), "dd/MM/yyyy", {
+                                locale: ptBR
+                              })}
                                     </Badge>
                                   </div>
                                   <p className="text-sm text-muted-foreground">{exam.file_name}</p>
-                                  {exam.observations && (
-                                    <p className="text-sm text-muted-foreground mt-2">{exam.observations}</p>
-                                  )}
+                                  {exam.observations && <p className="text-sm text-muted-foreground mt-2">{exam.observations}</p>}
                                 </div>
                               </div>
                             </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <Card className="bg-card border-border">
+                          </Card>)}
+                      </div> : <Card className="bg-card border-border">
                         <CardContent className="py-16 text-center">
                           <FileText className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
                           <p className="text-muted-foreground text-lg mb-4">Nenhum exame registrado</p>
@@ -658,8 +568,7 @@ const DetalhePaciente = () => {
                             Adicione exames através da Triagem Biológica para acompanhar a evolução do paciente
                           </p>
                         </CardContent>
-                      </Card>
-                    )}
+                      </Card>}
                   </div>
                 </TabsContent>
 
@@ -667,10 +576,7 @@ const DetalhePaciente = () => {
                 <TabsContent value="protocolos" className="mt-8">
                   <div className="max-w-4xl space-y-6">
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <Card 
-                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/protocolos/mac?paciente=${selectedPatientId}`)}
-                      >
+                      <Card className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/protocolos/mac?paciente=${selectedPatientId}`)}>
                         <CardContent className="p-6 text-center">
                           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                             <Beaker className="w-7 h-7 text-primary" />
@@ -679,10 +585,7 @@ const DetalhePaciente = () => {
                           <p className="text-sm text-muted-foreground">Modulação Avançada Celular</p>
                         </CardContent>
                       </Card>
-                      <Card 
-                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/protocolos/epi?paciente=${selectedPatientId}`)}
-                      >
+                      <Card className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/protocolos/epi?paciente=${selectedPatientId}`)}>
                         <CardContent className="p-6 text-center">
                           <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
                             <Activity className="w-7 h-7 text-orange-500" />
@@ -691,10 +594,7 @@ const DetalhePaciente = () => {
                           <p className="text-sm text-muted-foreground">Eletrólise Percutânea</p>
                         </CardContent>
                       </Card>
-                      <Card 
-                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/protocolos/ortobiologicos?paciente=${selectedPatientId}`)}
-                      >
+                      <Card className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/protocolos/ortobiologicos?paciente=${selectedPatientId}`)}>
                         <CardContent className="p-6 text-center">
                           <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
                             <FlaskConical className="w-7 h-7 text-emerald-500" />
@@ -703,10 +603,7 @@ const DetalhePaciente = () => {
                           <p className="text-sm text-muted-foreground">PRP, PRF, BMAC</p>
                         </CardContent>
                       </Card>
-                      <Card 
-                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/protocolos/ondas-choque?paciente=${selectedPatientId}`)}
-                      >
+                      <Card className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/protocolos/ondas-choque?paciente=${selectedPatientId}`)}>
                         <CardContent className="p-6 text-center">
                           <div className="w-14 h-14 rounded-full bg-cyan-500/10 flex items-center justify-center mx-auto mb-4">
                             <Waves className="w-7 h-7 text-cyan-500" />
@@ -715,10 +612,7 @@ const DetalhePaciente = () => {
                           <p className="text-sm text-muted-foreground">Radial e Focada</p>
                         </CardContent>
                       </Card>
-                      <Card 
-                        className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/protocolos/injetaveis?paciente=${selectedPatientId}`)}
-                      >
+                      <Card className="bg-card border-border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/protocolos/injetaveis?paciente=${selectedPatientId}`)}>
                         <CardContent className="p-6 text-center">
                           <div className="w-14 h-14 rounded-full bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
                             <Syringe className="w-7 h-7 text-violet-500" />
@@ -735,12 +629,7 @@ const DetalhePaciente = () => {
                 <TabsContent value="relatorios" className="mt-8">
                   <div className="max-w-4xl space-y-6">
                     {/* Relatório de Avaliação e Plano Terapêutico - Novo Bloco Isolado */}
-                    <PatientEvaluationReport 
-                      patient={patient}
-                      latestScreening={screenings?.[0]}
-                      professionalName="Profissional Responsável"
-                      professionalRegistration="CREFITO-XX/XXXXX-F"
-                    />
+                    <PatientEvaluationReport patient={patient} latestScreening={screenings?.[0]} professionalName="Profissional Responsável" professionalRegistration="CREFITO-XX/XXXXX-F" />
                     
                     {/* Seção de Outros Relatórios (existente) */}
                     <div className="pt-6 border-t border-border">
@@ -786,28 +675,18 @@ const DetalhePaciente = () => {
 
               </Tabs>
             </div>
-          </div>
-        )}
+          </div>}
       </div>
 
       {/* Modal de detalhe de triagem */}
-      <ScreeningDetailModal
-        open={isScreeningModalOpen}
-        onOpenChange={setIsScreeningModalOpen}
-        screening={selectedScreening}
-      />
+      <ScreeningDetailModal open={isScreeningModalOpen} onOpenChange={setIsScreeningModalOpen} screening={selectedScreening} />
 
       {/* Modal de adicionar procedimento */}
-      <AddProcedureModal
-        open={isProcedureModalOpen}
-        onOpenChange={setIsProcedureModalOpen}
-        patientId={selectedPatientId || ""}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["patient-procedures", selectedPatientId] });
-        }}
-      />
-    </div>
-  );
+      <AddProcedureModal open={isProcedureModalOpen} onOpenChange={setIsProcedureModalOpen} patientId={selectedPatientId || ""} onSuccess={() => {
+      queryClient.invalidateQueries({
+        queryKey: ["patient-procedures", selectedPatientId]
+      });
+    }} />
+    </div>;
 };
-
 export default DetalhePaciente;
