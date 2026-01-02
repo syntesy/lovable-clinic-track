@@ -466,7 +466,29 @@ const DetalhePaciente = () => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <p className="text-4xl font-bold text-foreground">{patient?.initial_vas ?? "—"}</p>
+                        <p className="text-4xl font-bold text-foreground">
+                          {(() => {
+                            // Prioriza EVA da triagem mais recente, depois fallback para patient.initial_vas
+                            const latestScreening = screenings?.[0];
+                            if (latestScreening?.questionnaire_responses) {
+                              const responses = latestScreening.questionnaire_responses as Record<string, unknown>;
+                              // Tenta extrair do regen_canonical primeiro, depois answers
+                              const canonical = responses?.regen_canonical as Record<string, unknown> | undefined;
+                              const complaint = canonical?.complaint as Record<string, unknown> | undefined;
+                              const painNrs = complaint?.pain_nrs;
+                              if (painNrs != null && (typeof painNrs === 'number' || typeof painNrs === 'string')) {
+                                return String(painNrs);
+                              }
+                              
+                              const answers = responses?.answers as Record<string, unknown> | undefined;
+                              const dorEscala = answers?.dor_escala;
+                              if (dorEscala != null && (typeof dorEscala === 'number' || typeof dorEscala === 'string')) {
+                                return String(dorEscala);
+                              }
+                            }
+                            return patient?.initial_vas != null ? String(patient.initial_vas) : "—";
+                          })()}
+                        </p>
                       </CardContent>
                     </Card>
                   </div>
