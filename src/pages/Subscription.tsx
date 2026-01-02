@@ -15,17 +15,24 @@ import { ptBR } from "date-fns/locale";
 type PlanType = "essencial" | "profissional" | "empresarial";
 type SubscriptionStatus = "active" | "canceled" | "past_due" | "trial";
 
+interface PricingTier {
+  label: string;
+  price: number;
+  perUser: boolean;
+}
+
 interface Plan {
   id: PlanType;
   name: string;
   price: number;
-  priceNote?: string;
+  priceSecondary?: number;
   billing: string;
   badge?: string;
   icon: React.ReactNode;
   features: string[];
   description: string;
   idealFor?: string;
+  pricingTiers?: PricingTier[];
   order: number;
 }
 
@@ -98,12 +105,16 @@ const PLANS: Plan[] = [
     id: "empresarial",
     name: "Empresarial",
     price: 519.00,
-    priceNote: "por usuário (3-9 usuários) ou R$ 459/usuário (10+)",
+    priceSecondary: 459.00,
     billing: "mensal",
     badge: "Para equipes",
     icon: <Crown className="h-6 w-6" />,
     order: 3,
     description: "Um único plano para clínicas e redes, com valor ajustado conforme o tamanho da equipe.",
+    pricingTiers: [
+      { label: "3 A 9 USUÁRIOS", price: 519, perUser: true },
+      { label: "ACIMA DE 9 USUÁRIOS", price: 459, perUser: true }
+    ],
     features: [
       "Tudo do Profissional, mais:",
       "Gestão de múltiplos usuários",
@@ -543,10 +554,26 @@ export default function Subscription() {
                     {plan.icon}
                     <CardTitle>{plan.name}</CardTitle>
                   </div>
-                  <CardDescription className="text-2xl font-bold text-foreground">
-                    {formatPrice(plan.price)}
-                    <span className="text-sm font-normal text-muted-foreground"> / mês</span>
-                  </CardDescription>
+                  {plan.pricingTiers ? (
+                    <div className="space-y-3 pt-2">
+                      <p className="text-sm text-muted-foreground">{plan.description}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {plan.pricingTiers.map((tier, idx) => (
+                          <div key={idx} className="bg-muted/50 rounded-lg p-3 text-center">
+                            <p className="text-xs font-medium text-primary mb-1">{tier.label}</p>
+                            <p className="text-lg font-bold">{formatPrice(tier.price)}<span className="text-xs font-normal text-muted-foreground">/mês</span></p>
+                            {tier.perUser && <p className="text-xs text-muted-foreground">por usuário</p>}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">Valores por usuário ativo. Cobrança mensal.</p>
+                    </div>
+                  ) : (
+                    <CardDescription className="text-2xl font-bold text-foreground">
+                      {formatPrice(plan.price)}
+                      <span className="text-sm font-normal text-muted-foreground"> / mês</span>
+                    </CardDescription>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ul className="space-y-2">
