@@ -52,7 +52,7 @@ interface BillingRecord {
 const PLANS: Plan[] = [
   {
     id: "essencial",
-    name: "Essencial",
+    name: "Individual",
     price: 499.00,
     billing: "mensal",
     icon: <Zap className="h-6 w-6" />,
