@@ -116,15 +116,7 @@ const PLANS: Plan[] = [
       { label: "ACIMA DE 9 USUÁRIOS", price: 459, perUser: true }
     ],
     features: [
-      "Tudo do Essencial, mais:",
-      "Follow-up completo até D365",
-      "Registry observacional (read-only)",
-      "Análise longitudinal",
-      "Comparabilidade entre casos",
-      "Trajetória clínica visual",
-      "Estrutura para clínicas",
-      "Governança clínica avançada",
-      "Histórico de regras e critérios"
+      "Tudo do Profissional"
     ]
   }
 ];
