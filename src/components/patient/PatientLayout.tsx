@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { Button } from '@/components/ui/button';
-import { FileText, Pill, ShoppingBag, Home, LogOut, ClipboardCheck } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import logoRegenapp from '@/assets/logo-regenapp.png';
 
 interface PatientLayoutProps {
@@ -12,30 +12,21 @@ interface PatientLayoutProps {
 export function PatientLayout({ children }: PatientLayoutProps) {
   const { session, logout } = usePatientAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/patient/login');
   };
 
-  const navItems = [
-    { path: '/patient/home', label: 'Início', icon: Home },
-    { path: '/patient/followup', label: 'Acompanhamento', icon: ClipboardCheck },
-    { path: '/patient/reports', label: 'Relatórios', icon: FileText },
-    { path: '/patient/prescriptions', label: 'Prescrições', icon: Pill },
-    { path: '/patient/partners', label: 'Parceiros', icon: ShoppingBag },
-  ];
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
+      {/* Header - Minimal, no navigation */}
       <header className="bg-card border-b border-border px-4 py-3">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logoRegenapp} alt="REGENAPP" className="h-8 w-auto" />
             <span className="text-xs text-muted-foreground border-l border-border pl-3">
-              Área do Paciente
+              Acompanhamento Clínico
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -50,43 +41,18 @@ export function PatientLayout({ children }: PatientLayoutProps) {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="bg-card border-b border-border px-4 py-2">
-        <div className="max-w-5xl mx-auto flex gap-1 overflow-x-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Button
-                key={item.path}
-                variant={isActive ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => navigate(item.path)}
-                className="flex-shrink-0"
-              >
-                <Icon className="h-4 w-4 mr-2" />
-                {item.label}
-              </Button>
-            );
-          })}
-        </div>
-      </nav>
-
-      {/* Main Content */}
+      {/* Main Content - No navigation bar */}
       <main className="flex-1 p-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           {children}
         </div>
       </main>
 
       {/* Footer */}
       <footer className="bg-card border-t border-border px-4 py-4">
-        <div className="max-w-5xl mx-auto text-center">
+        <div className="max-w-2xl mx-auto text-center">
           <p className="text-xs text-muted-foreground">
-            O REGENAPP é uma ferramenta de apoio à decisão clínica.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Esta área destina-se exclusivamente à visualização de informações liberadas pelo seu profissional de saúde.
+            Esta área destina-se exclusivamente ao acompanhamento clínico orientado pelo seu profissional de saúde.
           </p>
         </div>
       </footer>

@@ -3,42 +3,12 @@ import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { PatientLayout } from '@/components/patient/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileText, Pill, ShoppingBag, AlertTriangle, ClipboardCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, ClipboardCheck, ArrowRight } from 'lucide-react';
 
 export default function PatientHome() {
   const { session } = usePatientAuth();
   const navigate = useNavigate();
-
-  const cards = [
-    {
-      title: 'Acompanhamento Clínico',
-      description: 'Informe como você está se sentindo para ajudar no seu acompanhamento',
-      icon: ClipboardCheck,
-      path: '/patient/followup',
-      color: 'text-emerald-500'
-    },
-    {
-      title: 'Meus Relatórios',
-      description: 'Visualize os relatórios clínicos liberados pelo seu profissional',
-      icon: FileText,
-      path: '/patient/reports',
-      color: 'text-blue-500'
-    },
-    {
-      title: 'Minhas Prescrições',
-      description: 'Acesse orientações alimentares, medicamentosas e suplementares',
-      icon: Pill,
-      path: '/patient/prescriptions',
-      color: 'text-green-500'
-    },
-    {
-      title: 'Parceiros e Suplementos',
-      description: 'Descontos exclusivos em produtos recomendados',
-      icon: ShoppingBag,
-      path: '/patient/partners',
-      color: 'text-purple-500'
-    }
-  ];
 
   return (
     <PatientLayout>
@@ -46,10 +16,10 @@ export default function PatientHome() {
         {/* Welcome Message */}
         <div className="text-center py-6">
           <h1 className="text-2xl font-semibold text-foreground mb-2">
-            Bem-vindo(a), {session?.patientName?.split(' ')[0]}
+            Olá, {session?.patientName?.split(' ')[0]}
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Aqui você pode consultar os relatórios e orientações liberados pelo seu profissional de saúde.
+            Suas respostas ajudam o profissional responsável a acompanhar sua evolução.
           </p>
         </div>
 
@@ -57,33 +27,32 @@ export default function PatientHome() {
         <Alert className="border-amber-500/50 bg-amber-500/10">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
           <AlertDescription className="text-amber-700 dark:text-amber-400">
-            O REGENAPP não substitui a orientação do seu profissional de saúde.
+            Estas informações não substituem avaliação profissional presencial.
           </AlertDescription>
         </Alert>
 
-        {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Card 
-                key={card.path}
-                className="cursor-pointer hover:shadow-md transition-shadow border-border/50"
-                onClick={() => navigate(card.path)}
-              >
-                <CardHeader className="pb-3">
-                  <div className={`w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2`}>
-                    <Icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                  <CardTitle className="text-lg">{card.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{card.description}</CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Single CTA Card - Follow-up */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="text-center pb-2">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <ClipboardCheck className="h-7 w-7 text-primary" />
+            </div>
+            <CardTitle className="text-xl">Acompanhamento Clínico</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <CardDescription className="text-base">
+              Informe como você está se sentindo para que seu profissional possa acompanhar sua evolução.
+            </CardDescription>
+            <Button 
+              size="lg" 
+              className="w-full sm:w-auto"
+              onClick={() => navigate('/patient/followup')}
+            >
+              Responder acompanhamento
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </PatientLayout>
   );
