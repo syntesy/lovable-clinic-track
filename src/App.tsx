@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { RequireAdminRole } from "./components/RequireAdminRole";
 import { PatientAuthProvider } from "./contexts/PatientAuthContext";
 import { PatientProtectedRoute } from "./components/patient/PatientProtectedRoute";
 import Auth from "./pages/Auth";
@@ -285,105 +286,105 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          {/* Admin Routes */}
+          {/* Admin Routes - Protected by RequireAdminRole */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminDashboard />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/curadoria"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminCuradoria />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/curadoria/:id"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminCuradoriaEditor />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/artigos"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminArtigos />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/artigos/novo"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminArtigoForm />
               </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/artigos/:id"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminArtigoForm />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/registry"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminRegistryDashboard />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/registry/governance"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <RegistryGovernance />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/docs/score-fluxo"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminScoreFluxoDoc />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           <Route
             path="/admin/qa/score"
             element={
-              <ProtectedRoute>
+              <RequireAdminRole>
                 <Layout>
                   <AdminScoreQA />
                 </Layout>
-              </ProtectedRoute>
+              </RequireAdminRole>
             }
           />
           {/* Registry Analytics Routes */}

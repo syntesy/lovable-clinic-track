@@ -4,7 +4,6 @@
 
 import { AlertCircle, CheckCircle2, Clock, AlertTriangle, Shield } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { 
   RegenCaseStatus, 
   REGEN_CASE_STATUS_MAP 
@@ -16,7 +15,6 @@ interface StatusBannerProps {
   status: RegenCaseStatus;
   engineComputedAt?: string | null;
   isStale?: boolean;
-  staleDate?: string | null;
   onRecalculate?: () => void;
 }
 
@@ -24,7 +22,6 @@ export function StatusBanner({
   status, 
   engineComputedAt,
   isStale = false,
-  staleDate,
   onRecalculate
 }: StatusBannerProps) {
   const statusInfo = REGEN_CASE_STATUS_MAP[status];
@@ -80,8 +77,8 @@ export function StatusBanner({
         {isStale ? (
           <div className="flex flex-col gap-1">
             <span>
-              Exames desatualizados{staleDate ? ` (coletados em ${format(new Date(staleDate), "dd/MM/yyyy", { locale: ptBR })})` : ""}.
-              Atualize os exames para prosseguir.
+              Resultado desatualizado. Dados foram alterados após a geração do score.
+              Recalcule para atualizar.
             </span>
             {onRecalculate && (
               <button 
