@@ -568,6 +568,51 @@ export type Database = {
           },
         ]
       }
+      curation_registry_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          curation_id: string
+          dimension_id: string
+          id: string
+          link_type: string
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          curation_id: string
+          dimension_id: string
+          id?: string
+          link_type?: string
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          curation_id?: string
+          dimension_id?: string
+          id?: string
+          link_type?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curation_registry_links_curation_id_fkey"
+            columns: ["curation_id"]
+            isOneToOne: false
+            referencedRelation: "curations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curation_registry_links_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "evidence_dimensions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curation_versions: {
         Row: {
           change_reason: string | null
@@ -786,6 +831,122 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evidence_audit_log: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      evidence_dimensions: {
+        Row: {
+          created_at: string
+          id: string
+          pathology_tag: string
+          region_tag: string | null
+          technique_tag: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pathology_tag: string
+          region_tag?: string | null
+          technique_tag: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pathology_tag?: string
+          region_tag?: string | null
+          technique_tag?: string
+        }
+        Relationships: []
+      }
+      evidence_snapshots: {
+        Row: {
+          canonical_hash: string
+          computed_at: string
+          created_at: string
+          dimension_id: string
+          id: string
+          n_cases_total: number
+          n_with_followup_180: number
+          n_with_followup_30: number
+          n_with_followup_365: number
+          n_with_followup_90: number
+          pain_baseline_mean: number | null
+          pain_baseline_median: number | null
+          pain_followup_90_mean: number | null
+          pain_followup_90_median: number | null
+          pct_improved_90: number | null
+          time_window: string
+          version: number
+        }
+        Insert: {
+          canonical_hash: string
+          computed_at?: string
+          created_at?: string
+          dimension_id: string
+          id?: string
+          n_cases_total: number
+          n_with_followup_180?: number
+          n_with_followup_30?: number
+          n_with_followup_365?: number
+          n_with_followup_90?: number
+          pain_baseline_mean?: number | null
+          pain_baseline_median?: number | null
+          pain_followup_90_mean?: number | null
+          pain_followup_90_median?: number | null
+          pct_improved_90?: number | null
+          time_window: string
+          version: number
+        }
+        Update: {
+          canonical_hash?: string
+          computed_at?: string
+          created_at?: string
+          dimension_id?: string
+          id?: string
+          n_cases_total?: number
+          n_with_followup_180?: number
+          n_with_followup_30?: number
+          n_with_followup_365?: number
+          n_with_followup_90?: number
+          pain_baseline_mean?: number | null
+          pain_baseline_median?: number | null
+          pain_followup_90_mean?: number | null
+          pain_followup_90_median?: number | null
+          pct_improved_90?: number | null
+          time_window?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_snapshots_dimension_id_fkey"
+            columns: ["dimension_id"]
+            isOneToOne: false
+            referencedRelation: "evidence_dimensions"
             referencedColumns: ["id"]
           },
         ]
@@ -3232,6 +3393,10 @@ export type Database = {
         }
       }
       generate_integrity_hash: { Args: { data: Json }; Returns: string }
+      get_next_snapshot_version: {
+        Args: { p_dimension_id: string; p_time_window: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3255,6 +3420,7 @@ export type Database = {
         Returns: string
       }
       mark_missed_followups: { Args: never; Returns: number }
+      normalize_evidence_tag: { Args: { tag: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "professional" | "viewer" | "patient"
