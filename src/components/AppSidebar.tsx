@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale } from "lucide-react";
+import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -19,6 +19,7 @@ const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
   { title: "Área do Paciente", url: "/patients/manage", icon: UserCog },
   { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
+  { title: "Evidence Engine", url: "/evidence", icon: Database },
   { title: "Parceiros", url: "/partners", icon: Handshake },
   { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
   { title: "AGENTE REGENAPP", url: "/agente-mac", icon: Bot, isAgent: true },
