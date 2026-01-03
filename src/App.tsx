@@ -38,6 +38,8 @@ import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegistryDashboard from "./pages/admin/AdminRegistryDashboard";
 import RegistryGovernance from "./pages/admin/RegistryGovernance";
+import AdminScoreFluxoDoc from "./pages/admin/AdminScoreFluxoDoc";
+import AdminScoreQA from "./pages/admin/AdminScoreQA";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import FollowupPanel from "./pages/FollowupPanel";
@@ -360,6 +362,26 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <RegistryGovernance />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/docs/score-fluxo"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminScoreFluxoDoc />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/qa/score"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminScoreQA />
                 </Layout>
               </ProtectedRoute>
             }

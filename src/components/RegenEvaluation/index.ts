@@ -10,3 +10,5 @@ export { ActionButtons } from "./ActionButtons";
 export { ExamRequestModal } from "./ExamRequestModal";
 export { PreReportModal } from "./PreReportModal";
 export { AvaliacaoRegenapp } from "./AvaliacaoRegenapp";
+export { ActionStateMap } from "./ActionStateMap";
+export { CriticalLabsChecklist } from "./CriticalLabsChecklist";

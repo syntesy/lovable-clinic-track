@@ -14,10 +14,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   REQUIRED_CRITICAL_LABS, 
   CRITICAL_LAB_LABELS,
-  RequiredCriticalLab
+  RequiredCriticalLab,
+  ValidatedLabData
 } from "@/types/regen-case-status";
 import { computeDIE } from "@/lib/regen-engine";
 import { RegenCanonical, RegenLabValue, defaultLabValue } from "@/types/regen-canonical";
+import { CriticalLabsChecklist } from "./CriticalLabsChecklist";
 
 interface LabsPanelProps {
   screeningId: string;
@@ -271,6 +273,13 @@ export function LabsPanel({
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Checklist Visual */}
+        <div className="border-t pt-4">
+          <CriticalLabsChecklist 
+            labsValidated={validationResults as Record<string, ValidatedLabData> | null}
+          />
         </div>
 
         <div className="flex items-center justify-between pt-2">

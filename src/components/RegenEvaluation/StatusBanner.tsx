@@ -16,6 +16,7 @@ interface StatusBannerProps {
   status: RegenCaseStatus;
   engineComputedAt?: string | null;
   isStale?: boolean;
+  staleDate?: string | null;
   onRecalculate?: () => void;
 }
 
@@ -23,6 +24,7 @@ export function StatusBanner({
   status, 
   engineComputedAt,
   isStale = false,
+  staleDate,
   onRecalculate
 }: StatusBannerProps) {
   const statusInfo = REGEN_CASE_STATUS_MAP[status];
@@ -76,14 +78,17 @@ export function StatusBanner({
       </AlertTitle>
       <AlertDescription className={getTextClass()}>
         {isStale ? (
-          <div className="flex items-center gap-2">
-            <span>Os dados foram alterados após a geração do score. Clique em "Recalcular" para atualizar.</span>
+          <div className="flex flex-col gap-1">
+            <span>
+              Exames desatualizados{staleDate ? ` (coletados em ${format(new Date(staleDate), "dd/MM/yyyy", { locale: ptBR })})` : ""}.
+              Atualize os exames para prosseguir.
+            </span>
             {onRecalculate && (
               <button 
                 onClick={onRecalculate}
-                className="underline font-medium hover:no-underline"
+                className="underline font-medium hover:no-underline text-left w-fit"
               >
-                Recalcular
+                Recalcular Resultado
               </button>
             )}
           </div>
