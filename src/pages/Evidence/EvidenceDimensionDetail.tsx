@@ -175,10 +175,10 @@ export default function EvidenceDimensionDetail() {
   if (error || !dimension) {
     return (
       <div className="space-y-6">
-        <Link to="/evidence/dimensions">
+        <Link to="/curadoria">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
+            Voltar à Curadoria
           </Button>
         </Link>
         <Alert variant="destructive">
@@ -194,10 +194,10 @@ export default function EvidenceDimensionDetail() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Link to="/evidence/dimensions">
+            <Link to="/curadoria">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Voltar
+                Voltar à Curadoria
               </Button>
             </Link>
           </div>
@@ -219,11 +219,12 @@ export default function EvidenceDimensionDetail() {
         </Button>
       </div>
 
-      {/* Disclaimer */}
-      <Alert className="bg-muted/50 border-muted">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Dados observacionais agregados. Não comparativos. Não inferenciais.
+      {/* Regulatory Disclaimer - Always visible at top */}
+      <Alert className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
+        <AlertTriangle className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+          <strong>Dados observacionais agregados.</strong> Não comparativos. Não inferenciais. 
+          Não substituem decisão profissional.
         </AlertDescription>
       </Alert>
 

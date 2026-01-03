@@ -15,18 +15,20 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import logoRegenapp from "@/assets/logo-regenapp.png";
 
+// Menu items visible to all authenticated users (professional role)
 const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
   { title: "Área do Paciente", url: "/patients/manage", icon: UserCog },
   { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
-  { title: "Evidence Engine", url: "/evidence", icon: Database },
   { title: "Parceiros", url: "/partners", icon: Handshake },
   { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
   { title: "AGENTE REGENAPP", url: "/agente-mac", icon: Bot, isAgent: true },
 ];
 
+// Admin-only menu items (includes Evidence Engine access)
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin", icon: ShieldCheck },
+  { title: "Evidence Engine", url: "/evidence", icon: Database },
   { title: "Gerenciar Artigos", url: "/admin/artigos", icon: FileText },
   { title: "Revisão de Curadorias", url: "/admin/curadoria", icon: Settings },
   { title: "Clinical Registry", url: "/admin/registry", icon: FlaskConical },

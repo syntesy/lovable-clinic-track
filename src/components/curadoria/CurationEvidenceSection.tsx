@@ -54,17 +54,14 @@ export function CurationEvidenceSection({ curationId }: CurationEvidenceSectionP
           <Database className="h-5 w-5" />
           Dados Observacionais do REGENAPP Clinical Registry™
         </CardTitle>
-        <CardDescription>
-          Dados observacionais agregados. Não comparativos. Não inferenciais.
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Disclaimer - Always visible */}
-        <Alert className="bg-muted/50 border-muted">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="text-sm">
-            Dados observacionais agregados. Não comparativos. Não inferenciais.
-            Evidence Engine powered by REGENAPP Clinical Registry™.
+        {/* Regulatory Disclaimer - Always visible at top */}
+        <Alert className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+            <strong>Dados observacionais agregados.</strong> Não comparativos. Não inferenciais. 
+            Não substituem decisão profissional.
           </AlertDescription>
         </Alert>
 
@@ -157,14 +154,11 @@ export function CurationEvidenceSection({ curationId }: CurationEvidenceSectionP
           </div>
         )}
 
-        {/* Link to Evidence Engine */}
+        {/* Footer note - replaces link to Evidence Engine dashboard */}
         <div className="pt-2 border-t">
-          <Link to="/evidence">
-            <Button variant="outline" size="sm" className="w-full">
-              <Database className="h-4 w-4 mr-2" />
-              Explorar Evidence Engine
-            </Button>
-          </Link>
+          <p className="text-xs text-muted-foreground text-center">
+            Análise descritiva • REGENAPP Clinical Registry™
+          </p>
         </div>
       </CardContent>
     </Card>
