@@ -2,8 +2,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
+
+// Componente de redirect para rota legada do prontuário
+const ProntuarioRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/prontuario/${id}`} replace />;
+};
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RequireAdminRole } from "./components/RequireAdminRole";
 import { PatientAuthProvider } from "./contexts/PatientAuthContext";
@@ -102,6 +108,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          {/* Rota principal do Prontuário Clínico */}
           <Route
             path="/prontuario/:id"
             element={
@@ -111,6 +118,11 @@ const App = () => (
                 </Layout>
               </ProtectedRoute>
             }
+          />
+          {/* Redirect do caminho antigo para o novo */}
+          <Route
+            path="/pacientes/:id/prontuario"
+            element={<ProntuarioRedirect />}
           />
           <Route
             path="/evolucao/:id"
