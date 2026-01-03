@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle2, 
   AlertTriangle, 
-  Clock,
-  XCircle
+  Clock
 } from "lucide-react";
 import { 
   REQUIRED_CRITICAL_LABS, 
@@ -41,17 +40,19 @@ export function CriticalLabsChecklist({
     const details = validationDetails[labKey];
     const labData = labsValidated?.[labKey];
     
+    // Caso 1: Não inserido (pendente)
     if (!details || !labData) {
       return {
-        status: "missing" as const,
-        icon: XCircle,
-        color: "text-muted-foreground",
-        bgColor: "bg-muted/50",
-        label: "Não inserido",
+        status: "pending" as const,
+        icon: AlertTriangle,
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-50 dark:bg-yellow-950/20",
+        label: "Pendente",
         tooltip: "Exame ainda não foi inserido no sistema"
       };
     }
 
+    // Caso 2: Válido (valor + data + USE)
     if (details.isValid) {
       return {
         status: "valid" as const,
@@ -59,33 +60,25 @@ export function CriticalLabsChecklist({
         color: "text-green-600",
         bgColor: "bg-green-50 dark:bg-green-950/20",
         label: "Válido",
-        tooltip: `Valor: ${labData.value} | Data: ${labData.date ? format(new Date(labData.date), "dd/MM/yyyy", { locale: ptBR }) : "-"} | Status: USE`
+        tooltip: `Valor: ${labData.value} | Data: ${labData.date ? format(new Date(labData.date), "dd/MM/yyyy", { locale: ptBR }) : "-"}`
       };
     }
 
-if (details.invalidStatus && labData.status === "REPEAT") {
+    // Caso 3: Desatualizado (STALE) - tem valor e data mas status não é USE
+    if (labData.value !== null && labData.value !== undefined && 
+        labData.date !== null && labData.date !== undefined && labData.date !== "" &&
+        labData.status !== "USE") {
       return {
-        status: "repeat" as const,
-        icon: AlertTriangle,
+        status: "stale" as const,
+        icon: Clock,
         color: "text-orange-600",
         bgColor: "bg-orange-50 dark:bg-orange-950/20",
         label: "Desatualizado",
-        tooltip: "Exame desatualizado (STALE) — DIE recomenda nova coleta"
+        tooltip: "Exame precisa ser atualizado (fora da janela de validade ou valor inadequado)"
       };
     }
 
-    if (details.invalidStatus && labData.status === "REQUEST") {
-      return {
-        status: "request" as const,
-        icon: Clock,
-        color: "text-blue-600",
-        bgColor: "bg-blue-50 dark:bg-blue-950/20",
-        label: "Solicitar",
-        tooltip: "Exame precisa ser solicitado"
-      };
-    }
-
-    // Pendente (falta valor ou data)
+    // Caso 4: Pendente (falta valor ou data)
     const missing = [];
     if (details.missingValue) missing.push("valor");
     if (details.missingDate) missing.push("data");
@@ -96,7 +89,7 @@ if (details.invalidStatus && labData.status === "REPEAT") {
       color: "text-yellow-600",
       bgColor: "bg-yellow-50 dark:bg-yellow-950/20",
       label: "Pendente",
-      tooltip: `Faltando: ${missing.join(", ")}`
+      tooltip: missing.length > 0 ? `Faltando: ${missing.join(", ")}` : "Dados incompletos"
     };
   };
 
@@ -149,8 +142,8 @@ if (details.invalidStatus && labData.status === "REPEAT") {
         })}
       </div>
 
-      {/* Legenda */}
-      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-2 border-t">
+      {/* Legenda - apenas 3 estados */}
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
         <div className="flex items-center gap-1">
           <CheckCircle2 className="h-3 w-3 text-green-600" />
           <span>Válido</span>
@@ -160,12 +153,8 @@ if (details.invalidStatus && labData.status === "REPEAT") {
           <span>Pendente</span>
         </div>
         <div className="flex items-center gap-1">
-          <AlertTriangle className="h-3 w-3 text-orange-600" />
+          <Clock className="h-3 w-3 text-orange-600" />
           <span>Desatualizado</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3 text-blue-600" />
-          <span>Solicitar</span>
         </div>
       </div>
     </div>
