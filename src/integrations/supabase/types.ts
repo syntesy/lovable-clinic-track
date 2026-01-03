@@ -1815,6 +1815,190 @@ export type Database = {
         }
         Relationships: []
       }
+      registry_audit_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          registry_case_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          registry_case_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          registry_case_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_audit_events_registry_case_id_fkey"
+            columns: ["registry_case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_cases"
+            referencedColumns: ["registry_case_id"]
+          },
+        ]
+      }
+      registry_baseline: {
+        Row: {
+          age_range: string | null
+          anatomical_region: string | null
+          comorbidities: Json | null
+          created_at: string
+          id: string
+          initial_pain_score: number | null
+          pain_duration_range: string | null
+          primary_diagnosis: string | null
+          registry_case_id: string
+          sex: string | null
+        }
+        Insert: {
+          age_range?: string | null
+          anatomical_region?: string | null
+          comorbidities?: Json | null
+          created_at?: string
+          id?: string
+          initial_pain_score?: number | null
+          pain_duration_range?: string | null
+          primary_diagnosis?: string | null
+          registry_case_id: string
+          sex?: string | null
+        }
+        Update: {
+          age_range?: string | null
+          anatomical_region?: string | null
+          comorbidities?: Json | null
+          created_at?: string
+          id?: string
+          initial_pain_score?: number | null
+          pain_duration_range?: string | null
+          primary_diagnosis?: string | null
+          registry_case_id?: string
+          sex?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_baseline_registry_case_id_fkey"
+            columns: ["registry_case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_cases"
+            referencedColumns: ["registry_case_id"]
+          },
+        ]
+      }
+      registry_cases: {
+        Row: {
+          consented_at: string | null
+          created_at: string
+          id: string
+          patient_id: string
+          professional_id: string
+          registry_case_id: string
+          screening_id: string | null
+          site_id: string | null
+          status: string
+          updated_at: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          consented_at?: string | null
+          created_at?: string
+          id?: string
+          patient_id: string
+          professional_id: string
+          registry_case_id?: string
+          screening_id?: string | null
+          site_id?: string | null
+          status?: string
+          updated_at?: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          consented_at?: string | null
+          created_at?: string
+          id?: string
+          patient_id?: string
+          professional_id?: string
+          registry_case_id?: string
+          screening_id?: string | null
+          site_id?: string | null
+          status?: string
+          updated_at?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_cases_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_cases_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "prp_screenings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_cases_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "registry_case_summary_v1_1"
+            referencedColumns: ["screening_id"]
+          },
+        ]
+      }
+      registry_consent_audit: {
+        Row: {
+          accepted_at: string | null
+          consent_version: string
+          created_at: string
+          id: string
+          registry_case_id: string
+          text_hash: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          consent_version?: string
+          created_at?: string
+          id?: string
+          registry_case_id: string
+          text_hash: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          consent_version?: string
+          created_at?: string
+          id?: string
+          registry_case_id?: string
+          text_hash?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_consent_audit_registry_case_id_fkey"
+            columns: ["registry_case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_cases"
+            referencedColumns: ["registry_case_id"]
+          },
+        ]
+      }
       registry_consent_logs: {
         Row: {
           changed_at: string
@@ -1891,6 +2075,44 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "patients"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_engine_snapshots: {
+        Row: {
+          canonical_hash: string | null
+          created_at: string
+          engine_computed_at: string | null
+          engine_outputs: Json
+          final_state: string | null
+          id: string
+          registry_case_id: string
+        }
+        Insert: {
+          canonical_hash?: string | null
+          created_at?: string
+          engine_computed_at?: string | null
+          engine_outputs?: Json
+          final_state?: string | null
+          id?: string
+          registry_case_id: string
+        }
+        Update: {
+          canonical_hash?: string | null
+          created_at?: string
+          engine_computed_at?: string | null
+          engine_outputs?: Json
+          final_state?: string | null
+          id?: string
+          registry_case_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_engine_snapshots_registry_case_id_fkey"
+            columns: ["registry_case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_cases"
+            referencedColumns: ["registry_case_id"]
           },
         ]
       }
@@ -2100,6 +2322,106 @@ export type Database = {
           },
         ]
       }
+      registry_labs: {
+        Row: {
+          collection_date: string | null
+          created_at: string
+          crp: number | null
+          ferritin: number | null
+          hba1c: number | null
+          hemoglobin: number | null
+          id: string
+          leukocytes: number | null
+          platelets: number | null
+          registry_case_id: string
+          status: string | null
+        }
+        Insert: {
+          collection_date?: string | null
+          created_at?: string
+          crp?: number | null
+          ferritin?: number | null
+          hba1c?: number | null
+          hemoglobin?: number | null
+          id?: string
+          leukocytes?: number | null
+          platelets?: number | null
+          registry_case_id: string
+          status?: string | null
+        }
+        Update: {
+          collection_date?: string | null
+          created_at?: string
+          crp?: number | null
+          ferritin?: number | null
+          hba1c?: number | null
+          hemoglobin?: number | null
+          id?: string
+          leukocytes?: number | null
+          platelets?: number | null
+          registry_case_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_labs_registry_case_id_fkey"
+            columns: ["registry_case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_cases"
+            referencedColumns: ["registry_case_id"]
+          },
+        ]
+      }
+      registry_longitudinal_followups: {
+        Row: {
+          adverse_event_type: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          late_adverse_event: boolean | null
+          new_intervention: boolean | null
+          pain_score: number | null
+          perceived_improvement: number | null
+          registry_case_id: string
+          return_to_activity: boolean | null
+          timepoint: number
+        }
+        Insert: {
+          adverse_event_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          late_adverse_event?: boolean | null
+          new_intervention?: boolean | null
+          pain_score?: number | null
+          perceived_improvement?: number | null
+          registry_case_id: string
+          return_to_activity?: boolean | null
+          timepoint: number
+        }
+        Update: {
+          adverse_event_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          late_adverse_event?: boolean | null
+          new_intervention?: boolean | null
+          pain_score?: number | null
+          perceived_improvement?: number | null
+          registry_case_id?: string
+          return_to_activity?: boolean | null
+          timepoint?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_longitudinal_followups_registry_case_id_fkey"
+            columns: ["registry_case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_cases"
+            referencedColumns: ["registry_case_id"]
+          },
+        ]
+      }
       registry_procedure_plans: {
         Row: {
           created_at: string
@@ -2141,6 +2463,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "registry_episodes"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      registry_procedures: {
+        Row: {
+          adverse_event_type: string | null
+          anatomical_site_detail: string | null
+          application_count: number | null
+          created_at: string
+          id: string
+          image_guided: boolean | null
+          immediate_adverse_event: boolean | null
+          procedure_date: string
+          procedure_type: string
+          registry_case_id: string
+        }
+        Insert: {
+          adverse_event_type?: string | null
+          anatomical_site_detail?: string | null
+          application_count?: number | null
+          created_at?: string
+          id?: string
+          image_guided?: boolean | null
+          immediate_adverse_event?: boolean | null
+          procedure_date: string
+          procedure_type: string
+          registry_case_id: string
+        }
+        Update: {
+          adverse_event_type?: string | null
+          anatomical_site_detail?: string | null
+          application_count?: number | null
+          created_at?: string
+          id?: string
+          image_guided?: boolean | null
+          immediate_adverse_event?: boolean | null
+          procedure_date?: string
+          procedure_type?: string
+          registry_case_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_procedures_registry_case_id_fkey"
+            columns: ["registry_case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_cases"
+            referencedColumns: ["registry_case_id"]
           },
         ]
       }
