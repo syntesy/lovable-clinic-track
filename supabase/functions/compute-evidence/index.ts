@@ -119,20 +119,23 @@ serve(async (req) => {
       );
     }
     
-    // Check admin role
+    // Check admin or governance role
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
+      .in('role', ['admin', 'governance']);
     
-    if (roleError || !roleData) {
+    if (roleError || !roleData || roleData.length === 0) {
+      console.log(`[Evidence Engine] Access denied for user ${user.id} - no admin/governance role`);
       return new Response(
-        JSON.stringify({ error: "Admin access required" }),
+        JSON.stringify({ error: "Acesso negado. Requer role admin ou governance." }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    const userRole = roleData[0].role;
+    console.log(`[Evidence Engine] Access granted for user ${user.id} with role ${userRole}`);
 
     console.log(`[Evidence Engine] Starting batch computation by admin ${user.id}`);
     
