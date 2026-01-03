@@ -17,9 +17,13 @@ const ProntuarioClinico = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Form state
+  // Form state - 4 campos obrigatórios (FONTE ÚNICA)
+  const [chiefComplaint, setChiefComplaint] = useState("");
   const [anamnesis, setAnamnesis] = useState("");
+  const [physicalExam, setPhysicalExam] = useState("");
   const [clinicalDiagnosis, setClinicalDiagnosis] = useState("");
+  
+  // Campos adicionais
   const [painNociceptive, setPainNociceptive] = useState(false);
   const [painNeuropathic, setPainNeuropathic] = useState(false);
   const [painNociplastic, setPainNociplastic] = useState(false);
@@ -83,10 +87,9 @@ const ProntuarioClinico = () => {
     },
   });
 
-  // Initialize form with patient data
+  // Initialize form with patient data (campos legados)
   useEffect(() => {
     if (patient) {
-      setClinicalDiagnosis(patient.clinical_diagnosis || "");
       setPainNociceptive(patient.pain_type_nociceptive || false);
       setPainNeuropathic(patient.pain_type_neuropathic || false);
       setPainNociplastic(patient.pain_type_nociplastic || false);
@@ -94,31 +97,42 @@ const ProntuarioClinico = () => {
     }
   }, [patient]);
 
-  // Initialize anamnesis from clinical record
+  // Initialize all 4 clinical fields from clinical_records (FONTE ÚNICA)
   useEffect(() => {
     if (clinicalRecord) {
-      setAnamnesis(clinicalRecord.anamnesis || "");
+      const record = clinicalRecord as Record<string, unknown>;
+      setChiefComplaint((record.chief_complaint as string) || "");
+      setAnamnesis((record.anamnesis as string) || "");
+      setPhysicalExam((record.physical_exam as string) || "");
+      setClinicalDiagnosis((record.clinical_diagnosis as string) || "");
     }
   }, [clinicalRecord]);
 
   // Track changes
   useEffect(() => {
     if (patient && clinicalRecord !== undefined) {
+      const record = clinicalRecord as Record<string, unknown> | null;
+      
       const patientChanged =
-        clinicalDiagnosis !== (patient.clinical_diagnosis || "") ||
         painNociceptive !== (patient.pain_type_nociceptive || false) ||
         painNeuropathic !== (patient.pain_type_neuropathic || false) ||
         painNociplastic !== (patient.pain_type_nociplastic || false) ||
         initialVas !== (patient.initial_vas?.toString() || "");
 
-      const anamnesisChanged = anamnesis !== (clinicalRecord?.anamnesis || "");
+      const clinicalChanged = 
+        chiefComplaint !== ((record?.chief_complaint as string) || "") ||
+        anamnesis !== ((record?.anamnesis as string) || "") ||
+        physicalExam !== ((record?.physical_exam as string) || "") ||
+        clinicalDiagnosis !== ((record?.clinical_diagnosis as string) || "");
 
-      setHasChanges(patientChanged || anamnesisChanged);
+      setHasChanges(patientChanged || clinicalChanged);
     }
   }, [
     patient,
     clinicalRecord,
+    chiefComplaint,
     anamnesis,
+    physicalExam,
     clinicalDiagnosis,
     painNociceptive,
     painNeuropathic,
@@ -131,11 +145,10 @@ const ProntuarioClinico = () => {
 
     setIsSaving(true);
     try {
-      // Update patient data
+      // Update patient data (apenas classificação de dor e EVA)
       const { error: patientError } = await supabase
         .from("patients")
         .update({
-          clinical_diagnosis: clinicalDiagnosis || null,
           pain_type_nociceptive: painNociceptive,
           pain_type_neuropathic: painNeuropathic,
           pain_type_nociplastic: painNociplastic,
@@ -145,11 +158,18 @@ const ProntuarioClinico = () => {
 
       if (patientError) throw patientError;
 
-      // Upsert clinical record (anamnesis)
+      // Upsert clinical record com os 4 campos obrigatórios (FONTE ÚNICA)
+      const clinicalData = {
+        chief_complaint: chiefComplaint.trim() || null,
+        anamnesis: anamnesis.trim() || null,
+        physical_exam: physicalExam.trim() || null,
+        clinical_diagnosis: clinicalDiagnosis.trim() || null,
+      };
+
       if (clinicalRecord) {
         const { error: recordError } = await supabase
           .from("clinical_records")
-          .update({ anamnesis: anamnesis || null })
+          .update(clinicalData)
           .eq("id", clinicalRecord.id);
 
         if (recordError) throw recordError;
@@ -158,11 +178,17 @@ const ProntuarioClinico = () => {
           .from("clinical_records")
           .insert({
             patient_id: id,
-            anamnesis: anamnesis || null,
+            ...clinicalData,
           });
 
         if (insertError) throw insertError;
       }
+
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ["patient", id] });
+      await queryClient.invalidateQueries({ queryKey: ["clinical-record", id] });
+      // Invalidar também o checklist na Avaliação REGENAPP
+      await queryClient.invalidateQueries({ queryKey: ["clinical-record-checklist", id] });
 
       // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ["patient", id] });
@@ -253,12 +279,34 @@ const ProntuarioClinico = () => {
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Avaliação Clínica</CardTitle>
+          <CardTitle>Avaliação Clínica (Prontuário do Profissional)</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Estes são os 4 campos obrigatórios para a Avaliação REGENAPP
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Campo 1: Queixa Principal */}
+          <div className="space-y-2">
+            <Label htmlFor="chief-complaint" className="flex items-center gap-2">
+              Queixa Principal
+              {!chiefComplaint.trim() && <span className="text-destructive text-xs">*</span>}
+            </Label>
+            <Textarea
+              id="chief-complaint"
+              className="border-input min-h-[80px]"
+              placeholder="Descreva a queixa principal do paciente..."
+              value={chiefComplaint}
+              onChange={(e) => setChiefComplaint(e.target.value)}
+            />
+          </div>
+
+          {/* Campo 2: Anamnese */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Anamnese</Label>
+              <Label htmlFor="anamnesis" className="flex items-center gap-2">
+                Anamnese
+                {!anamnesis.trim() && <span className="text-destructive text-xs">*</span>}
+              </Label>
               <AudioRecorder 
                 onTranscription={(text) => {
                   setAnamnesis(prev => prev ? `${prev}\n\n${text}` : text);
@@ -267,59 +315,97 @@ const ProntuarioClinico = () => {
               />
             </div>
             <Textarea
+              id="anamnesis"
               className="border-input min-h-[150px]"
               placeholder="Histórico clínico detalhado do paciente..."
               value={anamnesis}
               onChange={(e) => setAnamnesis(e.target.value)}
             />
           </div>
+
+          {/* Campo 3: Exame Físico */}
           <div className="space-y-2">
-            <Label>Diagnóstico Clínico</Label>
+            <Label htmlFor="physical-exam" className="flex items-center gap-2">
+              Exame Físico
+              {!physicalExam.trim() && <span className="text-destructive text-xs">*</span>}
+            </Label>
             <Textarea
-              className="border-input"
+              id="physical-exam"
+              className="border-input min-h-[120px]"
+              placeholder="Achados do exame físico..."
+              value={physicalExam}
+              onChange={(e) => setPhysicalExam(e.target.value)}
+            />
+          </div>
+
+          {/* Campo 4: Diagnóstico Clínico */}
+          <div className="space-y-2">
+            <Label htmlFor="clinical-diagnosis" className="flex items-center gap-2">
+              Diagnóstico Clínico
+              {!clinicalDiagnosis.trim() && <span className="text-destructive text-xs">*</span>}
+            </Label>
+            <Textarea
+              id="clinical-diagnosis"
+              className="border-input min-h-[80px]"
+              placeholder="Diagnóstico clínico..."
               value={clinicalDiagnosis}
               onChange={(e) => setClinicalDiagnosis(e.target.value)}
             />
           </div>
-          <div className="space-y-3">
-            <Label>Classificação da Dor</Label>
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="pain_nociceptive"
-                  checked={painNociceptive}
-                  onCheckedChange={(checked) =>
-                    setPainNociceptive(checked === true)
-                  }
-                />
-                <Label htmlFor="pain_nociceptive" className="font-normal">
-                  Nociceptiva
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="pain_neuropathic"
-                  checked={painNeuropathic}
-                  onCheckedChange={(checked) =>
-                    setPainNeuropathic(checked === true)
-                  }
-                />
-                <Label htmlFor="pain_neuropathic" className="font-normal">
-                  Neuropática
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="pain_nociplastic"
-                  checked={painNociplastic}
-                  onCheckedChange={(checked) =>
-                    setPainNociplastic(checked === true)
-                  }
-                />
-                <Label htmlFor="pain_nociplastic" className="font-normal">
-                  Nociplástica
-                </Label>
-              </div>
+
+          {/* Indicador de completude */}
+          <div className="pt-2 border-t">
+            {chiefComplaint.trim() && anamnesis.trim() && physicalExam.trim() && clinicalDiagnosis.trim() ? (
+              <span className="text-sm text-green-600">✓ Todos os campos obrigatórios preenchidos</span>
+            ) : (
+              <span className="text-sm text-yellow-600">⚠️ Preencha todos os campos obrigatórios (*)</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Card de Classificação da Dor */}
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle>Classificação da Dor</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="pain_nociceptive"
+                checked={painNociceptive}
+                onCheckedChange={(checked) =>
+                  setPainNociceptive(checked === true)
+                }
+              />
+              <Label htmlFor="pain_nociceptive" className="font-normal">
+                Nociceptiva
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="pain_neuropathic"
+                checked={painNeuropathic}
+                onCheckedChange={(checked) =>
+                  setPainNeuropathic(checked === true)
+                }
+              />
+              <Label htmlFor="pain_neuropathic" className="font-normal">
+                Neuropática
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="pain_nociplastic"
+                checked={painNociplastic}
+                onCheckedChange={(checked) =>
+                  setPainNociplastic(checked === true)
+                }
+              />
+              <Label htmlFor="pain_nociplastic" className="font-normal">
+                Nociplástica
+              </Label>
             </div>
           </div>
         </CardContent>

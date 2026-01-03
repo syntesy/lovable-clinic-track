@@ -76,19 +76,39 @@ export function AvaliacaoRegenapp({
     enabled: !!patientId
   });
 
+  // Buscar clinical_records (FONTE ÚNICA para os 4 campos clínicos)
+  const { data: clinicalRecord } = useQuery({
+    queryKey: ["clinical-record-for-status", patientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clinical_records")
+        .select("*")
+        .eq("patient_id", patientId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!patientId
+  });
+
   // Extrair dados do screening
   const screeningId = screening?.id;
   const questionnaireResponses = screening?.questionnaire_responses as Record<string, unknown> | null;
   const canonical = (questionnaireResponses?.regen_canonical as RegenCanonical) || null;
   const engineOutputs = (questionnaireResponses?.regen_engine_outputs as RegenEngineOutputs) || null;
   
-  // Calcular status atual
+  // Cast para acessar campos novos do clinical_records
+  const clinicalRecordData = clinicalRecord as Record<string, unknown> | null;
+
+  // Calcular status atual - LENDO DO clinical_records (FONTE ÚNICA)
   const currentStatus: RegenCaseStatus = screening ? computeCaseStatus({
     triage_completed_at: screening.triage_completed_at,
-    clinical_chief_complaint: screening.clinical_chief_complaint,
-    clinical_anamnesis: screening.clinical_anamnesis,
-    clinical_physical_exam: screening.clinical_physical_exam,
-    clinical_diagnosis: screening.clinical_diagnosis,
+    // FONTE ÚNICA: ler do clinical_records, não do prp_screenings
+    clinical_chief_complaint: clinicalRecordData?.chief_complaint as string | null,
+    clinical_anamnesis: clinicalRecordData?.anamnesis as string | null,
+    clinical_physical_exam: clinicalRecordData?.physical_exam as string | null,
+    clinical_diagnosis: clinicalRecordData?.clinical_diagnosis as string | null,
     labs_validated: screening.labs_validated as unknown as Record<string, ValidatedLabData> | null,
     regen_engine_outputs: engineOutputs
   }) : "S0";
@@ -352,15 +372,10 @@ export function AvaliacaoRegenapp({
         rawAnswers={questionnaireResponses?.answers as Record<string, unknown> | null}
       />
 
-      {/* (C) AVALIAÇÃO CLÍNICA - CHECKLIST READ-ONLY */}
+      {/* (C) AVALIAÇÃO CLÍNICA - CHECKLIST READ-ONLY (Fonte: Prontuário Clínico) */}
       <ClinicalAssessmentChecklist
         patientId={patientId}
-        clinicalData={{
-          clinical_chief_complaint: screening.clinical_chief_complaint,
-          clinical_anamnesis: screening.clinical_anamnesis,
-          clinical_physical_exam: screening.clinical_physical_exam,
-          clinical_diagnosis: screening.clinical_diagnosis
-        }}
+        screeningId={screeningId}
         disabled={currentStatus === "S3"}
       />
 

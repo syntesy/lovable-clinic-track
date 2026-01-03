@@ -1,6 +1,13 @@
 /**
- * Clinical Assessment Form - Prontuário do Profissional
- * Campos obrigatórios para transição S0 → S1
+ * @deprecated Este componente está DESATIVADO.
+ * 
+ * NÃO UTILIZAR - Os campos clínicos agora são editados APENAS no Prontuário Clínico.
+ * A Avaliação REGENAPP usa ClinicalAssessmentChecklist (read-only) em vez deste form.
+ * 
+ * Se este componente for usado, ele ainda tentará escrever em prp_screenings.clinical_*,
+ * o que viola a regra de FONTE ÚNICA (clinical_records).
+ * 
+ * Mantido apenas para referência histórica. Será removido em versão futura.
  */
 
 import { useState, useEffect } from "react";

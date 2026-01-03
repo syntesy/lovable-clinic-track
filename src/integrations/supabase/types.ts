@@ -290,23 +290,35 @@ export type Database = {
       clinical_records: {
         Row: {
           anamnesis: string | null
+          chief_complaint: string | null
+          clinical_diagnosis: string | null
           created_at: string
           id: string
+          legacy_migrated_at: string | null
           patient_id: string
+          physical_exam: string | null
           updated_at: string
         }
         Insert: {
           anamnesis?: string | null
+          chief_complaint?: string | null
+          clinical_diagnosis?: string | null
           created_at?: string
           id?: string
+          legacy_migrated_at?: string | null
           patient_id: string
+          physical_exam?: string | null
           updated_at?: string
         }
         Update: {
           anamnesis?: string | null
+          chief_complaint?: string | null
+          clinical_diagnosis?: string | null
           created_at?: string
           id?: string
+          legacy_migrated_at?: string | null
           patient_id?: string
+          physical_exam?: string | null
           updated_at?: string
         }
         Relationships: [
