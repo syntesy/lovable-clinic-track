@@ -96,6 +96,9 @@ export function AvaliacaoRegenapp({
   const isStale = screening && engineOutputs && 
     screening.canonical_updated_at && screening.engine_computed_at &&
     new Date(screening.canonical_updated_at) > new Date(screening.engine_computed_at);
+  
+  // Data do exame que causou o stale (usa labs_collected_date se disponível)
+  const staleDate = isStale ? (screening.labs_collected_date || screening.canonical_updated_at) : null;
 
   /**
    * Gera hash do canonical para auditoria
@@ -341,6 +344,7 @@ export function AvaliacaoRegenapp({
         status={currentStatus}
         engineComputedAt={screening.engine_computed_at}
         isStale={isStale || false}
+        staleDate={staleDate}
         onRecalculate={handleRecalculate}
       />
       

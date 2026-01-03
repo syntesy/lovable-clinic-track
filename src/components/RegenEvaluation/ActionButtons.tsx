@@ -16,6 +16,11 @@ import {
   RegenCaseStatus, 
   getAllowedActions 
 } from "@/types/regen-case-status";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 
 interface ActionButtonsProps {
   status: RegenCaseStatus;
@@ -39,6 +44,17 @@ export function ActionButtons({
   onExportPDF
 }: ActionButtonsProps) {
   const actions = getAllowedActions(status);
+
+  const BlockedTooltip = ({ children }: { children: React.ReactNode }) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="cursor-not-allowed">{children}</span>
+      </TooltipTrigger>
+      <TooltipContent>
+        Disponível apenas após avaliação clínica + exames válidos (S2).
+      </TooltipContent>
+    </Tooltip>
+  );
 
   return (
     <Card className="bg-muted/30">
@@ -70,8 +86,8 @@ export function ActionButtons({
             </Button>
           )}
 
-          {/* Score Definitivo - S2 */}
-          {actions.canGenerateDefinitiveScore && onGenerateDefinitiveScore && (
+          {/* Score Definitivo - S2 only */}
+          {status === "S2" && actions.canGenerateDefinitiveScore && onGenerateDefinitiveScore && (
             <Button 
               onClick={onGenerateDefinitiveScore}
               disabled={isLoading}
@@ -80,6 +96,20 @@ export function ActionButtons({
               <Zap className="w-4 h-4" />
               {isLoading ? "Gerando..." : "Gerar Score Definitivo (REGENAPP)"}
             </Button>
+          )}
+
+          {/* Show blocked score button with tooltip in S0/S1 */}
+          {(status === "S0" || status === "S1") && onGenerateDefinitiveScore && (
+            <BlockedTooltip>
+              <Button 
+                variant="outline"
+                disabled
+                className="gap-2 opacity-50"
+              >
+                <Zap className="w-4 h-4" />
+                Gerar Score Definitivo
+              </Button>
+            </BlockedTooltip>
           )}
 
           {/* Recalcular - S3 */}
@@ -99,26 +129,34 @@ export function ActionButtons({
           {status === "S3" && (
             <>
               {onPrint && (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={onPrint}
-                  disabled={isLoading}
-                  title="Imprimir"
-                >
-                  <Printer className="w-4 h-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={onPrint}
+                      disabled={isLoading}
+                    >
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Imprimir</TooltipContent>
+                </Tooltip>
               )}
               {onExportPDF && (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={onExportPDF}
-                  disabled={isLoading}
-                  title="Exportar PDF"
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={onExportPDF}
+                      disabled={isLoading}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Exportar PDF</TooltipContent>
+                </Tooltip>
               )}
             </>
           )}
