@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, User } from "lucide-react";
+import { Shield, User, AlertTriangle } from "lucide-react";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import logoRegenapp from "@/assets/logo-regenapp.png";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { validateSignup, loginSchema } from "@/lib/password-validation";
 export default function Auth() {
   const navigate = useNavigate();
   const {
@@ -19,17 +21,103 @@ export default function Auth() {
   const [error, setError] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+  const [lockoutMessage, setLockoutMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  // Verificar rate limit ao carregar
+  useEffect(() => {
+    checkRateLimit();
+  }, []);
+
+  const checkRateLimit = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-rate-limit', {
+        body: { action: 'check', email: email || undefined }
+      });
+      
+      if (data && !data.allowed) {
+        setLockoutMessage(data.message);
+        setRemainingAttempts(0);
+      } else if (data) {
+        setLockoutMessage(null);
+        if (data.remainingAttempts < 5) {
+          setRemainingAttempts(data.remainingAttempts);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao verificar rate limit:', err);
+    }
+  };
+
+  const recordFailedAttempt = async () => {
+    try {
+      const { data } = await supabase.functions.invoke('auth-rate-limit', {
+        body: { action: 'record-failure', email }
+      });
+      
+      if (data) {
+        setRemainingAttempts(data.remainingAttempts);
+        if (!data.allowed || data.lockoutEndsAt) {
+          setLockoutMessage(data.message);
+        } else if (data.message !== 'OK') {
+          toast({
+            title: "Atenção",
+            description: data.message,
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao registrar tentativa:', err);
+    }
+  };
+
+  const recordSuccessfulLogin = async () => {
+    try {
+      await supabase.functions.invoke('auth-rate-limit', {
+        body: { action: 'record-success', email }
+      });
+      setRemainingAttempts(null);
+      setLockoutMessage(null);
+    } catch (err) {
+      console.error('Erro ao registrar sucesso:', err);
+    }
+  };
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const {
-      error
-    } = await supabase.auth.signInWithPassword({
+    setFieldErrors({});
+
+    // Verificar se está bloqueado
+    if (lockoutMessage) {
+      setError(lockoutMessage);
+      setLoading(false);
+      return;
+    }
+
+    // Validar campos
+    const validation = loginSchema.safeParse({ email, password });
+    if (!validation.success) {
+      const errors: Record<string, string[]> = {};
+      validation.error.errors.forEach(e => {
+        const field = e.path[0] as string;
+        if (!errors[field]) errors[field] = [];
+        errors[field].push(e.message);
+      });
+      setFieldErrors(errors);
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
+    
     if (error) {
+      await recordFailedAttempt();
       setError(error.message);
       toast({
         title: "Falha no login",
@@ -37,7 +125,7 @@ export default function Auth() {
         variant: "destructive"
       });
     } else {
-      // Registrar log de login
+      await recordSuccessfulLogin();
       await logLogin();
       navigate("/pacientes");
     }
@@ -47,15 +135,20 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    if (!fullName.trim()) {
-      setError("Nome completo é obrigatório");
+    setFieldErrors({});
+
+    // Validar todos os campos com schema forte
+    const validation = validateSignup({ email, password, fullName });
+    if (!validation.valid) {
+      setFieldErrors(validation.errors);
+      const firstError = Object.values(validation.errors)[0]?.[0];
+      if (firstError) setError(firstError);
       setLoading(false);
       return;
     }
+
     const redirectUrl = `${window.location.origin}/`;
-    const {
-      error
-    } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -65,6 +158,7 @@ export default function Auth() {
         }
       }
     });
+    
     if (error) {
       setError(error.message);
       toast({
@@ -176,6 +270,44 @@ export default function Auth() {
           }}>Conformidade LGPD </span>
           </div>
 
+          {/* Aviso de bloqueio */}
+          {lockoutMessage && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "12px 16px",
+              backgroundColor: "rgba(255, 77, 77, 0.1)",
+              border: "1px solid rgba(255, 77, 77, 0.3)",
+              borderRadius: "12px",
+              marginBottom: "20px"
+            }}>
+              <AlertTriangle style={{ width: "16px", height: "16px", color: "#FF4D4D" }} />
+              <span style={{ color: "#FF6B6B", fontSize: "12px", fontFamily: "Inter, sans-serif" }}>
+                {lockoutMessage}
+              </span>
+            </div>
+          )}
+
+          {/* Aviso de tentativas restantes */}
+          {!lockoutMessage && remainingAttempts !== null && remainingAttempts < 5 && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 16px",
+              backgroundColor: "rgba(255, 140, 66, 0.1)",
+              border: "1px solid rgba(255, 140, 66, 0.3)",
+              borderRadius: "12px",
+              marginBottom: "20px"
+            }}>
+              <AlertTriangle style={{ width: "14px", height: "14px", color: "#FF8C42" }} />
+              <span style={{ color: "#FF8C42", fontSize: "11px", fontFamily: "Inter, sans-serif" }}>
+                {remainingAttempts} tentativa(s) restante(s)
+              </span>
+            </div>
+          )}
+
           <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
             {/* Campo Nome (apenas no cadastro) */}
             {isSignUp && <div style={{
@@ -195,13 +327,18 @@ export default function Auth() {
               width: "100%",
               backgroundColor: "transparent",
               border: "none",
-              borderBottom: "1px solid #253441",
+              borderBottom: fieldErrors.fullName ? "1px solid #FF6B6B" : "1px solid #253441",
               padding: "12px 0",
               color: "#FEFEFE",
               fontSize: "14px",
               outline: "none",
               fontFamily: "Inter, sans-serif"
             }} />
+                {fieldErrors.fullName && (
+                  <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
+                    {fieldErrors.fullName[0]}
+                  </span>
+                )}
               </div>}
 
             {/* Campo Email */}
@@ -222,13 +359,18 @@ export default function Auth() {
               width: "100%",
               backgroundColor: "transparent",
               border: "none",
-              borderBottom: "1px solid #253441",
+              borderBottom: fieldErrors.email ? "1px solid #FF6B6B" : "1px solid #253441",
               padding: "12px 0",
               color: "#FEFEFE",
               fontSize: "14px",
               outline: "none",
               fontFamily: "Inter, sans-serif"
             }} />
+              {fieldErrors.email && (
+                <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
+                  {fieldErrors.email[0]}
+                </span>
+              )}
             </div>
 
             {/* Campo Password */}
@@ -245,17 +387,23 @@ export default function Auth() {
             }}>
                 Senha
               </label>
-              <input type="password" placeholder={isSignUp ? "Mínimo 6 caracteres" : "Sua senha"} value={password} onChange={e => setPassword(e.target.value)} required minLength={6} style={{
+              <input type="password" placeholder={isSignUp ? "Mín. 8 caracteres, maiúscula, número e símbolo" : "Sua senha"} value={password} onChange={e => setPassword(e.target.value)} required minLength={isSignUp ? 8 : 1} style={{
               width: "100%",
               backgroundColor: "transparent",
               border: "none",
-              borderBottom: "1px solid #253441",
+              borderBottom: fieldErrors.password ? "1px solid #FF6B6B" : "1px solid #253441",
               padding: "12px 0",
               color: "#FEFEFE",
               fontSize: "14px",
               outline: "none",
               fontFamily: "Inter, sans-serif"
             }} />
+              {isSignUp && <PasswordStrengthIndicator password={password} />}
+              {fieldErrors.password && (
+                <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
+                  {fieldErrors.password[0]}
+                </span>
+              )}
             </div>
 
             {/* Mensagem de erro */}
@@ -270,28 +418,28 @@ export default function Auth() {
               </p>}
 
             {/* Botão principal */}
-            <button type="submit" disabled={loading} style={{
+            <button type="submit" disabled={loading || !!lockoutMessage} style={{
             width: "100%",
             height: "52px",
-            backgroundColor: "#79B997",
+            backgroundColor: lockoutMessage ? "#555" : "#79B997",
             border: "none",
             borderRadius: "26px",
             color: "#FEFEFE",
             fontSize: "16px",
             fontWeight: 500,
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.7 : 1,
+            cursor: (loading || lockoutMessage) ? "not-allowed" : "pointer",
+            opacity: (loading || lockoutMessage) ? 0.7 : 1,
             transition: "all 0.2s ease",
             fontFamily: "Inter, sans-serif",
-            boxShadow: "0 4px 20px rgba(121, 185, 151, 0.3)"
+            boxShadow: lockoutMessage ? "none" : "0 4px 20px rgba(121, 185, 151, 0.3)"
           }} onMouseEnter={e => {
-            if (!loading) {
+            if (!loading && !lockoutMessage) {
               e.currentTarget.style.filter = "brightness(1.1)";
             }
           }} onMouseLeave={e => {
             e.currentTarget.style.filter = "brightness(1)";
           }}>
-              {loading ? "Aguarde..." : isSignUp ? "Cadastrar" : "Entrar"}
+              {loading ? "Aguarde..." : lockoutMessage ? "Bloqueado" : isSignUp ? "Cadastrar" : "Entrar"}
             </button>
           </form>
 
@@ -303,6 +451,7 @@ export default function Auth() {
             <button type="button" onClick={() => {
             setIsSignUp(!isSignUp);
             setError("");
+            setFieldErrors({});
           }} style={{
             background: "none",
             border: "none",
