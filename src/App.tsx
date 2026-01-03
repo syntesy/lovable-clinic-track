@@ -53,13 +53,10 @@ import NotFound from "./pages/NotFound";
 import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
 import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
-// Patient Portal Pages
+// Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
 import PatientFollowup from "./pages/patient/PatientFollowup";
-import PatientReports from "./pages/patient/PatientReports";
-import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
-import PatientPartners from "./pages/patient/PatientPartners";
 
 const queryClient = new QueryClient();
 
@@ -75,13 +72,14 @@ const App = () => (
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/" element={<LandingPage />} />
             
-            {/* Patient Portal Routes */}
+            {/* Patient Portal Routes - Single Function */}
             <Route path="/patient/login" element={<PatientLogin />} />
             <Route path="/patient/home" element={<PatientProtectedRoute><PatientHome /></PatientProtectedRoute>} />
             <Route path="/patient/followup" element={<PatientProtectedRoute><PatientFollowup /></PatientProtectedRoute>} />
-            <Route path="/patient/reports" element={<PatientProtectedRoute><PatientReports /></PatientProtectedRoute>} />
-            <Route path="/patient/prescriptions" element={<PatientProtectedRoute><PatientPrescriptions /></PatientProtectedRoute>} />
-            <Route path="/patient/partners" element={<PatientProtectedRoute><PatientPartners /></PatientProtectedRoute>} />
+            {/* Legacy routes redirect to home */}
+            <Route path="/patient/reports" element={<Navigate to="/patient/home" replace />} />
+            <Route path="/patient/prescriptions" element={<Navigate to="/patient/home" replace />} />
+            <Route path="/patient/partners" element={<Navigate to="/patient/home" replace />} />
           <Route
             path="/pacientes"
             element={
