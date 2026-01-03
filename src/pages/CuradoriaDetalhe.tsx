@@ -10,6 +10,7 @@ import { Curation, CurationStatus } from "@/types/curation";
 import { CuradoriaStatusBadge } from "@/components/curadoria/CuradoriaStatusBadge";
 import { ScientificCurationCard, exampleCurationData } from "@/components/curadoria/ScientificCurationCard";
 import { CurationGovernanceBadge } from "@/components/curadoria/CurationGovernanceBadge";
+import { CurationEvidenceSection } from "@/components/curadoria/CurationEvidenceSection";
 import { toast } from "sonner";
 import { 
   ArrowLeft, 
@@ -440,6 +441,11 @@ export default function CuradoriaDetalhe() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Observational Data Section - Always show if curation exists */}
+      {structuredCuration && (
+        <CurationEvidenceSection curationId={structuredCuration.id} />
       )}
 
       {/* Fixed CTA Footer - Only show when appropriate */}

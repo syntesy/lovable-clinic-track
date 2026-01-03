@@ -51,6 +51,7 @@ import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
+import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
 // Patient Portal Pages
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -416,6 +417,37 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <RegistryExport />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Evidence Engine Routes */}
+          <Route
+            path="/evidence"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <EvidenceDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/evidence/dimensions"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <EvidenceDimensions />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/evidence/dimensions/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <EvidenceDimensionDetail />
                 </Layout>
               </ProtectedRoute>
             }
