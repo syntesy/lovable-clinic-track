@@ -1643,6 +1643,8 @@ export type Database = {
           notes: string | null
           pain_score: number | null
           patient_id: string
+          patient_self_declaration: boolean | null
+          patient_self_declaration_at: string | null
           rescheduled_from: string | null
           scheduled_for: string
           screening_id: string
@@ -1665,6 +1667,8 @@ export type Database = {
           notes?: string | null
           pain_score?: number | null
           patient_id: string
+          patient_self_declaration?: boolean | null
+          patient_self_declaration_at?: string | null
           rescheduled_from?: string | null
           scheduled_for: string
           screening_id: string
@@ -1687,6 +1691,8 @@ export type Database = {
           notes?: string | null
           pain_score?: number | null
           patient_id?: string
+          patient_self_declaration?: boolean | null
+          patient_self_declaration_at?: string | null
           rescheduled_from?: string | null
           scheduled_for?: string
           screening_id?: string
@@ -3381,6 +3387,8 @@ export type Database = {
           notes: string | null
           pain_score: number | null
           patient_id: string
+          patient_self_declaration: boolean | null
+          patient_self_declaration_at: string | null
           rescheduled_from: string | null
           scheduled_for: string
           screening_id: string
