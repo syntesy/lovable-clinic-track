@@ -1367,6 +1367,7 @@ export type Database = {
           photo_url: string | null
           previous_treatments: string | null
           profession: string | null
+          professional_id: string | null
           skin_phototype: string | null
           specific_limitations: string | null
           sport_activity: string | null
@@ -1404,6 +1405,7 @@ export type Database = {
           photo_url?: string | null
           previous_treatments?: string | null
           profession?: string | null
+          professional_id?: string | null
           skin_phototype?: string | null
           specific_limitations?: string | null
           sport_activity?: string | null
@@ -1441,6 +1443,7 @@ export type Database = {
           photo_url?: string | null
           previous_treatments?: string | null
           profession?: string | null
+          professional_id?: string | null
           skin_phototype?: string | null
           specific_limitations?: string | null
           sport_activity?: string | null
@@ -2752,8 +2755,10 @@ export type Database = {
           adverse_event_any: boolean | null
           baseline_function_score: number | null
           baseline_pain_nrs: number | null
+          classification: string | null
           clinician_id: string | null
           d180_function: number | null
+          d180_function_dummy: number | null
           d180_pain: number | null
           d30_function: number | null
           d30_global_change: string | null
@@ -2765,6 +2770,8 @@ export type Database = {
           d90_pain: number | null
           diagnosis: string | null
           followup_completion_rate: number | null
+          followups_completed: number | null
+          followups_total: number | null
           has_d180: boolean | null
           has_d30: boolean | null
           has_d365: boolean | null
