@@ -63,14 +63,14 @@ export function CriticalLabsChecklist({
       };
     }
 
-    if (details.invalidStatus && labData.status === "REPEAT") {
+if (details.invalidStatus && labData.status === "REPEAT") {
       return {
         status: "repeat" as const,
         icon: AlertTriangle,
         color: "text-orange-600",
         bgColor: "bg-orange-50 dark:bg-orange-950/20",
-        label: "Repetir",
-        tooltip: "DIE recomenda repetição do exame (valor fora dos parâmetros ou data antiga)"
+        label: "Desatualizado",
+        tooltip: "Exame desatualizado (STALE) — DIE recomenda nova coleta"
       };
     }
 
@@ -161,7 +161,7 @@ export function CriticalLabsChecklist({
         </div>
         <div className="flex items-center gap-1">
           <AlertTriangle className="h-3 w-3 text-orange-600" />
-          <span>Repetir</span>
+          <span>Desatualizado</span>
         </div>
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3 text-blue-600" />
