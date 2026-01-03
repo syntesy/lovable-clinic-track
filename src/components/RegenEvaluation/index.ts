@@ -5,6 +5,7 @@
 export { StatusBanner, LegalDisclaimer } from "./StatusBanner";
 export { TriageSummary } from "./TriageSummary";
 export { ClinicalAssessmentForm } from "./ClinicalAssessmentForm";
+export { ClinicalAssessmentChecklist } from "./ClinicalAssessmentChecklist";
 export { LabsPanel } from "./LabsPanel";
 export { ActionButtons } from "./ActionButtons";
 export { ExamRequestModal } from "./ExamRequestModal";

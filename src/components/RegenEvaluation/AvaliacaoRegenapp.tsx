@@ -15,12 +15,12 @@ import {
   StatusBanner,
   LegalDisclaimer,
   TriageSummary,
-  ClinicalAssessmentForm,
   LabsPanel,
   ActionButtons,
   ExamRequestModal,
   PreReportModal
 } from "@/components/RegenEvaluation";
+import { ClinicalAssessmentChecklist } from "@/components/RegenEvaluation/ClinicalAssessmentChecklist";
 
 import { RegenResultView } from "@/components/RegenResult";
 import { ObservationalRegistryCard } from "@/components/registry/ObservationalRegistryCard";
@@ -310,9 +310,8 @@ export function AvaliacaoRegenapp({
     });
   }, [screeningId, currentStatus, logAction, canonical, generateCanonicalHash]);
 
-  const handleClinicalAssessmentSave = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  // Handler removido - Avaliação REGENAPP não salva mais campos clínicos
+  // Os campos são editados apenas no Prontuário Clínico (fonte única)
 
   const handleLabsSave = useCallback(() => {
     refetch();
@@ -353,17 +352,15 @@ export function AvaliacaoRegenapp({
         rawAnswers={questionnaireResponses?.answers as Record<string, unknown> | null}
       />
 
-      {/* (C) PRONTUÁRIO DO PROFISSIONAL */}
-      <ClinicalAssessmentForm
-        screeningId={screeningId}
-        initialData={{
+      {/* (C) AVALIAÇÃO CLÍNICA - CHECKLIST READ-ONLY */}
+      <ClinicalAssessmentChecklist
+        patientId={patientId}
+        clinicalData={{
           clinical_chief_complaint: screening.clinical_chief_complaint,
           clinical_anamnesis: screening.clinical_anamnesis,
           clinical_physical_exam: screening.clinical_physical_exam,
-          clinical_diagnosis: screening.clinical_diagnosis,
-          clinical_assessment_completed_at: screening.clinical_assessment_completed_at
+          clinical_diagnosis: screening.clinical_diagnosis
         }}
-        onSave={handleClinicalAssessmentSave}
         disabled={currentStatus === "S3"}
       />
 
