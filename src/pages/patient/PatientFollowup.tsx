@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import { AlertTriangle, CheckCircle2, Send, Activity } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Send, Activity, UserCheck } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 type TreatmentAdherence = 'full' | 'partial' | 'none';
@@ -22,6 +23,7 @@ interface FollowupFormData {
   adverseEventDescription: string;
   treatmentAdherence: TreatmentAdherence | null;
   selfReportedProgress: SelfReportedProgress | null;
+  selfDeclarationAccepted: boolean;
 }
 
 export default function PatientFollowup() {
@@ -35,6 +37,7 @@ export default function PatientFollowup() {
     adverseEventDescription: '',
     treatmentAdherence: null,
     selfReportedProgress: null,
+    selfDeclarationAccepted: false,
   });
 
   // Check if patient has an active screening (case)
@@ -104,6 +107,8 @@ export default function PatientFollowup() {
             global_change: data.selfReportedProgress ? globalChangeMap[data.selfReportedProgress] : null,
             status: 'completed',
             completed_at: new Date().toISOString(),
+            patient_self_declaration: true,
+            patient_self_declaration_at: new Date().toISOString(),
           })
           .eq('id', pendingFollowup.id);
 
@@ -125,6 +130,8 @@ export default function PatientFollowup() {
             adverse_event_description: data.adverseEvent ? data.adverseEventDescription : null,
             treatment_adherence: data.treatmentAdherence,
             global_change: data.selfReportedProgress ? globalChangeMap[data.selfReportedProgress] : null,
+            patient_self_declaration: true,
+            patient_self_declaration_at: new Date().toISOString(),
           });
 
         if (error) throw error;
@@ -160,6 +167,10 @@ export default function PatientFollowup() {
     }
     if (formData.adverseEvent && !formData.adverseEventDescription.trim()) {
       toast.error('Por favor, descreva o efeito indesejado.');
+      return;
+    }
+    if (!formData.selfDeclarationAccepted) {
+      toast.error('É necessário confirmar a declaração para enviar o acompanhamento.');
       return;
     }
     submitFollowup.mutate(formData);
@@ -378,10 +389,46 @@ export default function PatientFollowup() {
               </CardContent>
             </Card>
 
+            {/* Block 5 - Patient Self-Declaration */}
+            <Card className="border-primary/30 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-primary" />
+                  Declaração do Paciente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-sm text-foreground leading-relaxed space-y-3">
+                  <p>
+                    Declaro que sou <strong>{session?.patientName || 'Paciente'}</strong>, paciente cadastrado neste acompanhamento, e que as informações acima foram preenchidas por mim, de forma verdadeira e espontânea.
+                  </p>
+                  <p>
+                    Estou ciente de que estas informações serão utilizadas exclusivamente para fins de acompanhamento clínico e registro observacional, não substituindo avaliação profissional.
+                  </p>
+                </div>
+                
+                <div className="flex items-start space-x-3 pt-2">
+                  <Checkbox
+                    id="self-declaration"
+                    checked={formData.selfDeclarationAccepted}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, selfDeclarationAccepted: checked === true })
+                    }
+                  />
+                  <Label 
+                    htmlFor="self-declaration" 
+                    className="text-sm font-medium leading-relaxed cursor-pointer"
+                  >
+                    Confirmo que sou o paciente e concordo com a declaração acima.
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Submit Button */}
             <Button 
               onClick={handleSubmit} 
-              disabled={submitFollowup.isPending}
+              disabled={submitFollowup.isPending || !formData.selfDeclarationAccepted}
               className="w-full"
               size="lg"
             >
