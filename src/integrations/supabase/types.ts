@@ -1648,6 +1648,7 @@ export type Database = {
           screening_id: string
           status: string
           timepoint: string
+          treatment_adherence: string | null
           updated_at: string
         }
         Insert: {
@@ -1669,6 +1670,7 @@ export type Database = {
           screening_id: string
           status?: string
           timepoint: string
+          treatment_adherence?: string | null
           updated_at?: string
         }
         Update: {
@@ -1690,6 +1692,7 @@ export type Database = {
           screening_id?: string
           status?: string
           timepoint?: string
+          treatment_adherence?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3383,6 +3386,7 @@ export type Database = {
           screening_id: string
           status: string
           timepoint: string
+          treatment_adherence: string | null
           updated_at: string
         }[]
         SetofOptions: {

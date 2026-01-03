@@ -56,6 +56,7 @@ import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "
 // Patient Portal Pages
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
+import PatientFollowup from "./pages/patient/PatientFollowup";
 import PatientReports from "./pages/patient/PatientReports";
 import PatientPrescriptions from "./pages/patient/PatientPrescriptions";
 import PatientPartners from "./pages/patient/PatientPartners";
@@ -77,6 +78,7 @@ const App = () => (
             {/* Patient Portal Routes */}
             <Route path="/patient/login" element={<PatientLogin />} />
             <Route path="/patient/home" element={<PatientProtectedRoute><PatientHome /></PatientProtectedRoute>} />
+            <Route path="/patient/followup" element={<PatientProtectedRoute><PatientFollowup /></PatientProtectedRoute>} />
             <Route path="/patient/reports" element={<PatientProtectedRoute><PatientReports /></PatientProtectedRoute>} />
             <Route path="/patient/prescriptions" element={<PatientProtectedRoute><PatientPrescriptions /></PatientProtectedRoute>} />
             <Route path="/patient/partners" element={<PatientProtectedRoute><PatientPartners /></PatientProtectedRoute>} />

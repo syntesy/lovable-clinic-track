@@ -3,13 +3,20 @@ import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { PatientLayout } from '@/components/patient/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileText, Pill, ShoppingBag, AlertTriangle } from 'lucide-react';
+import { FileText, Pill, ShoppingBag, AlertTriangle, ClipboardCheck } from 'lucide-react';
 
 export default function PatientHome() {
   const { session } = usePatientAuth();
   const navigate = useNavigate();
 
   const cards = [
+    {
+      title: 'Acompanhamento Clínico',
+      description: 'Informe como você está se sentindo para ajudar no seu acompanhamento',
+      icon: ClipboardCheck,
+      path: '/patient/followup',
+      color: 'text-emerald-500'
+    },
     {
       title: 'Meus Relatórios',
       description: 'Visualize os relatórios clínicos liberados pelo seu profissional',
@@ -55,7 +62,7 @@ export default function PatientHome() {
         </Alert>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {cards.map((card) => {
             const Icon = card.icon;
             return (

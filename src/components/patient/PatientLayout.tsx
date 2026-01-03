@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { Button } from '@/components/ui/button';
-import { FileText, Pill, ShoppingBag, Home, LogOut } from 'lucide-react';
+import { FileText, Pill, ShoppingBag, Home, LogOut, ClipboardCheck } from 'lucide-react';
 import logoRegenapp from '@/assets/logo-regenapp.png';
 
 interface PatientLayoutProps {
@@ -21,6 +21,7 @@ export function PatientLayout({ children }: PatientLayoutProps) {
 
   const navItems = [
     { path: '/patient/home', label: 'Início', icon: Home },
+    { path: '/patient/followup', label: 'Acompanhamento', icon: ClipboardCheck },
     { path: '/patient/reports', label: 'Relatórios', icon: FileText },
     { path: '/patient/prescriptions', label: 'Prescrições', icon: Pill },
     { path: '/patient/partners', label: 'Parceiros', icon: ShoppingBag },
