@@ -12,6 +12,7 @@ const ProntuarioRedirect = () => {
 };
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RequireAdminRole } from "./components/RequireAdminRole";
+import { RequireGovernanceRole } from "./components/RequireGovernanceRole";
 import { PatientAuthProvider } from "./contexts/PatientAuthContext";
 import { PatientProtectedRoute } from "./components/patient/PatientProtectedRoute";
 import Auth from "./pages/Auth";
@@ -421,25 +422,25 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          {/* Evidence Engine Routes */}
+          {/* Evidence Engine Routes - Dashboard restricted to admin/governance */}
           <Route
             path="/evidence"
             element={
-              <ProtectedRoute>
+              <RequireGovernanceRole>
                 <Layout>
                   <EvidenceDashboard />
                 </Layout>
-              </ProtectedRoute>
+              </RequireGovernanceRole>
             }
           />
           <Route
             path="/evidence/dimensions"
             element={
-              <ProtectedRoute>
+              <RequireGovernanceRole>
                 <Layout>
                   <EvidenceDimensions />
                 </Layout>
-              </ProtectedRoute>
+              </RequireGovernanceRole>
             }
           />
           <Route

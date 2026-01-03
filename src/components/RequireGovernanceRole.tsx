@@ -26,12 +26,13 @@ export function RequireGovernanceRole({ children }: RequireGovernanceRoleProps) 
 
     const checkGovernanceRole = async (userId: string) => {
       try {
-        // Check if user has 'admin' OR 'governance' role
+        // Check if user has 'admin' role (governance access)
+        // Note: governance/council roles require DB enum extension
         const { data, error } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
-          .in("role", ["admin", "governance"]);
+          .eq("role", "admin");
 
         if (mounted) {
           setHasAccess(!error && data && data.length > 0);
