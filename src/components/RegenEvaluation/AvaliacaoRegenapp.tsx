@@ -23,6 +23,7 @@ import {
 } from "@/components/RegenEvaluation";
 
 import { RegenResultView } from "@/components/RegenResult";
+import { ObservationalRegistryCard } from "@/components/registry/ObservationalRegistryCard";
 import { RegenCanonical } from "@/types/regen-canonical";
 import { RegenEngineOutputs } from "@/types/regen-engine";
 import { 
@@ -384,6 +385,13 @@ export function AvaliacaoRegenapp({
         onGeneratePreReport={() => setPreReportModalOpen(true)}
         onGenerateDefinitiveScore={handleGenerateDefinitiveScore}
         onRecalculate={handleRecalculate}
+      />
+
+      {/* (G) REGISTRO OBSERVACIONAL - Camada paralela opt-in */}
+      <ObservationalRegistryCard
+        patientId={patientId}
+        screeningId={screeningId}
+        caseStatus={currentStatus}
       />
 
       {/* (F) RESULTADO DEFINITIVO (CARDS) - Só exibe em S3 */}
