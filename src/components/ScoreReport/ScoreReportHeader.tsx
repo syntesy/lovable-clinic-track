@@ -1,4 +1,4 @@
-import logoRegenapp from "@/assets/logo-regenapp.png";
+import logoRegenapp from "@/assets/logo-regenapp-new.png";
 
 export function ScoreReportHeader() {
   return (
@@ -8,13 +8,13 @@ export function ScoreReportHeader() {
         alt="REGENAPP Logo" 
         className="h-12 mx-auto mb-4"
       />
-      <h1 className="text-2xl md:text-3xl font-bold text-[#051F41]">
+      <h1 className="text-2xl md:text-3xl font-bold text-foreground">
         Relatório do Score Clínico
       </h1>
-      <p className="text-[#797E88] mt-2">
+      <p className="text-muted-foreground mt-2">
         Avaliação de prontidão biológica para procedimentos regenerativos
       </p>
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-[#051F41]/20 to-transparent mt-6" />
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent mt-6" />
     </div>
   );
 }

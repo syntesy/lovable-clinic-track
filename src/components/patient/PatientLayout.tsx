@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import logoRegenapp from '@/assets/logo-regenapp.png';
+import logoRegenapp from '@/assets/logo-regenapp-new.png';
 
 interface PatientLayoutProps {
   children: ReactNode;

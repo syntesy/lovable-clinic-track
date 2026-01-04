@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertCircle, Loader2 } from 'lucide-react';
-import logoRegenapp from '@/assets/logo-regenapp.png';
+import logoRegenapp from '@/assets/logo-regenapp-new.png';
 
 export default function PatientLogin() {
   const [surname, setSurname] = useState('');

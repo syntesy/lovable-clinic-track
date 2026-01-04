@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pill, Heart, Sparkles, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import logoRegenapp from '@/assets/logo-regenapp.png';
+import logoRegenapp from '@/assets/logo-regenapp-new.png';
 import { toast } from 'sonner';
 
 const prescriptionTypes = {

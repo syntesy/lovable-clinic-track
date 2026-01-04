@@ -13,7 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
-import logoRegenapp from "@/assets/logo-regenapp.png";
+import logoRegenapp from "@/assets/logo-regenapp-new.png";
 
 // Menu items visible to all authenticated users (professional role)
 const menuItems = [

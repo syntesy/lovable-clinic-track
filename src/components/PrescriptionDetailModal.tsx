@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FileDown, Send, Eye, EyeOff } from "lucide-react";
-import logoRegenapp from "@/assets/logo-regenapp.png";
+import logoRegenapp from "@/assets/logo-regenapp-new.png";
 
 interface PrescriptionDetailModalProps {
   open: boolean;

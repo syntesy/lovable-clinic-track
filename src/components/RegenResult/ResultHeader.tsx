@@ -8,6 +8,7 @@ import { RegenEngineOutputs } from "@/types/regen-engine";
 import { RegenCanonical } from "@/types/regen-canonical";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import logoRegenapp from "@/assets/logo-regenapp-new.png";
 
 interface ResultHeaderProps {
   engineOutputs: RegenEngineOutputs;
@@ -25,7 +26,7 @@ export function ResultHeader({ engineOutputs, canonical, caseId, patientName }: 
     <div className="mb-6">
       {/* Logo / Title */}
       <div className="text-center mb-4">
-        <h1 className="text-2xl font-bold text-primary">REGENAPP</h1>
+        <img src={logoRegenapp} alt="REGENAPP" className="h-10 mx-auto mb-2" />
         <p className="text-muted-foreground text-sm">Resultado da Avaliação Clínica</p>
       </div>
 
