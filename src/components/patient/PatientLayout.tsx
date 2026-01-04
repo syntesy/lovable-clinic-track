@@ -4,6 +4,7 @@ import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import logoRegenapp from '@/assets/logo-regenapp-new.png';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface PatientLayoutProps {
   children: ReactNode;
@@ -29,10 +30,11 @@ export function PatientLayout({ children }: PatientLayoutProps) {
               Acompanhamento Clínico
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden sm:block">
               {session?.patientName}
             </span>
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Sair

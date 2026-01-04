@@ -82,8 +82,81 @@ All colors MUST be HSL.
     --sidebar-ring: 170 50% 54%;
   }
 
+  /* ===== TEMA LIGHT REGENAPP ===== */
+  .light {
+    /* Background claro suave */
+    --background: 220 20% 97%;
+    /* Foreground escuro */
+    --foreground: 222 47% 11%;
+
+    /* Cards com fundo branco */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* PRIMARY - Teal (mesmo tom, ajustado para contraste) */
+    --primary: 170 55% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Muted */
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Accent - Teal */
+    --accent: 170 55% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success - Teal */
+    --success: 170 55% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Gold (mais saturado para contraste) */
+    --warning: 36 70% 45%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Gold (premium) */
+    --gold: 36 70% 45%;
+    --gold-foreground: 0 0% 100%;
+
+    /* Teal (accent) */
+    --teal: 170 55% 40%;
+    --teal-foreground: 0 0% 100%;
+
+    /* Bordas suaves */
+    --border: 220 14% 85%;
+    --input: 220 14% 92%;
+    --ring: 170 55% 40%;
+
+    /* Clinical specific colors - ajustados para contraste em fundo claro */
+    --clinical-safe: 170 55% 35%;
+    --clinical-caution: 36 80% 40%;
+    --clinical-danger: 0 72% 45%;
+    --clinical-neutral: 220 10% 45%;
+
+    /* Sidebar light */
+    --sidebar-background: 220 20% 97%;
+    --sidebar-foreground: 220 10% 45%;
+    --sidebar-primary: 170 55% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 92%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 14% 85%;
+    --sidebar-ring: 170 55% 40%;
+  }
+
+  /* ===== TEMA DARK REGENAPP ===== */
   .dark {
-    /* ===== TEMA DARK REGENAPP (mesmo que light - app é dark-first) ===== */
     --background: 222 47% 8%;
     --foreground: 220 14% 96%;
 
