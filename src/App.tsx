@@ -55,6 +55,7 @@ import { RegistryDashboard, RegistryExport } from "./pages/Registry";
 import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
 import { CareerDashboard } from "./pages/Career";
 import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
+import DailyDashboard from "./pages/DailyDashboard";
 // Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -82,6 +83,16 @@ const App = () => (
             <Route path="/patient/reports" element={<Navigate to="/patient/home" replace />} />
             <Route path="/patient/prescriptions" element={<Navigate to="/patient/home" replace />} />
             <Route path="/patient/partners" element={<Navigate to="/patient/home" replace />} />
+          
+          {/* Daily Clinical Dashboard */}
+          <Route
+            path="/agenda"
+            element={
+              <ProtectedRoute>
+                <DailyDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/pacientes"
             element={
