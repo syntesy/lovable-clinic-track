@@ -53,6 +53,7 @@ import NotFound from "./pages/NotFound";
 import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
 import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
+import { CareerDashboard } from "./pages/Career";
 // Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -296,6 +297,17 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Subscription />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Career Engine Route */}
+          <Route
+            path="/career"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CareerDashboard />
                 </Layout>
               </ProtectedRoute>
             }
