@@ -18,13 +18,14 @@ export function useDailyDashboard(selectedDate: Date = new Date()) {
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
-  // Fetch events for the selected date
+  // Fetch events for the selected date with READ-ONLY Registry enrichment
   const fetchEvents = async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // 1. Fetch scheduled events
       const { data, error } = await supabase
         .from('clinical_scheduled_events')
         .select('*')
@@ -34,22 +35,105 @@ export function useDailyDashboard(selectedDate: Date = new Date()) {
 
       if (error) throw error;
 
-      const mappedEvents: ClinicalEventCard[] = (data || []).map(row => ({
-        id: row.id,
-        event_date: row.event_date,
-        time_start: row.time_start,
-        time_end: row.time_end || undefined,
-        patient_id: row.patient_id,
-        patient_name: row.patient_name,
-        case_id: row.case_id || undefined,
-        case_summary: row.case_summary || undefined,
-        clinical_stage: row.clinical_stage as ClinicalStage,
-        today_action: row.today_action,
-        last_outcome: row.last_outcome || undefined,
-        alerts: (Array.isArray(row.alerts) ? row.alerts : []) as unknown as ClinicalAlert[],
-        attended: row.attended || false,
-        attended_at: row.attended_at || undefined,
-      }));
+      // 2. Collect case_ids that exist (for Registry lookup)
+      const caseIds = (data || [])
+        .map(e => e.case_id)
+        .filter((id): id is string => !!id);
+
+      // 3. READ-ONLY: Fetch Registry data for these cases (prp_screenings)
+      let registryData: Record<string, { last_outcome?: string; alerts?: ClinicalAlert[] }> = {};
+      
+      if (caseIds.length > 0) {
+        // Fetch latest followup outcome per screening (READ-ONLY)
+        const { data: followups } = await supabase
+          .from('procedure_followups')
+          .select('screening_id, pain_score, adverse_event, completed_at')
+          .in('screening_id', caseIds)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false });
+
+        // Fetch screening data (READ-ONLY) - classification and questionnaire_responses contain red_flags
+        const { data: screenings } = await supabase
+          .from('prp_screenings')
+          .select('id, classification, questionnaire_responses')
+          .in('id', caseIds);
+
+        // Build registry data map (READ-ONLY consumption)
+        for (const caseId of caseIds) {
+          const latestFollowup = followups?.find(f => f.screening_id === caseId);
+          const screening = screenings?.find(s => s.id === caseId);
+          
+          const alerts: ClinicalAlert[] = [];
+          
+          // READ-ONLY: Consume red_flags from questionnaire_responses if present
+          if (screening?.questionnaire_responses) {
+            const responses = screening.questionnaire_responses as Record<string, unknown>;
+            const canonical = responses?.regen_canonical as Record<string, unknown> | undefined;
+            const flags = canonical?.flags as Record<string, unknown> | undefined;
+            
+            if (flags?.red_flags_present === true) {
+              alerts.push({ type: 'critical', message: 'Red flags identificados', source: 'registry' });
+            }
+          }
+          
+          // READ-ONLY: Consume adverse events from followup
+          if (latestFollowup?.adverse_event === true) {
+            alerts.push({ 
+              type: 'critical', 
+              message: 'Evento adverso registrado', 
+              source: 'registry' 
+            });
+          }
+
+          // READ-ONLY: Build last_outcome from followup data
+          let lastOutcome: string | undefined;
+          if (latestFollowup?.pain_score !== null && latestFollowup?.pain_score !== undefined) {
+            lastOutcome = `Último follow-up: Dor ${latestFollowup.pain_score}/10`;
+          }
+
+          registryData[caseId] = {
+            last_outcome: lastOutcome,
+            alerts: alerts.length > 0 ? alerts : undefined,
+          };
+        }
+      }
+
+      // 4. Map events, enriching with Registry data when available
+      const mappedEvents: ClinicalEventCard[] = (data || []).map(row => {
+        const registryEnrichment = row.case_id ? registryData[row.case_id] : undefined;
+        
+        // Merge alerts: event alerts + registry alerts (if any)
+        const rawAlerts = Array.isArray(row.alerts) ? row.alerts : [];
+        const eventAlerts: ClinicalAlert[] = rawAlerts.map((a: unknown) => {
+          const alert = a as Record<string, unknown>;
+          return {
+            type: (alert.type as 'warning' | 'info' | 'critical') || 'info',
+            message: String(alert.message || ''),
+            source: alert.source ? String(alert.source) : undefined,
+          };
+        });
+        const registryAlerts = registryEnrichment?.alerts || [];
+        const mergedAlerts = [...eventAlerts, ...registryAlerts];
+
+        return {
+          id: row.id,
+          event_date: row.event_date,
+          time_start: row.time_start,
+          time_end: row.time_end || undefined,
+          patient_id: row.patient_id,
+          patient_name: row.patient_name,
+          case_id: row.case_id || undefined,
+          case_summary: row.case_summary || undefined,
+          clinical_stage: row.clinical_stage as ClinicalStage,
+          today_action: row.today_action,
+          // Use Registry last_outcome if available, else use event's stored value
+          last_outcome: registryEnrichment?.last_outcome || row.last_outcome || undefined,
+          // Merged alerts from event + registry
+          alerts: mergedAlerts,
+          attended: row.attended || false,
+          attended_at: row.attended_at || undefined,
+        };
+      });
 
       setEvents(mappedEvents);
     } catch (err) {
