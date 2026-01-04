@@ -88,12 +88,12 @@ export function useDailyDashboard(selectedDate: Date = new Date()) {
     return result;
   }, [events, filters]);
 
-  // Counters based on ALL events (not filtered)
+  // Counters based on filtered events (per TESTE 14 spec)
   const counters: DashboardCounters = useMemo(() => ({
-    avaliacoes: events.filter(e => e.clinical_stage === 'avaliacao').length,
-    procedimentos: events.filter(e => e.clinical_stage === 'procedimento').length,
-    followups: events.filter(e => e.clinical_stage === 'followup').length,
-  }), [events]);
+    avaliacoes: filteredEvents.filter(e => e.clinical_stage === 'avaliacao').length,
+    procedimentos: filteredEvents.filter(e => e.clinical_stage === 'procedimento').length,
+    followups: filteredEvents.filter(e => e.clinical_stage === 'followup').length,
+  }), [filteredEvents]);
 
   // Create a new event
   const createEvent = async (eventData: Omit<ClinicalEventCard, 'id' | 'alerts' | 'attended' | 'attended_at'>) => {
