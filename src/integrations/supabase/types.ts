@@ -652,6 +652,88 @@ export type Database = {
           },
         ]
       }
+      clinical_scheduled_events: {
+        Row: {
+          alerts: Json | null
+          attended: boolean | null
+          attended_at: string | null
+          case_id: string | null
+          case_summary: string | null
+          clinical_stage: string
+          created_at: string
+          created_by: string
+          event_date: string
+          id: string
+          last_outcome: string | null
+          patient_id: string
+          patient_name: string
+          time_end: string | null
+          time_start: string
+          today_action: string
+          user_id: string
+        }
+        Insert: {
+          alerts?: Json | null
+          attended?: boolean | null
+          attended_at?: string | null
+          case_id?: string | null
+          case_summary?: string | null
+          clinical_stage: string
+          created_at?: string
+          created_by: string
+          event_date: string
+          id?: string
+          last_outcome?: string | null
+          patient_id: string
+          patient_name: string
+          time_end?: string | null
+          time_start: string
+          today_action: string
+          user_id: string
+        }
+        Update: {
+          alerts?: Json | null
+          attended?: boolean | null
+          attended_at?: string | null
+          case_id?: string | null
+          case_summary?: string | null
+          clinical_stage?: string
+          created_at?: string
+          created_by?: string
+          event_date?: string
+          id?: string
+          last_outcome?: string | null
+          patient_id?: string
+          patient_name?: string
+          time_end?: string | null
+          time_start?: string
+          today_action?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinical_scheduled_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "prp_screenings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinical_scheduled_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "registry_case_summary_v1_1"
+            referencedColumns: ["screening_id"]
+          },
+          {
+            foreignKeyName: "clinical_scheduled_events_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consent_forms: {
         Row: {
           file_name: string
