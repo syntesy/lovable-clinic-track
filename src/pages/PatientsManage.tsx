@@ -13,8 +13,23 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PatientOperationalDrawer } from '@/components/patient/PatientOperationalDrawer';
 import { toast } from 'sonner';
 import { Users, UserPlus, Search, Crown, AlertTriangle, Check, X, Loader2 } from 'lucide-react';
+
+type PortalAccessData = {
+  id: string;
+  patient_id: string;
+  login_surname: string;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  patients: {
+    id: string;
+    full_name: string;
+    cpf: string | null;
+  } | null;
+};
 
 export default function PatientsManage() {
   const navigate = useNavigate();
@@ -23,6 +38,8 @@ export default function PatientsManage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedAccess, setSelectedAccess] = useState<PortalAccessData | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { data: limitInfo, isLoading: isLoadingLimit } = usePatientLimit();
 
@@ -351,7 +368,14 @@ export default function PatientsManage() {
         ) : filteredAccess.length > 0 ? (
           <div className="space-y-3">
             {filteredAccess.map((access) => (
-              <Card key={access.id} className="border-border/50">
+              <Card 
+                key={access.id} 
+                className="border-border/50 cursor-pointer transition-colors hover:bg-muted/30"
+                onClick={() => {
+                  setSelectedAccess(access as PortalAccessData);
+                  setIsDrawerOpen(true);
+                }}
+              >
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -386,9 +410,10 @@ export default function PatientsManage() {
                       </div>
                       <Switch
                         checked={access.is_active}
-                        onCheckedChange={(checked) => 
-                          toggleActiveMutation.mutate({ accessId: access.id, isActive: checked })
-                        }
+                        onCheckedChange={(checked) => {
+                          toggleActiveMutation.mutate({ accessId: access.id, isActive: checked });
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </div>
                   </div>
@@ -413,6 +438,18 @@ export default function PatientsManage() {
             </CardContent>
           </Card>
         )}
+
+        <PatientOperationalDrawer
+          isOpen={isDrawerOpen}
+          onClose={() => {
+            setIsDrawerOpen(false);
+            setSelectedAccess(null);
+          }}
+          accessData={selectedAccess}
+          onToggleActive={(accessId, isActive) => {
+            toggleActiveMutation.mutate({ accessId, isActive });
+          }}
+        />
       </div>
     </Layout>
   );
