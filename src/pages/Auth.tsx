@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, User, AlertTriangle } from "lucide-react";
 import { useAuditLog } from "@/hooks/useAuditLog";
-import logoRegenapp from "@/assets/logo-regenapp.png";
+import logoRegenapp from "@/assets/logo-regenapp-new.png";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { validateSignup, loginSchema } from "@/lib/password-validation";
 export default function Auth() {

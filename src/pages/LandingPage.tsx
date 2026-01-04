@@ -21,7 +21,7 @@ import {
   Percent,
   ShoppingBag,
 } from "lucide-react";
-import logoRegenapp from "@/assets/logo-regenapp.png";
+import logoRegenapp from "@/assets/logo-regenapp-new.png";
 import mockupScore from "@/assets/mockup-score-clinico.png";
 import mockupAvaliacao from "@/assets/mockup-avaliacao-clinica.png";
 import mockupRelatorios from "@/assets/mockup-relatorios.png";
