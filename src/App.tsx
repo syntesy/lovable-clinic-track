@@ -54,6 +54,7 @@ import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
 import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
 import { CareerDashboard } from "./pages/Career";
+import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
 // Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -308,6 +309,27 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <CareerDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Diligence & Compliance Routes */}
+          <Route
+            path="/diligence"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DiligenceDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diligence/case/:caseId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DiligenceCaseDetail />
                 </Layout>
               </ProtectedRoute>
             }

@@ -1094,6 +1094,231 @@ export type Database = {
           },
         ]
       }
+      diligence_case_reports: {
+        Row: {
+          case_id: string
+          created_at: string
+          generated_at: string
+          id: string
+          immutable: boolean
+          pdf_checksum: string | null
+          pdf_storage_path: string | null
+          report_content: Json
+          report_version: number
+          user_id: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          immutable?: boolean
+          pdf_checksum?: string | null
+          pdf_storage_path?: string | null
+          report_content: Json
+          report_version?: number
+          user_id: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          immutable?: boolean
+          pdf_checksum?: string | null
+          pdf_storage_path?: string | null
+          report_content?: Json
+          report_version?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diligence_case_timelines: {
+        Row: {
+          case_id: string
+          created_at: string
+          event_description: string
+          event_timestamp: string
+          event_type: string
+          id: string
+          immutable: boolean
+          source_record_id: string | null
+          source_table: string | null
+          user_id: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          event_description: string
+          event_timestamp: string
+          event_type: string
+          id?: string
+          immutable?: boolean
+          source_record_id?: string | null
+          source_table?: string | null
+          user_id: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          event_description?: string
+          event_timestamp?: string
+          event_type?: string
+          id?: string
+          immutable?: boolean
+          source_record_id?: string | null
+          source_table?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diligence_checklists: {
+        Row: {
+          case_id: string | null
+          checklist_items: Json
+          checklist_type: string
+          completed_items: Json
+          created_at: string
+          id: string
+          immutable: boolean
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          case_id?: string | null
+          checklist_items: Json
+          checklist_type: string
+          completed_items?: Json
+          created_at?: string
+          id?: string
+          immutable?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          case_id?: string | null
+          checklist_items?: Json
+          checklist_type?: string
+          completed_items?: Json
+          created_at?: string
+          id?: string
+          immutable?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diligence_compliance_logs: {
+        Row: {
+          action: string
+          action_details: Json | null
+          case_id: string | null
+          created_at: string
+          id: string
+          immutable: boolean
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          action_details?: Json | null
+          case_id?: string | null
+          created_at?: string
+          id?: string
+          immutable?: boolean
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          action_details?: Json | null
+          case_id?: string | null
+          created_at?: string
+          id?: string
+          immutable?: boolean
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diligence_practice_statements: {
+        Row: {
+          created_at: string
+          id: string
+          immutable: boolean
+          statement_content: Json
+          statement_type: string
+          user_id: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          immutable?: boolean
+          statement_content: Json
+          statement_type: string
+          user_id: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          immutable?: boolean
+          statement_content?: Json
+          statement_type?: string
+          user_id?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      diligence_risk_disclosures: {
+        Row: {
+          case_id: string
+          created_at: string
+          disclosed_at: string
+          disclosure_method: string | null
+          id: string
+          immutable: boolean
+          patient_acknowledged: boolean | null
+          risk_category: string
+          risk_description: string
+          user_id: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          disclosed_at: string
+          disclosure_method?: string | null
+          id?: string
+          immutable?: boolean
+          patient_acknowledged?: boolean | null
+          risk_category: string
+          risk_description: string
+          user_id: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          disclosed_at?: string
+          disclosure_method?: string | null
+          id?: string
+          immutable?: boolean
+          patient_acknowledged?: boolean | null
+          risk_category?: string
+          risk_description?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       epi_protocols: {
         Row: {
           application_time: number | null
