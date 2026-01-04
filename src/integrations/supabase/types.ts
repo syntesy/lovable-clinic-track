@@ -187,6 +187,327 @@ export type Database = {
           },
         ]
       }
+      career_access_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      career_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string
+          period: string
+          severity: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message: string
+          period: string
+          severity?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          period?: string
+          severity?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      career_case_complexity: {
+        Row: {
+          complexity_score: number | null
+          created_at: string
+          id: string
+          metric_type: string
+          period: string
+          red_flags_count: number | null
+          total_cases: number | null
+          unique_diagnoses: number | null
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          complexity_score?: number | null
+          created_at?: string
+          id?: string
+          metric_type?: string
+          period: string
+          red_flags_count?: number | null
+          total_cases?: number | null
+          unique_diagnoses?: number | null
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          complexity_score?: number | null
+          created_at?: string
+          id?: string
+          metric_type?: string
+          period?: string
+          red_flags_count?: number | null
+          total_cases?: number | null
+          unique_diagnoses?: number | null
+          user_id?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      career_certifications: {
+        Row: {
+          certification_level: string
+          certification_type: string
+          created_at: string
+          criteria_met: Json | null
+          earned_at: string
+          id: string
+          user_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          certification_level?: string
+          certification_type: string
+          created_at?: string
+          criteria_met?: Json | null
+          earned_at?: string
+          id?: string
+          user_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          certification_level?: string
+          certification_type?: string
+          created_at?: string
+          criteria_met?: Json | null
+          earned_at?: string
+          id?: string
+          user_id?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      career_consistency_index: {
+        Row: {
+          consistency_score: number | null
+          created_at: string
+          id: string
+          metric_type: string
+          period: string
+          protocol_variance: number | null
+          technique_diversity: number | null
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          consistency_score?: number | null
+          created_at?: string
+          id?: string
+          metric_type?: string
+          period: string
+          protocol_variance?: number | null
+          technique_diversity?: number | null
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          consistency_score?: number | null
+          created_at?: string
+          id?: string
+          metric_type?: string
+          period?: string
+          protocol_variance?: number | null
+          technique_diversity?: number | null
+          user_id?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      career_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          percentile: number | null
+          period: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          percentile?: number | null
+          period: string
+          updated_at?: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          percentile?: number | null
+          period?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      career_narratives: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          metric_type: string
+          narrative_type: string
+          period: string
+          title: string
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          metric_type?: string
+          narrative_type: string
+          period: string
+          title: string
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          metric_type?: string
+          narrative_type?: string
+          period?: string
+          title?: string
+          user_id?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      career_opportunities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_interested: boolean | null
+          is_viewed: boolean | null
+          opportunity_type: string
+          period: string
+          relevance_score: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_interested?: boolean | null
+          is_viewed?: boolean | null
+          opportunity_type: string
+          period: string
+          relevance_score?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_interested?: boolean | null
+          is_viewed?: boolean | null
+          opportunity_type?: string
+          period?: string
+          relevance_score?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      career_trends: {
+        Row: {
+          baseline_period: string | null
+          created_at: string
+          id: string
+          metric_type: string
+          period: string
+          trend_direction: string
+          trend_value: number | null
+          user_id: string
+        }
+        Insert: {
+          baseline_period?: string | null
+          created_at?: string
+          id?: string
+          metric_type: string
+          period: string
+          trend_direction?: string
+          trend_value?: number | null
+          user_id: string
+        }
+        Update: {
+          baseline_period?: string | null
+          created_at?: string
+          id?: string
+          metric_type?: string
+          period?: string
+          trend_direction?: string
+          trend_value?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string

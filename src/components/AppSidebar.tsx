@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database } from "lucide-react";
+import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -19,6 +19,7 @@ import logoRegenapp from "@/assets/logo-regenapp-new.png";
 const menuItems = [
   { title: "Pacientes", url: "/pacientes", icon: Users },
   { title: "Área do Paciente", url: "/patients/manage", icon: UserCog },
+  { title: "Career Engine", url: "/career", icon: TrendingUp },
   { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
   { title: "Parceiros", url: "/partners", icon: Handshake },
   { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
