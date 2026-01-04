@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import SessionTimeout from "@/components/SessionTimeout";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -47,15 +48,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   className="h-12 md:h-[60px] w-auto"
                 />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="flex items-center gap-1 md:gap-2 flex-shrink-0"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1 md:gap-2 flex-shrink-0"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </div>
             </header>
             <main className="flex-1 p-3 md:p-6 overflow-x-hidden">{children}</main>
           </div>
