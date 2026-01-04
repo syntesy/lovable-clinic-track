@@ -35,6 +35,49 @@ export function ClinicalEventCard({ event, viewMode, onMarkAttended }: ClinicalE
     ? `${formatTime(event.time_start)} — ${formatTime(event.time_end)}`
     : formatTime(event.time_start);
 
+  // Calculate visual state based on current time
+  const getEventState = (): 'future' | 'ongoing' | 'completed' => {
+    if (event.attended) return 'completed';
+    
+    const now = new Date();
+    const today = event.event_date;
+    const [startH, startM] = event.time_start.split(':').map(Number);
+    const startTime = new Date(`${today}T${event.time_start}`);
+    
+    if (event.time_end) {
+      const endTime = new Date(`${today}T${event.time_end}`);
+      if (now >= startTime && now <= endTime) return 'ongoing';
+    } else {
+      // If no end time, consider ongoing for 1 hour after start
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+      if (now >= startTime && now <= endTime) return 'ongoing';
+    }
+    
+    if (now < startTime) return 'future';
+    return 'future'; // Past events without attended flag show as future style
+  };
+
+  const eventState = getEventState();
+
+  // State visual config
+  const stateConfig = {
+    future: {
+      borderColor: 'border-l-muted-foreground/30',
+      clockColor: 'text-muted-foreground',
+      indicator: null
+    },
+    ongoing: {
+      borderColor: 'border-l-emerald-500',
+      clockColor: 'text-emerald-600 dark:text-emerald-400',
+      indicator: 'bg-emerald-500 animate-pulse'
+    },
+    completed: {
+      borderColor: 'border-l-muted-foreground/50',
+      clockColor: 'text-muted-foreground',
+      indicator: null
+    }
+  };
+
   // Alert icon based on type
   const getAlertIcon = (type: string) => {
     switch (type) {
@@ -46,9 +89,11 @@ export function ClinicalEventCard({ event, viewMode, onMarkAttended }: ClinicalE
 
   return (
     <Card className={cn(
-      "transition-all duration-200 hover:shadow-md",
+      "transition-all duration-200 hover:shadow-md border-l-4",
       event.attended && "opacity-60",
-      viewMode === 'by_stage' && "border-l-4",
+      // State-based border color (default)
+      !viewMode || viewMode === 'by_time' ? stateConfig[eventState].borderColor : '',
+      // Stage-based border color (when viewing by stage)
       viewMode === 'by_stage' && event.clinical_stage === 'avaliacao' && "border-l-blue-500",
       viewMode === 'by_stage' && event.clinical_stage === 'procedimento' && "border-l-emerald-500",
       viewMode === 'by_stage' && event.clinical_stage === 'followup' && "border-l-amber-500",
@@ -57,12 +102,22 @@ export function ClinicalEventCard({ event, viewMode, onMarkAttended }: ClinicalE
       <CardContent className="p-4 space-y-3">
         {/* BLOCO 1 — TEMPO (sempre visível, nunca ocultável) */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-lg font-semibold">
-            <Clock className="h-5 w-5 text-muted-foreground" />
+          <div className={cn(
+            "flex items-center gap-2 text-lg font-semibold",
+            stateConfig[eventState].clockColor
+          )}>
+            {/* Ongoing indicator dot */}
+            {eventState === 'ongoing' && (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+            )}
+            <Clock className="h-5 w-5" />
             <span>{timeRange}</span>
           </div>
           {event.attended && (
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               Atendido
             </Badge>
