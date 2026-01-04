@@ -122,6 +122,17 @@ export default function CareerDashboard() {
         </AlertDescription>
       </Alert>
 
+      {/* Insufficient Data Warning */}
+      {dashboardMetrics && dashboardMetrics.totalPatients < 5 && (
+        <Alert className="border-gold/30 bg-gold/10">
+          <AlertDescription className="text-xs text-gold">
+            <strong>Dados insuficientes:</strong> Com menos de 5 pacientes cadastrados, as métricas e percentis 
+            podem não refletir padrões estatisticamente significativos. Continue desenvolvendo sua prática para 
+            obter insights mais precisos.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-card border-border">
@@ -135,6 +146,9 @@ export default function CareerDashboard() {
             <div className="text-2xl md:text-3xl font-bold text-foreground">
               {dashboardMetrics?.totalPatients || 0}
             </div>
+            {dashboardMetrics && dashboardMetrics.totalPatients < 5 && (
+              <p className="text-xs text-gold mt-1">Dados insuficientes</p>
+            )}
           </CardContent>
         </Card>
 
