@@ -58,9 +58,10 @@ export default function Auth() {
       
       if (data) {
         setRemainingAttempts(data.remainingAttempts);
-        if (!data.allowed || data.lockoutEndsAt) {
+        // Só bloqueia se lockoutEndsAt existir (bloqueio ativo)
+        if (data.lockoutEndsAt) {
           setLockoutMessage(data.message);
-        } else if (data.message !== 'OK') {
+        } else if (data.remainingAttempts !== undefined && data.remainingAttempts <= 2 && data.message !== 'OK') {
           toast({
             title: "Atenção",
             description: data.message,

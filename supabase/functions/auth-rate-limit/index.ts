@@ -167,11 +167,12 @@ serve(async (req) => {
       recordFailedAttempt(identifier);
       const result = checkLoginRateLimit(identifier);
       
-      console.log(`[AUTH-RATE-LIMIT] Falha registrada para ${identifier}. Tentativas restantes: ${result.remainingAttempts}`);
+      console.log(`[AUTH-RATE-LIMIT] Falha registrada para ${identifier}. Tentativas restantes: ${result.remainingAttempts}, Bloqueado: ${!result.allowed}`);
       
       return new Response(
         JSON.stringify({
           recorded: true,
+          allowed: result.allowed,
           remainingAttempts: result.remainingAttempts,
           lockoutEndsAt: result.lockoutEndsAt,
           message: result.message
