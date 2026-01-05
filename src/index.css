@@ -144,12 +144,12 @@ All colors MUST be HSL.
     --clinical-danger: 0 72% 45%;
     --clinical-neutral: 220 10% 45%;
 
-    /* Sidebar light */
+    /* Sidebar light - texto escuro para legibilidade */
     --sidebar-background: 220 20% 97%;
-    --sidebar-foreground: 220 10% 45%;
+    --sidebar-foreground: 222 47% 25%;
     --sidebar-primary: 170 55% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 92%;
+    --sidebar-accent: 220 14% 88%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 14% 85%;
     --sidebar-ring: 170 55% 40%;
