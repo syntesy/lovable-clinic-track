@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,35 @@ import { format, addDays, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDailyDashboard } from '@/hooks/useDailyDashboard';
 import { ClinicalEventCard, DashboardCounters, AddEventModal } from '@/components/DailyDashboard';
-import { ViewMode, ClinicalStage } from '@/types/daily-dashboard';
+import { ViewMode, ClinicalStage, ClinicalEventCard as EventCardType, STAGE_CONFIG } from '@/types/daily-dashboard';
+
+// Fixed order of clinical stages for grouping
+const STAGE_ORDER: ClinicalStage[] = ['avaliacao', 'procedimento', 'followup', 'alta'];
+
+// Group events by clinical stage, maintaining time order within each group
+function groupEventsByClinicalStage(events: EventCardType[]): Record<ClinicalStage, EventCardType[]> {
+  const groups: Record<ClinicalStage, EventCardType[]> = {
+    avaliacao: [],
+    procedimento: [],
+    followup: [],
+    alta: []
+  };
+
+  // Sort events by start_time first
+  const sortedEvents = [...events].sort((a, b) => 
+    a.time_start.localeCompare(b.time_start)
+  );
+
+  // Group by stage
+  sortedEvents.forEach(event => {
+    const stage = event.clinical_stage as ClinicalStage;
+    if (groups[stage]) {
+      groups[stage].push(event);
+    }
+  });
+
+  return groups;
+}
 
 export default function DailyDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -44,6 +72,11 @@ export default function DailyDashboard() {
 
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
+  // Memoize grouped events for stage view
+  const groupedEvents = useMemo(() => {
+    return groupEventsByClinicalStage(events);
+  }, [events]);
+
   return (
     <Layout>
       <div className="container mx-auto p-6 max-w-5xl">
@@ -52,7 +85,9 @@ export default function DailyDashboard() {
           <div>
             <h1 className="text-2xl font-bold">Agenda Clínica</h1>
             <p className="text-muted-foreground">
-              Eventos do dia organizados por horário
+              {viewMode === 'by_time' 
+                ? 'Eventos do dia organizados por horário'
+                : 'Eventos do dia organizados por etapa clínica'}
             </p>
           </div>
           <Button onClick={() => setShowAddModal(true)}>
@@ -135,7 +170,8 @@ export default function DailyDashboard() {
               Agendar atendimento
             </Button>
           </div>
-        ) : (
+        ) : viewMode === 'by_time' ? (
+          /* MODE: BY TIME - Original flat list ordered by time */
           <div className="space-y-4">
             {events.map((event) => (
               <ClinicalEventCard
@@ -145,6 +181,52 @@ export default function DailyDashboard() {
                 onMarkAttended={markAsAttended}
               />
             ))}
+          </div>
+        ) : (
+          /* MODE: BY STAGE - Grouped by clinical stage with section headers */
+          <div className="space-y-6">
+            {STAGE_ORDER.map((stage) => {
+              const stageEvents = groupedEvents[stage];
+              const config = STAGE_CONFIG[stage];
+              
+              return (
+                <div key={stage} className="space-y-3">
+                  {/* Section Header */}
+                  <div className="flex items-center gap-3 pb-2 border-b">
+                    <div 
+                      className={`w-1 h-6 rounded-full ${
+                        stage === 'avaliacao' ? 'bg-blue-500' :
+                        stage === 'procedimento' ? 'bg-emerald-500' :
+                        stage === 'followup' ? 'bg-amber-500' :
+                        'bg-purple-500'
+                      }`}
+                    />
+                    <h3 className="text-lg font-semibold">{config.label}</h3>
+                    <span className="text-sm text-muted-foreground">
+                      ({stageEvents.length})
+                    </span>
+                  </div>
+                  
+                  {/* Stage Events */}
+                  {stageEvents.length > 0 ? (
+                    <div className="space-y-3 pl-4">
+                      {stageEvents.map((event) => (
+                        <ClinicalEventCard
+                          key={event.id}
+                          event={event}
+                          viewMode={viewMode}
+                          onMarkAttended={markAsAttended}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pl-4 py-4 text-sm text-muted-foreground italic">
+                      Nenhum evento nesta etapa hoje
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
