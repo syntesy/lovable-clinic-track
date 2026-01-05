@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,43 @@ import { format, addDays, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDailyDashboard } from '@/hooks/useDailyDashboard';
 import { ClinicalEventCard, DashboardCounters, AddEventModal } from '@/components/DailyDashboard';
-import { ViewMode, ClinicalStage, ClinicalEventCard as EventCardType, STAGE_CONFIG } from '@/types/daily-dashboard';
+import { 
+  ViewMode, 
+  ClinicalStage, 
+  ClinicalEventCard as EventCardType, 
+  STAGE_CONFIG,
+  STAGE_ORDER,
+  VIEWMODE_STORAGE_KEY
+} from '@/types/daily-dashboard';
 
-// Fixed order of clinical stages for grouping
-const STAGE_ORDER: ClinicalStage[] = ['avaliacao', 'procedimento', 'followup', 'alta'];
+/**
+ * Sort events with tie-breaker for stable ordering
+ * Primary: time_start (ascending)
+ * Secondary: created_at (ascending, older first)
+ * Tertiary: id (alphabetic fallback for absolute stability)
+ */
+function sortEventsWithTieBreaker(events: EventCardType[]): EventCardType[] {
+  return [...events].sort((a, b) => {
+    // Primary: time_start
+    const timeCompare = a.time_start.localeCompare(b.time_start);
+    if (timeCompare !== 0) return timeCompare;
+    
+    // Secondary: created_at (if both have it)
+    if (a.created_at && b.created_at) {
+      const createdCompare = a.created_at.localeCompare(b.created_at);
+      if (createdCompare !== 0) return createdCompare;
+    }
+    
+    // Tertiary: id (absolute fallback)
+    return a.id.localeCompare(b.id);
+  });
+}
 
-// Group events by clinical stage, maintaining time order within each group
+/**
+ * Group events by clinical stage, maintaining time order within each group
+ * Uses STAGE_ORDER (hard-coded) to ensure fixed order (Avaliação → Procedimento → Follow-up → Alta)
+ * No alphabetic sorting - order is deterministic
+ */
 function groupEventsByClinicalStage(events: EventCardType[]): Record<ClinicalStage, EventCardType[]> {
   const groups: Record<ClinicalStage, EventCardType[]> = {
     avaliacao: [],
@@ -22,25 +53,41 @@ function groupEventsByClinicalStage(events: EventCardType[]): Record<ClinicalSta
     alta: []
   };
 
-  // Sort events by start_time first
-  const sortedEvents = [...events].sort((a, b) => 
-    a.time_start.localeCompare(b.time_start)
-  );
+  // Sort events with tie-breaker first
+  const sortedEvents = sortEventsWithTieBreaker(events);
 
-  // Group by stage
+  // Group by stage - events with invalid stage already have FALLBACK applied in hook
   sortedEvents.forEach(event => {
-    const stage = event.clinical_stage as ClinicalStage;
+    const stage = event.clinical_stage;
     if (groups[stage]) {
       groups[stage].push(event);
+    } else {
+      // Extra safety: if somehow stage is invalid, put in avaliacao
+      groups['avaliacao'].push(event);
     }
   });
 
   return groups;
 }
 
+/**
+ * Get initial viewMode from localStorage or default to 'by_time'
+ */
+function getStoredViewMode(): ViewMode {
+  try {
+    const stored = localStorage.getItem(VIEWMODE_STORAGE_KEY);
+    if (stored === 'by_time' || stored === 'by_stage') {
+      return stored;
+    }
+  } catch {
+    // localStorage not available (SSR, privacy mode, etc.)
+  }
+  return 'by_time';
+}
+
 export default function DailyDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('by_time');
+  const [viewMode, setViewMode] = useState<ViewMode>(getStoredViewMode);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -53,6 +100,15 @@ export default function DailyDashboard() {
     createEvent,
     markAsAttended,
   } = useDailyDashboard(selectedDate);
+
+  // Persist viewMode to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEWMODE_STORAGE_KEY, viewMode);
+    } catch {
+      // localStorage not available
+    }
+  }, [viewMode]);
 
   // Apply search filter
   const handleSearch = (term: string) => {
@@ -72,7 +128,12 @@ export default function DailyDashboard() {
 
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
-  // Memoize grouped events for stage view
+  // Sort events for by_time mode with tie-breaker
+  const sortedEvents = useMemo(() => {
+    return sortEventsWithTieBreaker(events);
+  }, [events]);
+
+  // Memoize grouped events for stage view (uses STAGE_ORDER, not alphabetic)
   const groupedEvents = useMemo(() => {
     return groupEventsByClinicalStage(events);
   }, [events]);
@@ -171,9 +232,9 @@ export default function DailyDashboard() {
             </Button>
           </div>
         ) : viewMode === 'by_time' ? (
-          /* MODE: BY TIME - Original flat list ordered by time */
+          /* MODE: BY TIME - Flat list ordered by time with tie-breaker */
           <div className="space-y-4">
-            {events.map((event) => (
+            {sortedEvents.map((event) => (
               <ClinicalEventCard
                 key={event.id}
                 event={event}
