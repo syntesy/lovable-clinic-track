@@ -2,7 +2,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import logoHeader from "@/assets/logo-regenapp-new.png";
+import logoHeaderDark from "@/assets/logo-regenapp-new.png";
+import logoHeaderLight from "@/assets/logo-header-light.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import SessionTimeout from "@/components/SessionTimeout";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -17,6 +19,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { logLogout, logSessionStart } = useAuditLog();
+  const { theme } = useTheme();
+
+  const currentHeaderLogo = theme === 'light' ? logoHeaderLight : logoHeaderDark;
 
   // Registrar início da sessão
   useEffect(() => {
@@ -43,7 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center min-w-0">
                 <SidebarTrigger className="mr-2 md:mr-4 flex-shrink-0" />
                 <img 
-                  src={logoHeader} 
+                  src={currentHeaderLogo} 
                   alt="REGENAPP" 
                   className="h-12 md:h-[60px] w-auto"
                 />
