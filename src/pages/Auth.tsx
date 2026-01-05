@@ -355,17 +355,27 @@ export default function Auth() {
             }}>
                 Email
               </label>
-              <input type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} required style={{
-              width: "100%",
-              backgroundColor: "rgba(37, 52, 65, 0.5)",
-              border: fieldErrors.email ? "1px solid #FF6B6B" : "1px solid #253441",
-              borderRadius: "26px",
-              padding: "12px 16px",
-              color: "#FEFEFE",
-              fontSize: "14px",
-              outline: "none",
-              fontFamily: "Inter, sans-serif"
-            }} />
+              <input 
+                type="email" 
+                name="email"
+                autoComplete="username"
+                inputMode="email"
+                placeholder="seu@email.com" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                required 
+                style={{
+                  width: "100%",
+                  backgroundColor: "rgba(37, 52, 65, 0.5)",
+                  border: fieldErrors.email ? "1px solid #FF6B6B" : "1px solid #253441",
+                  borderRadius: "26px",
+                  padding: "12px 16px",
+                  color: "#FEFEFE",
+                  fontSize: "14px",
+                  outline: "none",
+                  fontFamily: "Inter, sans-serif"
+                }} 
+              />
               {fieldErrors.email && (
                 <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
                   {fieldErrors.email[0]}
@@ -387,17 +397,27 @@ export default function Auth() {
             }}>
                 Senha
               </label>
-              <input type="password" placeholder={isSignUp ? "Mín. 8 caracteres, maiúscula, número e símbolo" : "Sua senha"} value={password} onChange={e => setPassword(e.target.value)} required minLength={isSignUp ? 8 : 1} style={{
-              width: "100%",
-              backgroundColor: "rgba(37, 52, 65, 0.5)",
-              border: fieldErrors.password ? "1px solid #FF6B6B" : "1px solid #253441",
-              borderRadius: "26px",
-              padding: "12px 16px",
-              color: "#FEFEFE",
-              fontSize: "14px",
-              outline: "none",
-              fontFamily: "Inter, sans-serif"
-            }} />
+              <input 
+                type="password" 
+                name="password"
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                placeholder={isSignUp ? "Mín. 8 caracteres, maiúscula, número e símbolo" : "Sua senha"} 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                required 
+                minLength={isSignUp ? 8 : 1} 
+                style={{
+                  width: "100%",
+                  backgroundColor: "rgba(37, 52, 65, 0.5)",
+                  border: fieldErrors.password ? "1px solid #FF6B6B" : "1px solid #253441",
+                  borderRadius: "26px",
+                  padding: "12px 16px",
+                  color: "#FEFEFE",
+                  fontSize: "14px",
+                  outline: "none",
+                  fontFamily: "Inter, sans-serif"
+                }} 
+              />
               {isSignUp && <PasswordStrengthIndicator password={password} />}
               {fieldErrors.password && (
                 <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
