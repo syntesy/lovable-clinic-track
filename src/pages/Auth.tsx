@@ -357,10 +357,10 @@ export default function Auth() {
               </label>
               <input type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} required style={{
               width: "100%",
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom: fieldErrors.email ? "1px solid #FF6B6B" : "1px solid #253441",
-              padding: "12px 0",
+              backgroundColor: "rgba(37, 52, 65, 0.5)",
+              border: fieldErrors.email ? "1px solid #FF6B6B" : "1px solid #253441",
+              borderRadius: "26px",
+              padding: "12px 16px",
               color: "#FEFEFE",
               fontSize: "14px",
               outline: "none",
@@ -389,10 +389,10 @@ export default function Auth() {
               </label>
               <input type="password" placeholder={isSignUp ? "Mín. 8 caracteres, maiúscula, número e símbolo" : "Sua senha"} value={password} onChange={e => setPassword(e.target.value)} required minLength={isSignUp ? 8 : 1} style={{
               width: "100%",
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom: fieldErrors.password ? "1px solid #FF6B6B" : "1px solid #253441",
-              padding: "12px 0",
+              backgroundColor: "rgba(37, 52, 65, 0.5)",
+              border: fieldErrors.password ? "1px solid #FF6B6B" : "1px solid #253441",
+              borderRadius: "26px",
+              padding: "12px 16px",
               color: "#FEFEFE",
               fontSize: "14px",
               outline: "none",
