@@ -25,6 +25,7 @@ export interface ClinicalEventCard {
   case_summary?: string; // Formato: "Região — Diagnóstico"
   
   // BLOCO 3 — ETAPA CLÍNICA (congelado no agendamento)
+  // Nullable para fallback - eventos sem etapa vão para "Avaliação" como fallback
   clinical_stage: ClinicalStage;
   
   // BLOCO 4 — AÇÃO DO DIA
@@ -39,6 +40,9 @@ export interface ClinicalEventCard {
   // Metadados
   attended: boolean;
   attended_at?: string;
+  
+  // Metadados para tie-breaker (ordenação estável)
+  created_at?: string;
 }
 
 // Contadores do topo (fixos)
@@ -80,3 +84,12 @@ export const STAGE_CONFIG: Record<ClinicalStage, { label: string; color: string;
     bgColor: 'bg-purple-100 dark:bg-purple-900/30'
   },
 };
+
+// Ordem fixa das etapas (hard-coded, NÃO usar sort alfabético)
+export const STAGE_ORDER: readonly ClinicalStage[] = ['avaliacao', 'procedimento', 'followup', 'alta'] as const;
+
+// Fallback stage para eventos com clinical_stage nulo/inválido
+export const FALLBACK_STAGE: ClinicalStage = 'avaliacao';
+
+// LocalStorage key for viewMode persistence
+export const VIEWMODE_STORAGE_KEY = 'regenapp_agenda_viewMode';

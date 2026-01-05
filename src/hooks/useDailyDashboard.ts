@@ -6,7 +6,8 @@ import {
   DashboardCounters, 
   DashboardFilters,
   ClinicalStage,
-  ClinicalAlert
+  ClinicalAlert,
+  FALLBACK_STAGE
 } from '@/types/daily-dashboard';
 import { format } from 'date-fns';
 
@@ -99,6 +100,9 @@ export function useDailyDashboard(selectedDate: Date = new Date()) {
       }
 
       // 4. Map events, enriching with Registry data when available
+      // Apply FALLBACK for null/invalid clinical_stage to prevent events from disappearing
+      const validStages: ClinicalStage[] = ['avaliacao', 'procedimento', 'followup', 'alta'];
+      
       const mappedEvents: ClinicalEventCard[] = (data || []).map(row => {
         const registryEnrichment = row.case_id ? registryData[row.case_id] : undefined;
         
@@ -115,6 +119,12 @@ export function useDailyDashboard(selectedDate: Date = new Date()) {
         const registryAlerts = registryEnrichment?.alerts || [];
         const mergedAlerts = [...eventAlerts, ...registryAlerts];
 
+        // FALLBACK: Se clinical_stage for nulo ou inválido, usar FALLBACK_STAGE
+        const rawStage = row.clinical_stage as string | null | undefined;
+        const clinicalStage: ClinicalStage = (rawStage && validStages.includes(rawStage as ClinicalStage))
+          ? (rawStage as ClinicalStage)
+          : FALLBACK_STAGE;
+
         return {
           id: row.id,
           event_date: row.event_date,
@@ -124,7 +134,7 @@ export function useDailyDashboard(selectedDate: Date = new Date()) {
           patient_name: row.patient_name,
           case_id: row.case_id || undefined,
           case_summary: row.case_summary || undefined,
-          clinical_stage: row.clinical_stage as ClinicalStage,
+          clinical_stage: clinicalStage,
           today_action: row.today_action,
           // Use Registry last_outcome if available, else use event's stored value
           last_outcome: registryEnrichment?.last_outcome || row.last_outcome || undefined,
@@ -132,6 +142,8 @@ export function useDailyDashboard(selectedDate: Date = new Date()) {
           alerts: mergedAlerts,
           attended: row.attended || false,
           attended_at: row.attended_at || undefined,
+          // Store created_at for tie-breaker sorting
+          created_at: row.created_at,
         };
       });
 
