@@ -10,11 +10,12 @@
 
 1. [Papéis (Roles)](#1-papéis-roles)
 2. [Matriz de Permissões por Tabela](#2-matriz-de-permissões-por-tabela)
-3. [Regras Específicas do Student](#3-regras-específicas-do-student)
-4. [Regras de Staff (Teacher/Director/Admin)](#4-regras-de-staff-teacherdirectoradmin)
-5. [Regras Anti Self-Escalation](#5-regras-anti-self-escalation)
-6. [Append-Only (Imutabilidade)](#6-append-only-imutabilidade)
-7. [Storage Permissions](#7-storage-permissions)
+3. [Regras do Student](#3-regras-do-student)
+4. [Regras do Teacher](#4-regras-do-teacher)
+5. [Regras do Director](#5-regras-do-director)
+6. [Regras do Institution Admin](#6-regras-do-institution-admin)
+7. [Proteção Anti Self-Escalation](#7-proteção-anti-self-escalation)
+8. [Tabelas Append-Only](#8-tabelas-append-only)
 
 ---
 
@@ -22,18 +23,20 @@
 
 O módulo Education define **4 papéis** no enum `edu.institution_role`:
 
-| Role | Descrição | Hierarquia |
-|------|-----------|------------|
-| `student` | Aluno matriculado em cohort(s) | Nível 1 (mais restrito) |
-| `teacher` | Professor/instrutor | Nível 2 |
-| `director` | Coordenador/diretor | Nível 3 |
-| `institution_admin` | Administrador da instituição | Nível 4 (mais privilegiado) |
+| Role | Descrição | Nível |
+|------|-----------|-------|
+| `student` | Aluno matriculado | 1 (mais restrito) |
+| `teacher` | Professor/instrutor | 2 |
+| `director` | Coordenador/diretor | 3 |
+| `institution_admin` | Administrador | 4 (mais privilegiado) |
 
 ### Grupos de Acesso
 
-- **Member**: Qualquer role com `status = 'active'`
-- **Staff**: `teacher`, `director`, `institution_admin`
-- **Admin**: Apenas `institution_admin`
+| Grupo | Roles incluídos |
+|-------|-----------------|
+| **member** | Qualquer role com `status = 'active'` |
+| **staff** | `teacher`, `director`, `institution_admin` |
+| **admin** | Apenas `institution_admin` |
 
 ---
 
@@ -58,22 +61,22 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 | | teacher | ✅ | ❌ | ❌ | ❌ |
 | | director | ✅ | ❌ | ❌ | ❌ |
 | | admin | ✅ | ❌ | ✅ | ❌ |
-| **institution_members** | student | 🔒¹ | ❌ | ❌ | ❌ |
+| **institution_members** | student | 👤 | ❌ | ❌ | ❌ |
 | | teacher | ✅ | ❌ | ❌ | ❌ |
 | | director | ✅ | ❌ | ❌ | ❌ |
-| | admin | ✅ | ✅² | ✅² | ✅² |
-| **programs** | student | 🔒³ | ❌ | ❌ | ❌ |
+| | admin | ✅ | ✅¹ | ✅¹ | ✅¹ |
+| **programs** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
-| **cohorts** | student | 🔒³ | ❌ | ❌ | ❌ |
+| **cohorts** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
 | **enrollments** | student | 👤 | ❌ | ❌ | ❌ |
-| | teacher/director | ✅ | ❌ | ❌ | ❌ |
+| | teacher | ✅ | ❌ | ❌ | ❌ |
+| | director | ✅ | ❌ | ❌ | ❌ |
 | | admin | ✅ | ✅ | ✅ | ✅ |
 
 **Notas:**
-1. Student só vê próprio membership
-2. Admin não pode alterar próprio role (anti self-escalation)
-3. Student só vê `status = 'published'` ou `status = 'active'`
+1. Admin não pode modificar próprio registro (anti self-escalation)
+2. Student só vê `status = 'published'` ou `status = 'active'`
 
 ---
 
@@ -81,13 +84,13 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 
 | Tabela | Role | SELECT | INSERT | UPDATE | DELETE |
 |--------|------|--------|--------|--------|--------|
-| **modules** | student | 🔒³ | ❌ | ❌ | ❌ |
+| **modules** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
-| **cases** | student | 🔒³ | ❌ | ❌ | ❌ |
+| **cases** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
-| **case_versions** | student | 🔒⁴ | ❌ | ❌ | ❌ |
+| **case_versions** | student | 🔒³ | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
-| **case_assets** | student | 🔒³ | ❌ | ❌ | ❌ |
+| **case_assets** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
 | **case_consents** | student | ❌ | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
@@ -95,8 +98,8 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 | | staff | ✅ | ✅ | ✅ | ✅ |
 
 **Notas:**
-3. Student só vê onde `status = 'published'`
-4. Student só vê `version_number = cases.published_version_number`
+2. Student só vê `status = 'published'`
+3. Student só vê `version_number = published_version_number`
 
 ---
 
@@ -104,9 +107,9 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 
 | Tabela | Role | SELECT | INSERT | UPDATE | DELETE |
 |--------|------|--------|--------|--------|--------|
-| **learning_objects** | student | 🔒³ | ❌ | ❌ | ❌ |
+| **learning_objects** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
-| **learning_links** | student | 🔒⁵ | ❌ | ❌ | ❌ |
+| **learning_links** | student | 🔒⁴ | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
 | **concepts** | member | ✅ | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
@@ -116,7 +119,7 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 | | staff | ✅ | ✅ | ✅ | ✅ |
 
 **Notas:**
-5. Student só vê links de learning_objects publicados
+4. Student só vê links de learning_objects publicados
 
 ---
 
@@ -124,15 +127,15 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 
 | Tabela | Role | SELECT | INSERT | UPDATE | DELETE |
 |--------|------|--------|--------|--------|--------|
-| **checkpoints** | student | 🔒³ | ❌ | ❌ | ❌ |
+| **checkpoints** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
-| **checkpoint_items** | student | 🔒⁶ | ❌ | ❌ | ❌ |
+| **checkpoint_items** | student | 🔒⁵ | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
 | **checkpoint_attempts** | student | 👤 | 👤 | ❌ | ❌ |
 | | staff | ✅ | ❌ | ❌ | ❌ |
 
 **Notas:**
-6. Student só vê items de checkpoints publicados
+5. Student só vê items de checkpoints publicados
 
 ---
 
@@ -140,9 +143,9 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 
 | Tabela | Role | SELECT | INSERT | UPDATE | DELETE |
 |--------|------|--------|--------|--------|--------|
-| **decision_scenarios** | student | 🔒³ | ❌ | ❌ | ❌ |
+| **decision_scenarios** | student | 🔒² | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
-| **decision_prompts** | student | 🔒⁷ | ❌ | ❌ | ❌ |
+| **decision_prompts** | student | 🔒⁶ | ❌ | ❌ | ❌ |
 | | staff | ✅ | ✅ | ✅ | ✅ |
 | **decision_attempts** | student | 👤 | 👤 | ❌ | ❌ |
 | | staff | ✅ | ❌ | ❌ | ❌ |
@@ -150,7 +153,7 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 | | staff | ✅ | ✅ | ✅ | ✅ |
 
 **Notas:**
-7. Student só vê prompts de scenarios publicados
+6. Student só vê prompts de scenarios publicados
 
 ---
 
@@ -165,125 +168,195 @@ O módulo Education define **4 papéis** no enum `edu.institution_role`:
 
 ---
 
-## 3. Regras Específicas do Student
+## 3. Regras do Student
 
 ### 3.1 Visibilidade Restrita
 
+O student **só vê conteúdo publicado**:
+
 ```sql
--- Student só vê conteúdo publicado
+-- Filtragem automática via RLS
 WHERE status = 'published'
-
--- Student só vê versão publicada do case
-WHERE version_number = (SELECT published_version_number FROM edu.cases WHERE id = case_id)
-
--- Student só vê cohorts onde está matriculado
-WHERE cohort_id IN (SELECT cohort_id FROM edu.enrollments WHERE user_id = auth.uid() AND status = 'active')
 ```
 
-### 3.2 Ownership Estrito
+### 3.2 Cohorts Matriculados
+
+O student **só acessa cohorts onde está matriculado**:
 
 ```sql
--- Student só vê/cria próprios attempts
-WHERE user_id = auth.uid()
+WHERE cohort_id IN (
+    SELECT cohort_id FROM edu.enrollments 
+    WHERE user_id = auth.uid() AND status = 'active'
+)
+```
 
--- Student só vê próprios logs
-WHERE user_id = auth.uid()
+### 3.3 Apenas Próprios Dados
 
--- Student só vê próprio progress
+O student **só cria/vê suas próprias attempts e logs**:
+
+```sql
+-- INSERT
+WITH CHECK (user_id = auth.uid())
+
+-- SELECT
 WHERE user_id = auth.uid()
 ```
 
-### 3.3 Imutabilidade
+### 3.4 Sem UPDATE/DELETE
 
-- Student **não pode UPDATE** attempts após criação
-- Student **não pode DELETE** nenhum registro
-- Activity logs são **append-only**
+O student **NÃO pode modificar ou deletar** nenhum registro:
 
-### 3.4 Conteúdo Invisível
+- ❌ UPDATE em qualquer tabela
+- ❌ DELETE em qualquer tabela
 
-Student **nunca** vê:
+### 3.5 Progress Somente Leitura
+
+O `student_progress` é atualizado **automaticamente por trigger**:
+
+- ✅ SELECT próprio progresso
+- ❌ INSERT (trigger cria automaticamente)
+- ❌ UPDATE (trigger atualiza automaticamente)
+- ❌ DELETE
+
+### 3.6 Conteúdo Invisível
+
+Student **nunca vê**:
 - `case_instructor_notes`
 - `instructor_reference`
-- `case_consents` (dados de consentimento)
-- Versões não-publicadas de cases
+- `case_consents`
+- Versões não-publicadas
 - Conteúdo em `draft`, `review` ou `archived`
 
 ---
 
-## 4. Regras de Staff (Teacher/Director/Admin)
+## 4. Regras do Teacher
 
-### 4.1 Teacher
-
-| Pode | Não Pode |
-|------|----------|
-| CRUD em conteúdo pedagógico | Gerenciar membros |
-| Ver todos os attempts | Alterar enrollments |
-| Ver analytics agregados | Alterar configurações |
-| Upload de arquivos | Deletar arquivos (só admin) |
-
-### 4.2 Director
+### 4.1 CRUD de Conteúdo Pedagógico
 
 | Pode | Não Pode |
 |------|----------|
-| Tudo que teacher pode | Gerenciar membros |
-| Ver KPIs e alertas | Alterar roles de outros |
-| Aprovar publicações | Deletar instituição |
+| ✅ Criar/editar cases | ❌ Gerenciar members |
+| ✅ Criar/editar modules | ❌ Gerenciar enrollments |
+| ✅ Criar/editar learning_objects | ❌ Alterar configurações |
+| ✅ Criar/editar checkpoints | ❌ Deletar arquivos |
+| ✅ Criar/editar decision_scenarios | |
+| ✅ Ver todos os attempts | |
+| ✅ Upload de arquivos | |
 
-### 4.3 Institution Admin
+### 4.2 Sem Acesso a Members/Enrollments
 
-| Pode | Não Pode |
-|------|----------|
-| Tudo que director pode | Auto-elevação de role |
-| Gerenciar membros | Acessar outras instituições |
-| Gerenciar enrollments | Modificar core clínico |
-| Deletar arquivos | |
-| Configurar instituição | |
+```sql
+-- Teacher não pode INSERT/UPDATE/DELETE em:
+- institution_members
+- enrollments
+```
 
 ---
 
-## 5. Regras Anti Self-Escalation
+## 5. Regras do Director
 
-### Proteção em `institution_members`
+### 5.1 Publicação de Conteúdo
+
+| Pode | Não Pode |
+|------|----------|
+| ✅ Tudo que teacher pode | ❌ Gerenciar members |
+| ✅ Publicar conteúdo | ❌ Alterar roles |
+| ✅ Ver KPIs agregados | ❌ Configurar instituição |
+| ✅ Alertas de turma | |
+
+### 5.2 Analytics Somente Leitura
+
+Director vê analytics agregados mas **não pode modificar**:
+- ✅ SELECT em activity_logs (todos da instituição)
+- ✅ SELECT em student_progress (todos da instituição)
+- ❌ INSERT/UPDATE/DELETE
+
+### 5.3 Sem Gerenciar Members
 
 ```sql
--- Admin não pode alterar próprio role
-CREATE POLICY "institution_members_update_admin" ON edu.institution_members
+-- Director não pode INSERT/UPDATE/DELETE em:
+- institution_members
+- enrollments (apenas SELECT)
+```
+
+---
+
+## 6. Regras do Institution Admin
+
+### 6.1 Gerencia Members e Enrollments
+
+| Pode | Não Pode |
+|------|----------|
+| ✅ Tudo que director pode | ❌ Self-escalation |
+| ✅ Adicionar/remover members | ❌ Acessar outras instituições |
+| ✅ Criar/cancelar enrollments | ❌ Modificar core clínico |
+| ✅ Alterar roles (exceto próprio) | |
+| ✅ Deletar arquivos | |
+| ✅ Configurar instituição | |
+
+### 6.2 Acesso Total Dentro da Instituição
+
+```sql
+-- Admin tem acesso total a edu.* 
+-- ONDE institution_id = sua instituição
+WHERE edu.is_member(institution_id)
+```
+
+---
+
+## 7. Proteção Anti Self-Escalation
+
+### Regra em `institution_members`
+
+**Nenhum usuário pode modificar seu próprio role ou status**:
+
+```sql
+-- UPDATE bloqueado para próprio registro
+CREATE POLICY "members_update_admin" ON edu.institution_members
 FOR UPDATE USING (
     edu.has_role(institution_id, 'institution_admin')
     AND user_id != auth.uid()  -- ← Anti self-escalation
 );
 
--- Admin não pode deletar próprio membership
-CREATE POLICY "institution_members_delete_admin" ON edu.institution_members
+-- DELETE bloqueado para próprio registro
+CREATE POLICY "members_delete_admin" ON edu.institution_members
 FOR DELETE USING (
     edu.has_role(institution_id, 'institution_admin')
     AND user_id != auth.uid()  -- ← Anti self-escalation
 );
 ```
 
-### Regra Geral
+### Cenários Bloqueados
 
-> **Nenhum usuário pode modificar seu próprio role ou status de membership.**
+| Tentativa | Resultado |
+|-----------|-----------|
+| Admin tenta elevar próprio role | ❌ Bloqueado |
+| Admin tenta remover próprio membership | ❌ Bloqueado |
+| Admin tenta alterar próprio status | ❌ Bloqueado |
 
 ---
 
-## 6. Append-Only (Imutabilidade)
+## 8. Tabelas Append-Only
 
-### Tabelas Imutáveis
+### Definição
+
+Tabelas **append-only** não permitem UPDATE nem DELETE após INSERT:
 
 | Tabela | INSERT | UPDATE | DELETE |
 |--------|--------|--------|--------|
-| `activity_logs` | ✅ (user_id = auth.uid()) | ❌ | ❌ |
-| `checkpoint_attempts` | ✅ (user_id = auth.uid()) | ❌ | ❌ |
-| `decision_attempts` | ✅ (user_id = auth.uid()) | ❌ | ❌ |
+| `activity_logs` | ✅ | ❌ | ❌ |
+| `checkpoint_attempts` | ✅ | ❌ | ❌ |
+| `decision_attempts` | ✅ | ❌ | ❌ |
+| `student_progress` | ❌ (trigger) | ❌ | ❌ |
 
 ### Implementação
 
 ```sql
 -- Trigger bloqueando UPDATE/DELETE
-CREATE FUNCTION edu.trg_activity_logs_append_only() RETURNS TRIGGER AS $$
+CREATE FUNCTION edu.trg_activity_logs_append_only() 
+RETURNS TRIGGER AS $$
 BEGIN
-    RAISE EXCEPTION 'activity_logs is append-only: UPDATE and DELETE are not allowed';
+    RAISE EXCEPTION 'activity_logs is append-only';
 END;
 $$ LANGUAGE plpgsql;
 
@@ -294,73 +367,24 @@ FOR EACH ROW EXECUTE FUNCTION edu.trg_activity_logs_append_only();
 
 ### Justificativa
 
-- **Auditoria**: Logs não podem ser alterados retroativamente
-- **Integridade**: Tentativas de avaliação são imutáveis
-- **Compliance**: Trilha de auditoria preservada
+- **Auditoria**: Logs imutáveis para compliance
+- **Integridade**: Attempts não podem ser alterados retroativamente
+- **Trilha**: Histórico completo preservado
 
 ---
 
-## 7. Storage Permissions
+## Resumo de Policies por Operação
 
-### Bucket: `edu-assets` (Privado)
-
-| Operação | Role | Condição |
-|----------|------|----------|
-| **SELECT** | member | `edu.edu_storage_is_member(institution_id)` |
-| **INSERT** | teacher+ | `edu.edu_storage_can_upload(institution_id)` |
-| **UPDATE** | teacher+ | `edu.edu_storage_can_upload(institution_id)` |
-| **DELETE** | admin | `edu.edu_storage_is_admin(institution_id)` |
-
-### Isolamento por Path
-
-```
-Path: {institution_id}/learning_objects/{object_id}/file.pdf
-       └──────┬─────┘
-              │
-              └─ Extraído por edu.edu_storage_get_institution_id()
-                 Validado contra membership do usuário
-```
-
-### Signed URLs
-
-- Arquivos são acessados via **signed URLs** gerados pelo backend
-- URLs têm expiração configurável
-- Nenhum acesso direto público
+| Operação | Policies |
+|----------|----------|
+| SELECT | ~50 |
+| INSERT | ~25 |
+| UPDATE | ~25 |
+| DELETE | ~18 |
+| **TOTAL** | **118** |
 
 ---
 
-## Resumo de Contagem de Policies
-
-| Tabela | SELECT | INSERT | UPDATE | DELETE | Total |
-|--------|--------|--------|--------|--------|-------|
-| activity_logs | 2 | 1 | 1 | 1 | 5 |
-| case_assets | 2 | 1 | 1 | 1 | 5 |
-| case_consents | 1 | 1 | 1 | 1 | 4 |
-| case_instructor_notes | 1 | 1 | 1 | 1 | 4 |
-| case_versions | 2 | 1 | 1 | 1 | 5 |
-| cases | 2 | 1 | 1 | 1 | 5 |
-| checkpoint_attempts | 2 | 1 | 1 | 1 | 5 |
-| checkpoint_items | 2 | 1 | 1 | 1 | 5 |
-| checkpoints | 2 | 1 | 1 | 1 | 5 |
-| cohorts | 2 | 1 | 1 | 1 | 5 |
-| concepts | 1 | 1 | 1 | 1 | 4 |
-| decision_attempts | 2 | 1 | 1 | 1 | 5 |
-| decision_prompts | 2 | 1 | 1 | 1 | 5 |
-| decision_scenarios | 2 | 1 | 1 | 1 | 5 |
-| enrollments | 2 | 1 | 1 | 1 | 5 |
-| evidence_links | 2 | 1 | 1 | 1 | 5 |
-| institution_members | 2 | 1 | 1 | 1 | 5 |
-| institutions | 2 | 1 | 1 | 1 | 5 |
-| instructor_reference | 1 | 1 | 1 | 1 | 4 |
-| learning_links | 2 | 1 | 1 | 1 | 5 |
-| learning_objects | 2 | 1 | 1 | 1 | 5 |
-| modules | 2 | 1 | 1 | 1 | 5 |
-| programs | 2 | 1 | 1 | 1 | 5 |
-| student_progress | 2 | 1 | 1 | 1 | 5 |
-| techniques | 1 | 1 | 1 | 1 | 4 |
-| **TOTAL** | | | | | **118** |
-
----
-
-*Documento gerado automaticamente pelo REGENAPP Academy*  
-*Versão do schema: 1.0.0*
+*Documento oficial do REGENAPP Education Academy*  
+*Schema: edu v1.0.0*  
+*Gerado em: 2025-01-06*
