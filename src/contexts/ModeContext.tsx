@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export type AppMode = 'clinical' | 'education';
 
@@ -23,6 +23,19 @@ function getStoredMode(): AppMode {
 
 export function ModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<AppMode>(getStoredMode);
+  const location = useLocation();
+
+  // Sincroniza modo com rota atual
+  useEffect(() => {
+    const isEduRoute = location.pathname.startsWith('/edu');
+    if (isEduRoute && mode !== 'education') {
+      setModeState('education');
+      localStorage.setItem(STORAGE_KEY, 'education');
+    } else if (!isEduRoute && mode === 'education') {
+      setModeState('clinical');
+      localStorage.setItem(STORAGE_KEY, 'clinical');
+    }
+  }, [location.pathname, mode]);
 
   const setMode = useCallback((newMode: AppMode) => {
     setModeState(newMode);
