@@ -65,7 +65,9 @@ export function useEduMembership() {
         } : undefined,
       }));
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -114,7 +116,9 @@ export function useEduEnrollments(cohortId?: string) {
       }));
     },
     enabled: true,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 
