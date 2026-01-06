@@ -29,45 +29,51 @@ export default function EduHome() {
     return null;
   }
 
-  // Multiple institutions - show selector
+  // Multiple contexts - show selector
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Selecione sua Instituição</h1>
+        <h1 className="text-2xl font-bold text-foreground">Selecione seu contexto de acesso</h1>
         <p className="text-muted-foreground mt-1">
-          Você está vinculado a múltiplas instituições. Selecione qual deseja acessar.
+          Você possui mais de um papel dentro da plataforma.
+          <br />
+          Escolha como deseja acessar o Academy.
         </p>
       </div>
 
       <div className="space-y-4">
-        {memberships?.map((membership) => (
-          <Card key={membership.id} className="hover:border-primary/50 transition-colors cursor-pointer">
-            <CardContent className="p-0">
-              <Button
-                variant="ghost"
-                className="w-full h-auto p-4 justify-between"
-                onClick={() => navigate('/edu/dashboard')}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-primary" />
+        {memberships?.map((membership) => {
+          const roleLabel = membership.role === 'institution_admin' ? 'Administrador' :
+                           membership.role === 'director' ? 'Diretor' :
+                           membership.role === 'teacher' ? 'Professor' : 'Estudante';
+          
+          return (
+            <Card key={membership.id} className="hover:border-primary/50 transition-colors cursor-pointer">
+              <CardContent className="p-0">
+                <Button
+                  variant="ghost"
+                  className="w-full h-auto p-4 justify-between"
+                  onClick={() => navigate('/edu/dashboard')}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Building2 className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm text-muted-foreground">
+                        {membership.institution?.name || 'Instituição'}
+                      </p>
+                      <p className="text-lg font-semibold text-foreground">
+                        {roleLabel}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">
-                      {membership.institution?.name || 'Instituição'}
-                    </p>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {membership.role === 'institution_admin' ? 'Administrador' :
-                       membership.role === 'director' ? 'Diretor' :
-                       membership.role === 'teacher' ? 'Professor' : 'Estudante'}
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
