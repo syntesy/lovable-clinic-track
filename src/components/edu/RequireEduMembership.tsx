@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useEduMembership, EduRole } from '@/hooks/useEduMembership';
 import { Loader2, ShieldX } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -62,7 +62,7 @@ export function RequireEduMembership({ children, allowedRoles }: RequireEduMembe
                 Entre em contato com sua instituição para solicitar acesso.
               </p>
               <Button variant="outline" asChild>
-                <a href="/pacientes">Voltar para Área Clínica</a>
+                <Link to="/pacientes">Voltar para Área Clínica</Link>
               </Button>
             </div>
           </CardContent>
@@ -86,9 +86,9 @@ export function RequireEduMembership({ children, allowedRoles }: RequireEduMembe
                 <p className="text-muted-foreground">
                   Você não possui a permissão necessária para acessar esta área.
                 </p>
-                <Button variant="outline" asChild>
-                  <a href="/edu">Voltar para Dashboard</a>
-                </Button>
+              <Button variant="outline" asChild>
+                <Link to="/edu">Voltar para Dashboard</Link>
+              </Button>
               </div>
             </CardContent>
           </Card>
