@@ -4032,6 +4032,22 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      edu_storage_can_upload: {
+        Args: { p_institution_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      edu_storage_get_institution_id: {
+        Args: { object_name: string }
+        Returns: string
+      }
+      edu_storage_is_admin: {
+        Args: { p_institution_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      edu_storage_is_member: {
+        Args: { p_institution_id: string; p_user_id: string }
+        Returns: boolean
+      }
       generate_integrity_hash: { Args: { data: Json }; Returns: string }
       get_next_snapshot_version: {
         Args: { p_dimension_id: string; p_time_window: string }
