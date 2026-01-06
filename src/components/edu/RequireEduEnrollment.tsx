@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ShieldX, BookX } from 'lucide-react';
@@ -93,7 +93,7 @@ export function RequireEduEnrollment({ children, cohortId: propCohortId }: Requi
                 Entre em contato com sua instituição para solicitar matrícula.
               </p>
               <Button variant="outline" asChild>
-                <a href="/edu">Voltar para Dashboard</a>
+                <Link to="/edu">Voltar para Dashboard</Link>
               </Button>
             </div>
           </CardContent>

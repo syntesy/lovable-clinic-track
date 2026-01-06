@@ -1,9 +1,9 @@
 import { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { useCurrentInstitution } from '@/hooks/useEduMembership';
 import { EyeOff } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
 interface RequirePublishedProps {
   children: ReactNode;
   isPublished: boolean;
@@ -35,7 +35,7 @@ export function RequirePublished({ children, isPublished, isLoading }: RequirePu
                 Aguarde a liberação pelo professor ou coordenador.
               </p>
               <Button variant="outline" asChild>
-                <a href="/edu">Voltar para Dashboard</a>
+                <Link to="/edu">Voltar para Dashboard</Link>
               </Button>
             </div>
           </CardContent>
