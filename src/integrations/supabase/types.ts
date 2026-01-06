@@ -3929,6 +3929,123 @@ export type Database = {
       }
     }
     Views: {
+      edu_cohorts: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          institution_id: string | null
+          name: string | null
+          program_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          institution_id?: string | null
+          name?: string | null
+          program_id?: string | null
+          status?: never
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          institution_id?: string | null
+          name?: string | null
+          program_id?: string | null
+          status?: never
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      edu_enrollments: {
+        Row: {
+          cohort_id: string | null
+          created_at: string | null
+          id: string | null
+          institution_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cohort_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          institution_id?: string | null
+          status?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cohort_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          institution_id?: string | null
+          status?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      edu_institution_members: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          institution_id: string | null
+          role: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          institution_id?: string | null
+          role?: never
+          status?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          institution_id?: string | null
+          role?: never
+          status?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      edu_institutions: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          name: string | null
+          slug: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          slug?: string | null
+          status?: never
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          slug?: string | null
+          status?: never
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       registry_case_summary_v1_1: {
         Row: {
           adverse_event_any: boolean | null
