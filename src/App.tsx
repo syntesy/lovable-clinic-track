@@ -60,6 +60,17 @@ import DailyDashboard from "./pages/DailyDashboard";
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
 import PatientFollowup from "./pages/patient/PatientFollowup";
+// Education Pages
+import { ModeProvider } from "./contexts/ModeContext";
+import { EduLayout } from "./components/edu/EduLayout";
+import { RequireEduMembership } from "./components/edu";
+import {
+  EduHome, EduDashboard, EduCohorts, EduCohortDetail, EduModuleDetail,
+  EduCaseDetail, EduLearningObjectDetail, EduDecisionLabDetail, EduCheckpointDetail, EduProgress,
+  EduTeacherDashboard, EduTeacherCases, EduTeacherLearningObjects, EduTeacherCheckpoints, EduTeacherDecisionLab, EduTeacherAnalytics,
+  EduDirectorConsole,
+  EduAdminMembers, EduAdminEnrollments, EduAdminSettings
+} from "./pages/edu";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +81,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+        <ModeProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/checkout" element={<Checkout />} />
@@ -506,8 +518,35 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* Education Routes */}
+          <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/dashboard" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduDashboard /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/cohorts" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduCohorts /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/cohorts/:cohortId" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduCohortDetail /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/modules/:moduleId" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduModuleDetail /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/cases/:caseId" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduCaseDetail /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/learning/:learningObjectId" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduLearningObjectDetail /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/decision-lab/:scenarioId" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduDecisionLabDetail /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/checkpoints/:checkpointId" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduCheckpointDetail /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/progress" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduProgress /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          {/* Teacher Routes */}
+          <Route path="/edu/teacher/dashboard" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherDashboard /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/teacher/cases" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherCases /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/teacher/learning-objects" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherLearningObjects /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/teacher/checkpoints" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherCheckpoints /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/teacher/decision-lab" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherDecisionLab /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/teacher/analytics" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherAnalytics /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          {/* Director Routes */}
+          <Route path="/edu/director/console" element={<ProtectedRoute><RequireEduMembership allowedRoles={['director', 'institution_admin']}><EduLayout><EduDirectorConsole /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          {/* Admin Routes */}
+          <Route path="/edu/admin/members" element={<ProtectedRoute><RequireEduMembership allowedRoles={['institution_admin']}><EduLayout><EduAdminMembers /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/admin/enrollments" element={<ProtectedRoute><RequireEduMembership allowedRoles={['institution_admin']}><EduLayout><EduAdminEnrollments /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/admin/settings" element={<ProtectedRoute><RequireEduMembership allowedRoles={['institution_admin']}><EduLayout><EduAdminSettings /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </ModeProvider>
       </BrowserRouter>
       </PatientAuthProvider>
     </TooltipProvider>
