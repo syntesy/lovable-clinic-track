@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import SessionTimeout from "@/components/SessionTimeout";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ModeSwitch } from "@/components/edu/ModeSwitch";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useEffect } from "react";
 
@@ -54,6 +55,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 />
               </div>
               <div className="flex items-center gap-2">
+                <ModeSwitch />
                 <ThemeToggle />
                 <Button
                   variant="ghost"
