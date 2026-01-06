@@ -67,7 +67,7 @@ import { RequireEduMembership } from "./components/edu";
 import {
   EduHome, EduDashboard, EduCohorts, EduCohortDetail, EduModuleDetail,
   EduCaseDetail, EduLearningObjectDetail, EduDecisionLabDetail, EduCheckpointDetail, EduProgress,
-  EduTeacherDashboard, EduTeacherCases, EduTeacherLearningObjects, EduTeacherCheckpoints, EduTeacherDecisionLab, EduTeacherAnalytics,
+  EduTeacherDashboard, EduTeacherCases, EduTeacherLearningObjects, EduTeacherLearningObjectForm, EduTeacherCheckpoints, EduTeacherDecisionLab, EduTeacherAnalytics,
   EduDirectorConsole,
   EduAdminMembers, EduAdminEnrollments, EduAdminSettings
 } from "./pages/edu";
@@ -534,6 +534,7 @@ const App = () => (
           <Route path="/edu/teacher/dashboard" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherDashboard /></EduLayout></RequireEduMembership></ProtectedRoute>} />
           <Route path="/edu/teacher/cases" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherCases /></EduLayout></RequireEduMembership></ProtectedRoute>} />
           <Route path="/edu/teacher/learning-objects" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherLearningObjects /></EduLayout></RequireEduMembership></ProtectedRoute>} />
+          <Route path="/edu/teacher/learning-objects/new" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherLearningObjectForm /></EduLayout></RequireEduMembership></ProtectedRoute>} />
           <Route path="/edu/teacher/checkpoints" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherCheckpoints /></EduLayout></RequireEduMembership></ProtectedRoute>} />
           <Route path="/edu/teacher/decision-lab" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherDecisionLab /></EduLayout></RequireEduMembership></ProtectedRoute>} />
           <Route path="/edu/teacher/analytics" element={<ProtectedRoute><RequireEduMembership allowedRoles={['teacher', 'director', 'institution_admin']}><EduLayout><EduTeacherAnalytics /></EduLayout></RequireEduMembership></ProtectedRoute>} />
