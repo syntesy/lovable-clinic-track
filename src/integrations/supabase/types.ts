@@ -1191,13 +1191,6 @@ export type Database = {
             foreignKeyName: "curations_therapy_item_fkey"
             columns: ["therapy_item_code"]
             isOneToOne: false
-            referencedRelation: "registry_research_export_v1"
-            referencedColumns: ["therapy_item_code"]
-          },
-          {
-            foreignKeyName: "curations_therapy_item_fkey"
-            columns: ["therapy_item_code"]
-            isOneToOne: false
             referencedRelation: "therapy_items"
             referencedColumns: ["code"]
           },
@@ -3364,13 +3357,6 @@ export type Database = {
             foreignKeyName: "registry_procedures_therapy_item_code_fkey"
             columns: ["therapy_item_code"]
             isOneToOne: false
-            referencedRelation: "registry_research_export_v1"
-            referencedColumns: ["therapy_item_code"]
-          },
-          {
-            foreignKeyName: "registry_procedures_therapy_item_code_fkey"
-            columns: ["therapy_item_code"]
-            isOneToOne: false
             referencedRelation: "therapy_items"
             referencedColumns: ["code"]
           },
@@ -3614,6 +3600,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      research_config: {
+        Row: {
+          created_at: string
+          key: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          value?: string
+        }
+        Relationships: []
       }
       session_images: {
         Row: {
@@ -4257,36 +4261,32 @@ export type Database = {
       }
       registry_research_export_v1: {
         Row: {
-          adverse_event_flag: boolean | null
-          age_bucket: string | null
-          baseline_function_score: number | null
-          baseline_pain_score: number | null
-          baseline_to_followup_days: number | null
+          age_range: string | null
+          application_count: number | null
+          baseline_pain_nrs: number | null
+          case_created_at: string | null
           case_uid: string | null
-          category_code: string | null
-          delta_pain_90d: number | null
-          diagnosis_tag: string | null
-          effective_category_code: string | null
-          followup_function_score_90d: number | null
-          followup_pain_score_30d: number | null
-          followup_pain_score_90d: number | null
-          joint_region: string | null
-          procedure_month: string | null
+          clinician_uid: string | null
+          comorbidities: Json | null
+          export_version: string | null
+          image_guided: boolean | null
+          pain_duration_range: string | null
+          pathology_tag: string | null
+          procedure_created_at: string | null
+          procedure_date: string | null
           procedure_uid: string | null
-          region_state: string | null
-          requires_checklist: boolean | null
-          requires_curadoria: boolean | null
-          requires_score: boolean | null
+          region_tag: string | null
           sex: string | null
+          status: string | null
+          technique_tag: string | null
           therapy_item_code: string | null
-          therapy_item_name: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "therapy_items_category_code_fkey"
-            columns: ["category_code"]
+            foreignKeyName: "registry_procedures_therapy_item_code_fkey"
+            columns: ["therapy_item_code"]
             isOneToOne: false
-            referencedRelation: "therapy_categories"
+            referencedRelation: "therapy_items"
             referencedColumns: ["code"]
           },
         ]
@@ -4350,7 +4350,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      generate_case_uid: { Args: { p_case_id: string }; Returns: string }
+      generate_clinician_uid: {
+        Args: { p_clinician_id: string }
+        Returns: string
+      }
       generate_integrity_hash: { Args: { data: Json }; Returns: string }
+      generate_procedure_uid: {
+        Args: { p_procedure_id: string }
+        Returns: string
+      }
       get_next_snapshot_version: {
         Args: { p_dimension_id: string; p_time_window: string }
         Returns: number
