@@ -3018,37 +3018,46 @@ export type Database = {
         Row: {
           created_at: string
           export_format: string | null
+          export_name: string
           export_version: string
           exported_at: string
           exported_by: string
           filters_json: Json
           id: string
           ip_address: string | null
+          notes: string | null
           row_count: number
+          status: string
           user_agent: string | null
         }
         Insert: {
           created_at?: string
           export_format?: string | null
+          export_name?: string
           export_version?: string
           exported_at?: string
           exported_by: string
           filters_json?: Json
           id?: string
           ip_address?: string | null
+          notes?: string | null
           row_count?: number
+          status?: string
           user_agent?: string | null
         }
         Update: {
           created_at?: string
           export_format?: string | null
+          export_name?: string
           export_version?: string
           exported_at?: string
           exported_by?: string
           filters_json?: Json
           id?: string
           ip_address?: string | null
+          notes?: string | null
           row_count?: number
+          status?: string
           user_agent?: string | null
         }
         Relationships: []
