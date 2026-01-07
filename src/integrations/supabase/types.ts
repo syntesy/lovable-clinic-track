@@ -3634,6 +3634,68 @@ export type Database = {
         }
         Relationships: []
       }
+      research_export_snapshots: {
+        Row: {
+          created_at: string
+          created_by: string
+          doi: string | null
+          export_hash: string
+          export_log_id: string | null
+          filters_json: Json | null
+          id: string
+          is_published: boolean
+          notes: string | null
+          published_at: string | null
+          row_count: number
+          snapshot_code: string
+          title: string | null
+          view_name: string
+          view_version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          doi?: string | null
+          export_hash: string
+          export_log_id?: string | null
+          filters_json?: Json | null
+          id?: string
+          is_published?: boolean
+          notes?: string | null
+          published_at?: string | null
+          row_count: number
+          snapshot_code: string
+          title?: string | null
+          view_name?: string
+          view_version: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          doi?: string | null
+          export_hash?: string
+          export_log_id?: string | null
+          filters_json?: Json | null
+          id?: string
+          is_published?: boolean
+          notes?: string | null
+          published_at?: string | null
+          row_count?: number
+          snapshot_code?: string
+          title?: string | null
+          view_name?: string
+          view_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_export_snapshots_export_log_id_fkey"
+            columns: ["export_log_id"]
+            isOneToOne: false
+            referencedRelation: "registry_exports_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_images: {
         Row: {
           description: string | null
@@ -4375,6 +4437,7 @@ export type Database = {
         Args: { p_procedure_id: string }
         Returns: string
       }
+      generate_snapshot_code: { Args: never; Returns: string }
       get_next_snapshot_version: {
         Args: { p_dimension_id: string; p_time_window: string }
         Returns: number
