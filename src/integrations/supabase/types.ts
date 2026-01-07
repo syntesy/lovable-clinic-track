@@ -3633,6 +3633,65 @@ export type Database = {
         }
         Relationships: []
       }
+      therapy_categories: {
+        Row: {
+          code: string
+          created_at: string
+          name: string
+          requires_checklist: boolean
+          requires_curadoria: boolean
+          requires_score: boolean
+          risk_class: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          name: string
+          requires_checklist?: boolean
+          requires_curadoria?: boolean
+          requires_score?: boolean
+          risk_class: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          name?: string
+          requires_checklist?: boolean
+          requires_curadoria?: boolean
+          requires_score?: boolean
+          risk_class?: string
+        }
+        Relationships: []
+      }
+      therapy_items: {
+        Row: {
+          category_code: string
+          code: string
+          created_at: string
+          name: string
+        }
+        Insert: {
+          category_code: string
+          code: string
+          created_at?: string
+          name: string
+        }
+        Update: {
+          category_code?: string
+          code?: string
+          created_at?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapy_items_category_code_fkey"
+            columns: ["category_code"]
+            isOneToOne: false
+            referencedRelation: "therapy_categories"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       thermography_images: {
         Row: {
           evaluated_region: string | null
