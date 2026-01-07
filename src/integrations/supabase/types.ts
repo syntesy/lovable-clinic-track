@@ -1191,6 +1191,13 @@ export type Database = {
             foreignKeyName: "curations_therapy_item_fkey"
             columns: ["therapy_item_code"]
             isOneToOne: false
+            referencedRelation: "registry_research_export_v1"
+            referencedColumns: ["therapy_item_code"]
+          },
+          {
+            foreignKeyName: "curations_therapy_item_fkey"
+            columns: ["therapy_item_code"]
+            isOneToOne: false
             referencedRelation: "therapy_items"
             referencedColumns: ["code"]
           },
@@ -3017,6 +3024,7 @@ export type Database = {
       registry_exports_log: {
         Row: {
           created_at: string
+          export_format: string | null
           export_version: string
           exported_at: string
           exported_by: string
@@ -3026,6 +3034,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          export_format?: string | null
           export_version?: string
           exported_at?: string
           exported_by: string
@@ -3035,6 +3044,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          export_format?: string | null
           export_version?: string
           exported_at?: string
           exported_by?: string
@@ -3343,6 +3353,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "registry_cases"
             referencedColumns: ["registry_case_id"]
+          },
+          {
+            foreignKeyName: "registry_procedures_therapy_item_code_fkey"
+            columns: ["therapy_item_code"]
+            isOneToOne: false
+            referencedRelation: "registry_research_export_v1"
+            referencedColumns: ["therapy_item_code"]
           },
           {
             foreignKeyName: "registry_procedures_therapy_item_code_fkey"
@@ -4190,6 +4207,42 @@ export type Database = {
           },
         ]
       }
+      registry_research_export_v1: {
+        Row: {
+          adverse_event_flag: boolean | null
+          age_bucket: string | null
+          baseline_function_score: number | null
+          baseline_pain_score: number | null
+          baseline_to_followup_days: number | null
+          case_uid: string | null
+          category_code: string | null
+          delta_pain_90d: number | null
+          diagnosis_tag: string | null
+          effective_category_code: string | null
+          followup_function_score_90d: number | null
+          followup_pain_score_30d: number | null
+          followup_pain_score_90d: number | null
+          joint_region: string | null
+          procedure_month: string | null
+          procedure_uid: string | null
+          region_state: string | null
+          requires_checklist: boolean | null
+          requires_curadoria: boolean | null
+          requires_score: boolean | null
+          sex: string | null
+          therapy_item_code: string | null
+          therapy_item_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapy_items_category_code_fkey"
+            columns: ["category_code"]
+            isOneToOne: false
+            referencedRelation: "therapy_categories"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
     }
     Functions: {
       authenticate_patient: {
@@ -4200,6 +4253,7 @@ export type Database = {
           professional_id: string
         }[]
       }
+      can_access_research_export: { Args: never; Returns: boolean }
       check_patient_limit: {
         Args: { user_id: string }
         Returns: {
@@ -4277,6 +4331,10 @@ export type Database = {
       }
       mark_missed_followups: { Args: never; Returns: number }
       normalize_evidence_tag: { Args: { tag: string }; Returns: string }
+      pseudonymize_id: {
+        Args: { original_id: string; salt?: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "professional" | "viewer" | "patient"
