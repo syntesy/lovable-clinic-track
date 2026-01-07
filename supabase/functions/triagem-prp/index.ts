@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, createRateLimitResponse, getRateLimitHeaders } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
@@ -10,6 +11,102 @@ const corsHeaders = {
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const assistantId = Deno.env.get('ASSISTANT_TRIAGEM_PRP_ID');
 const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// =============================================================================
+// TAXONOMY GATE: Determina se o item requer triagem via categoria efetiva
+// =============================================================================
+
+interface TaxonomyGateResult {
+  requires_score: boolean;
+  effective_category_code: string | null;
+  legacy_type: "PRP" | "PRF" | "BMAC" | null;
+  item_name: string | null;
+}
+
+/**
+ * Consulta taxonomia para determinar se item requer triagem.
+ * Calcula effective_category_code = COALESCE(base_component_category_code, category_code)
+ */
+async function checkTaxonomyGate(therapyItemCode: string | undefined): Promise<TaxonomyGateResult> {
+  // Se não foi passado código, assume triagem necessária (compatibilidade)
+  if (!therapyItemCode) {
+    console.log("[TaxonomyGate] No therapy_item_code provided, assuming score required (legacy mode)");
+    return { requires_score: true, effective_category_code: null, legacy_type: "PRP", item_name: null };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Buscar item com categoria
+  const { data: item, error: itemError } = await supabase
+    .from("therapy_items")
+    .select("code, name, category_code, base_component_category_code")
+    .eq("code", therapyItemCode)
+    .single();
+
+  if (itemError || !item) {
+    console.log(`[TaxonomyGate] Item not found: ${therapyItemCode}, assuming score required`);
+    return { requires_score: true, effective_category_code: null, legacy_type: "PRP", item_name: null };
+  }
+
+  // Calcular categoria efetiva (híbridos usam base_component)
+  const effectiveCategoryCode = item.base_component_category_code ?? item.category_code;
+
+  // Buscar flags da categoria efetiva
+  const { data: category, error: catError } = await supabase
+    .from("therapy_categories")
+    .select("code, requires_score")
+    .eq("code", effectiveCategoryCode)
+    .single();
+
+  if (catError || !category) {
+    console.log(`[TaxonomyGate] Category not found: ${effectiveCategoryCode}, assuming score required`);
+    return { requires_score: true, effective_category_code: effectiveCategoryCode, legacy_type: "PRP", item_name: item.name };
+  }
+
+  // Mapear para tipo legado do motor (PRP/PRF/BMAC)
+  const legacyType = mapToLegacyType(therapyItemCode);
+
+  console.log(`[TaxonomyGate] Item: ${therapyItemCode}, EffectiveCategory: ${effectiveCategoryCode}, RequiresScore: ${category.requires_score}, LegacyType: ${legacyType}`);
+
+  return {
+    requires_score: category.requires_score,
+    effective_category_code: effectiveCategoryCode,
+    legacy_type: legacyType,
+    item_name: item.name,
+  };
+}
+
+/**
+ * Mapeia código da taxonomia para tipo legado do motor (compatibilidade)
+ */
+function mapToLegacyType(itemCode: string): "PRP" | "PRF" | "BMAC" | null {
+  const code = itemCode.toUpperCase();
+
+  // PRP e variações
+  if (code === "AUTO_PRP" || code === "AUTO_LP_PRP" || code === "AUTO_LR_PRP" || code.includes("PRP")) {
+    return "PRP";
+  }
+
+  // PRF e variações
+  if (code === "AUTO_PRF" || code === "AUTO_IPRF" || code === "AUTO_APRF" || code === "AUTO_LPRF" || code.includes("PRF")) {
+    return "PRF";
+  }
+
+  // BMA/BMAC/BMEC
+  if (code === "AUTO_BMA" || code === "AUTO_BMAC" || code === "AUTO_BMEC" || 
+      code.includes("BMA") || code.includes("BMAC") || code.includes("BMEC")) {
+    return "BMAC";
+  }
+
+  // Nanofat/Microfat → mapeia para BMAC
+  if (code === "AUTO_NANOFAT" || code === "AUTO_MICROFAT") {
+    return "BMAC";
+  }
+
+  return null;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -32,11 +129,34 @@ serve(async (req) => {
     if (!rateLimitResult.allowed) {
       return createRateLimitResponse(rateLimitResult.resetAt);
     }
-    const { rawQuestionnaire, questionnaireData, labResults, action, imageUrls } = await req.json();
+    
+    const { rawQuestionnaire, questionnaireData, labResults, action, imageUrls, therapyItemCode } = await req.json();
 
     // Handle OCR/Vision extraction
     if (action === "extract_text") {
       return await handleTextExtraction(imageUrls);
+    }
+
+    // ==========================================================================
+    // TAXONOMY GATE: Verificar se o item requer triagem
+    // ==========================================================================
+    const taxonomyGate = await checkTaxonomyGate(therapyItemCode);
+    
+    if (!taxonomyGate.requires_score) {
+      console.log(`[TaxonomyGate] Score NOT required for: ${therapyItemCode}`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          gate: "taxonomy",
+          requires_score: false,
+          message: `Triagem de score não é necessária para "${taxonomyGate.item_name || therapyItemCode}". Categoria: ${taxonomyGate.effective_category_code}`,
+          eligibility: {
+            overall_status: "NOT_APPLICABLE",
+            reason: "Item não requer avaliação de aptidão biológica"
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (!openAIApiKey) {

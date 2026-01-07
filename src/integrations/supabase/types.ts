@@ -1090,6 +1090,7 @@ export type Database = {
           reviewed_by: string | null
           sample_size: string | null
           status: Database["public"]["Enums"]["curation_status"]
+          therapy_item_code: string | null
           updated_at: string
           version: number
           what_changes_in_practice: string | null
@@ -1126,6 +1127,7 @@ export type Database = {
           reviewed_by?: string | null
           sample_size?: string | null
           status?: Database["public"]["Enums"]["curation_status"]
+          therapy_item_code?: string | null
           updated_at?: string
           version?: number
           what_changes_in_practice?: string | null
@@ -1162,6 +1164,7 @@ export type Database = {
           reviewed_by?: string | null
           sample_size?: string | null
           status?: Database["public"]["Enums"]["curation_status"]
+          therapy_item_code?: string | null
           updated_at?: string
           version?: number
           what_changes_in_practice?: string | null
@@ -1173,6 +1176,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "curadoria_articles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curations_therapy_item_fkey"
+            columns: ["therapy_item_code"]
+            isOneToOne: false
+            referencedRelation: "therapy_items"
+            referencedColumns: ["code"]
           },
         ]
       }

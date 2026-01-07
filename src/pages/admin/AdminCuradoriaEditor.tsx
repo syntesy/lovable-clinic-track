@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,12 +40,14 @@ import {
   BookOpen,
   Quote,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Link2
 } from "lucide-react";
 import { CurationGovernanceBadge } from "@/components/curadoria/CurationGovernanceBadge";
 import { CurationStatus } from "@/types/curation";
 import { CuradoriaArticle, interestColors } from "@/types/curadoria";
 import { VersionHistoryModal } from "@/components/admin/VersionHistoryModal";
+import { useTherapyTaxonomy } from "@/hooks/useTherapyTaxonomy";
 
 interface CurationData {
   id: string;
@@ -79,6 +81,7 @@ interface CurationData {
   reviewed_at: string | null;
   approval_declaration: boolean;
   rejection_reason: string | null;
+  therapy_item_code: string | null;
 }
 
 const designOptions = [
@@ -132,6 +135,28 @@ export default function AdminCuradoriaEditor() {
   // Form state
   const [formData, setFormData] = useState<Partial<CurationData>>({});
   const [clinicalTakeaways, setClinicalTakeaways] = useState<string[]>(["", "", ""]);
+  const [selectedTherapyItem, setSelectedTherapyItem] = useState<string | null>(null);
+  
+  // Taxonomia
+  const { items: taxonomyItems, categories: taxonomyCategories, loading: taxonomyLoading } = useTherapyTaxonomy();
+  
+  // Agrupar itens por categoria para o select
+  const groupedTaxonomyItems = useMemo(() => {
+    const groups: Record<string, typeof taxonomyItems> = {};
+    taxonomyItems.forEach((item) => {
+      const cat = item.effective_category_code;
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    });
+    return groups;
+  }, [taxonomyItems]);
+  
+  const categoryLabels: Record<string, string> = {
+    autologous_biologic: "🩸 Biológicos Autólogos",
+    bio_stimulator: "💉 Bioestimuladores",
+    injectable_nutrition: "🧬 Terapias Nutricionais",
+    neuromodulation_light: "⚡ Neuromodulação",
+  };
   
   // Modals
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -198,6 +223,7 @@ export default function AdminCuradoriaEditor() {
       
       setCuration(typedCuration);
       setFormData(typedCuration);
+      setSelectedTherapyItem(typedCuration.therapy_item_code || null);
       setClinicalTakeaways([
         typedCuration.clinical_takeaways[0] || "",
         typedCuration.clinical_takeaways[1] || "",
@@ -269,6 +295,7 @@ export default function AdminCuradoriaEditor() {
           clinical_takeaways: clinicalTakeaways.filter((t) => t.trim() !== ""),
           what_changes_in_practice: formData.practice_impact || formData.what_changes_in_practice,
           authors_conclusion: formData.authors_conclusion,
+          therapy_item_code: selectedTherapyItem,
           version: curation.version + 1,
           status: "em_revisao" as CurationStatus,
           reviewed_by: currentUserId,
@@ -315,6 +342,7 @@ export default function AdminCuradoriaEditor() {
           clinical_takeaways: clinicalTakeaways.filter((t) => t.trim() !== ""),
           what_changes_in_practice: formData.practice_impact || formData.what_changes_in_practice,
           authors_conclusion: formData.authors_conclusion,
+          therapy_item_code: selectedTherapyItem,
           version: curation.version + 1,
           status: "disponivel" as CurationStatus,
           reviewed_by: currentUserId,
@@ -530,6 +558,43 @@ export default function AdminCuradoriaEditor() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Vínculo com taxonomia */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Link2 className="h-4 w-4" />
+                Relacionado a (item da taxonomia)
+              </Label>
+              <Select
+                value={selectedTherapyItem || "none"}
+                onValueChange={(v) => setSelectedTherapyItem(v === "none" ? null : v)}
+                disabled={taxonomyLoading}
+              >
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder={taxonomyLoading ? "Carregando..." : "Selecione um item (opcional)"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (curadoria geral)</SelectItem>
+                  {Object.entries(groupedTaxonomyItems).map(([categoryCode, items]) => (
+                    <div key={categoryCode}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        {categoryLabels[categoryCode] || categoryCode}
+                      </div>
+                      {items.map((item) => (
+                        <SelectItem key={item.code} value={item.code}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Vincular permite filtrar curadorias por terapia/procedimento específico.
+              </p>
+            </div>
+
+            <Separator />
+
             <div className="space-y-2">
               <Label>Intervenção principal</Label>
               <Textarea
