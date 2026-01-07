@@ -1067,6 +1067,7 @@ export type Database = {
           article_id: string
           authors_conclusion: string | null
           bias_risk: Database["public"]["Enums"]["bias_risk"] | null
+          category_code: string | null
           citations: Json | null
           clinical_takeaways: string[] | null
           comparator: string | null
@@ -1104,6 +1105,7 @@ export type Database = {
           article_id: string
           authors_conclusion?: string | null
           bias_risk?: Database["public"]["Enums"]["bias_risk"] | null
+          category_code?: string | null
           citations?: Json | null
           clinical_takeaways?: string[] | null
           comparator?: string | null
@@ -1141,6 +1143,7 @@ export type Database = {
           article_id?: string
           authors_conclusion?: string | null
           bias_risk?: Database["public"]["Enums"]["bias_risk"] | null
+          category_code?: string | null
           citations?: Json | null
           clinical_takeaways?: string[] | null
           comparator?: string | null
@@ -1176,6 +1179,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "curadoria_articles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curations_category_code_fkey"
+            columns: ["category_code"]
+            isOneToOne: false
+            referencedRelation: "therapy_categories"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "curations_therapy_item_fkey"

@@ -21,6 +21,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Clock, AlertTriangle, Target, ClipboardCheck, BookOpen } from 'lucide-react';
 import { useItemGovernance } from '@/hooks/useTherapyTaxonomy';
+import { CurationContextAccordion } from '@/components/curation/CurationContextAccordion';
 
 interface FollowupData {
   timepoint: 30 | 90 | 180 | 365;
@@ -140,6 +141,10 @@ export function ObservationalFollowupForm({
           </div>
         </div>
       )}
+
+      {/* Curadoria contextual (accordion colapsado) */}
+      <CurationContextAccordion therapyItemCode={therapyItemCode} />
+
       {/* Timeline de timepoints */}
       <div className="flex flex-wrap gap-2">
         {TIMEPOINTS.map((tp) => {
