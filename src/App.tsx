@@ -46,6 +46,7 @@ import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegistryDashboard from "./pages/admin/AdminRegistryDashboard";
 import RegistryGovernance from "./pages/admin/RegistryGovernance";
+import AdminResearchExport from "./pages/admin/AdminResearchExport";
 import AdminScoreFluxoDoc from "./pages/admin/AdminScoreFluxoDoc";
 import AdminScoreQA from "./pages/admin/AdminScoreQA";
 import LandingPage from "./pages/LandingPage";
@@ -434,6 +435,16 @@ const App = () => (
               <RequireAdminRole>
                 <Layout>
                   <RegistryGovernance />
+                </Layout>
+            </RequireAdminRole>
+          }
+          />
+          <Route
+            path="/admin/registry/export"
+            element={
+              <RequireAdminRole>
+                <Layout>
+                  <AdminResearchExport />
                 </Layout>
               </RequireAdminRole>
             }
