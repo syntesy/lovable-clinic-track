@@ -82,7 +82,10 @@ interface CurationData {
   approval_declaration: boolean;
   rejection_reason: string | null;
   therapy_item_code: string | null;
+  category_code: string | null;
 }
+
+type CurationBindingType = "general" | "category" | "item";
 
 const designOptions = [
   { value: "rct", label: "Ensaio Clínico Randomizado (RCT)" },
@@ -135,7 +138,9 @@ export default function AdminCuradoriaEditor() {
   // Form state
   const [formData, setFormData] = useState<Partial<CurationData>>({});
   const [clinicalTakeaways, setClinicalTakeaways] = useState<string[]>(["", "", ""]);
+  const [bindingType, setBindingType] = useState<CurationBindingType>("general");
   const [selectedTherapyItem, setSelectedTherapyItem] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   // Taxonomia
   const { items: taxonomyItems, categories: taxonomyCategories, loading: taxonomyLoading } = useTherapyTaxonomy();
@@ -224,6 +229,17 @@ export default function AdminCuradoriaEditor() {
       setCuration(typedCuration);
       setFormData(typedCuration);
       setSelectedTherapyItem(typedCuration.therapy_item_code || null);
+      setSelectedCategory(typedCuration.category_code || null);
+      
+      // Determine binding type
+      if (typedCuration.therapy_item_code) {
+        setBindingType("item");
+      } else if (typedCuration.category_code) {
+        setBindingType("category");
+      } else {
+        setBindingType("general");
+      }
+      
       setClinicalTakeaways([
         typedCuration.clinical_takeaways[0] || "",
         typedCuration.clinical_takeaways[1] || "",
@@ -275,6 +291,10 @@ export default function AdminCuradoriaEditor() {
       // Save current version first
       await saveVersion();
 
+      // Determine what to save based on binding type
+      const therapyItemCode = bindingType === "item" ? selectedTherapyItem : null;
+      const categoryCode = bindingType === "category" ? selectedCategory : null;
+
       const { error } = await supabase
         .from("curations")
         .update({
@@ -295,7 +315,8 @@ export default function AdminCuradoriaEditor() {
           clinical_takeaways: clinicalTakeaways.filter((t) => t.trim() !== ""),
           what_changes_in_practice: formData.practice_impact || formData.what_changes_in_practice,
           authors_conclusion: formData.authors_conclusion,
-          therapy_item_code: selectedTherapyItem,
+          therapy_item_code: therapyItemCode,
+          category_code: categoryCode,
           version: curation.version + 1,
           status: "em_revisao" as CurationStatus,
           reviewed_by: currentUserId,
@@ -322,6 +343,10 @@ export default function AdminCuradoriaEditor() {
     try {
       await saveVersion();
 
+      // Determine what to save based on binding type
+      const therapyItemCode = bindingType === "item" ? selectedTherapyItem : null;
+      const categoryCode = bindingType === "category" ? selectedCategory : null;
+
       const { error } = await supabase
         .from("curations")
         .update({
@@ -342,9 +367,10 @@ export default function AdminCuradoriaEditor() {
           clinical_takeaways: clinicalTakeaways.filter((t) => t.trim() !== ""),
           what_changes_in_practice: formData.practice_impact || formData.what_changes_in_practice,
           authors_conclusion: formData.authors_conclusion,
-          therapy_item_code: selectedTherapyItem,
+          therapy_item_code: therapyItemCode,
+          category_code: categoryCode,
           version: curation.version + 1,
-          status: "disponivel" as CurationStatus,
+          status: "aprovada" as CurationStatus,
           reviewed_by: currentUserId,
           reviewed_at: new Date().toISOString(),
           approval_declaration: true,
@@ -559,37 +585,101 @@ export default function AdminCuradoriaEditor() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Vínculo com taxonomia */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label className="flex items-center gap-2">
                 <Link2 className="h-4 w-4" />
-                Relacionado a (item da taxonomia)
+                Vincular curadoria a
               </Label>
-              <Select
-                value={selectedTherapyItem || "none"}
-                onValueChange={(v) => setSelectedTherapyItem(v === "none" ? null : v)}
-                disabled={taxonomyLoading}
-              >
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue placeholder={taxonomyLoading ? "Carregando..." : "Selecione um item (opcional)"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum (curadoria geral)</SelectItem>
-                  {Object.entries(groupedTaxonomyItems).map(([categoryCode, items]) => (
-                    <div key={categoryCode}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                        {categoryLabels[categoryCode] || categoryCode}
+              
+              {/* Binding type selection */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant={bindingType === "general" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setBindingType("general");
+                    setSelectedTherapyItem(null);
+                    setSelectedCategory(null);
+                  }}
+                >
+                  Geral
+                </Button>
+                <Button
+                  type="button"
+                  variant={bindingType === "category" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setBindingType("category");
+                    setSelectedTherapyItem(null);
+                  }}
+                >
+                  Categoria
+                </Button>
+                <Button
+                  type="button"
+                  variant={bindingType === "item" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setBindingType("item");
+                    setSelectedCategory(null);
+                  }}
+                >
+                  Item específico
+                </Button>
+              </div>
+
+              {/* Category selector (shown when bindingType === "category") */}
+              {bindingType === "category" && (
+                <Select
+                  value={selectedCategory || ""}
+                  onValueChange={(v) => setSelectedCategory(v || null)}
+                  disabled={taxonomyLoading}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder={taxonomyLoading ? "Carregando..." : "Selecione uma categoria"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taxonomyCategories.map((cat) => (
+                      <SelectItem key={cat.code} value={cat.code}>
+                        {categoryLabels[cat.code] || cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Item selector (shown when bindingType === "item") */}
+              {bindingType === "item" && (
+                <Select
+                  value={selectedTherapyItem || ""}
+                  onValueChange={(v) => setSelectedTherapyItem(v || null)}
+                  disabled={taxonomyLoading}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder={taxonomyLoading ? "Carregando..." : "Selecione um item"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(groupedTaxonomyItems).map(([catCode, items]) => (
+                      <div key={catCode}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          {categoryLabels[catCode] || catCode}
+                        </div>
+                        {items.map((item) => (
+                          <SelectItem key={item.code} value={item.code}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
                       </div>
-                      {items.map((item) => (
-                        <SelectItem key={item.code} value={item.code}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  ))}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
               <p className="text-xs text-muted-foreground">
-                Vincular permite filtrar curadorias por terapia/procedimento específico.
+                {bindingType === "general" && "Curadoria geral — aparece como fallback quando não houver específica."}
+                {bindingType === "category" && "Curadoria por categoria — aparece para todos os itens desta categoria."}
+                {bindingType === "item" && "Curadoria específica — aparece apenas para este item/procedimento."}
               </p>
             </div>
 
