@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { 
   Download, Lock, Shield, FileSpreadsheet, 
-  Calendar, Filter, AlertTriangle, History, Hash
+  Calendar, Filter, AlertTriangle, History, Hash,
+  RotateCcw, Eye, Bookmark, Copy, CheckCircle
 } from "lucide-react";
 import {
   Table,
@@ -20,6 +21,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -35,6 +44,24 @@ interface ExportLog {
   export_hash: string | null;
 }
 
+interface Snapshot {
+  id: string;
+  snapshot_code: string;
+  created_at: string;
+  export_hash: string;
+  view_version: string;
+  row_count: number;
+  title: string | null;
+  is_published: boolean;
+}
+
+interface PreviewData {
+  totalRows: number;
+  byProcedureType: Record<string, number>;
+  byMonth: Record<string, number>;
+  byRegion: Record<string, number>;
+}
+
 interface Filters {
   startMonth: string;
   endMonth: string;
@@ -45,8 +72,16 @@ interface Filters {
 export default function AdminResearchExport() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
   const [exportLogs, setExportLogs] = useState<ExportLog[]>([]);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [snapshotDialogOpen, setSnapshotDialogOpen] = useState(false);
+  const [selectedLogForSnapshot, setSelectedLogForSnapshot] = useState<ExportLog | null>(null);
+  const [snapshotTitle, setSnapshotTitle] = useState("");
+  const [creatingSnapshot, setCreatingSnapshot] = useState(false);
+  
   const [filters, setFilters] = useState<Filters>({
     startMonth: "",
     endMonth: "",
@@ -89,26 +124,35 @@ export default function AdminResearchExport() {
     }
   }, []);
 
+  const fetchSnapshots = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("research_export_snapshots")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setSnapshots((data as Snapshot[]) || []);
+    } catch (err) {
+      console.error("Error fetching snapshots:", err);
+    }
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       await checkAccess();
-      await fetchExportLogs();
+      await Promise.all([fetchExportLogs(), fetchSnapshots()]);
       setLoading(false);
     };
     init();
-  }, [checkAccess, fetchExportLogs]);
+  }, [checkAccess, fetchExportLogs, fetchSnapshots]);
 
-  const handleExport = async () => {
-    setExporting(true);
+  const handlePreview = async () => {
+    setPreviewing(true);
+    setPreviewData(null);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        toast.error("Sessão expirada. Faça login novamente.");
-        return;
-      }
-
-      // Build filter object (only non-empty values)
       const filterPayload: Record<string, string> = {};
       if (filters.startMonth) filterPayload.startMonth = filters.startMonth;
       if (filters.endMonth) filterPayload.endMonth = filters.endMonth;
@@ -116,17 +160,42 @@ export default function AdminResearchExport() {
       if (filters.procedureType) filterPayload.procedureType = filters.procedureType;
 
       const response = await supabase.functions.invoke("export-registry-research", {
-        body: filterPayload,
+        body: { action: "preview", filters: filterPayload },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Erro ao gerar preview");
+      }
+
+      setPreviewData(response.data as PreviewData);
+    } catch (err) {
+      console.error("Preview error:", err);
+      toast.error("Erro ao gerar preview");
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
+  const handleExport = async (replayFilters?: Record<string, unknown>) => {
+    setExporting(true);
+    try {
+      const filterPayload = replayFilters || {};
+      if (!replayFilters) {
+        if (filters.startMonth) filterPayload.startMonth = filters.startMonth;
+        if (filters.endMonth) filterPayload.endMonth = filters.endMonth;
+        if (filters.therapyItemCode) filterPayload.therapyItemCode = filters.therapyItemCode;
+        if (filters.procedureType) filterPayload.procedureType = filters.procedureType;
+      }
+
+      const response = await supabase.functions.invoke("export-registry-research", {
+        body: { action: "export", filters: filterPayload },
       });
 
       if (response.error) {
         throw new Error(response.error.message || "Erro ao exportar");
       }
 
-      // Get the CSV content
       const csvContent = response.data;
-      
-      // Create download link
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -138,8 +207,6 @@ export default function AdminResearchExport() {
       URL.revokeObjectURL(url);
 
       toast.success("Exportação concluída com sucesso!");
-      
-      // Refresh logs
       await fetchExportLogs();
     } catch (err) {
       console.error("Export error:", err);
@@ -147,6 +214,55 @@ export default function AdminResearchExport() {
     } finally {
       setExporting(false);
     }
+  };
+
+  const handleReplay = (log: ExportLog) => {
+    if (log.filters_json) {
+      toast.info("Reexecutando export com os mesmos filtros...");
+      handleExport(log.filters_json);
+    } else {
+      handleExport({});
+    }
+  };
+
+  const openSnapshotDialog = (log: ExportLog) => {
+    setSelectedLogForSnapshot(log);
+    setSnapshotTitle("");
+    setSnapshotDialogOpen(true);
+  };
+
+  const handleCreateSnapshot = async () => {
+    if (!selectedLogForSnapshot) return;
+    
+    setCreatingSnapshot(true);
+    try {
+      const response = await supabase.functions.invoke("export-registry-research", {
+        body: {
+          action: "snapshot",
+          exportLogId: selectedLogForSnapshot.id,
+          snapshotTitle: snapshotTitle || undefined,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Erro ao criar snapshot");
+      }
+
+      const result = response.data;
+      toast.success(`Snapshot criado: ${result.snapshot.code}`);
+      setSnapshotDialogOpen(false);
+      await fetchSnapshots();
+    } catch (err) {
+      console.error("Snapshot error:", err);
+      toast.error("Erro ao criar snapshot");
+    } finally {
+      setCreatingSnapshot(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copiado para a área de transferência");
   };
 
   if (loading) {
@@ -195,7 +311,7 @@ export default function AdminResearchExport() {
                 <li>Dados pseudonimizados (UIDs irreversíveis)</li>
                 <li>Exportação registrada no log de auditoria</li>
                 <li>Hash SHA256 para verificação de integridade</li>
-                <li>Uso exclusivo para pesquisa institucional</li>
+                <li>Snapshots imutáveis para publicações</li>
               </ul>
             </div>
           </div>
@@ -225,7 +341,6 @@ export default function AdminResearchExport() {
                 type="month"
                 value={filters.startMonth}
                 onChange={(e) => setFilters({ ...filters, startMonth: e.target.value })}
-                placeholder="YYYY-MM"
               />
             </div>
 
@@ -239,7 +354,6 @@ export default function AdminResearchExport() {
                 type="month"
                 value={filters.endMonth}
                 onChange={(e) => setFilters({ ...filters, endMonth: e.target.value })}
-                placeholder="YYYY-MM"
               />
             </div>
 
@@ -273,18 +387,150 @@ export default function AdminResearchExport() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end gap-2 pt-4">
             <Button 
-              onClick={handleExport} 
+              variant="outline"
+              onClick={handlePreview} 
+              disabled={previewing}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              {previewing ? "Gerando..." : "Preview"}
+            </Button>
+            <Button 
+              onClick={() => handleExport()} 
               disabled={exporting}
               className="gap-2"
             >
               <Download className="h-4 w-4" />
-              {exporting ? "Exportando..." : "Gerar Exportação CSV"}
+              {exporting ? "Exportando..." : "Gerar CSV"}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Preview Results */}
+      {previewData && (
+        <Card className="border-blue-200 dark:border-blue-800">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye className="h-4 w-4 text-blue-600" />
+              Preview da Exportação
+            </CardTitle>
+            <CardDescription>
+              Contagens agregadas (sem dados individuais)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">Total de Linhas</p>
+                <p className="text-3xl font-bold">{previewData.totalRows}</p>
+              </div>
+              
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Por Procedimento</p>
+                <div className="space-y-1">
+                  {Object.entries(previewData.byProcedureType).map(([type, count]) => (
+                    <div key={type} className="flex justify-between text-sm">
+                      <span>{type}</span>
+                      <span className="font-medium">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Por Região</p>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {Object.entries(previewData.byRegion).map(([region, count]) => (
+                    <div key={region} className="flex justify-between text-sm">
+                      <span>{region}</span>
+                      <span className="font-medium">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {Object.keys(previewData.byMonth).length > 0 && (
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Por Mês</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(previewData.byMonth)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([month, count]) => (
+                      <Badge key={month} variant="secondary">
+                        {month}: {count}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Snapshots */}
+      {snapshots.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Bookmark className="h-4 w-4" />
+              Snapshots para Publicação
+            </CardTitle>
+            <CardDescription>
+              Referências imutáveis para citar em papers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Título</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Linhas</TableHead>
+                    <TableHead>Hash</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {snapshots.map((snap) => (
+                    <TableRow key={snap.id}>
+                      <TableCell>
+                        <code className="bg-primary/10 text-primary px-2 py-1 rounded font-mono">
+                          {snap.snapshot_code}
+                        </code>
+                      </TableCell>
+                      <TableCell>{snap.title || "-"}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(snap.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell>{snap.row_count}</TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                          {snap.export_hash.slice(0, 12)}...
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(snap.snapshot_code)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Export History */}
       <Card>
@@ -294,7 +540,7 @@ export default function AdminResearchExport() {
             Histórico de Exportações
           </CardTitle>
           <CardDescription>
-            Últimas 20 exportações realizadas
+            Últimas 20 exportações - clique para replay ou criar snapshot
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -313,6 +559,7 @@ export default function AdminResearchExport() {
                     <TableHead>Linhas</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Hash</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -340,6 +587,28 @@ export default function AdminResearchExport() {
                           </code>
                         )}
                       </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReplay(log)}
+                            title="Reexecutar export"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                          {log.status === "success" && log.export_hash && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openSnapshotDialog(log)}
+                              title="Criar snapshot para publicação"
+                            >
+                              <Bookmark className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -348,6 +617,61 @@ export default function AdminResearchExport() {
           )}
         </CardContent>
       </Card>
+
+      {/* Snapshot Dialog */}
+      <Dialog open={snapshotDialogOpen} onOpenChange={setSnapshotDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bookmark className="h-5 w-5" />
+              Criar Snapshot para Publicação
+            </DialogTitle>
+            <DialogDescription>
+              Snapshots são referências imutáveis que podem ser citadas em papers científicos.
+              Um código único será gerado (ex: REGEN-2026-001).
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="snapshotTitle">Título do Estudo (opcional)</Label>
+              <Input
+                id="snapshotTitle"
+                value={snapshotTitle}
+                onChange={(e) => setSnapshotTitle(e.target.value)}
+                placeholder="Ex: Análise de desfechos PRP joelho 2026"
+              />
+            </div>
+
+            {selectedLogForSnapshot && (
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Linhas:</span>
+                  <span className="font-medium">{selectedLogForSnapshot.row_count}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Hash:</span>
+                  <code className="text-xs">{selectedLogForSnapshot.export_hash?.slice(0, 24)}...</code>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Versão:</span>
+                  <span>{selectedLogForSnapshot.view_version}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSnapshotDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateSnapshot} disabled={creatingSnapshot} className="gap-2">
+              <CheckCircle className="h-4 w-4" />
+              {creatingSnapshot ? "Criando..." : "Criar Snapshot"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

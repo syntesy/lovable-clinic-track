@@ -6,13 +6,19 @@ const corsHeaders = {
 };
 
 interface ExportFilters {
-  startMonth?: string; // YYYY-MM
-  endMonth?: string;   // YYYY-MM
+  startMonth?: string;
+  endMonth?: string;
   therapyItemCode?: string;
   procedureType?: string;
 }
 
-// Generate SHA256 hash of content
+interface RequestBody {
+  action?: "export" | "preview" | "snapshot";
+  filters?: ExportFilters;
+  exportLogId?: string; // For replay
+  snapshotTitle?: string; // For snapshot creation
+}
+
 async function generateHash(content: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(content);
@@ -21,7 +27,6 @@ async function generateHash(content: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Convert array of objects to CSV
 function toCSV(data: Record<string, unknown>[]): string {
   if (data.length === 0) return "";
   
@@ -44,14 +49,34 @@ function toCSV(data: Record<string, unknown>[]): string {
   return csvRows.join("\n");
 }
 
+// deno-lint-ignore no-explicit-any
+async function buildQuery(supabase: any, filters: ExportFilters) {
+  let baseQuery = supabase.from("registry_research_export_v1").select("*");
+
+  if (filters.startMonth) {
+    baseQuery = baseQuery.gte("procedure_date", `${filters.startMonth}-01`);
+  }
+  if (filters.endMonth) {
+    const [year, month] = filters.endMonth.split("-").map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+    baseQuery = baseQuery.lte("procedure_date", `${filters.endMonth}-${lastDay}`);
+  }
+  if (filters.therapyItemCode) {
+    baseQuery = baseQuery.eq("therapy_item_code", filters.therapyItemCode);
+  }
+  if (filters.procedureType) {
+    baseQuery = baseQuery.eq("technique_tag", filters.procedureType);
+  }
+
+  return baseQuery;
+}
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -60,19 +85,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    // Client with user's JWT for RLS
     const supabaseUser = createClient(supabaseUrl, supabaseServiceKey, {
       global: { headers: { Authorization: authHeader } },
     });
-
-    // Service client for logging (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user info
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
       return new Response(
@@ -81,7 +101,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user has admin or research role
     const { data: roles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -95,49 +114,150 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse filters from request body
-    let filters: ExportFilters = {};
+    let body: RequestBody = { action: "export", filters: {} };
     if (req.method === "POST") {
       try {
-        filters = await req.json();
+        body = await req.json();
       } catch {
-        // No filters provided
+        // Default values
       }
     }
 
-    console.log(`[export-registry-research] User ${user.id} requesting export with filters:`, filters);
+    const action = body.action || "export";
+    const filters = body.filters || {};
 
-    // Build query for the research export view
-    let query = supabaseUser.from("registry_research_export_v1").select("*");
+    console.log(`[export-registry-research] User ${user.id} action: ${action}, filters:`, filters);
 
-    // Apply date filters
-    if (filters.startMonth) {
-      const startDate = `${filters.startMonth}-01`;
-      query = query.gte("procedure_date", startDate);
-    }
-    if (filters.endMonth) {
-      // Get last day of month
-      const [year, month] = filters.endMonth.split("-").map(Number);
-      const lastDay = new Date(year, month, 0).getDate();
-      const endDate = `${filters.endMonth}-${lastDay}`;
-      query = query.lte("procedure_date", endDate);
+    // ============ PREVIEW ACTION ============
+    if (action === "preview") {
+      const query = await buildQuery(supabaseUser, filters);
+      const { data: exportData, error: queryError } = await query;
+
+      if (queryError) {
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch data", details: queryError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const rows = exportData || [];
+      
+      // Aggregate counts without showing individual data
+      const byProcedureType: Record<string, number> = {};
+      const byMonth: Record<string, number> = {};
+      const byRegion: Record<string, number> = {};
+
+      rows.forEach((row: Record<string, unknown>) => {
+        // By procedure type
+        const procType = String(row.technique_tag || "Não especificado");
+        byProcedureType[procType] = (byProcedureType[procType] || 0) + 1;
+
+        // By month
+        const procDate = row.procedure_date as string | null;
+        if (procDate) {
+          const month = procDate.slice(0, 7); // YYYY-MM
+          byMonth[month] = (byMonth[month] || 0) + 1;
+        }
+
+        // By region
+        const region = String(row.region_tag || "Não especificado");
+        byRegion[region] = (byRegion[region] || 0) + 1;
+      });
+
+      return new Response(
+        JSON.stringify({
+          totalRows: rows.length,
+          byProcedureType,
+          byMonth,
+          byRegion,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Apply other filters
-    if (filters.therapyItemCode) {
-      query = query.eq("therapy_item_code", filters.therapyItemCode);
-    }
-    if (filters.procedureType) {
-      query = query.eq("technique_tag", filters.procedureType);
+    // ============ SNAPSHOT ACTION ============
+    if (action === "snapshot") {
+      const exportLogId = body.exportLogId;
+      const snapshotTitle = body.snapshotTitle;
+
+      if (!exportLogId) {
+        return new Response(
+          JSON.stringify({ error: "exportLogId is required for snapshot" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Get the export log
+      const { data: logData, error: logError } = await supabaseAdmin
+        .from("registry_exports_log")
+        .select("*")
+        .eq("id", exportLogId)
+        .single();
+
+      if (logError || !logData) {
+        return new Response(
+          JSON.stringify({ error: "Export log not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Generate snapshot code
+      const { data: codeData, error: codeError } = await supabaseAdmin.rpc("generate_snapshot_code");
+      
+      if (codeError) {
+        console.error("Error generating snapshot code:", codeError);
+        return new Response(
+          JSON.stringify({ error: "Failed to generate snapshot code" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Create snapshot
+      const { data: snapshot, error: snapshotError } = await supabaseAdmin
+        .from("research_export_snapshots")
+        .insert({
+          snapshot_code: codeData,
+          created_by: user.id,
+          export_log_id: exportLogId,
+          export_hash: logData.export_hash,
+          view_name: logData.export_name || "registry_research_export_v1",
+          view_version: logData.view_version || "v1",
+          filters_json: logData.filters_json,
+          row_count: logData.row_count,
+          title: snapshotTitle || null,
+        })
+        .select()
+        .single();
+
+      if (snapshotError) {
+        console.error("Error creating snapshot:", snapshotError);
+        return new Response(
+          JSON.stringify({ error: "Failed to create snapshot", details: snapshotError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          snapshot: {
+            id: snapshot.id,
+            code: snapshot.snapshot_code,
+            hash: snapshot.export_hash,
+            rowCount: snapshot.row_count,
+          }
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Execute query
+    // ============ EXPORT ACTION ============
+    const query = await buildQuery(supabaseUser, filters);
     const { data: exportData, error: queryError } = await query;
 
     if (queryError) {
       console.error("[export-registry-research] Query error:", queryError);
       
-      // Log failed export
       await supabaseAdmin.from("registry_exports_log").insert({
         exported_by: user.id,
         exported_at: new Date().toISOString(),
@@ -159,31 +279,30 @@ Deno.serve(async (req) => {
     const rowCount = exportData?.length || 0;
     console.log(`[export-registry-research] Fetched ${rowCount} rows`);
 
-    // Generate CSV
     const csvContent = toCSV(exportData || []);
-    
-    // Calculate hash for integrity verification
     const exportHash = await generateHash(csvContent);
 
-    // Log successful export
-    const { error: logError } = await supabaseAdmin.from("registry_exports_log").insert({
-      exported_by: user.id,
-      exported_at: new Date().toISOString(),
-      export_name: "registry_research_export_v1",
-      view_version: "v1",
-      filters_json: filters,
-      row_count: rowCount,
-      status: "success",
-      export_hash: exportHash,
-      export_format: "csv",
-      user_agent: req.headers.get("user-agent") || null,
-    });
+    const { data: logEntry, error: logError } = await supabaseAdmin
+      .from("registry_exports_log")
+      .insert({
+        exported_by: user.id,
+        exported_at: new Date().toISOString(),
+        export_name: "registry_research_export_v1",
+        view_version: "v1",
+        filters_json: filters,
+        row_count: rowCount,
+        status: "success",
+        export_hash: exportHash,
+        export_format: "csv",
+        user_agent: req.headers.get("user-agent") || null,
+      })
+      .select("id")
+      .single();
 
     if (logError) {
       console.error("[export-registry-research] Failed to log export:", logError);
     }
 
-    // Return CSV file
     const filename = `registry_research_export_${new Date().toISOString().slice(0, 10)}.csv`;
     
     return new Response(csvContent, {
@@ -194,6 +313,7 @@ Deno.serve(async (req) => {
         "Content-Disposition": `attachment; filename="${filename}"`,
         "X-Export-Hash": exportHash,
         "X-Row-Count": String(rowCount),
+        "X-Export-Log-Id": logEntry?.id || "",
       },
     });
   } catch (error) {
