@@ -3018,6 +3018,7 @@ export type Database = {
         Row: {
           created_at: string
           export_format: string | null
+          export_hash: string | null
           export_name: string
           export_version: string
           exported_at: string
@@ -3029,10 +3030,12 @@ export type Database = {
           row_count: number
           status: string
           user_agent: string | null
+          view_version: string
         }
         Insert: {
           created_at?: string
           export_format?: string | null
+          export_hash?: string | null
           export_name?: string
           export_version?: string
           exported_at?: string
@@ -3044,10 +3047,12 @@ export type Database = {
           row_count?: number
           status?: string
           user_agent?: string | null
+          view_version?: string
         }
         Update: {
           created_at?: string
           export_format?: string | null
+          export_hash?: string | null
           export_name?: string
           export_version?: string
           exported_at?: string
@@ -3059,6 +3064,7 @@ export type Database = {
           row_count?: number
           status?: string
           user_agent?: string | null
+          view_version?: string
         }
         Relationships: []
       }
