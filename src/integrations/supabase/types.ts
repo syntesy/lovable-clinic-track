@@ -3665,24 +3665,34 @@ export type Database = {
       }
       therapy_items: {
         Row: {
+          base_component_category_code: string | null
           category_code: string
           code: string
           created_at: string
           name: string
         }
         Insert: {
+          base_component_category_code?: string | null
           category_code: string
           code: string
           created_at?: string
           name: string
         }
         Update: {
+          base_component_category_code?: string | null
           category_code?: string
           code?: string
           created_at?: string
           name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "therapy_items_base_component_fkey"
+            columns: ["base_component_category_code"]
+            isOneToOne: false
+            referencedRelation: "therapy_categories"
+            referencedColumns: ["code"]
+          },
           {
             foreignKeyName: "therapy_items_category_code_fkey"
             columns: ["category_code"]
