@@ -29,10 +29,15 @@ const SOURCE_LABELS: Record<CurationSource, string> = {
   none: "",
 };
 
-function formatUpdateDate(dateStr: string | null): string | null {
-  if (!dateStr) return null;
+function getCurationDate(curation: { 
+  updated_at: string | null; 
+  reviewed_at: string | null; 
+  created_at: string;
+}): string | null {
+  const raw = curation.updated_at ?? curation.reviewed_at ?? curation.created_at;
+  if (!raw) return null;
   try {
-    const date = parseISO(dateStr);
+    const date = parseISO(raw);
     return format(date, "dd/MM/yyyy", { locale: ptBR });
   } catch {
     return null;
@@ -138,10 +143,10 @@ export function CurationContextAccordion({
                         Nível: {curation.evidence_level}
                       </Badge>
                     )}
-                    {formatUpdateDate(curation.updated_at) && (
+                    {getCurationDate(curation) && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        Atualizado: {formatUpdateDate(curation.updated_at)}
+                        Atualizado: {getCurationDate(curation)}
                       </span>
                     )}
                   </div>

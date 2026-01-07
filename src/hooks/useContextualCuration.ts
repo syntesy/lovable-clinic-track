@@ -17,6 +17,8 @@ interface CurationSummary {
   results_key: string | null;
   clinical_takeaways: string[] | null;
   what_changes_in_practice: string | null;
+  created_at: string;
+  reviewed_at: string | null;
   evidence_level: string | null;
   updated_at: string | null;
   article_title?: string;
@@ -77,6 +79,8 @@ export function useContextualCuration(
           what_changes_in_practice,
           evidence_level,
           updated_at,
+          created_at,
+          reviewed_at,
           curadoria_articles (
             title,
             authors,
@@ -111,6 +115,8 @@ export function useContextualCuration(
             what_changes_in_practice,
             evidence_level,
             updated_at,
+            created_at,
+            reviewed_at,
             curadoria_articles (
               title,
               authors,
@@ -145,6 +151,8 @@ export function useContextualCuration(
           what_changes_in_practice,
           evidence_level,
           updated_at,
+          created_at,
+          reviewed_at,
           curadoria_articles (
             title,
             authors,
@@ -215,6 +223,8 @@ function mapCurations(data: unknown[]): CurationSummary[] {
       what_changes_in_practice: r.what_changes_in_practice as string | null,
       evidence_level: r.evidence_level as string | null,
       updated_at: r.updated_at as string | null,
+      created_at: r.created_at as string,
+      reviewed_at: r.reviewed_at as string | null,
       article_title: article?.title as string | undefined,
       article_authors: article?.authors as string | undefined,
       article_year: article?.year as number | undefined,
