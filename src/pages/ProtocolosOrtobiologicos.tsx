@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,7 @@ import {
 import { Plus, FileText, Pencil, Trash2, Eye, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
+import { useTherapyTaxonomy } from "@/hooks/useTherapyTaxonomy";
 
 interface OrtobiologicoProtocol {
   id: string;
@@ -70,7 +71,6 @@ interface OrtobiologicoFormData {
   pre_procedure_exams: string;
 }
 
-const TIPO_OPTIONS = ["PRP", "BMA", "BMAC"];
 const TECNICA_OPTIONS = [
   "Injeção guiada por ultrassom",
   "Injeção direta",
@@ -106,6 +106,14 @@ const ProtocolosOrtobiologicos = () => {
   const [viewingProtocol, setViewingProtocol] = useState<OrtobiologicoProtocol | null>(null);
   const [deletingProtocol, setDeletingProtocol] = useState<OrtobiologicoProtocol | null>(null);
   const [formData, setFormData] = useState<OrtobiologicoFormData>(emptyFormData);
+
+  // Carregar taxonomia - itens autólogos (effective_category = autologous_biologic)
+  const { items: taxonomyItems, loading: taxonomyLoading } = useTherapyTaxonomy();
+  
+  // Filtrar apenas itens com categoria efetiva autologous_biologic
+  const autologousItems = useMemo(() => {
+    return taxonomyItems.filter(item => item.effective_category_code === "autologous_biologic");
+  }, [taxonomyItems]);
 
   // Registry episode hook - non-intrusive capture
   const { ensureActiveEpisode, captureProcedurePlan } = useRegistryEpisode(patientIdFromUrl || "");
@@ -495,14 +503,15 @@ const ProtocolosOrtobiologicos = () => {
                 <Select
                   value={formData.therapy_type}
                   onValueChange={(v) => handleInputChange("therapy_type", v)}
+                  disabled={taxonomyLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
+                    <SelectValue placeholder={taxonomyLoading ? "Carregando..." : "Selecione..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    {TIPO_OPTIONS.map((opt) => (
-                      <SelectItem key={opt} value={opt}>
-                        {opt} - {getTipoLabel(opt)}
+                    {autologousItems.map((item) => (
+                      <SelectItem key={item.code} value={item.code}>
+                        {item.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

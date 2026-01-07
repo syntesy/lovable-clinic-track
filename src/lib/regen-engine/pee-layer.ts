@@ -3,13 +3,24 @@
  * 
  * Avalia elegibilidade para procedimentos específicos.
  * O sistema NUNCA escolhe tratamento, apenas indica viabilidade.
+ * 
+ * INTEGRAÇÃO TAXONOMIA v1.1:
+ * - A elegibilidade agora é determinada pela categoria efetiva do item
+ * - Itens com requires_score = true são avaliados
+ * - Híbridos (HYB_*) herdam categoria via base_component_category_code
  */
 
 import { RegenCanonical } from "@/types/regen-canonical";
 import { BRSOutput, PEEOutput, ProcedureEligibility } from "@/types/regen-engine";
+import { mapToLegacyProcedureType } from "@/lib/taxonomy/therapyTaxonomy";
 
-// Tipos de procedimento suportados
-const PROCEDURE_TYPES = ["PRP", "PRF", "BMAC"];
+// Tipos de procedimento suportados pelo motor (congelado)
+// Novos itens da taxonomia são mapeados para estes tipos
+const LEGACY_PROCEDURE_TYPES = ["PRP", "PRF", "BMAC"] as const;
+type LegacyProcedureType = typeof LEGACY_PROCEDURE_TYPES[number];
+
+// Categoria que requer avaliação de score
+const SCORE_ELIGIBLE_CATEGORY = "autologous_biologic";
 
 // Gates que afetam elegibilidade
 interface EligibilityGate {
@@ -17,7 +28,7 @@ interface EligibilityGate {
   effect: "block" | "downgrade";
   gate_code: string;
   rationale: string;
-  affects: string[]; // Quais procedimentos são afetados
+  affects: LegacyProcedureType[]; // Quais procedimentos são afetados
 }
 
 const ELIGIBILITY_GATES: EligibilityGate[] = [
@@ -79,13 +90,17 @@ const ELIGIBILITY_GATES: EligibilityGate[] = [
   },
 ];
 
+/**
+ * Computa elegibilidade para procedimentos.
+ * Usa os 3 tipos legados do motor (PRP, PRF, BMAC).
+ */
 export function computePEE(
   canonical: RegenCanonical, 
   brsOutput: BRSOutput
 ): PEEOutput {
   const eligibility: ProcedureEligibility[] = [];
 
-  for (const procedureType of PROCEDURE_TYPES) {
+  for (const procedureType of LEGACY_PROCEDURE_TYPES) {
     const result = evaluateProcedure(procedureType, canonical, brsOutput);
     eligibility.push(result);
   }
@@ -93,8 +108,35 @@ export function computePEE(
   return { eligibility };
 }
 
+/**
+ * Verifica se um código de item da taxonomia é elegível para avaliação de score.
+ * Usa mapToLegacyProcedureType para determinar se o item pode ser avaliado.
+ * 
+ * @param itemCode - Código do item da taxonomia (ex: AUTO_PRP, HYB_PRP_HA)
+ * @returns true se o item requer e pode passar por avaliação de score
+ */
+export function isItemScoreEligible(itemCode: string): boolean {
+  const legacyType = mapToLegacyProcedureType(itemCode);
+  return legacyType !== null;
+}
+
+/**
+ * Obtém o tipo legado para um item da taxonomia.
+ * Usado para compatibilidade com motor congelado.
+ */
+export function getLegacyProcedureType(itemCode: string): LegacyProcedureType | null {
+  return mapToLegacyProcedureType(itemCode);
+}
+
+/**
+ * Retorna a categoria que requer score.
+ */
+export function getScoreEligibleCategory(): string {
+  return SCORE_ELIGIBLE_CATEGORY;
+}
+
 function evaluateProcedure(
-  procedureType: string,
+  procedureType: LegacyProcedureType,
   canonical: RegenCanonical,
   brs: BRSOutput
 ): ProcedureEligibility {
