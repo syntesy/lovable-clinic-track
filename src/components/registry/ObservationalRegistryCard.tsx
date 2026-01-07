@@ -50,18 +50,24 @@ export function ObservationalRegistryCard({
     includeInRegistry,
     withdrawConsent,
     captureFollowup,
-    getFollowups
+    getFollowups,
+    getTherapyItemCode
   } = useObservationalRegistry(patientId, screeningId);
 
   const [consentModalOpen, setConsentModalOpen] = useState(false);
   const [followupOpen, setFollowupOpen] = useState(false);
   const [existingFollowups, setExistingFollowups] = useState<number[]>([]);
+  const [procedureItemCode, setProcedureItemCode] = useState<string | null>(null);
 
-  // Load existing followups when expanding
+  // Load existing followups and therapy_item_code when expanding
   const handleFollowupToggle = async () => {
     if (!followupOpen && hasConsent) {
-      const followups = await getFollowups();
+      const [followups, itemCode] = await Promise.all([
+        getFollowups(),
+        getTherapyItemCode()
+      ]);
       setExistingFollowups(followups.map((f: { timepoint: number }) => f.timepoint));
+      setProcedureItemCode(itemCode);
     }
     setFollowupOpen(!followupOpen);
   };
@@ -180,7 +186,7 @@ export function ObservationalRegistryCard({
                   <ObservationalFollowupForm
                     onSave={captureFollowup}
                     existingTimepoints={existingFollowups}
-                    therapyItemCode={therapyItemCode}
+                    therapyItemCode={therapyItemCode ?? procedureItemCode}
                   />
                 </CollapsibleContent>
               </Collapsible>

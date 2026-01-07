@@ -42,6 +42,8 @@ interface RegistryProcedure {
   application_count: number;
   immediate_adverse_event: boolean;
   adverse_event_type?: string;
+  /** Código do item da taxonomia (opcional) */
+  therapy_item_code?: string | null;
 }
 
 interface RegistryLabs {
@@ -349,7 +351,8 @@ export function useObservationalRegistry(patientId?: string, screeningId?: strin
           anatomical_site_detail: procedure.anatomical_site_detail,
           application_count: procedure.application_count,
           immediate_adverse_event: procedure.immediate_adverse_event,
-          adverse_event_type: procedure.adverse_event_type || null
+          adverse_event_type: procedure.adverse_event_type || null,
+          therapy_item_code: procedure.therapy_item_code || null
         });
 
       if (error) {
@@ -579,6 +582,34 @@ export function useObservationalRegistry(patientId?: string, screeningId?: strin
     }
   }, [registryCase]);
 
+  /**
+   * Buscar therapy_item_code do procedimento mais recente
+   * Retorna null se não existir (sem inferir de texto livre)
+   */
+  const getTherapyItemCode = useCallback(async (): Promise<string | null> => {
+    if (!registryCase) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('registry_procedures')
+        .select('therapy_item_code')
+        .eq('registry_case_id', registryCase.registry_case_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[ObservationalRegistry] Get therapy_item_code error:', error);
+        return null;
+      }
+
+      return data?.therapy_item_code || null;
+    } catch (err) {
+      console.error('[ObservationalRegistry] Get therapy_item_code exception:', err);
+      return null;
+    }
+  }, [registryCase]);
+
   // Status helpers
   const getStatus = useCallback((): 'not_included' | 'included' | 'withdrawn' => {
     if (!registryCase) return 'not_included';
@@ -600,6 +631,7 @@ export function useObservationalRegistry(patientId?: string, screeningId?: strin
     captureEngineSnapshot,
     captureFollowup,
     getFollowups,
+    getTherapyItemCode,
     
     // Refresh
     refresh: fetchRegistryCase

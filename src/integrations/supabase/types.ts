@@ -3298,6 +3298,7 @@ export type Database = {
           procedure_date: string
           procedure_type: string
           registry_case_id: string
+          therapy_item_code: string | null
         }
         Insert: {
           adverse_event_type?: string | null
@@ -3310,6 +3311,7 @@ export type Database = {
           procedure_date: string
           procedure_type: string
           registry_case_id: string
+          therapy_item_code?: string | null
         }
         Update: {
           adverse_event_type?: string | null
@@ -3322,6 +3324,7 @@ export type Database = {
           procedure_date?: string
           procedure_type?: string
           registry_case_id?: string
+          therapy_item_code?: string | null
         }
         Relationships: [
           {
@@ -3330,6 +3333,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "registry_cases"
             referencedColumns: ["registry_case_id"]
+          },
+          {
+            foreignKeyName: "registry_procedures_therapy_item_code_fkey"
+            columns: ["therapy_item_code"]
+            isOneToOne: false
+            referencedRelation: "therapy_items"
+            referencedColumns: ["code"]
           },
         ]
       }
