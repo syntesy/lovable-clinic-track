@@ -3030,7 +3030,9 @@ export type Database = {
           exported_by: string
           filters_json: Json
           id: string
+          ip_address: string | null
           row_count: number
+          user_agent: string | null
         }
         Insert: {
           created_at?: string
@@ -3040,7 +3042,9 @@ export type Database = {
           exported_by: string
           filters_json?: Json
           id?: string
+          ip_address?: string | null
           row_count?: number
+          user_agent?: string | null
         }
         Update: {
           created_at?: string
@@ -3050,7 +3054,9 @@ export type Database = {
           exported_by?: string
           filters_json?: Json
           id?: string
+          ip_address?: string | null
           row_count?: number
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -3425,6 +3431,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      registry_research_data_dictionary: {
+        Row: {
+          created_at: string
+          definition: string
+          field_name: string
+          field_type: string
+          id: string
+          is_phi: boolean
+          possible_values: string | null
+          source_table: string | null
+          transformation_rules: string | null
+          view_name: string
+          view_version: string
+        }
+        Insert: {
+          created_at?: string
+          definition: string
+          field_name: string
+          field_type: string
+          id?: string
+          is_phi?: boolean
+          possible_values?: string | null
+          source_table?: string | null
+          transformation_rules?: string | null
+          view_name: string
+          view_version: string
+        }
+        Update: {
+          created_at?: string
+          definition?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_phi?: boolean
+          possible_values?: string | null
+          source_table?: string | null
+          transformation_rules?: string | null
+          view_name?: string
+          view_version?: string
+        }
+        Relationships: []
       }
       registry_score_snapshots: {
         Row: {
