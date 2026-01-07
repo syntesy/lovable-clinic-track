@@ -13,19 +13,31 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, AlertCircle, Info } from "lucide-react";
+import { BookOpen, AlertCircle, Info, Clock } from "lucide-react";
 import { useContextualCuration, CurationSource } from "@/hooks/useContextualCuration";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface CurationContextAccordionProps {
   therapyItemCode: string | null | undefined;
 }
 
 const SOURCE_LABELS: Record<CurationSource, string> = {
-  item: "Curadoria do item",
+  item: "Curadoria específica do procedimento",
   category: "Curadoria da categoria",
   general: "Curadoria geral",
   none: "",
 };
+
+function formatUpdateDate(dateStr: string | null): string | null {
+  if (!dateStr) return null;
+  try {
+    const date = parseISO(dateStr);
+    return format(date, "dd/MM/yyyy", { locale: ptBR });
+  } catch {
+    return null;
+  }
+}
 
 export function CurationContextAccordion({
   therapyItemCode,
@@ -119,12 +131,20 @@ export function CurationContextAccordion({
                     </div>
                   )}
 
-                  {/* Evidence level */}
-                  {curation.evidence_level && (
-                    <Badge variant="outline" className="text-xs">
-                      Nível: {curation.evidence_level}
-                    </Badge>
-                  )}
+                  {/* Footer: Evidence level + Timestamp */}
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+                    {curation.evidence_level && (
+                      <Badge variant="outline" className="text-xs">
+                        Nível: {curation.evidence_level}
+                      </Badge>
+                    )}
+                    {formatUpdateDate(curation.updated_at) && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        Atualizado: {formatUpdateDate(curation.updated_at)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
