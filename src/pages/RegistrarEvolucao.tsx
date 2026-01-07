@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -10,18 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, Activity, User, Upload, X, FileText, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, Activity, User, Upload, X, FileText, RefreshCw, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { TreatmentSessionFormData, safeParseFloat, safeParseInt } from "@/types/forms";
 import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
+import { useTherapyTaxonomy } from "@/hooks/useTherapyTaxonomy";
 
-const PROTOCOL_OPTIONS = [
+// Opções legadas que não estão na taxonomia (técnicas, não terapias)
+const LEGACY_TECHNIQUE_OPTIONS = [
   { id: "MAC", label: "MAC" },
   { id: "EPI", label: "EPI" },
   { id: "ONDAS_CHOQUE", label: "Ondas de Choque" },
-  { id: "PRP", label: "PRP" },
-  { id: "PRF", label: "PRF" },
-  { id: "PPP", label: "PPP" },
-  { id: "BMA", label: "BMA" },
 ];
 
 const RegistrarEvolucao = () => {
@@ -33,6 +31,26 @@ const RegistrarEvolucao = () => {
   const [thermographyFiles, setThermographyFiles] = useState<File[]>([]);
   const [bloodTestFiles, setBloodTestFiles] = useState<File[]>([]);
   const [selectedProtocols, setSelectedProtocols] = useState<string[]>([]);
+  
+  // Carregar taxonomia
+  const { items: taxonomyItems, loading: taxonomyLoading } = useTherapyTaxonomy();
+  
+  // Combinar técnicas legadas + itens da taxonomia
+  const allProtocolOptions = useMemo(() => {
+    const taxonomyOptions = taxonomyItems.map(item => ({
+      id: item.code,
+      label: item.name,
+      isTaxonomy: true,
+    }));
+    
+    const legacyOptions = LEGACY_TECHNIQUE_OPTIONS.map(opt => ({
+      ...opt,
+      isTaxonomy: false,
+    }));
+    
+    // Legadas primeiro, depois taxonomia
+    return [...legacyOptions, ...taxonomyOptions];
+  }, [taxonomyItems]);
   
   // Registry episode hook - non-intrusive capture
   const { 
@@ -394,38 +412,45 @@ const RegistrarEvolucao = () => {
               <Label className="text-base md:text-lg font-semibold text-foreground block">
                 Protocolo (selecione um ou mais)
               </Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                {PROTOCOL_OPTIONS.map((protocol) => (
-                  <div
-                    key={protocol.id}
-                    className={`flex items-center space-x-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedProtocols.includes(protocol.id)
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-accent/10 hover:border-primary/50"
-                    }`}
-                    onClick={() =>
-                      handleProtocolChange(
-                        protocol.id,
-                        !selectedProtocols.includes(protocol.id)
-                      )
-                    }
-                  >
-                    <Checkbox
-                      id={`protocol-${protocol.id}`}
-                      checked={selectedProtocols.includes(protocol.id)}
-                      onCheckedChange={(checked) =>
-                        handleProtocolChange(protocol.id, checked as boolean)
+              {taxonomyLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando protocolos...
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {allProtocolOptions.map((protocol) => (
+                    <div
+                      key={protocol.id}
+                      className={`flex items-center space-x-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        selectedProtocols.includes(protocol.id)
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-accent/10 hover:border-primary/50"
+                      }`}
+                      onClick={() =>
+                        handleProtocolChange(
+                          protocol.id,
+                          !selectedProtocols.includes(protocol.id)
+                        )
                       }
-                    />
-                    <Label
-                      htmlFor={`protocol-${protocol.id}`}
-                      className="font-semibold cursor-pointer"
                     >
-                      {protocol.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
+                      <Checkbox
+                        id={`protocol-${protocol.id}`}
+                        checked={selectedProtocols.includes(protocol.id)}
+                        onCheckedChange={(checked) =>
+                          handleProtocolChange(protocol.id, checked as boolean)
+                        }
+                      />
+                      <Label
+                        htmlFor={`protocol-${protocol.id}`}
+                        className="font-semibold cursor-pointer text-xs"
+                      >
+                        {protocol.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
               {selectedProtocols.length > 0 && (
                 <p className="text-sm text-muted-foreground">
                   Protocolos selecionados: {selectedProtocols.join(", ")}
