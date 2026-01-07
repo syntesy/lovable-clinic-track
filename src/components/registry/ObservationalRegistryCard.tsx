@@ -32,12 +32,15 @@ interface ObservationalRegistryCardProps {
   patientId: string;
   screeningId?: string;
   caseStatus?: 'S0' | 'S1' | 'S2' | 'S3';
+  /** Código do item da taxonomia vinculado ao caso (opcional) */
+  therapyItemCode?: string | null;
 }
 
 export function ObservationalRegistryCard({
   patientId,
   screeningId,
-  caseStatus
+  caseStatus,
+  therapyItemCode
 }: ObservationalRegistryCardProps) {
   const {
     status,
@@ -177,6 +180,7 @@ export function ObservationalRegistryCard({
                   <ObservationalFollowupForm
                     onSave={captureFollowup}
                     existingTimepoints={existingFollowups}
+                    therapyItemCode={therapyItemCode}
                   />
                 </CollapsibleContent>
               </Collapsible>

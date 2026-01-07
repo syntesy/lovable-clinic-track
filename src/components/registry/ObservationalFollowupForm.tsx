@@ -2,6 +2,7 @@
  * ObservationalFollowupForm - Formulário de follow-up longitudinal
  * 
  * Permite registrar follow-ups em D30, D90, D180, D365.
+ * Exibe bloco read-only de rastreabilidade quando therapy_item_code presente.
  */
 
 import { useState } from 'react';
@@ -18,7 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Target, ClipboardCheck, BookOpen } from 'lucide-react';
+import { useItemGovernance } from '@/hooks/useTherapyTaxonomy';
 
 interface FollowupData {
   timepoint: 30 | 90 | 180 | 365;
@@ -33,6 +35,8 @@ interface FollowupData {
 interface ObservationalFollowupFormProps {
   onSave: (data: FollowupData) => Promise<boolean>;
   existingTimepoints: number[];
+  /** Código do item da taxonomia vinculado ao caso/procedimento (opcional) */
+  therapyItemCode?: string | null;
 }
 
 const TIMEPOINTS = [
@@ -52,8 +56,11 @@ const IMPROVEMENT_LABELS = [
 
 export function ObservationalFollowupForm({
   onSave,
-  existingTimepoints
+  existingTimepoints,
+  therapyItemCode
 }: ObservationalFollowupFormProps) {
+  // Buscar item e flags de governança (se código fornecido)
+  const { item, flags, loading: taxonomyLoading } = useItemGovernance(therapyItemCode ?? null);
   const [selectedTimepoint, setSelectedTimepoint] = useState<30 | 90 | 180 | 365 | null>(null);
   const [painScore, setPainScore] = useState<number>(5);
   const [improvement, setImprovement] = useState<number>(3);
@@ -99,6 +106,40 @@ export function ObservationalFollowupForm({
 
   return (
     <div className="space-y-4 border rounded-lg p-4 bg-card">
+      {/* Bloco read-only de rastreabilidade da intervenção */}
+      {item && !taxonomyLoading && (
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-primary">
+            <Target className="w-4 h-4" />
+            <span>Intervenção registrada: {item.name}</span>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {item.effective_category_code && (
+              <Badge variant="outline" className="text-muted-foreground">
+                {item.effective_category_code}
+              </Badge>
+            )}
+            {flags.requires_score && (
+              <Badge variant="secondary" className="gap-1">
+                <Target className="w-3 h-3" />
+                SCORE
+              </Badge>
+            )}
+            {flags.requires_checklist && (
+              <Badge variant="secondary" className="gap-1">
+                <ClipboardCheck className="w-3 h-3" />
+                Checklist
+              </Badge>
+            )}
+            {flags.requires_curadoria && (
+              <Badge variant="secondary" className="gap-1">
+                <BookOpen className="w-3 h-3" />
+                Curadoria
+              </Badge>
+            )}
+          </div>
+        </div>
+      )}
       {/* Timeline de timepoints */}
       <div className="flex flex-wrap gap-2">
         {TIMEPOINTS.map((tp) => {
