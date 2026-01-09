@@ -14,8 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
-import logoRegenappDark from "@/assets/logo-regenapp-new.png";
-import logoRegenappLight from "@/assets/logo-regenapp-light.png";
+import logoSyntesy from "@/assets/logo-syntesy.png";
 
 // Menu items visible to all authenticated users (professional role)
 const menuItems = [
@@ -64,7 +63,7 @@ export function AppSidebar() {
     setIsAdmin(Boolean(data));
   };
 
-  const currentLogo = theme === 'light' ? logoRegenappLight : logoRegenappDark;
+  // Logo única para ambos os temas
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar data-[state=open]:w-64 md:data-[state=open]:w-72">
@@ -75,7 +74,7 @@ export function AppSidebar() {
             <>
               <div className="w-48 md:w-72 h-14 md:h-20 mb-2">
                 <img
-                  src={currentLogo}
+                  src={logoSyntesy}
                   alt="SYNTESY"
                   className="w-full h-full object-contain"
                 />
