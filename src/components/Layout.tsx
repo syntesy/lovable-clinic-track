@@ -50,7 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <SidebarTrigger className="mr-2 md:mr-4 flex-shrink-0" />
                 <img 
                   src={currentHeaderLogo} 
-                  alt="REGENAPP" 
+                  alt="SYNTESY" 
                   className="h-12 md:h-[60px] w-auto"
                 />
               </div>

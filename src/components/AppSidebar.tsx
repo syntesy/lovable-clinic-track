@@ -76,14 +76,14 @@ export function AppSidebar() {
               <div className="w-48 md:w-72 h-14 md:h-20 mb-2">
                 <img
                   src={currentLogo}
-                  alt="REGENAPP"
+                  alt="SYNTESY"
                   className="w-full h-full object-contain"
                 />
               </div>
             </>
           ) : (
             <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-accent/50 p-0.5 flex items-center justify-center">
-              <span className="text-sidebar-primary font-bold text-xs">R</span>
+              <span className="text-sidebar-primary font-bold text-xs">S</span>
             </div>
           )}
         </div>

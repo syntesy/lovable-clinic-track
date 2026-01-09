@@ -37,7 +37,7 @@ export const REGEN_CASE_STATUS_MAP: Record<RegenCaseStatus, RegenCaseStatusInfo>
     label: "AVALIAÇÃO COMPLETA",
     description: "EXAMES DISPONÍVEIS",
     color: "green",
-    provisionalLabel: "Pronto para gerar Score Definitivo REGENAPP"
+    provisionalLabel: "Pronto para gerar Score Definitivo SYNTESY"
   },
   S3: {
     status: "S3",

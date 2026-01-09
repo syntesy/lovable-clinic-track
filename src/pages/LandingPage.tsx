@@ -197,7 +197,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <img src={logoRegenapp} alt="REGENAPP" className="h-8 md:h-10" />
+          <img src={logoRegenapp} alt="SYNTESY" className="h-8 md:h-10" />
           <div className="flex items-center gap-2 md:gap-3">
             <Button variant="ghost" size="sm" onClick={handleLogin}>
               Entrar
@@ -214,17 +214,17 @@ export default function LandingPage() {
         <div className="container mx-auto max-w-6xl px-4 text-center">
           <img
             src={logoRegenapp}
-            alt="REGENAPP"
+            alt="SYNTESY"
             className="mx-auto mb-6 h-16 md:h-20 lg:h-24"
           />
           <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            REGENAPP
+            SYNTESY
           </h1>
           <h2 className="mb-6 text-lg text-muted-foreground md:text-xl lg:text-2xl">
             Ferramenta de apoio à decisão clínica em procedimentos regenerativos
           </h2>
           <p className="mx-auto mb-8 max-w-3xl text-base leading-relaxed text-foreground md:text-lg">
-            O REGENAPP é uma ferramenta de apoio à decisão clínica, desenvolvida
+            O SYNTESY é uma ferramenta de apoio à decisão clínica, desenvolvida
             para profissionais habilitados, com foco em prática segura e baseada
             em evidência.
           </p>

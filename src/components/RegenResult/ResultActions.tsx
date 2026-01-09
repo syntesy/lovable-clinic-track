@@ -38,7 +38,7 @@ function generateClinicalSummary(
     : "—";
 
   let summary = `
-=== RESUMO REGENAPP ===
+=== RESUMO SYNTESY ===
 Gerado em: ${now}
 Calculado em: ${computedAt}
 ${patientName ? `Paciente: ${patientName}` : ""}
@@ -139,7 +139,7 @@ export function ResultActions({
     setIsExporting(true);
     try {
       const element = reportRef.current;
-      const filename = `regenapp-resultado${patientName ? `-${patientName.replace(/\s/g, "-")}` : ""}${caseId ? `-${caseId}` : ""}.pdf`;
+      const filename = `syntesy-resultado${patientName ? `-${patientName.replace(/\s/g, "-")}` : ""}${caseId ? `-${caseId}` : ""}.pdf`;
 
       const opt = {
         margin: [10, 10, 15, 10],

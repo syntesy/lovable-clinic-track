@@ -158,7 +158,7 @@ export function ClinicalAssessmentChecklist({
         <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="font-medium">
-            🔴 Avaliação clínica incompleta — Complete o prontuário clínico para liberar a Avaliação REGENAPP.
+            🔴 Avaliação clínica incompleta — Complete o prontuário clínico para liberar a Avaliação SYNTESY.
           </AlertDescription>
         </Alert>
       )}

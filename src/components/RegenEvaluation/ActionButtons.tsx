@@ -94,7 +94,7 @@ export function ActionButtons({
               className="gap-2 bg-primary hover:bg-primary/90"
             >
               <Zap className="w-4 h-4" />
-              {isLoading ? "Gerando..." : "Gerar Score Definitivo (REGENAPP)"}
+              {isLoading ? "Gerando..." : "Gerar Score Definitivo (SYNTESY)"}
             </Button>
           )}
 
@@ -171,7 +171,7 @@ export function ActionButtons({
             "Avaliação clínica concluída. Aguardando exames laboratoriais válidos."
           )}
           {status === "S2" && (
-            "Pronto para gerar o Score Definitivo REGENAPP."
+            "Pronto para gerar o Score Definitivo SYNTESY."
           )}
           {status === "S3" && (
             "Score Definitivo gerado. Você pode recalcular se os dados forem alterados."

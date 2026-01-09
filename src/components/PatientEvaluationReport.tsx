@@ -367,7 +367,7 @@ export function PatientEvaluationReport({
               <div className="text-right space-y-2">
                 <img 
                   src={logoRegenapp} 
-                  alt="REGENAPP" 
+                  alt="SYNTESY" 
                   className="h-10 w-auto ml-auto opacity-90"
                 />
               </div>
@@ -663,8 +663,8 @@ export function PatientEvaluationReport({
             <div className="mt-10 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
-                  <img src={logoRegenapp} alt="REGENAPP" className="h-5 w-auto opacity-60" />
-                  <span>Documento gerado pelo REGENAPP</span>
+                  <img src={logoRegenapp} alt="SYNTESY" className="h-5 w-auto opacity-60" />
+                  <span>Documento gerado pelo SYNTESY</span>
                 </div>
                 <span>{displayData.generatedDate}</span>
               </div>

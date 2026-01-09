@@ -211,7 +211,7 @@ export function AvaliacaoRegenapp({
         }
       });
 
-      toast.success("Score Definitivo REGENAPP gerado com sucesso!");
+      toast.success("Score Definitivo SYNTESY gerado com sucesso!");
       refetch();
     } catch (error) {
       console.error("Error generating definitive score:", error);

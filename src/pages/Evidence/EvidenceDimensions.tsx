@@ -59,7 +59,7 @@ export default function EvidenceDimensions() {
             Dimensões de Evidência
           </h1>
           <p className="text-muted-foreground text-sm">
-            Agregações por Patologia × Técnica do REGENAPP Clinical Registry™
+            Agregações por Patologia × Técnica do SYNTESY Clinical Registry™
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={refetch} disabled={loading}>

@@ -70,7 +70,7 @@ export default function EvidenceDashboard() {
             Evidence Engine Dashboard
           </h1>
           <p className="text-muted-foreground text-sm">
-            Evidence Engine powered by REGENAPP Clinical Registry™
+            Evidence Engine powered by SYNTESY Clinical Registry™
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function EvidenceDashboard() {
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
           Dados observacionais agregados. Não comparativos. Não inferenciais.
-          O REGENAPP Evidence Engine™ fornece análise descritiva apenas.
+          O SYNTESY Evidence Engine™ fornece análise descritiva apenas.
         </AlertDescription>
       </Alert>
 
@@ -233,12 +233,12 @@ export default function EvidenceDashboard() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            Sobre o REGENAPP Evidence Engine™
+            Sobre o SYNTESY Evidence Engine™
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            O Evidence Engine agrega dados anônimos do REGENAPP Clinical Registry™ para 
+            O Evidence Engine agrega dados anônimos do SYNTESY Clinical Registry™ para 
             fornecer estatísticas descritivas por combinação de Patologia × Técnica.
           </p>
           <p>
