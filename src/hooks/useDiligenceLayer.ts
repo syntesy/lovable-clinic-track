@@ -421,7 +421,7 @@ DADOS AGREGADOS:
 - Taxa de follow-up: ${followups?.length ? Math.round((followups.filter(f => f.status === 'completed').length / followups.length) * 100) : 0}%
 
 DECLARAÇÃO:
-O profissional utiliza o sistema REGENAPP para registro e acompanhamento de procedimentos de fisioterapia regenerativa, mantendo documentação técnica de processos, consentimentos e resultados.
+O profissional utiliza o sistema SYNTESY para registro e acompanhamento de procedimentos de fisioterapia regenerativa, mantendo documentação técnica de processos, consentimentos e resultados.
 
 Esta declaração não constitui parecer jurídico ou garantia de conformidade regulatória.
         `.trim(),

@@ -281,7 +281,7 @@ const ProntuarioClinico = () => {
         <CardHeader>
           <CardTitle>Avaliação Clínica (Prontuário do Profissional)</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Estes são os 4 campos obrigatórios para a Avaliação REGENAPP
+            Estes são os 4 campos obrigatórios para a Avaliação SYNTESY
           </p>
         </CardHeader>
         <CardContent className="space-y-4">

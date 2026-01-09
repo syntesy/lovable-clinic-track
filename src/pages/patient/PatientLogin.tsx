@@ -139,7 +139,7 @@ export default function PatientLogin() {
         </Card>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
-          O REGENAPP não substitui a orientação do seu profissional de saúde.
+          O SYNTESY não substitui a orientação do seu profissional de saúde.
         </p>
       </div>
     </div>
