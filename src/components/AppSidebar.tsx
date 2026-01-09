@@ -26,7 +26,7 @@ const menuItems = [
   { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
   { title: "Parceiros", url: "/partners", icon: Handshake },
   { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
-  { title: "AGENTE REGENAPP", url: "/agente-mac", icon: Bot, isAgent: true },
+  { title: "AGENTE SYNTESY", url: "/agente-mac", icon: Bot, isAgent: true },
 ];
 
 // Admin-only menu items (includes Evidence Engine access)
