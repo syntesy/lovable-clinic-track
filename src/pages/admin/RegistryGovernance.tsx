@@ -31,12 +31,12 @@ export default function RegistryGovernance() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Scale className="h-5 w-5 text-primary" />
-            Finalidade do REGENAPP Clinical Registry™
+            Finalidade do SYNTESY Clinical Registry™
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-muted-foreground">
           <p>
-            O REGENAPP Clinical Registry™ é uma iniciativa <strong className="text-foreground">científica e estatística</strong> destinada a:
+            O SYNTESY Clinical Registry™ é uma iniciativa <strong className="text-foreground">científica e estatística</strong> destinada a:
           </p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>Gerar evidências sobre terapias ortobiológicas (PRP, PRF, BMAC)</li>
@@ -114,7 +114,7 @@ export default function RegistryGovernance() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            O REGENAPP Clinical Registry™ opera em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018):
+            O SYNTESY Clinical Registry™ opera em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018):
           </p>
           <div className="grid gap-3">
             <div className="flex items-center gap-2 text-sm">
@@ -216,7 +216,7 @@ export default function RegistryGovernance() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-muted-foreground">
-            O REGENAPP Clinical Registry™ mantém <strong className="text-foreground">total independência científica</strong>:
+            O SYNTESY Clinical Registry™ mantém <strong className="text-foreground">total independência científica</strong>:
           </p>
           <div className="grid gap-2">
             <div className="flex items-center gap-2 text-sm">

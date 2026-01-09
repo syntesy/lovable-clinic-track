@@ -189,7 +189,7 @@ export function ScientificCurationCard({ data, className }: ScientificCurationCa
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Award className="h-4 w-4 text-primary" />
-              <span>Classificação Científica REGENAPP</span>
+              <span>Classificação Científica SYNTESY</span>
             </div>
             {isEnglish && translatedTitle && (
               <Button
@@ -370,7 +370,7 @@ export function ScientificCurationCard({ data, className }: ScientificCurationCa
           
           <div className="bg-background/60 p-4 rounded-lg border border-emerald-500/20">
             <h4 className="text-sm font-medium mb-2 flex items-center gap-1 text-emerald-500">
-              <Lightbulb className="h-4 w-4" /> Interpretação REGENAPP
+              <Lightbulb className="h-4 w-4" /> Interpretação SYNTESY
             </h4>
             <ul className="space-y-1">
               {data.relevanciaBiologica.interpretacao.map((item, index) => (

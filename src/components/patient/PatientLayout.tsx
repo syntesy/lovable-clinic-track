@@ -25,7 +25,7 @@ export function PatientLayout({ children }: PatientLayoutProps) {
       <header className="bg-card border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoRegenapp} alt="REGENAPP" className="h-8 w-auto" />
+            <img src={logoRegenapp} alt="SYNTESY" className="h-8 w-auto" />
             <span className="text-xs text-muted-foreground border-l border-border pl-3">
               Acompanhamento Clínico
             </span>

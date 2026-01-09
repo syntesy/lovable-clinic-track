@@ -5,7 +5,7 @@ export function ScoreReportHeader() {
     <div className="text-center mb-8 print:mb-6">
       <img 
         src={logoRegenapp} 
-        alt="REGENAPP Logo" 
+        alt="SYNTESY Logo" 
         className="h-12 mx-auto mb-4"
       />
       <h1 className="text-2xl md:text-3xl font-bold text-foreground">

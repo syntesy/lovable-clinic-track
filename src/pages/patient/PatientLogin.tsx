@@ -58,7 +58,7 @@ export default function PatientLogin() {
         <div className="text-center mb-8">
           <img 
             src={logoRegenapp} 
-            alt="REGENAPP" 
+            alt="SYNTESY" 
             className="h-12 mx-auto mb-4"
           />
           <h1 className="text-2xl font-semibold text-foreground">

@@ -204,7 +204,7 @@ export default function Checkout() {
           >
             <img
               src={logoRegenapp}
-              alt="REGENAPP"
+              alt="SYNTESY"
               style={{
                 width: "200px",
                 height: "auto",

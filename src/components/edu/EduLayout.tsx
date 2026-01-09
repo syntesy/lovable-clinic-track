@@ -57,7 +57,7 @@ export function EduLayout({ children }: EduLayoutProps) {
                 <div className="flex items-center gap-2">
                   <GraduationCap className="h-6 w-6 text-primary" />
                   <div className="hidden sm:flex flex-col">
-                    <span className="text-sm font-semibold text-foreground">REGENAPP Academy</span>
+                    <span className="text-sm font-semibold text-foreground">SYNTESY Academy</span>
                     {institution && (
                       <span className="text-xs text-muted-foreground truncate max-w-[200px]">
                         {institution.name}

@@ -52,7 +52,7 @@ export function CurationEvidenceSection({ curationId }: CurationEvidenceSectionP
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Database className="h-5 w-5" />
-          Dados Observacionais do REGENAPP Clinical Registry™
+          Dados Observacionais do SYNTESY Clinical Registry™
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -157,7 +157,7 @@ export function CurationEvidenceSection({ curationId }: CurationEvidenceSectionP
         {/* Footer note - replaces link to Evidence Engine dashboard */}
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground text-center">
-            Análise descritiva • REGENAPP Clinical Registry™
+            Análise descritiva • SYNTESY Clinical Registry™
           </p>
         </div>
       </CardContent>

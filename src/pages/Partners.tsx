@@ -402,7 +402,7 @@ const Partners = () => {
               Atenção
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              Utilize o cupom <strong className="text-primary">REGENAPP</strong> no 
+              Utilize o cupom <strong className="text-primary">SYNTESY</strong> no 
               site do parceiro para garantir o desconto e o rastreio da compra.
             </AlertDialogDescription>
           </AlertDialogHeader>

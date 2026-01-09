@@ -26,7 +26,7 @@ export function ResultHeader({ engineOutputs, canonical, caseId, patientName }: 
     <div className="mb-6">
       {/* Logo / Title */}
       <div className="text-center mb-4">
-        <img src={logoRegenapp} alt="REGENAPP" className="h-10 mx-auto mb-2" />
+        <img src={logoRegenapp} alt="SYNTESY" className="h-10 mx-auto mb-2" />
         <p className="text-muted-foreground text-sm">Resultado da Avaliação Clínica</p>
       </div>
 

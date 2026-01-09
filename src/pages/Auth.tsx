@@ -227,7 +227,7 @@ export default function Auth() {
           justifyContent: "center",
           marginBottom: "30px"
         }}>
-            <img src={logoRegenapp} alt="REGENAPP" style={{
+            <img src={logoRegenapp} alt="SYNTESY" style={{
             width: "280px",
             height: "auto",
             objectFit: "contain"

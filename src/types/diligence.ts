@@ -187,5 +187,5 @@ export const DILIGENCE_DISCLAIMER = `
 Este documento é um relatório factual e descritivo de processo técnico.
 Não constitui parecer jurídico, aconselhamento legal ou garantia de conformidade regulatória.
 A interpretação jurídica deve ser feita por profissional habilitado.
-REGENAPP Diligence & Compliance Layer™ - Registro de Diligência Técnica.
+SYNTESY Diligence & Compliance Layer™ - Registro de Diligência Técnica.
 `;
