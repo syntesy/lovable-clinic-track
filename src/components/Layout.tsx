@@ -2,8 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import logoHeaderDark from "@/assets/logo-regenapp-new.png";
-import logoHeaderLight from "@/assets/logo-header-light.png";
+import logoSyntesy from "@/assets/logo-syntesy.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +21,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { logLogout, logSessionStart } = useAuditLog();
   const { theme } = useTheme();
 
-  const currentHeaderLogo = theme === 'light' ? logoHeaderLight : logoHeaderDark;
+  // Logo única para ambos os temas
 
   // Registrar início da sessão
   useEffect(() => {
@@ -49,7 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center min-w-0">
                 <SidebarTrigger className="mr-2 md:mr-4 flex-shrink-0" />
                 <img 
-                  src={currentHeaderLogo} 
+                  src={logoSyntesy} 
                   alt="SYNTESY" 
                   className="h-12 md:h-[60px] w-auto"
                 />

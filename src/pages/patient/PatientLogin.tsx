@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertCircle, Loader2 } from 'lucide-react';
-import logoRegenapp from '@/assets/logo-regenapp-new.png';
+import logoSyntesy from '@/assets/logo-syntesy.png';
 
 export default function PatientLogin() {
   const [surname, setSurname] = useState('');
@@ -57,7 +57,7 @@ export default function PatientLogin() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img 
-            src={logoRegenapp} 
+            src={logoSyntesy} 
             alt="SYNTESY" 
             className="h-12 mx-auto mb-4"
           />

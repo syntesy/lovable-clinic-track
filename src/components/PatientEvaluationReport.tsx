@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import logoRegenapp from "@/assets/logo-regenapp-new.png";
+import logoSyntesy from "@/assets/logo-syntesy.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -366,7 +366,7 @@ export function PatientEvaluationReport({
               </div>
               <div className="text-right space-y-2">
                 <img 
-                  src={logoRegenapp} 
+                  src={logoSyntesy} 
                   alt="SYNTESY" 
                   className="h-10 w-auto ml-auto opacity-90"
                 />
@@ -663,7 +663,7 @@ export function PatientEvaluationReport({
             <div className="mt-10 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
-                  <img src={logoRegenapp} alt="SYNTESY" className="h-5 w-auto opacity-60" />
+                  <img src={logoSyntesy} alt="SYNTESY" className="h-5 w-auto opacity-60" />
                   <span>Documento gerado pelo SYNTESY</span>
                 </div>
                 <span>{displayData.generatedDate}</span>

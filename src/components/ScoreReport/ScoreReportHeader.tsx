@@ -1,10 +1,10 @@
-import logoRegenapp from "@/assets/logo-regenapp-new.png";
+import logoSyntesy from "@/assets/logo-syntesy.png";
 
 export function ScoreReportHeader() {
   return (
     <div className="text-center mb-8 print:mb-6">
       <img 
-        src={logoRegenapp} 
+        src={logoSyntesy} 
         alt="SYNTESY Logo" 
         className="h-12 mx-auto mb-4"
       />

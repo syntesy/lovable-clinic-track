@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FileDown, Send, Eye, EyeOff } from "lucide-react";
-import logoRegenapp from "@/assets/logo-regenapp-new.png";
+import logoSyntesy from "@/assets/logo-syntesy.png";
 
 interface PrescriptionDetailModalProps {
   open: boolean;
@@ -200,7 +200,7 @@ export function PrescriptionDetailModal({
         <div class="paper">
           <!-- LOGO -->
           <div class="logo-section">
-            <img src="${logoRegenapp}" alt="SYNTESY" />
+            <img src="${logoSyntesy}" alt="SYNTESY" />
           </div>
           
           <!-- IDENTIFICAÇÃO -->
@@ -296,7 +296,7 @@ export function PrescriptionDetailModal({
               className="text-center pb-[18px] mb-[28px]"
               style={{ borderBottom: '1px solid #D6D9DE' }}
             >
-              <img src={logoRegenapp} alt="SYNTESY" className="h-14 mx-auto" />
+              <img src={logoSyntesy} alt="SYNTESY" className="h-14 mx-auto" />
             </div>
 
             {/* CAIXA IDENTIFICAÇÃO */}
