@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
 import logoRhegen from "@/assets/logo-rhegen.png";
+import logoRhegenLight from "@/assets/logo-rhegen-light.png";
 
 // Menu items visible to all authenticated users (professional role)
 const menuItems = [
@@ -63,7 +64,8 @@ export function AppSidebar() {
     setIsAdmin(Boolean(data));
   };
 
-  // Logo única para ambos os temas
+  // Logo conforme o tema
+  const currentLogo = theme === 'light' ? logoRhegenLight : logoRhegen;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar data-[state=open]:w-64 md:data-[state=open]:w-72">
@@ -74,7 +76,7 @@ export function AppSidebar() {
             <>
               <div className="w-48 md:w-72 h-14 md:h-20 mb-2">
                 <img
-                  src={logoRhegen}
+                  src={currentLogo}
                   alt="rhegen"
                   className="w-full h-full object-contain"
                 />
