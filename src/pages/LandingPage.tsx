@@ -22,6 +22,8 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import logoRhegen from "@/assets/logo-rhegen.png";
+import logoRhegenLight from "@/assets/logo-rhegen-light.png";
+import { useTheme } from "@/contexts/ThemeContext";
 import mockupScore from "@/assets/mockup-score-clinico.png";
 import mockupAvaliacao from "@/assets/mockup-avaliacao-clinica.png";
 import mockupRelatorios from "@/assets/mockup-relatorios.png";
@@ -175,6 +177,8 @@ const faqItems = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const currentLogo = theme === 'light' ? logoRhegenLight : logoRhegen;
 
   const handleLogin = () => {
     navigate("/auth");
@@ -197,7 +201,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <img src={logoRhegen} alt="rhegen" className="h-8 md:h-10" />
+          <img src={currentLogo} alt="rhegen" className="h-8 md:h-10" />
           <div className="flex items-center gap-2 md:gap-3">
             <Button variant="ghost" size="sm" onClick={handleLogin}>
               Entrar
@@ -213,7 +217,7 @@ export default function LandingPage() {
       <section className="relative overflow-hidden py-16 md:py-24 lg:py-32">
         <div className="container mx-auto max-w-6xl px-4 text-center">
           <img
-            src={logoRhegen}
+            src={currentLogo}
             alt="rhegen"
             className="mx-auto mb-6 h-16 md:h-20 lg:h-24"
           />
