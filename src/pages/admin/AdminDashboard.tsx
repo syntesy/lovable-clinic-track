@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           <ShieldCheck className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">Dashboard — Administrador</h1>
-            <p className="text-sm text-muted-foreground">Visão geral do SYNTESY</p>
+            <p className="text-sm text-muted-foreground">Visão geral do rhegen</p>
           </div>
         </div>
         <PeriodFilter

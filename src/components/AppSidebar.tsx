@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
-import logoSyntesy from "@/assets/logo-syntesy.png";
+import logoRhegen from "@/assets/logo-rhegen.png";
 
 // Menu items visible to all authenticated users (professional role)
 const menuItems = [
@@ -26,7 +26,7 @@ const menuItems = [
   { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
   { title: "Parceiros", url: "/partners", icon: Handshake },
   { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
-  { title: "AGENTE SYNTESY", url: "/agente-mac", icon: Bot, isAgent: true },
+  { title: "AGENTE rhegen", url: "/agente-mac", icon: Bot, isAgent: true },
 ];
 
 // Admin-only menu items (includes Evidence Engine access)
@@ -74,15 +74,15 @@ export function AppSidebar() {
             <>
               <div className="w-48 md:w-72 h-14 md:h-20 mb-2">
                 <img
-                  src={logoSyntesy}
-                  alt="SYNTESY"
+                  src={logoRhegen}
+                  alt="rhegen"
                   className="w-full h-full object-contain"
                 />
               </div>
             </>
           ) : (
             <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-accent/50 p-0.5 flex items-center justify-center">
-              <span className="text-sidebar-primary font-bold text-xs">S</span>
+              <span className="text-sidebar-primary font-bold text-xs">r</span>
             </div>
           )}
         </div>

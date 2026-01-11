@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, User, AlertTriangle } from "lucide-react";
 import { useAuditLog } from "@/hooks/useAuditLog";
-import logoSyntesy from "@/assets/logo-syntesy.png";
+import logoRhegen from "@/assets/logo-rhegen.png";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { validateSignup, loginSchema } from "@/lib/password-validation";
 export default function Auth() {
@@ -227,7 +227,7 @@ export default function Auth() {
           justifyContent: "center",
           marginBottom: "30px"
         }}>
-            <img src={logoSyntesy} alt="SYNTESY" style={{
+            <img src={logoRhegen} alt="rhegen" style={{
             width: "280px",
             height: "auto",
             objectFit: "contain"

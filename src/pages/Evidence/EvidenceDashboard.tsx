@@ -70,7 +70,7 @@ export default function EvidenceDashboard() {
             Evidence Engine Dashboard
           </h1>
           <p className="text-muted-foreground text-sm">
-            Evidence Engine powered by SYNTESY Clinical Registry™
+            Evidence Engine powered by rhegen Clinical Registry™
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function EvidenceDashboard() {
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
           Dados observacionais agregados. Não comparativos. Não inferenciais.
-          O SYNTESY Evidence Engine™ fornece análise descritiva apenas.
+          O rhegen Evidence Engine™ fornece análise descritiva apenas.
         </AlertDescription>
       </Alert>
 
