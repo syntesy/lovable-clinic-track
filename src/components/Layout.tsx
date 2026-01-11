@@ -2,7 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import logoSyntesy from "@/assets/logo-syntesy.png";
+import logoRhegen from "@/assets/logo-rhegen.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -48,8 +48,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center min-w-0">
                 <SidebarTrigger className="mr-2 md:mr-4 flex-shrink-0" />
                 <img 
-                  src={logoSyntesy} 
-                  alt="SYNTESY" 
+                  src={logoRhegen} 
+                  alt="rhegen" 
                   className="h-12 md:h-[60px] w-auto"
                 />
               </div>

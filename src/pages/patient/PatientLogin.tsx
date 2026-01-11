@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertCircle, Loader2 } from 'lucide-react';
-import logoSyntesy from '@/assets/logo-syntesy.png';
+import logoRhegen from '@/assets/logo-rhegen.png';
 
 export default function PatientLogin() {
   const [surname, setSurname] = useState('');
@@ -57,8 +57,8 @@ export default function PatientLogin() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img 
-            src={logoSyntesy} 
-            alt="SYNTESY" 
+            src={logoRhegen} 
+            alt="rhegen" 
             className="h-12 mx-auto mb-4"
           />
           <h1 className="text-2xl font-semibold text-foreground">
@@ -139,7 +139,7 @@ export default function PatientLogin() {
         </Card>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
-          O SYNTESY não substitui a orientação do seu profissional de saúde.
+          O rhegen não substitui a orientação do seu profissional de saúde.
         </p>
       </div>
     </div>

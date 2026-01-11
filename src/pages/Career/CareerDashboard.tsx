@@ -97,7 +97,7 @@ export default function CareerDashboard() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
             <TrendingUp className="h-7 w-7 text-teal" />
-            SYNTESY Career Engine™
+            rhegen Career Engine™
           </h1>
           <p className="text-muted-foreground mt-1">
             Métricas operacionais da sua prática profissional

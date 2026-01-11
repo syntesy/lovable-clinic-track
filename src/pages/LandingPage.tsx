@@ -21,7 +21,7 @@ import {
   Percent,
   ShoppingBag,
 } from "lucide-react";
-import logoSyntesy from "@/assets/logo-syntesy.png";
+import logoRhegen from "@/assets/logo-rhegen.png";
 import mockupScore from "@/assets/mockup-score-clinico.png";
 import mockupAvaliacao from "@/assets/mockup-avaliacao-clinica.png";
 import mockupRelatorios from "@/assets/mockup-relatorios.png";
@@ -77,7 +77,7 @@ const features = [
     title: "Ecossistema de parceiros",
     items: [
       "Fornecedores confiáveis",
-      "Benefícios mediante uso do cupom REGENAPP",
+      "Benefícios mediante uso do cupom RHEGEN",
     ],
   },
 ];
@@ -125,8 +125,8 @@ const plans = [
       "Tudo do Premium",
       "IA de apoio à decisão clínica",
       "Simulação de cenários e alertas de risco",
-      "Protocolos licenciados REGENAPP",
       "Relatórios nível expert",
+      "Prioridade no suporte",
       "Prioridade no suporte",
     ],
     buttonText: "Assinar PRO",
@@ -137,19 +137,19 @@ const plans = [
 
 const faqItems = [
   {
-    question: "O REGENAPP substitui o julgamento clínico?",
+    question: "O rhegen substitui o julgamento clínico?",
     answer:
-      "Não. O REGENAPP é uma ferramenta de apoio à decisão clínica. Toda conduta deve ser definida pelo profissional habilitado, com base em sua avaliação e experiência.",
+      "Não. O rhegen é uma ferramenta de apoio à decisão clínica. Toda conduta deve ser definida pelo profissional habilitado, com base em sua avaliação e experiência.",
   },
   {
-    question: "Quem pode usar o REGENAPP?",
+    question: "Quem pode usar o rhegen?",
     answer:
       "Médicos e fisioterapeutas que realizam procedimentos regenerativos e buscam padronização, segurança e documentação técnica.",
   },
   {
-    question: "O REGENAPP realiza procedimentos?",
+    question: "O rhegen realiza procedimentos?",
     answer:
-      "Não. O REGENAPP não realiza, prescreve ou automatiza procedimentos clínicos. Ele oferece suporte técnico para decisões clínicas mais seguras.",
+      "Não. O rhegen não realiza, prescreve ou automatiza procedimentos clínicos. Ele oferece suporte técnico para decisões clínicas mais seguras.",
   },
   {
     question: "Como funciona a cobrança?",
@@ -197,7 +197,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <img src={logoSyntesy} alt="SYNTESY" className="h-8 md:h-10" />
+          <img src={logoRhegen} alt="rhegen" className="h-8 md:h-10" />
           <div className="flex items-center gap-2 md:gap-3">
             <Button variant="ghost" size="sm" onClick={handleLogin}>
               Entrar
@@ -213,18 +213,18 @@ export default function LandingPage() {
       <section className="relative overflow-hidden py-16 md:py-24 lg:py-32">
         <div className="container mx-auto max-w-6xl px-4 text-center">
           <img
-            src={logoSyntesy}
-            alt="SYNTESY"
+            src={logoRhegen}
+            alt="rhegen"
             className="mx-auto mb-6 h-16 md:h-20 lg:h-24"
           />
           <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            SYNTESY
+            rhegen
           </h1>
           <h2 className="mb-6 text-lg text-muted-foreground md:text-xl lg:text-2xl">
             Ferramenta de apoio à decisão clínica em procedimentos regenerativos
           </h2>
           <p className="mx-auto mb-8 max-w-3xl text-base leading-relaxed text-foreground md:text-lg">
-            O SYNTESY é uma ferramenta de apoio à decisão clínica, desenvolvida
+            O rhegen é uma ferramenta de apoio à decisão clínica, desenvolvida
             para profissionais habilitados, com foco em prática segura e baseada
             em evidência.
           </p>
@@ -248,7 +248,7 @@ export default function LandingPage() {
       <section className="border-y border-border/40 bg-secondary/50 py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-4">
           <h2 className="mb-6 text-center text-2xl font-semibold md:text-3xl">
-            Por que o REGENAPP existe
+            Por que o rhegen existe
           </h2>
           <p className="text-center text-base leading-relaxed text-muted-foreground md:text-lg">
             A prática clínica com procedimentos regenerativos exige critérios bem
@@ -256,7 +256,7 @@ export default function LandingPage() {
             alinhamento com evidência científica.
           </p>
           <p className="mt-4 text-center text-base leading-relaxed text-muted-foreground md:text-lg">
-            O REGENAPP foi criado para apoiar a tomada de decisão clínica,
+            O rhegen foi criado para apoiar a tomada de decisão clínica,
             oferecendo estrutura, organização e suporte técnico, sem substituir o
             julgamento profissional.
           </p>
@@ -274,7 +274,7 @@ export default function LandingPage() {
                 Scores clínicos para apoio à decisão
               </h2>
               <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-                O REGENAPP utiliza scores clínicos estruturados para apoiar a avaliação, 
+                O rhegen utiliza scores clínicos estruturados para apoiar a avaliação, 
                 o preparo do paciente e a tomada de decisão, sempre como suporte técnico 
                 e nunca como substituição do julgamento profissional.
               </p>
@@ -297,12 +297,12 @@ export default function LandingPage() {
               <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
                 <img 
                   src={mockupScore} 
-                  alt="Score clínico REGENAPP" 
+                  alt="Score clínico rhegen" 
                   className="w-full h-auto"
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
                   <p className="text-xs text-muted-foreground text-center">
-                    Exemplo ilustrativo de score clínico no REGENAPP
+                    Exemplo ilustrativo de score clínico no rhegen
                   </p>
                 </div>
               </div>
@@ -454,19 +454,19 @@ export default function LandingPage() {
               Tudo em um único ambiente clínico
             </h2>
             <p className="mx-auto max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
-              O REGENAPP centraliza avaliação, decisão, documentação e acompanhamento 
+              O rhegen centraliza avaliação, decisão, documentação e acompanhamento 
               em um único sistema integrado e profissional.
             </p>
           </div>
           <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl mx-auto max-w-5xl">
             <img 
               src={mockupDashboard} 
-              alt="Dashboard REGENAPP" 
+              alt="Dashboard rhegen" 
               className="w-full h-auto"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
               <p className="text-xs text-muted-foreground text-center">
-                Exemplo ilustrativo do painel principal do REGENAPP
+                Exemplo ilustrativo do painel principal do rhegen
               </p>
             </div>
           </div>
@@ -523,7 +523,7 @@ export default function LandingPage() {
       <section className="border-y border-border/40 bg-secondary/50 py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-4 text-center">
           <h2 className="mb-6 text-2xl font-semibold md:text-3xl">
-            Para quem é o REGENAPP
+            Para quem é o rhegen
           </h2>
           <p className="mb-6 text-base text-foreground md:text-lg">
             Médicos e Fisioterapeutas que:
@@ -543,7 +543,7 @@ export default function LandingPage() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground md:text-base">
-            O REGENAPP não executa procedimentos nem define condutas. Ele oferece
+            O rhegen não executa procedimentos nem define condutas. Ele oferece
             suporte técnico para decisões clínicas mais seguras.
           </p>
         </div>
@@ -561,7 +561,7 @@ export default function LandingPage() {
               Parcerias com fornecedores
             </h2>
             <p className="mx-auto max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
-              Usuários do REGENAPP têm acesso a <strong className="text-foreground">descontos exclusivos</strong> na 
+              Usuários do rhegen têm acesso a <strong className="text-foreground">descontos exclusivos</strong> na 
               compra de insumos e materiais para procedimentos regenerativos em nossa rede de parceiros.
             </p>
           </div>
@@ -603,13 +603,13 @@ export default function LandingPage() {
                 </h3>
                 <p className="text-muted-foreground max-w-xl">
                   Ao acessar nossa aba de parceiros dentro do app, utilize o cupom exclusivo 
-                  <span className="font-bold text-primary"> REGENAPP </span> 
+                  <span className="font-bold text-primary"> RHEGEN </span> 
                   para garantir descontos e condições especiais em sua compra.
                 </p>
               </div>
               <div className="flex flex-col items-center gap-3">
                 <div className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-xl tracking-wider shadow-lg">
-                  REGENAPP
+                  RHEGEN
                 </div>
                 <span className="text-xs text-muted-foreground">Seu cupom de desconto</span>
               </div>
@@ -773,12 +773,12 @@ export default function LandingPage() {
       <footer className="border-t border-border/40 bg-secondary/30 py-8">
         <div className="container mx-auto max-w-4xl px-4">
           <p className="text-center text-xs text-muted-foreground md:text-sm">
-            O REGENAPP é uma ferramenta de apoio à decisão clínica, desenvolvida
+            O rhegen é uma ferramenta de apoio à decisão clínica, desenvolvida
             para profissionais habilitados. Não substitui julgamento profissional
             nem automatiza condutas terapêuticas.
           </p>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} REGENAPP. Todos os direitos reservados.
+            © {new Date().getFullYear()} rhegen. Todos os direitos reservados.
           </p>
         </div>
       </footer>

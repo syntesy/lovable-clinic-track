@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pill, Heart, Sparkles, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import logoSyntesy from '@/assets/logo-syntesy.png';
+import logoRhegen from '@/assets/logo-rhegen.png';
 import { toast } from 'sonner';
 
 const prescriptionTypes = {
@@ -220,7 +220,7 @@ export default function PatientPrescriptions() {
         <div class="paper">
           <!-- LOGO -->
           <div class="logo-section">
-            <img src="${logoSyntesy}" alt="SYNTESY" />
+            <img src="${logoRhegen}" alt="rhegen" />
           </div>
           
           <!-- IDENTIFICAÇÃO -->
@@ -292,7 +292,7 @@ export default function PatientPrescriptions() {
             className="text-center pb-[18px] mb-[28px]"
             style={{ borderBottom: '1px solid #D6D9DE' }}
           >
-            <img src={logoSyntesy} alt="SYNTESY" className="h-14 mx-auto" />
+            <img src={logoRhegen} alt="rhegen" className="h-14 mx-auto" />
           </div>
 
           {/* CAIXA IDENTIFICAÇÃO */}

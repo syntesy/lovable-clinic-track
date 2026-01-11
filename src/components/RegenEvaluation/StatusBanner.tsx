@@ -105,7 +105,7 @@ export function LegalDisclaimer() {
     <Alert className="bg-muted/50 border-muted-foreground/20">
       <AlertCircle className="h-4 w-4 text-muted-foreground" />
       <AlertDescription className="text-xs text-muted-foreground">
-        <strong>AVISO LEGAL:</strong> O SYNTESY é um sistema de suporte informacional. 
+        <strong>AVISO LEGAL:</strong> O rhegen é um sistema de suporte informacional. 
         Não prescreve, não decide e não substitui o julgamento clínico. 
         O score definitivo só é gerado após avaliação profissional e exames laboratoriais válidos.
       </AlertDescription>

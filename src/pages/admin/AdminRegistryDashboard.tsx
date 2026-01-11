@@ -349,7 +349,7 @@ export default function AdminRegistryDashboard() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <FlaskConical className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-semibold text-foreground">SYNTESY Clinical Registry™</h1>
+            <h1 className="text-2xl font-semibold text-foreground">rhegen Clinical Registry™</h1>
           </div>
           <p className="text-sm text-muted-foreground">
             Dados agregados e anonimizados para análise científica

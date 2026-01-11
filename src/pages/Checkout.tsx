@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, CreditCard, Check, ArrowLeft } from "lucide-react";
-import logoSyntesy from "@/assets/logo-syntesy.png";
+import logoRhegen from "@/assets/logo-rhegen.png";
 
 interface Plan {
   id: string;
@@ -203,8 +203,8 @@ export default function Checkout() {
             }}
           >
             <img
-              src={logoSyntesy}
-              alt="SYNTESY"
+              src={logoRhegen}
+              alt="rhegen"
               style={{
                 width: "200px",
                 height: "auto",
