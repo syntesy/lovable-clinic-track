@@ -10,13 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { PatientPhotoUpload } from "@/components/PatientPhotoUpload";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,7 +22,7 @@ interface Patient {
   birth_date: string | null;
   phone: string | null;
   email: string | null;
-  profession: string | null;
+  
   cpf: string | null;
   address: string | null;
   photo_url: string | null;
@@ -47,7 +40,6 @@ export const EditPatientModal = ({
   onOpenChange,
 }: EditPatientModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [profession, setProfession] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const { register, handleSubmit, reset } = useForm();
   const queryClient = useQueryClient();
@@ -64,7 +56,7 @@ export const EditPatientModal = ({
         cpf: patient.cpf || "",
         address: patient.address || "",
       });
-      setProfession(patient.profession || "");
+      
       setPhotoUrl(patient.photo_url);
     }
   }, [patient, open, reset]);
@@ -83,7 +75,6 @@ export const EditPatientModal = ({
           birth_date: data.birth_date || null,
           phone: data.phone || null,
           email: data.email || null,
-          profession: profession || null,
           cpf: data.cpf || null,
           address: data.address || null,
           photo_url: photoUrl,
@@ -172,21 +163,6 @@ export const EditPatientModal = ({
                 {...register("email")}
                 className="border-input"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_profession">Profissão</Label>
-              <Select
-                onValueChange={(value) => setProfession(value)}
-                value={profession}
-              >
-                <SelectTrigger className="border-input">
-                  <SelectValue placeholder="Selecione a profissão" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border-border z-50">
-                  <SelectItem value="Fisioterapia">Fisioterapia</SelectItem>
-                  <SelectItem value="Medicina">Medicina</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_cpf">CPF</Label>
