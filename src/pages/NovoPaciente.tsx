@@ -14,7 +14,6 @@ import { PatientPhotoUpload } from "@/components/PatientPhotoUpload";
 const NovoPaciente = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [profession, setProfession] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const { register, handleSubmit, control } = useForm();
   
@@ -31,7 +30,6 @@ const NovoPaciente = () => {
           birth_date: data.birth_date || null,
           phone: data.phone,
           email: data.email,
-          profession: profession,
           cpf: data.cpf || null,
           address: data.address,
           photo_url: photoUrl,
@@ -134,22 +132,6 @@ const NovoPaciente = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="profession">Profissão *</Label>
-                <Select 
-                  required
-                  onValueChange={(value) => setProfession(value)}
-                  value={profession}
-                >
-                  <SelectTrigger className="border-input">
-                    <SelectValue placeholder="Selecione a profissão" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border-border z-50">
-                    <SelectItem value="Fisioterapia">Fisioterapia</SelectItem>
-                    <SelectItem value="Medicina">Medicina</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="cpf">CPF</Label>
                 <Input
                   id="cpf"
@@ -181,7 +163,7 @@ const NovoPaciente = () => {
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || !profession}
+            disabled={isSubmitting}
             className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
           >
             {isSubmitting ? "Salvando..." : "Cadastrar Paciente"}
