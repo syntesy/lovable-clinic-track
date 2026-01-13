@@ -9,12 +9,14 @@
  * - Anamnese: clinical_records.anamnesis
  * - Exame físico: clinical_records.physical_exam
  * - Diagnóstico: clinical_records.clinical_diagnosis
+ * 
+ * NOTA: Este componente é Tipo A (permitido usar getLatestClinicalRecord)
+ * porque exibe "status geral" do prontuário, não um prontuário específico.
  */
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -28,6 +30,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useClinicalRecordMigration } from "@/hooks/useClinicalRecordMigration";
+import { getLatestClinicalRecord } from "@/lib/clinical-record-helpers";
 
 interface ClinicalAssessmentChecklistProps {
   patientId: string;
@@ -60,8 +63,8 @@ export function ClinicalAssessmentChecklist({
   const queryClient = useQueryClient();
   const { migrateIfNeeded } = useClinicalRecordMigration();
 
-  // Buscar dados do clinical_records mais recente (FONTE ÚNICA)
-  // Para o checklist, pegamos o prontuário mais recente criado para o paciente
+  // Tipo A: Buscar dados do clinical_records mais recente (VISÃO GERAL de status)
+  // Permitido usar getLatestClinicalRecord porque é checklist de status, não visualização específica
   const { data: clinicalRecord, isLoading, refetch } = useQuery({
     queryKey: ["clinical-record-checklist", patientId],
     queryFn: async () => {
@@ -72,23 +75,16 @@ export function ClinicalAssessmentChecklist({
         console.log("[CHECKLIST] Dados legados migrados com sucesso");
       }
 
-      // Buscar o clinical_record mais recente do paciente (ordenado por created_at DESC)
-      const { data, error } = await supabase
-        .from("clinical_records")
-        .select("*")
-        .eq("patient_id", patientId)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (error) throw error;
-      // Retorna o primeiro (mais recente) ou null se não houver nenhum
-      return data && data.length > 0 ? data[0] : null;
+      // Tipo A: Buscar o mais recente para verificar STATUS de completude
+      const record = await getLatestClinicalRecord(patientId);
+      console.log("[CHECKLIST] Using getLatestClinicalRecord for status check");
+      return record;
     },
     enabled: !!patientId
   });
 
-  // Cast para acessar campos novos
-  const record = clinicalRecord as Record<string, unknown> | null;
+  // Usar tipo direto do helper (não precisa de cast)
+  const record = clinicalRecord;
 
   // Montar checklist com dados do prontuário
   const checklistItems: ChecklistItem[] = [

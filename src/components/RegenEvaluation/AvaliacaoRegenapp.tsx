@@ -3,6 +3,9 @@
  * 
  * Fluxo completo: Status → Triagem (read-only) → Prontuário → Exames → Ações → Resultado
  * Implementa máquina de estados S0 → S1 → S2 → S3
+ * 
+ * NOTA: Este componente é Tipo A (permitido usar getLatestClinicalRecord)
+ * porque exibe "status geral" da avaliação, não um prontuário específico para edição.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
@@ -35,6 +38,7 @@ import { runRegenEngine } from "@/lib/regen-engine";
 import { buildRegenCanonicalFromTriagem } from "@/lib/regen-canonical-adapter";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { Json } from "@/integrations/supabase/types";
+import { getLatestClinicalRecord } from "@/lib/clinical-record-helpers";
 
 interface AvaliacaoRegenappProps {
   patientId: string;
@@ -76,20 +80,13 @@ export function AvaliacaoRegenapp({
     enabled: !!patientId
   });
 
-  // Buscar clinical_records (FONTE ÚNICA para os 4 campos clínicos)
-  // Busca o mais recente para este paciente
+  // Tipo A: Buscar clinical_records mais recente (VISÃO GERAL para status da avaliação)
+  // Permitido usar getLatestClinicalRecord porque é para calcular status, não para editar/visualizar
   const { data: clinicalRecord } = useQuery({
     queryKey: ["clinical-record-for-status", patientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clinical_records")
-        .select("*")
-        .eq("patient_id", patientId)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      return data && data.length > 0 ? data[0] : null;
+      console.log("[AvaliacaoRegenapp] Using getLatestClinicalRecord for status calculation");
+      return await getLatestClinicalRecord(patientId);
     },
     enabled: !!patientId
   });
@@ -100,17 +97,17 @@ export function AvaliacaoRegenapp({
   const canonical = (questionnaireResponses?.regen_canonical as RegenCanonical) || null;
   const engineOutputs = (questionnaireResponses?.regen_engine_outputs as RegenEngineOutputs) || null;
   
-  // Cast para acessar campos novos do clinical_records
-  const clinicalRecordData = clinicalRecord as Record<string, unknown> | null;
+  // Usar tipo direto do helper (não precisa de cast)
+  const clinicalRecordData = clinicalRecord;
 
   // Calcular status atual - LENDO DO clinical_records (FONTE ÚNICA)
   const currentStatus: RegenCaseStatus = screening ? computeCaseStatus({
     triage_completed_at: screening.triage_completed_at,
     // FONTE ÚNICA: ler do clinical_records, não do prp_screenings
-    clinical_chief_complaint: clinicalRecordData?.chief_complaint as string | null,
-    clinical_anamnesis: clinicalRecordData?.anamnesis as string | null,
-    clinical_physical_exam: clinicalRecordData?.physical_exam as string | null,
-    clinical_diagnosis: clinicalRecordData?.clinical_diagnosis as string | null,
+    clinical_chief_complaint: clinicalRecordData?.chief_complaint ?? null,
+    clinical_anamnesis: clinicalRecordData?.anamnesis ?? null,
+    clinical_physical_exam: clinicalRecordData?.physical_exam ?? null,
+    clinical_diagnosis: clinicalRecordData?.clinical_diagnosis ?? null,
     labs_validated: screening.labs_validated as unknown as Record<string, ValidatedLabData> | null,
     regen_engine_outputs: engineOutputs
   }) : "S0";
