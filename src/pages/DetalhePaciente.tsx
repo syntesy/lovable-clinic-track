@@ -346,8 +346,8 @@ const DetalhePaciente = () => {
                   <div className="flex gap-2">
                     <Button 
                       size="lg" 
-                      variant="secondary"
-                      className="gap-2" 
+                      variant="outline"
+                      className="gap-2 border-primary/30 bg-primary/10 hover:bg-primary/20 text-foreground" 
                       onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
                     >
                       <FolderOpen className="w-5 h-5" />
