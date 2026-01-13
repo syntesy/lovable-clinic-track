@@ -187,10 +187,11 @@ export default function ClinicalRecordEditor() {
         throw recordError;
       }
 
-      // Invalidate queries
+      // Invalidate queries (including latest-clinical-record for overview refresh)
       await queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
       await queryClient.invalidateQueries({ queryKey: ["clinical-record", recordId] });
       await queryClient.invalidateQueries({ queryKey: ["clinical-records-list", patientId] });
+      await queryClient.invalidateQueries({ queryKey: ["latest-clinical-record", patientId] });
 
       if (finalize) {
         toast.success("Prontuário finalizado com sucesso!");
