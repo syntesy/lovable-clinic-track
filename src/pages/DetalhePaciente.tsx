@@ -345,7 +345,8 @@ const DetalhePaciente = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button 
-                      variant="outline" 
+                      size="lg" 
+                      variant="secondary"
                       className="gap-2" 
                       onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
                     >
