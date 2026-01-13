@@ -1,0 +1,14 @@
+-- Migration 0001
+-- Initial database state documented in:
+-- db/baseline/2025-01-13_initial/
+-- 
+-- This file exists only to anchor future migrations.
+-- 
+-- The baseline contains:
+--   - schema.sql: Full DDL (tables, columns, types, enums, relations, indexes)
+--   - policies.sql: All RLS policies
+--   - functions_triggers.sql: All functions, triggers and procedures
+--   - baseline_notes.md: Documentation and observations
+--
+-- ⚠️ DO NOT ADD EXECUTABLE DDL TO THIS FILE
+-- All new changes should be created as new numbered migration files.
