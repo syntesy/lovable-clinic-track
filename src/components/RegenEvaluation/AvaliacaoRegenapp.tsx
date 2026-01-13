@@ -77,6 +77,7 @@ export function AvaliacaoRegenapp({
   });
 
   // Buscar clinical_records (FONTE ÚNICA para os 4 campos clínicos)
+  // Busca o mais recente para este paciente
   const { data: clinicalRecord } = useQuery({
     queryKey: ["clinical-record-for-status", patientId],
     queryFn: async () => {
@@ -84,10 +85,11 @@ export function AvaliacaoRegenapp({
         .from("clinical_records")
         .select("*")
         .eq("patient_id", patientId)
-        .maybeSingle();
+        .order("created_at", { ascending: false })
+        .limit(1);
       
       if (error) throw error;
-      return data;
+      return data && data.length > 0 ? data[0] : null;
     },
     enabled: !!patientId
   });

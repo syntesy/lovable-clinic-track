@@ -60,7 +60,8 @@ export function ClinicalAssessmentChecklist({
   const queryClient = useQueryClient();
   const { migrateIfNeeded } = useClinicalRecordMigration();
 
-  // Buscar dados do clinical_records (FONTE ÚNICA)
+  // Buscar dados do clinical_records mais recente (FONTE ÚNICA)
+  // Para o checklist, pegamos o prontuário mais recente criado para o paciente
   const { data: clinicalRecord, isLoading, refetch } = useQuery({
     queryKey: ["clinical-record-checklist", patientId],
     queryFn: async () => {
@@ -71,15 +72,17 @@ export function ClinicalAssessmentChecklist({
         console.log("[CHECKLIST] Dados legados migrados com sucesso");
       }
 
-      // Buscar clinical_record atualizado
+      // Buscar o clinical_record mais recente do paciente (ordenado por created_at DESC)
       const { data, error } = await supabase
         .from("clinical_records")
         .select("*")
         .eq("patient_id", patientId)
-        .maybeSingle();
+        .order("created_at", { ascending: false })
+        .limit(1);
 
       if (error) throw error;
-      return data;
+      // Retorna o primeiro (mais recente) ou null se não houver nenhum
+      return data && data.length > 0 ? data[0] : null;
     },
     enabled: !!patientId
   });
@@ -124,9 +127,9 @@ export function ClinicalAssessmentChecklist({
     onCompletionChange?.(allComplete);
   }, [allComplete, onCompletionChange]);
 
-  // Navigate to Prontuário Clínico
+  // Navigate to Prontuário Clínico - redireciona para lista de prontuários
   const handleNavigateToProntuario = () => {
-    navigate(`/prontuario/${patientId}`);
+    navigate(`/patients/${patientId}/records`);
   };
 
   // Refresh data

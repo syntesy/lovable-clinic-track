@@ -34,11 +34,15 @@ const VisualizarRelatorio = () => {
 
       if (patientError) throw patientError;
 
-      const { data: clinicalRecord } = await supabase
+      // Buscar o prontuário mais recente (ordenado por created_at DESC)
+      const { data: clinicalRecords } = await supabase
         .from("clinical_records")
         .select("*")
         .eq("patient_id", id)
-        .maybeSingle();
+        .order("created_at", { ascending: false })
+        .limit(1);
+      
+      const clinicalRecord = clinicalRecords && clinicalRecords.length > 0 ? clinicalRecords[0] : null;
 
       const { data: protocols } = await supabase
         .from("mac_protocols")
