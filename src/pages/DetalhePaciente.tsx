@@ -192,7 +192,7 @@ const DetalhePaciente = () => {
     data: latestClinicalRecord,
     isLoading: isLoadingLatestRecord
   } = useQuery({
-    queryKey: ["latest-clinical-record", selectedPatientId],
+    queryKey: ["clinical-record", "latest", selectedPatientId],
     queryFn: async () => {
       if (!selectedPatientId) return null;
       return getLatestClinicalRecord(selectedPatientId);
@@ -438,14 +438,33 @@ const DetalhePaciente = () => {
                       <CardContent className="pt-0 space-y-3">
                         {isLoadingLatestRecord ? (
                           <Skeleton className="h-7 w-3/4" />
+                        ) : !latestClinicalRecord ? (
+                          <div className="space-y-2">
+                            <p className="text-muted-foreground text-lg">Sem prontuários ainda</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Novo Prontuário
+                            </Button>
+                          </div>
                         ) : (
-                          <p className="text-foreground text-lg">
-                            {latestClinicalRecord?.clinical_diagnosis?.trim() 
-                              ? latestClinicalRecord.clinical_diagnosis 
-                              : latestClinicalRecord?.chief_complaint?.trim()
-                                ? latestClinicalRecord.chief_complaint
-                                : "Não informado"}
-                          </p>
+                          <>
+                            <p className="text-foreground text-lg">
+                              {latestClinicalRecord.clinical_diagnosis?.trim() 
+                                ? latestClinicalRecord.clinical_diagnosis 
+                                : latestClinicalRecord.chief_complaint?.trim()
+                                  ? latestClinicalRecord.chief_complaint
+                                  : "Não informado"}
+                            </p>
+                            {latestClinicalRecord.status === "draft" && 
+                              !latestClinicalRecord.clinical_diagnosis?.trim() && 
+                              !latestClinicalRecord.chief_complaint?.trim() && (
+                              <p className="text-xs text-muted-foreground italic">Rascunho em andamento</p>
+                            )}
+                          </>
                         )}
                         {latestClinicalRecord && (
                           <Button

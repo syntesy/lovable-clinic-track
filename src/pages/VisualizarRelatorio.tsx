@@ -41,7 +41,7 @@ const VisualizarRelatorio = () => {
 
   // Se não tiver recordId, buscar lista de prontuários para seleção
   const { data: recordsList, isLoading: loadingRecordsList } = useQuery({
-    queryKey: ["clinical-records-list", id],
+    queryKey: ["clinical-record", "list", id],
     queryFn: () => listClinicalRecords(id!),
     enabled: !!id && !recordIdFromQuery,
   });

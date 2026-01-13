@@ -84,7 +84,7 @@ export function AvaliacaoRegenapp({
   // Tipo A: Buscar clinical_records mais recente (VISÃO GERAL para status da avaliação)
   // Permitido usar getLatestClinicalRecord porque é para calcular status, não para editar/visualizar
   const { data: clinicalRecord } = useQuery({
-    queryKey: ["clinical-record-for-status", patientId],
+    queryKey: ["clinical-record", "latest", patientId],
     queryFn: async () => {
       console.log("[AvaliacaoRegenapp] Using getLatestClinicalRecord for status calculation");
       return await getLatestClinicalRecord(patientId);
