@@ -1,8 +1,11 @@
 /**
  * Exam Request Modal - Gerar Solicitação de Exames
+ * 
+ * UNIFICADO: Usa o catálogo canônico de exames (exam-catalog.ts) como fonte única.
+ * Exames são pré-selecionados com base no snapshot da triagem (recommendedExams prop).
  */
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,50 +18,77 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Printer, FileText } from "lucide-react";
-import { REQUIRED_CRITICAL_LABS, CRITICAL_LAB_LABELS, RequiredCriticalLab } from "@/types/regen-case-status";
+import { Badge } from "@/components/ui/badge";
+import { Printer, FileText, AlertCircle } from "lucide-react";
+import {
+  normalizeExamList,
+  getExamLabel,
+  isCriticalExam,
+  getCriticalExamCodes,
+  getAdditionalExamCodes,
+  EXAM_CATALOG,
+} from "@/lib/exam-catalog";
 
 interface ExamRequestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patientName?: string;
+  /** Exames recomendados pelo snapshot da triagem (fonte: analysis_result ou recommended_exams) */
+  recommendedExams?: string[];
   onGenerate?: (selectedExams: string[], observations: string) => void;
 }
-
-// Exames adicionais opcionais
-const OPTIONAL_EXAMS = [
-  { id: "vitamin_d", label: "Vitamina D (25-OH)" },
-  { id: "vitamin_b12", label: "Vitamina B12" },
-  { id: "iron", label: "Ferro Sérico" },
-  { id: "transferrin", label: "Transferrina" },
-  { id: "tsh", label: "TSH" },
-  { id: "urea", label: "Ureia" },
-  { id: "creatinine", label: "Creatinina" },
-  { id: "alt", label: "ALT (TGP)" },
-  { id: "ast", label: "AST (TGO)" },
-];
 
 export function ExamRequestModal({
   open,
   onOpenChange,
   patientName,
+  recommendedExams,
   onGenerate
 }: ExamRequestModalProps) {
-  const [selectedExams, setSelectedExams] = useState<Set<string>>(() => {
-    // Iniciar com exames críticos selecionados
-    return new Set(REQUIRED_CRITICAL_LABS);
-  });
   const [observations, setObservations] = useState("");
 
-  const toggleExam = (examId: string) => {
+  // Normaliza os exames recomendados da triagem
+  const normalizedRecommended = useMemo(() => {
+    return normalizeExamList(recommendedExams);
+  }, [recommendedExams]);
+
+  // Códigos críticos e adicionais do catálogo
+  const criticalCodes = useMemo(() => getCriticalExamCodes(), []);
+  const additionalCodes = useMemo(() => getAdditionalExamCodes(), []);
+
+  // Estado: inicia com críticos + recomendados da triagem
+  const [selectedExams, setSelectedExams] = useState<Set<string>>(() => {
+    const initial = new Set(criticalCodes);
+    normalizedRecommended.forEach(code => initial.add(code));
+    return initial;
+  });
+
+  // Atualiza seleção quando recommendedExams muda
+  useEffect(() => {
+    const newSet = new Set(criticalCodes);
+    normalizedRecommended.forEach(code => newSet.add(code));
+    setSelectedExams(newSet);
+  }, [normalizedRecommended, criticalCodes]);
+
+  // Exames adicionais que vieram da triagem (não-críticos)
+  const triagemAdditionalExams = useMemo(() => {
+    return normalizedRecommended.filter(code => !isCriticalExam(code));
+  }, [normalizedRecommended]);
+
+  // Exames opcionais que NÃO vieram da triagem
+  const otherOptionalExams = useMemo(() => {
+    return additionalCodes.filter(code => !normalizedRecommended.includes(code));
+  }, [additionalCodes, normalizedRecommended]);
+
+  const toggleExam = (examCode: string) => {
     const newSet = new Set(selectedExams);
-    if (newSet.has(examId)) {
+    if (newSet.has(examCode)) {
       // Não permitir desmarcar exames críticos
-      if (!REQUIRED_CRITICAL_LABS.includes(examId as RequiredCriticalLab)) {
-        newSet.delete(examId);
+      if (!isCriticalExam(examCode)) {
+        newSet.delete(examCode);
       }
     } else {
-      newSet.add(examId);
+      newSet.add(examCode);
     }
     setSelectedExams(newSet);
   };
@@ -72,7 +102,13 @@ export function ExamRequestModal({
   const handlePrint = () => {
     const exams = Array.from(selectedExams);
     
-    // Criar documento para impressão
+    // Ordenar: críticos primeiro
+    const sortedExams = exams.sort((a, b) => {
+      if (isCriticalExam(a) && !isCriticalExam(b)) return -1;
+      if (!isCriticalExam(a) && isCriticalExam(b)) return 1;
+      return getExamLabel(a).localeCompare(getExamLabel(b), "pt-BR");
+    });
+    
     const printContent = `
       <html>
         <head>
@@ -85,6 +121,7 @@ export function ExamRequestModal({
             .exam-list { list-style: none; padding: 0; }
             .exam-list li { padding: 8px 0; border-bottom: 1px solid #eee; }
             .critical { font-weight: bold; }
+            .from-triage { color: #0066cc; }
             .disclaimer { margin-top: 30px; padding: 15px; background: #fff3cd; font-size: 12px; }
             .footer { margin-top: 40px; font-size: 11px; color: #666; }
             .observations { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
@@ -100,12 +137,11 @@ export function ExamRequestModal({
           
           <h2>Exames Solicitados:</h2>
           <ul class="exam-list">
-            ${exams.map(exam => {
-              const isCritical = REQUIRED_CRITICAL_LABS.includes(exam as RequiredCriticalLab);
-              const label = isCritical 
-                ? CRITICAL_LAB_LABELS[exam as RequiredCriticalLab]
-                : OPTIONAL_EXAMS.find(e => e.id === exam)?.label || exam;
-              return `<li class="${isCritical ? 'critical' : ''}">${label}${isCritical ? ' (obrigatório)' : ''}</li>`;
+            ${sortedExams.map(code => {
+              const label = getExamLabel(code);
+              const critical = isCriticalExam(code);
+              const fromTriage = normalizedRecommended.includes(code) && !critical;
+              return `<li class="${critical ? 'critical' : ''} ${fromTriage ? 'from-triage' : ''}">${label}${critical ? ' (crítico)' : ''}${fromTriage ? ' (recomendado pela triagem)' : ''}</li>`;
             }).join('')}
           </ul>
           
@@ -139,7 +175,7 @@ export function ExamRequestModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -151,49 +187,84 @@ export function ExamRequestModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Exames Críticos */}
+          {/* Exames Críticos (sempre obrigatórios) */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Exames Críticos (Obrigatórios)</Label>
+            <Label className="text-sm font-medium flex items-center gap-2">
+              Exames Críticos
+              <Badge variant="secondary" className="text-xs">Obrigatórios</Badge>
+            </Label>
             <div className="grid grid-cols-2 gap-2">
-              {REQUIRED_CRITICAL_LABS.map(lab => (
-                <div key={lab} className="flex items-center space-x-2">
+              {criticalCodes.map(code => (
+                <div key={code} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`exam-${lab}`}
-                    checked={selectedExams.has(lab)}
+                    id={`exam-${code}`}
+                    checked={selectedExams.has(code)}
                     disabled={true}
                   />
                   <label
-                    htmlFor={`exam-${lab}`}
+                    htmlFor={`exam-${code}`}
                     className="text-sm font-medium leading-none cursor-not-allowed opacity-70"
                   >
-                    {CRITICAL_LAB_LABELS[lab]}
+                    {getExamLabel(code)}
                   </label>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Exames Opcionais */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Exames Adicionais (Opcionais)</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {OPTIONAL_EXAMS.map(exam => (
-                <div key={exam.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`exam-${exam.id}`}
-                    checked={selectedExams.has(exam.id)}
-                    onCheckedChange={() => toggleExam(exam.id)}
-                  />
-                  <label
-                    htmlFor={`exam-${exam.id}`}
-                    className="text-sm leading-none cursor-pointer"
-                  >
-                    {exam.label}
-                  </label>
-                </div>
-              ))}
+          {/* Exames Recomendados pela Triagem (se houver) */}
+          {triagemAdditionalExams.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-blue-500" />
+                Recomendados pela Triagem
+                <Badge className="text-xs bg-blue-500/20 text-blue-700 border-blue-500/30">
+                  Pré-selecionados
+                </Badge>
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {triagemAdditionalExams.map(code => (
+                  <div key={code} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`exam-${code}`}
+                      checked={selectedExams.has(code)}
+                      onCheckedChange={() => toggleExam(code)}
+                    />
+                    <label
+                      htmlFor={`exam-${code}`}
+                      className="text-sm leading-none cursor-pointer text-blue-700 dark:text-blue-400"
+                    >
+                      {getExamLabel(code)}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Exames Adicionais Opcionais */}
+          {otherOptionalExams.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Exames Adicionais (Opcionais)</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                {otherOptionalExams.map(code => (
+                  <div key={code} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`exam-${code}`}
+                      checked={selectedExams.has(code)}
+                      onCheckedChange={() => toggleExam(code)}
+                    />
+                    <label
+                      htmlFor={`exam-${code}`}
+                      className="text-sm leading-none cursor-pointer"
+                    >
+                      {getExamLabel(code)}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Observações */}
           <div className="space-y-2">
