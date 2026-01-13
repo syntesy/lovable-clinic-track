@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -188,7 +189,8 @@ const DetalhePaciente = () => {
 
   // Fetch latest clinical record for overview (Type A: status/summary only)
   const {
-    data: latestClinicalRecord
+    data: latestClinicalRecord,
+    isLoading: isLoadingLatestRecord
   } = useQuery({
     queryKey: ["latest-clinical-record", selectedPatientId],
     queryFn: async () => {
@@ -428,19 +430,23 @@ const DetalhePaciente = () => {
                           </CardTitle>
                           {latestClinicalRecord && (
                             <Badge variant="outline" className="text-xs font-normal">
-                              Prontuário: {format(new Date(latestClinicalRecord.updated_at), "dd/MM/yyyy", { locale: ptBR })}
+                              Baseado no ÚLTIMO prontuário: {format(new Date(latestClinicalRecord.created_at), "dd/MM/yyyy", { locale: ptBR })}
                             </Badge>
                           )}
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0 space-y-3">
-                        <p className="text-foreground text-lg">
-                          {latestClinicalRecord?.clinical_diagnosis?.trim() 
-                            ? latestClinicalRecord.clinical_diagnosis 
-                            : latestClinicalRecord?.chief_complaint?.trim()
-                              ? latestClinicalRecord.chief_complaint
-                              : "Não informado"}
-                        </p>
+                        {isLoadingLatestRecord ? (
+                          <Skeleton className="h-7 w-3/4" />
+                        ) : (
+                          <p className="text-foreground text-lg">
+                            {latestClinicalRecord?.clinical_diagnosis?.trim() 
+                              ? latestClinicalRecord.clinical_diagnosis 
+                              : latestClinicalRecord?.chief_complaint?.trim()
+                                ? latestClinicalRecord.chief_complaint
+                                : "Não informado"}
+                          </p>
+                        )}
                         {latestClinicalRecord && (
                           <Button
                             variant="link"
