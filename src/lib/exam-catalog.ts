@@ -16,6 +16,49 @@ export interface ExamDefinition {
 }
 
 /**
+ * PAINÉIS LABORATORIAIS - Agrupam analitos individuais
+ * Ex: CBC (Hemograma) agrupa hemoglobina, leucócitos, plaquetas, hematócrito
+ */
+export interface LabPanel {
+  code: string;
+  label_pt: string;
+  /** Label detalhado para exibição: "Hemograma Completo (inclui: ...)" */
+  label_detailed: string;
+  components: string[]; // códigos dos analitos
+  priority: ExamPriority;
+  synonyms: string[];
+}
+
+export const LAB_PANELS: LabPanel[] = [
+  {
+    code: "cbc",
+    label_pt: "Hemograma Completo",
+    label_detailed: "Hemograma Completo (inclui: Hemoglobina, Leucócitos, Plaquetas, Hematócrito)",
+    components: ["hemoglobin", "leukocytes", "platelets", "hematocrit"],
+    priority: "critical",
+    synonyms: ["hemograma completo", "hemograma", "cbc", "complete blood count", "blood count"],
+  },
+  {
+    code: "lipid_panel",
+    label_pt: "Perfil Lipídico",
+    label_detailed: "Perfil Lipídico (inclui: Colesterol Total, LDL, HDL, Triglicerídeos)",
+    components: ["cholesterol", "ldl", "hdl", "triglycerides"],
+    priority: "additional",
+    synonyms: ["perfil lipídico", "perfil lipidico", "lipid panel", "colesterol total", "lipidograma"],
+  },
+];
+
+// Mapa para lookup rápido de painéis
+const PANEL_BY_CODE = new Map<string, LabPanel>();
+LAB_PANELS.forEach(panel => PANEL_BY_CODE.set(panel.code, panel));
+
+// Mapa de componente → painel (para agrupar analitos)
+const COMPONENT_TO_PANEL = new Map<string, LabPanel>();
+LAB_PANELS.forEach(panel => {
+  panel.components.forEach(comp => COMPONENT_TO_PANEL.set(comp, panel));
+});
+
+/**
  * Catálogo completo de exames
  * Ordenado por prioridade: críticos primeiro, depois adicionais
  */
@@ -24,21 +67,21 @@ export const EXAM_CATALOG: ExamDefinition[] = [
   {
     code: "hemoglobin",
     label_pt: "Hemoglobina",
-    group_code: "CBC",
+    group_code: "cbc",
     priority: "critical",
     synonyms: ["hemoglobina", "hb", "hemoglobin", "hgb"],
   },
   {
     code: "leukocytes",
     label_pt: "Leucócitos",
-    group_code: "CBC",
+    group_code: "cbc",
     priority: "critical",
     synonyms: ["leucócitos", "leucocitos", "leukocytes", "wbc", "globulos brancos", "glóbulos brancos"],
   },
   {
     code: "platelets",
     label_pt: "Plaquetas",
-    group_code: "CBC",
+    group_code: "cbc",
     priority: "critical",
     synonyms: ["plaquetas", "platelets", "plt", "contagem de plaquetas"],
   },
@@ -125,7 +168,7 @@ export const EXAM_CATALOG: ExamDefinition[] = [
   {
     code: "hematocrit",
     label_pt: "Hematócrito",
-    group_code: "CBC",
+    group_code: "cbc",
     priority: "additional",
     synonyms: ["hematócrito", "hematocrito", "hematocrit", "hct", "ht"],
   },
@@ -134,18 +177,6 @@ export const EXAM_CATALOG: ExamDefinition[] = [
     label_pt: "Magnésio",
     priority: "additional",
     synonyms: ["magnésio", "magnesio", "magnesium", "mg sérico", "mg serico"],
-  },
-  {
-    code: "cbc",
-    label_pt: "Hemograma Completo",
-    priority: "additional",
-    synonyms: ["hemograma completo", "hemograma", "cbc", "complete blood count", "blood count"],
-  },
-  {
-    code: "lipid_panel",
-    label_pt: "Perfil Lipídico",
-    priority: "additional",
-    synonyms: ["perfil lipídico", "perfil lipidico", "lipid panel", "colesterol total", "lipidograma"],
   },
   {
     code: "insulin",
@@ -188,6 +219,20 @@ EXAM_CATALOG.forEach(exam => {
   EXAM_BY_SYNONYM.set(exam.label_pt.toLowerCase(), exam);
 });
 
+// Adiciona sinônimos de painéis ao mapa
+LAB_PANELS.forEach(panel => {
+  panel.synonyms.forEach(synonym => {
+    // Cria um ExamDefinition virtual para painéis
+    const virtualExam: ExamDefinition = {
+      code: panel.code,
+      label_pt: panel.label_pt,
+      priority: panel.priority,
+      synonyms: panel.synonyms,
+    };
+    EXAM_BY_SYNONYM.set(synonym.toLowerCase().trim(), virtualExam);
+  });
+});
+
 /**
  * Obtém um exame pelo código canônico
  */
@@ -196,17 +241,54 @@ export function getExamByCode(code: string): ExamDefinition | undefined {
 }
 
 /**
+ * Obtém um painel pelo código
+ */
+export function getPanelByCode(code: string): LabPanel | undefined {
+  return PANEL_BY_CODE.get(code);
+}
+
+/**
  * Obtém o label PT de um exame pelo código
  */
 export function getExamLabel(code: string): string {
+  // Primeiro verifica se é um painel
+  const panel = PANEL_BY_CODE.get(code);
+  if (panel) return panel.label_pt;
+  
   const exam = EXAM_BY_CODE.get(code);
   return exam?.label_pt || code;
 }
 
 /**
- * Verifica se um código é de exame crítico
+ * Obtém o label detalhado de um painel (com componentes listados)
+ */
+export function getPanelDetailedLabel(code: string): string | null {
+  const panel = PANEL_BY_CODE.get(code);
+  return panel?.label_detailed || null;
+}
+
+/**
+ * Verifica se um código é de um painel laboratorial
+ */
+export function isLabPanel(code: string): boolean {
+  return PANEL_BY_CODE.has(code);
+}
+
+/**
+ * Obtém os componentes de um painel
+ */
+export function getPanelComponents(code: string): string[] {
+  const panel = PANEL_BY_CODE.get(code);
+  return panel?.components || [];
+}
+
+/**
+ * Verifica se um código é de exame crítico (incluindo painéis)
  */
 export function isCriticalExam(code: string): boolean {
+  const panel = PANEL_BY_CODE.get(code);
+  if (panel) return panel.priority === "critical";
+  
   const exam = EXAM_BY_CODE.get(code);
   return exam?.priority === "critical";
 }
@@ -222,8 +304,13 @@ export function resolveExamCode(input: string): string | null {
   
   const normalized = input.toLowerCase().trim();
   
-  // Primeiro, tenta match direto por código
+  // Primeiro, tenta match direto por código de exame
   if (EXAM_BY_CODE.has(normalized)) {
+    return normalized;
+  }
+  
+  // Depois, tenta match direto por código de painel
+  if (PANEL_BY_CODE.has(normalized)) {
     return normalized;
   }
   
@@ -244,10 +331,11 @@ export function resolveExamCode(input: string): string | null {
 }
 
 /**
- * Normaliza uma lista de exames (strings ou códigos) para códigos canônicos
+ * Normaliza uma lista de exames para códigos DETALHADOS (analitos individuais)
+ * Expande painéis em seus componentes.
  * Remove duplicados e ordena por prioridade (críticos primeiro)
  */
-export function normalizeExamList(input: string[] | null | undefined): string[] {
+export function normalizeExamListDetailed(input: string[] | null | undefined): string[] {
   if (!input || !Array.isArray(input) || input.length === 0) {
     return [];
   }
@@ -259,38 +347,89 @@ export function normalizeExamList(input: string[] | null | undefined): string[] 
     
     const code = resolveExamCode(item);
     if (code) {
-      resolvedCodes.add(code);
-      
-      // Se for CBC (hemograma completo), adiciona os analitos individuais
-      if (code === "cbc") {
-        resolvedCodes.add("hemoglobin");
-        resolvedCodes.add("leukocytes");
-        resolvedCodes.add("platelets");
-        resolvedCodes.add("hematocrit");
+      // Se for um painel, expande para seus componentes
+      const panel = PANEL_BY_CODE.get(code);
+      if (panel) {
+        panel.components.forEach(comp => resolvedCodes.add(comp));
+      } else {
+        resolvedCodes.add(code);
       }
     }
   }
   
   // Converte para array e ordena por prioridade
-  const sorted = Array.from(resolvedCodes).sort((a, b) => {
-    const examA = EXAM_BY_CODE.get(a);
-    const examB = EXAM_BY_CODE.get(b);
-    
-    // Críticos primeiro
-    if (examA?.priority === "critical" && examB?.priority !== "critical") return -1;
-    if (examA?.priority !== "critical" && examB?.priority === "critical") return 1;
-    
-    // Dentro da mesma prioridade, ordena alfabeticamente pelo label
-    const labelA = examA?.label_pt || a;
-    const labelB = examB?.label_pt || b;
-    return labelA.localeCompare(labelB, "pt-BR");
-  });
-  
-  return sorted;
+  return sortExamCodes(Array.from(resolvedCodes));
 }
 
 /**
- * Retorna os códigos de todos os exames críticos
+ * Normaliza uma lista de exames para códigos AGRUPADOS (painéis laboratoriais)
+ * Agrupa analitos em seus painéis quando possível.
+ * Remove duplicados e ordena por prioridade (críticos primeiro)
+ */
+export function normalizeExamListGrouped(input: string[] | null | undefined): string[] {
+  if (!input || !Array.isArray(input) || input.length === 0) {
+    return [];
+  }
+
+  const resolvedCodes = new Set<string>();
+  const panelsAdded = new Set<string>();
+  
+  for (const item of input) {
+    if (!item || typeof item !== "string") continue;
+    
+    const code = resolveExamCode(item);
+    if (code) {
+      // Se for um painel, adiciona diretamente
+      if (PANEL_BY_CODE.has(code)) {
+        resolvedCodes.add(code);
+        panelsAdded.add(code);
+      } else {
+        // Se for um componente de painel, adiciona o painel em vez do componente
+        const parentPanel = COMPONENT_TO_PANEL.get(code);
+        if (parentPanel) {
+          resolvedCodes.add(parentPanel.code);
+          panelsAdded.add(parentPanel.code);
+        } else {
+          // Exame avulso, adiciona diretamente
+          resolvedCodes.add(code);
+        }
+      }
+    }
+  }
+  
+  // Converte para array e ordena por prioridade
+  return sortExamCodes(Array.from(resolvedCodes));
+}
+
+/**
+ * Mantém compatibilidade: normaliza expandindo CBC para analitos (comportamento original)
+ * @deprecated Use normalizeExamListDetailed ou normalizeExamListGrouped conforme contexto
+ */
+export function normalizeExamList(input: string[] | null | undefined): string[] {
+  return normalizeExamListDetailed(input);
+}
+
+/**
+ * Ordena códigos por prioridade (críticos primeiro) e alfabeticamente
+ */
+function sortExamCodes(codes: string[]): string[] {
+  return codes.sort((a, b) => {
+    const priorityA = isCriticalExam(a);
+    const priorityB = isCriticalExam(b);
+    
+    // Críticos primeiro
+    if (priorityA && !priorityB) return -1;
+    if (!priorityA && priorityB) return 1;
+    
+    // Dentro da mesma prioridade, ordena alfabeticamente pelo label
+    const labelA = getExamLabel(a);
+    const labelB = getExamLabel(b);
+    return labelA.localeCompare(labelB, "pt-BR");
+  });
+}
+
+/**
+ * Retorna os códigos de todos os exames críticos (NÃO painéis, apenas analitos)
  */
 export function getCriticalExamCodes(): string[] {
   return EXAM_CATALOG
@@ -299,24 +438,92 @@ export function getCriticalExamCodes(): string[] {
 }
 
 /**
- * Retorna os códigos de todos os exames adicionais
+ * Retorna os códigos de todos os painéis críticos
+ */
+export function getCriticalPanelCodes(): string[] {
+  return LAB_PANELS
+    .filter(panel => panel.priority === "critical")
+    .map(panel => panel.code);
+}
+
+/**
+ * Retorna os códigos de todos os exames adicionais (NÃO painéis)
  */
 export function getAdditionalExamCodes(): string[] {
   return EXAM_CATALOG
-    .filter(exam => exam.priority === "additional")
+    .filter(exam => exam.priority === "additional" && !exam.group_code)
     .map(exam => exam.code);
+}
+
+/**
+ * Retorna os códigos de todos os painéis adicionais
+ */
+export function getAdditionalPanelCodes(): string[] {
+  return LAB_PANELS
+    .filter(panel => panel.priority === "additional")
+    .map(panel => panel.code);
 }
 
 /**
  * Converte códigos para lista de objetos com id/label para UI
  */
-export function examCodesToUIList(codes: string[]): Array<{ id: string; label: string; priority: ExamPriority }> {
+export function examCodesToUIList(codes: string[]): Array<{ id: string; label: string; priority: ExamPriority; isPanel: boolean; components?: string[] }> {
   return codes.map(code => {
+    const panel = PANEL_BY_CODE.get(code);
+    if (panel) {
+      return {
+        id: code,
+        label: panel.label_pt,
+        priority: panel.priority,
+        isPanel: true,
+        components: panel.components,
+      };
+    }
+    
     const exam = EXAM_BY_CODE.get(code);
     return {
       id: code,
       label: exam?.label_pt || code,
       priority: exam?.priority || "additional",
+      isPanel: false,
     };
   });
+}
+
+/**
+ * Obtém informações completas de exibição para UI com agrupamento
+ */
+export interface ExamDisplayInfo {
+  code: string;
+  label: string;
+  detailedLabel?: string;
+  priority: ExamPriority;
+  isPanel: boolean;
+  components: Array<{ code: string; label: string }>;
+}
+
+export function getExamDisplayInfo(code: string): ExamDisplayInfo {
+  const panel = PANEL_BY_CODE.get(code);
+  if (panel) {
+    return {
+      code: panel.code,
+      label: panel.label_pt,
+      detailedLabel: panel.label_detailed,
+      priority: panel.priority,
+      isPanel: true,
+      components: panel.components.map(c => ({
+        code: c,
+        label: EXAM_BY_CODE.get(c)?.label_pt || c,
+      })),
+    };
+  }
+  
+  const exam = EXAM_BY_CODE.get(code);
+  return {
+    code,
+    label: exam?.label_pt || code,
+    priority: exam?.priority || "additional",
+    isPanel: false,
+    components: [],
+  };
 }

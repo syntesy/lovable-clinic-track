@@ -3,6 +3,8 @@
  * 
  * UNIFICADO: Usa o catálogo canônico de exames (exam-catalog.ts) como fonte única.
  * Exames são pré-selecionados com base no snapshot da triagem (recommendedExams prop).
+ * 
+ * AGRUPAMENTO: Exibe painéis (ex: Hemograma Completo) com expand/collapse para analitos.
  */
 
 import { useState, useEffect, useMemo } from "react";
@@ -19,13 +21,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Printer, FileText, AlertCircle } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Printer, FileText, AlertCircle, ChevronDown, ChevronRight, Beaker } from "lucide-react";
 import {
-  normalizeExamList,
+  normalizeExamListGrouped,
   getExamLabel,
   isCriticalExam,
-  getCriticalExamCodes,
+  isLabPanel,
+  getPanelComponents,
+  getPanelDetailedLabel,
+  getCriticalPanelCodes,
   getAdditionalExamCodes,
+  getAdditionalPanelCodes,
+  LAB_PANELS,
   EXAM_CATALOG,
 } from "@/lib/exam-catalog";
 
@@ -46,44 +54,49 @@ export function ExamRequestModal({
   onGenerate
 }: ExamRequestModalProps) {
   const [observations, setObservations] = useState("");
+  const [expandedPanels, setExpandedPanels] = useState<Set<string>>(new Set());
 
-  // Normaliza os exames recomendados da triagem
+  // Normaliza os exames recomendados da triagem (AGRUPADOS)
   const normalizedRecommended = useMemo(() => {
-    return normalizeExamList(recommendedExams);
+    return normalizeExamListGrouped(recommendedExams);
   }, [recommendedExams]);
 
-  // Códigos críticos e adicionais do catálogo
-  const criticalCodes = useMemo(() => getCriticalExamCodes(), []);
-  const additionalCodes = useMemo(() => getAdditionalExamCodes(), []);
+  // Painéis críticos (sempre obrigatórios)
+  const criticalPanels = useMemo(() => getCriticalPanelCodes(), []);
+  
+  // Exames e painéis adicionais
+  const additionalExams = useMemo(() => getAdditionalExamCodes(), []);
+  const additionalPanels = useMemo(() => getAdditionalPanelCodes(), []);
 
-  // Estado: inicia com críticos + recomendados da triagem
+  // Estado: inicia com painéis críticos + recomendados da triagem
   const [selectedExams, setSelectedExams] = useState<Set<string>>(() => {
-    const initial = new Set(criticalCodes);
+    const initial = new Set(criticalPanels);
     normalizedRecommended.forEach(code => initial.add(code));
     return initial;
   });
 
   // Atualiza seleção quando recommendedExams muda
   useEffect(() => {
-    const newSet = new Set(criticalCodes);
+    const newSet = new Set(criticalPanels);
     normalizedRecommended.forEach(code => newSet.add(code));
     setSelectedExams(newSet);
-  }, [normalizedRecommended, criticalCodes]);
+  }, [normalizedRecommended, criticalPanels]);
 
-  // Exames adicionais que vieram da triagem (não-críticos)
+  // Exames/painéis adicionais que vieram da triagem (não-críticos)
   const triagemAdditionalExams = useMemo(() => {
     return normalizedRecommended.filter(code => !isCriticalExam(code));
   }, [normalizedRecommended]);
 
-  // Exames opcionais que NÃO vieram da triagem
-  const otherOptionalExams = useMemo(() => {
-    return additionalCodes.filter(code => !normalizedRecommended.includes(code));
-  }, [additionalCodes, normalizedRecommended]);
+  // Exames opcionais que NÃO vieram da triagem (e não são componentes de painéis já selecionados)
+  const otherOptionalItems = useMemo(() => {
+    const allOptional = [...additionalExams, ...additionalPanels];
+    return allOptional.filter(code => !normalizedRecommended.includes(code));
+  }, [additionalExams, additionalPanels, normalizedRecommended]);
 
   const toggleExam = (examCode: string) => {
     const newSet = new Set(selectedExams);
     if (newSet.has(examCode)) {
-      // Não permitir desmarcar exames críticos
+      // Não permitir desmarcar exames/painéis críticos
       if (!isCriticalExam(examCode)) {
         newSet.delete(examCode);
       }
@@ -91,6 +104,16 @@ export function ExamRequestModal({
       newSet.add(examCode);
     }
     setSelectedExams(newSet);
+  };
+
+  const togglePanelExpand = (panelCode: string) => {
+    const newSet = new Set(expandedPanels);
+    if (newSet.has(panelCode)) {
+      newSet.delete(panelCode);
+    } else {
+      newSet.add(panelCode);
+    }
+    setExpandedPanels(newSet);
   };
 
   const handleGenerate = () => {
@@ -122,6 +145,7 @@ export function ExamRequestModal({
             .exam-list li { padding: 8px 0; border-bottom: 1px solid #eee; }
             .critical { font-weight: bold; }
             .from-triage { color: #0066cc; }
+            .panel-detail { font-size: 12px; color: #666; font-style: italic; }
             .disclaimer { margin-top: 30px; padding: 15px; background: #fff3cd; font-size: 12px; }
             .footer { margin-top: 40px; font-size: 11px; color: #666; }
             .observations { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
@@ -138,9 +162,15 @@ export function ExamRequestModal({
           <h2>Exames Solicitados:</h2>
           <ul class="exam-list">
             ${sortedExams.map(code => {
-              const label = getExamLabel(code);
               const critical = isCriticalExam(code);
+              const panel = isLabPanel(code);
               const fromTriage = normalizedRecommended.includes(code) && !critical;
+              
+              // Para painéis, usa o label detalhado na impressão
+              const label = panel 
+                ? (getPanelDetailedLabel(code) || getExamLabel(code))
+                : getExamLabel(code);
+              
               return `<li class="${critical ? 'critical' : ''} ${fromTriage ? 'from-triage' : ''}">${label}${critical ? ' (crítico)' : ''}${fromTriage ? ' (recomendado pela triagem)' : ''}</li>`;
             }).join('')}
           </ul>
@@ -173,6 +203,72 @@ export function ExamRequestModal({
     }
   };
 
+  // Renderiza um item de exame (painel ou exame avulso)
+  const renderExamItem = (code: string, options: { disabled?: boolean; highlight?: boolean } = {}) => {
+    const { disabled = false, highlight = false } = options;
+    const isPanel = isLabPanel(code);
+    const critical = isCriticalExam(code);
+    const isExpanded = expandedPanels.has(code);
+    const components = isPanel ? getPanelComponents(code) : [];
+
+    if (isPanel && components.length > 0) {
+      return (
+        <Collapsible key={code} open={isExpanded} onOpenChange={() => togglePanelExpand(code)}>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={`exam-${code}`}
+              checked={selectedExams.has(code)}
+              disabled={disabled || critical}
+              onCheckedChange={() => !disabled && toggleExam(code)}
+            />
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className={`text-sm leading-none flex items-center gap-1 ${
+                  disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:underline'
+                } ${highlight ? 'text-blue-700 dark:text-blue-400' : ''} ${critical ? 'font-medium' : ''}`}
+              >
+                <Beaker className="w-3 h-3" />
+                {getExamLabel(code)}
+                {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+              </button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="ml-6 mt-1 pl-2 border-l-2 border-muted">
+            <p className="text-xs text-muted-foreground mb-1">Inclui:</p>
+            <ul className="space-y-0.5">
+              {components.map(comp => (
+                <li key={comp} className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="w-1 h-1 bg-muted-foreground rounded-full" />
+                  {getExamLabel(comp)}
+                </li>
+              ))}
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+      );
+    }
+
+    return (
+      <div key={code} className="flex items-center space-x-2">
+        <Checkbox
+          id={`exam-${code}`}
+          checked={selectedExams.has(code)}
+          disabled={disabled || critical}
+          onCheckedChange={() => !disabled && toggleExam(code)}
+        />
+        <label
+          htmlFor={`exam-${code}`}
+          className={`text-sm leading-none ${
+            disabled || critical ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+          } ${highlight ? 'text-blue-700 dark:text-blue-400' : ''} ${critical ? 'font-medium' : ''}`}
+        >
+          {getExamLabel(code)}
+        </label>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -182,33 +278,19 @@ export function ExamRequestModal({
             Gerar Solicitação de Exames
           </DialogTitle>
           <DialogDescription>
-            Selecione os exames a serem solicitados. Os exames críticos são obrigatórios.
+            Selecione os exames a serem solicitados. Painéis críticos são obrigatórios.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Exames Críticos (sempre obrigatórios) */}
+          {/* Painéis Críticos (sempre obrigatórios) */}
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-2">
               Exames Críticos
               <Badge variant="secondary" className="text-xs">Obrigatórios</Badge>
             </Label>
-            <div className="grid grid-cols-2 gap-2">
-              {criticalCodes.map(code => (
-                <div key={code} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`exam-${code}`}
-                    checked={selectedExams.has(code)}
-                    disabled={true}
-                  />
-                  <label
-                    htmlFor={`exam-${code}`}
-                    className="text-sm font-medium leading-none cursor-not-allowed opacity-70"
-                  >
-                    {getExamLabel(code)}
-                  </label>
-                </div>
-              ))}
+            <div className="space-y-2">
+              {criticalPanels.map(code => renderExamItem(code, { disabled: true }))}
             </div>
           </div>
 
@@ -222,46 +304,18 @@ export function ExamRequestModal({
                   Pré-selecionados
                 </Badge>
               </Label>
-              <div className="grid grid-cols-2 gap-2">
-                {triagemAdditionalExams.map(code => (
-                  <div key={code} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`exam-${code}`}
-                      checked={selectedExams.has(code)}
-                      onCheckedChange={() => toggleExam(code)}
-                    />
-                    <label
-                      htmlFor={`exam-${code}`}
-                      className="text-sm leading-none cursor-pointer text-blue-700 dark:text-blue-400"
-                    >
-                      {getExamLabel(code)}
-                    </label>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {triagemAdditionalExams.map(code => renderExamItem(code, { highlight: true }))}
               </div>
             </div>
           )}
 
           {/* Exames Adicionais Opcionais */}
-          {otherOptionalExams.length > 0 && (
+          {otherOptionalItems.length > 0 && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Exames Adicionais (Opcionais)</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                {otherOptionalExams.map(code => (
-                  <div key={code} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`exam-${code}`}
-                      checked={selectedExams.has(code)}
-                      onCheckedChange={() => toggleExam(code)}
-                    />
-                    <label
-                      htmlFor={`exam-${code}`}
-                      className="text-sm leading-none cursor-pointer"
-                    >
-                      {getExamLabel(code)}
-                    </label>
-                  </div>
-                ))}
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {otherOptionalItems.map(code => renderExamItem(code))}
               </div>
             </div>
           )}

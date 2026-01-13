@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertTriangle, CheckCircle2, XCircle, ClipboardList, Pill, Activity, Heart, Apple, Moon, Ban, Check, X, FileText, Beaker } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-import { normalizeExamList, getExamLabel, isCriticalExam } from "@/lib/exam-catalog";
+import { normalizeExamListGrouped, getExamLabel, isCriticalExam, isLabPanel, getPanelDetailedLabel } from "@/lib/exam-catalog";
 
 interface ScreeningDetailModalProps {
   open: boolean;
@@ -570,8 +570,8 @@ export function ScreeningDetailModal({
                   ...(parsed?.requested_exams?.optional || [])
                 ];
                 
-                // NORMALIZAR exames usando catálogo canônico
-                const normalizedExamCodes = normalizeExamList(rawRequestedExams);
+                // NORMALIZAR exames usando catálogo canônico (AGRUPADO para histórico)
+                const normalizedExamCodes = normalizeExamListGrouped(rawRequestedExams);
                 const hasContent = keyReasons.length > 0 || normalizedExamCodes.length > 0;
                 
                 if (!hasContent) return null;
@@ -603,20 +603,25 @@ export function ScreeningDetailModal({
                           <p className="text-sm font-medium text-muted-foreground mb-2">Exames Solicitados:</p>
                           <ul className="space-y-1">
                             {normalizedExamCodes.map((code: string, idx: number) => {
-                              const label = getExamLabel(code);
                               const critical = isCriticalExam(code);
+                              const panel = isLabPanel(code);
+                              // Para painéis, mostra label detalhado
+                              const label = panel 
+                                ? (getPanelDetailedLabel(code) || getExamLabel(code))
+                                : getExamLabel(code);
+                              
                               return (
-                                <li key={idx} className="text-sm flex items-center gap-2">
+                                <li key={idx} className="text-sm flex items-start gap-2">
                                   {critical ? (
-                                    <Beaker className="w-3 h-3 text-red-500" />
+                                    <Beaker className="w-3 h-3 text-red-500 mt-0.5 shrink-0" />
                                   ) : (
-                                    <FileText className="w-3 h-3 text-blue-500" />
+                                    <FileText className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
                                   )}
                                   <span className={critical ? "font-medium" : ""}>
                                     {label}
                                   </span>
                                   {critical && (
-                                    <Badge variant="outline" className="text-xs text-red-600 border-red-300">
+                                    <Badge variant="outline" className="text-xs text-red-600 border-red-300 shrink-0">
                                       Crítico
                                     </Badge>
                                   )}
