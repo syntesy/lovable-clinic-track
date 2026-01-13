@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, ChevronDown, User, Activity, FileText, FlaskConical, ClipboardList, Brain, Calendar, CheckCircle2, AlertCircle, XCircle, Clock, TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle, Loader2, FolderOpen } from "lucide-react";
+import { Search, ChevronDown, User, Activity, FileText, FlaskConical, ClipboardList, Brain, Calendar, CheckCircle2, AlertCircle, XCircle, Clock, TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle, Loader2, FolderOpen, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { PatientPrescriptionsList } from "@/components/patient/PatientPrescripti
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { AddProcedureModal } from "@/components/AddProcedureModal";
 import { Tables } from "@/integrations/supabase/types";
+import { getLatestClinicalRecord } from "@/lib/clinical-record-helpers";
 const DetalhePaciente = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -181,6 +182,18 @@ const DetalhePaciente = () => {
       });
       if (error) throw error;
       return data;
+    },
+    enabled: !!selectedPatientId
+  });
+
+  // Fetch latest clinical record for overview (Type A: status/summary only)
+  const {
+    data: latestClinicalRecord
+  } = useQuery({
+    queryKey: ["latest-clinical-record", selectedPatientId],
+    queryFn: async () => {
+      if (!selectedPatientId) return null;
+      return getLatestClinicalRecord(selectedPatientId);
     },
     enabled: !!selectedPatientId
   });
@@ -409,12 +422,36 @@ const DetalhePaciente = () => {
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Card className="bg-card border-border">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                          Diagnóstico Clínico
-                        </CardTitle>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                            Diagnóstico Clínico
+                          </CardTitle>
+                          {latestClinicalRecord && (
+                            <Badge variant="outline" className="text-xs font-normal">
+                              Prontuário: {format(new Date(latestClinicalRecord.updated_at), "dd/MM/yyyy", { locale: ptBR })}
+                            </Badge>
+                          )}
+                        </div>
                       </CardHeader>
-                      <CardContent className="pt-0">
-                        <p className="text-foreground text-lg">{patient?.clinical_diagnosis || "Não informado"}</p>
+                      <CardContent className="pt-0 space-y-3">
+                        <p className="text-foreground text-lg">
+                          {latestClinicalRecord?.clinical_diagnosis?.trim() 
+                            ? latestClinicalRecord.clinical_diagnosis 
+                            : latestClinicalRecord?.chief_complaint?.trim()
+                              ? latestClinicalRecord.chief_complaint
+                              : "Não informado"}
+                        </p>
+                        {latestClinicalRecord && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-xs text-muted-foreground hover:text-primary"
+                            onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
+                          >
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Ver histórico de prontuários
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                     
