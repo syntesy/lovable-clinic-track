@@ -611,7 +611,12 @@ const DetalhePaciente = () => {
                           <CardContent className="py-12 text-center">
                             <Activity className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
                             <p className="text-muted-foreground mb-4">Nenhuma sessão registrada</p>
-                            <Button onClick={() => navigate(`/prontuario/${selectedPatientId}`)}>
+                            <Button onClick={handleCreateNewRecord} disabled={isCreatingRecord}>
+                              {isCreatingRecord ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Plus className="w-4 h-4 mr-2" />
+                              )}
                               Criar Prontuário Clínico
                             </Button>
                           </CardContent>

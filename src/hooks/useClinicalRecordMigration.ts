@@ -35,14 +35,17 @@ export function useClinicalRecordMigration() {
     screeningId?: string
   ): Promise<{ migrated: boolean; record: ClinicalRecordData | null }> => {
     try {
-      // 1. Buscar clinical_record atual
-      const { data: existingRecord, error: recordError } = await supabase
+      // 1. Buscar clinical_record mais recente
+      const { data: existingRecords, error: recordError } = await supabase
         .from("clinical_records")
         .select("*")
         .eq("patient_id", patientId)
-        .maybeSingle();
+        .order("created_at", { ascending: false })
+        .limit(1);
 
       if (recordError) throw recordError;
+      
+      const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
 
       // 2. Verificar se já tem dados no prontuário
       const hasData = existingRecord && (
