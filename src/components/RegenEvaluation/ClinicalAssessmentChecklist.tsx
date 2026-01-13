@@ -150,6 +150,11 @@ export function ClinicalAssessmentChecklist({
     );
   }
 
+  // Formatar data do último prontuário
+  const lastRecordDate = record?.created_at 
+    ? new Date(record.created_at).toLocaleDateString("pt-BR")
+    : null;
+
   return (
     <div className="space-y-4">
       {/* Banner de bloqueio quando incompleto */}
@@ -197,6 +202,23 @@ export function ClinicalAssessmentChecklist({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Badge transparência: ÚLTIMO prontuário */}
+          {lastRecordDate && (
+            <div className="flex items-center justify-between text-xs border border-blue-500/30 bg-blue-500/5 rounded-md p-2">
+              <span className="text-blue-700 dark:text-blue-300">
+                📋 Baseado no <strong>ÚLTIMO prontuário</strong>: {lastRecordDate}
+              </span>
+              <Button
+                variant="link"
+                size="sm"
+                className="text-xs h-auto p-0 text-blue-600 dark:text-blue-400"
+                onClick={handleNavigateToProntuario}
+              >
+                Ver histórico de prontuários →
+              </Button>
+            </div>
+          )}
+
           {/* Checklist read-only */}
           <div className="grid gap-3">
             {fieldStatuses.map(({ key, label, isComplete }) => (

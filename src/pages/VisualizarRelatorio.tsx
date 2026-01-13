@@ -2,7 +2,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Mail, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Printer, Mail, AlertTriangle, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
@@ -15,22 +15,41 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getClinicalRecordById, getLatestClinicalRecord } from "@/lib/clinical-record-helpers";
+import { getClinicalRecordById, listClinicalRecords, ClinicalRecord } from "@/lib/clinical-record-helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const VisualizarRelatorio = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState("");
 
   // Pegar recordId da query string (se fornecido)
   const recordIdFromQuery = searchParams.get("recordId");
 
-  const { data: patientReport, isLoading, error } = useQuery({
+  // Se não tiver recordId, buscar lista de prontuários para seleção
+  const { data: recordsList, isLoading: loadingRecordsList } = useQuery({
+    queryKey: ["clinical-records-list", id],
+    queryFn: () => listClinicalRecords(id!),
+    enabled: !!id && !recordIdFromQuery,
+  });
+
+  // Se tiver recordId, buscar o relatório completo
+  const { data: patientReport, isLoading: loadingReport, error } = useQuery({
     queryKey: ["patient-report-full", id, recordIdFromQuery],
-    enabled: !!id,
+    enabled: !!id && !!recordIdFromQuery,
     queryFn: async () => {
       const { data: patient, error: patientError } = await supabase
         .from("patients")
@@ -40,22 +59,14 @@ const VisualizarRelatorio = () => {
 
       if (patientError) throw patientError;
 
-      // Se recordId foi fornecido, carregar prontuário específico
-      // Caso contrário, carregar o mais recente (comportamento de "Visão Geral")
-      let clinicalRecord = null;
-      if (recordIdFromQuery) {
-        // Tipo B: Carregar prontuário específico por ID
-        try {
-          clinicalRecord = await getClinicalRecordById(id!, recordIdFromQuery);
-          console.log("[VisualizarRelatorio] Loaded specific record:", recordIdFromQuery);
-        } catch (err) {
-          console.error("[VisualizarRelatorio] Record not found:", recordIdFromQuery);
-          throw new Error("Prontuário não encontrado");
-        }
-      } else {
-        // Tipo A: Visão geral - último prontuário (comportamento legado)
-        clinicalRecord = await getLatestClinicalRecord(id!);
-        console.log("[VisualizarRelatorio] Using latest record (overview mode)");
+      // Tipo B: Carregar prontuário específico por ID (OBRIGATÓRIO)
+      let clinicalRecord: ClinicalRecord;
+      try {
+        clinicalRecord = await getClinicalRecordById(id!, recordIdFromQuery!);
+        console.log("[VisualizarRelatorio] Loaded specific record:", recordIdFromQuery);
+      } catch (err) {
+        console.error("[VisualizarRelatorio] Record not found:", recordIdFromQuery);
+        throw new Error("Prontuário não encontrado");
       }
 
       const { data: protocols } = await supabase
@@ -92,7 +103,6 @@ const VisualizarRelatorio = () => {
         ultrasoundImages: ultrasoundImages || [],
         thermographyImages: thermographyImages || [],
         bloodTests: bloodTests || [],
-        isSpecificRecord: !!recordIdFromQuery,
       };
     },
   });
@@ -112,18 +122,143 @@ const VisualizarRelatorio = () => {
     setRecipientEmail("");
   };
 
+  const handleSelectRecord = (recordId: string) => {
+    setSearchParams({ recordId });
+  };
+
+  const handleCreateNewRecord = async () => {
+    if (!id) return;
+    
+    try {
+      const { data: newRecord, error } = await supabase
+        .from("clinical_records")
+        .insert({ patient_id: id })
+        .select("id")
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success("Prontuário criado");
+      navigate(`/patients/${id}/records/${newRecord.id}`);
+    } catch (err) {
+      console.error("Error creating record:", err);
+      toast.error("Erro ao criar prontuário");
+    }
+  };
+
+  const isLoading = loadingRecordsList || loadingReport;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando relatório...</p>
+        <p className="text-muted-foreground">Carregando...</p>
       </div>
     );
   }
 
-  if (!patientReport) {
+  // Se não tiver recordId: mostrar seletor de prontuários
+  if (!recordIdFromQuery) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Relatório não encontrado</p>
+      <div className="min-h-screen bg-background">
+        <div className="print:hidden sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/pacientes/${id}`)}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Paciente
+          </Button>
+        </div>
+
+        <div className="max-w-2xl mx-auto p-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Selecione um Prontuário
+              </CardTitle>
+              <CardDescription>
+                Escolha qual prontuário deseja visualizar no relatório
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {recordsList && recordsList.length > 0 ? (
+                <>
+                  <Select onValueChange={handleSelectRecord}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um prontuário..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {recordsList.map((record) => (
+                        <SelectItem key={record.id} value={record.id}>
+                          <div className="flex items-center gap-2">
+                            <span>
+                              {format(new Date(record.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                            <Badge variant={record.status === "final" ? "default" : "secondary"}>
+                              {record.status === "final" ? "Finalizado" : "Rascunho"}
+                            </Badge>
+                            {record.clinical_diagnosis && (
+                              <span className="text-muted-foreground text-xs truncate max-w-[200px]">
+                                — {record.clinical_diagnosis}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <div className="text-sm text-muted-foreground">
+                    {recordsList.length} prontuário(s) encontrado(s)
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 space-y-4">
+                  <p className="text-muted-foreground">Nenhum prontuário encontrado</p>
+                  <Button onClick={handleCreateNewRecord} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Novo Prontuário
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Erro ao carregar
+  if (error || !patientReport) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="print:hidden sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/pacientes/${id}`)}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Paciente
+          </Button>
+        </div>
+        <div className="max-w-2xl mx-auto p-8">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Prontuário não encontrado. O prontuário solicitado pode ter sido excluído ou você não tem permissão para acessá-lo.
+            </AlertDescription>
+          </Alert>
+          <div className="mt-4 text-center">
+            <Button onClick={() => navigate(`/patients/${id}/records`)} variant="outline">
+              Ver Histórico de Prontuários
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -173,6 +308,13 @@ const VisualizarRelatorio = () => {
             <p className="text-muted-foreground print:text-sm">
               Método de Aceleração Cicatricial
             </p>
+            {/* Badge indicando qual prontuário */}
+            <div className="mt-2">
+              <Badge variant="outline" className="text-xs">
+                Prontuário de {format(new Date(patientReport.clinicalRecord.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                {patientReport.clinicalRecord.status === "final" && " — Finalizado"}
+              </Badge>
+            </div>
           </div>
 
           <Separator className="mb-6" />
@@ -212,7 +354,7 @@ const VisualizarRelatorio = () => {
 
           <Separator className="mb-6" />
 
-          {/* Avaliação Clínica Inicial */}
+          {/* Avaliação Clínica Inicial - DO PRONTUÁRIO ESPECÍFICO */}
           <section className="mb-8 print:mb-6">
             <h2 className="text-xl font-semibold text-foreground mb-4 print:text-lg">
               Avaliação Clínica Inicial
@@ -235,16 +377,30 @@ const VisualizarRelatorio = () => {
                 <p className="mt-1">{patientReport.patient.initial_mobility || "—"}</p>
               </div>
             </div>
-            {patientReport.patient.clinical_diagnosis && (
+            
+            {/* Dados do prontuário específico */}
+            {patientReport.clinicalRecord.chief_complaint && (
               <div className="mb-3 print:text-sm">
-                <span className="text-muted-foreground font-medium">Diagnóstico Clínico:</span>
-                <p className="mt-1">{patientReport.patient.clinical_diagnosis}</p>
+                <span className="text-muted-foreground font-medium">Queixa Principal:</span>
+                <p className="mt-1">{patientReport.clinicalRecord.chief_complaint}</p>
               </div>
             )}
-            {patientReport.clinicalRecord?.anamnesis && (
-              <div className="print:text-sm">
+            {patientReport.clinicalRecord.clinical_diagnosis && (
+              <div className="mb-3 print:text-sm">
+                <span className="text-muted-foreground font-medium">Diagnóstico Clínico:</span>
+                <p className="mt-1">{patientReport.clinicalRecord.clinical_diagnosis}</p>
+              </div>
+            )}
+            {patientReport.clinicalRecord.anamnesis && (
+              <div className="mb-3 print:text-sm">
                 <span className="text-muted-foreground font-medium">Anamnese:</span>
                 <p className="mt-1">{patientReport.clinicalRecord.anamnesis}</p>
+              </div>
+            )}
+            {patientReport.clinicalRecord.physical_exam && (
+              <div className="print:text-sm">
+                <span className="text-muted-foreground font-medium">Exame Físico:</span>
+                <p className="mt-1">{patientReport.clinicalRecord.physical_exam}</p>
               </div>
             )}
           </section>
@@ -421,29 +577,24 @@ const VisualizarRelatorio = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:gap-3 print:text-sm">
               <div className="border border-border rounded-lg p-4 print:p-3">
                 <span className="text-muted-foreground font-medium">Ultrassom:</span>
-                <p className="mt-1 text-lg font-semibold print:text-base">
-                  {patientReport.ultrasoundImages.length} imagens
-                </p>
+                <p className="mt-1 font-semibold">{patientReport.ultrasoundImages.length} imagem(s)</p>
               </div>
               <div className="border border-border rounded-lg p-4 print:p-3">
                 <span className="text-muted-foreground font-medium">Termografia:</span>
-                <p className="mt-1 text-lg font-semibold print:text-base">
-                  {patientReport.thermographyImages.length} imagens
-                </p>
+                <p className="mt-1 font-semibold">{patientReport.thermographyImages.length} imagem(s)</p>
               </div>
               <div className="border border-border rounded-lg p-4 print:p-3">
                 <span className="text-muted-foreground font-medium">Exames de Sangue:</span>
-                <p className="mt-1 text-lg font-semibold print:text-base">
-                  {patientReport.bloodTests.length} exames
-                </p>
+                <p className="mt-1 font-semibold">{patientReport.bloodTests.length} exame(s)</p>
               </div>
             </div>
           </section>
 
-          {/* Footer for Print */}
-          <div className="hidden print:block mt-12 pt-6 border-t border-border text-center text-xs text-muted-foreground">
+          {/* Rodapé */}
+          <Separator className="mb-6" />
+          <div className="text-center text-sm text-muted-foreground print:text-xs">
             <p>Relatório gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
-            <p className="mt-1">Sistema Fisioterapia Regenerativa</p>
+            <p className="mt-1">Sistema REGENAPP — Fisioterapia Regenerativa</p>
           </div>
         </div>
       </div>
@@ -456,11 +607,11 @@ const VisualizarRelatorio = () => {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email do Destinatário</Label>
+              <Label htmlFor="email">Email do destinatário</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="exemplo@email.com"
+                placeholder="email@exemplo.com"
                 value={recipientEmail}
                 onChange={(e) => setRecipientEmail(e.target.value)}
               />
@@ -471,7 +622,7 @@ const VisualizarRelatorio = () => {
               Cancelar
             </Button>
             <Button onClick={handleSendEmail}>
-              Enviar Email
+              Enviar
             </Button>
           </DialogFooter>
         </DialogContent>
