@@ -173,7 +173,19 @@ export default function ClinicalRecordEditor() {
         .eq("id", recordId)
         .eq("patient_id", patientId);
 
-      if (recordError) throw recordError;
+      if (recordError) {
+        // Detectar erro do trigger prevent_final_record_update
+        if (recordError.message?.includes("finalizado") || recordError.message?.includes("final")) {
+          toast.error("Prontuário finalizado", {
+            description: "Este prontuário está finalizado e não pode mais ser editado. Para fazer alterações, crie um novo prontuário.",
+            duration: 6000,
+          });
+          // Recarregar dados para refletir estado real
+          await queryClient.invalidateQueries({ queryKey: ["clinical-record-editor", recordId, patientId] });
+          return;
+        }
+        throw recordError;
+      }
 
       // Invalidate queries
       await queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
