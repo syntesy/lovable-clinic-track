@@ -98,6 +98,32 @@ export function AvaliacaoRegenapp({
   const canonical = (questionnaireResponses?.regen_canonical as RegenCanonical) || null;
   const engineOutputs = (questionnaireResponses?.regen_engine_outputs as RegenEngineOutputs) || null;
   
+  // Extrair exames recomendados da triagem (para passar ao modal)
+  const recommendedExamsFromTriage = (() => {
+    try {
+      if (screening?.analysis_result) {
+        const parsed = JSON.parse(screening.analysis_result);
+        const required = parsed?.requested_exams?.required || [];
+        const optional = parsed?.requested_exams?.optional || [];
+        return [...required, ...optional];
+      }
+    } catch {
+      // Fallback para recommended_exams JSONB se analysis_result não tiver exames
+    }
+    
+    // Tentar recommended_exams como fallback
+    const recommendedExams = screening?.recommended_exams;
+    if (Array.isArray(recommendedExams)) {
+      return recommendedExams.flatMap((group: unknown) => {
+        if (typeof group === "object" && group !== null && "exams" in group) {
+          return (group as { exams: string[] }).exams || [];
+        }
+        return [];
+      });
+    }
+    return [];
+  })();
+  
   // Usar tipo direto do helper (não precisa de cast)
   const clinicalRecordData = clinicalRecord;
 
@@ -445,6 +471,7 @@ export function AvaliacaoRegenapp({
         open={examRequestModalOpen}
         onOpenChange={setExamRequestModalOpen}
         patientName={patientName}
+        recommendedExams={recommendedExamsFromTriage}
         onGenerate={handleGenerateExamRequest}
       />
 

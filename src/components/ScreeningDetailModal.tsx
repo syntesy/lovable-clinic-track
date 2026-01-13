@@ -10,8 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertTriangle, CheckCircle2, XCircle, ClipboardList, Pill, Activity, Heart, Apple, Moon, Ban, Check, X, FileText } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle, ClipboardList, Pill, Activity, Heart, Apple, Moon, Ban, Check, X, FileText, Beaker } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { normalizeExamList, getExamLabel, isCriticalExam } from "@/lib/exam-catalog";
 
 interface ScreeningDetailModalProps {
   open: boolean;
@@ -558,14 +559,20 @@ export function ScreeningDetailModal({
               </Card>
             )}
 
-            {/* Análise da Triagem - exibe apenas texto legível, ignora JSON */}
+            {/* Análise da Triagem - exibe com normalização de exames */}
             {analysisResult && (() => {
               // Tenta detectar se é JSON e extrair apenas os textos relevantes
               try {
                 const parsed = JSON.parse(analysisResult);
                 const keyReasons = parsed?.key_reasons || [];
-                const requestedExams = parsed?.requested_exams?.required || [];
-                const hasContent = keyReasons.length > 0 || requestedExams.length > 0;
+                const rawRequestedExams = [
+                  ...(parsed?.requested_exams?.required || []),
+                  ...(parsed?.requested_exams?.optional || [])
+                ];
+                
+                // NORMALIZAR exames usando catálogo canônico
+                const normalizedExamCodes = normalizeExamList(rawRequestedExams);
+                const hasContent = keyReasons.length > 0 || normalizedExamCodes.length > 0;
                 
                 if (!hasContent) return null;
                 
@@ -591,16 +598,31 @@ export function ScreeningDetailModal({
                           </ul>
                         </div>
                       )}
-                      {requestedExams.length > 0 && (
+                      {normalizedExamCodes.length > 0 && (
                         <div>
                           <p className="text-sm font-medium text-muted-foreground mb-2">Exames Solicitados:</p>
                           <ul className="space-y-1">
-                            {requestedExams.map((exam: string, idx: number) => (
-                              <li key={idx} className="text-sm flex items-center gap-2">
-                                <FileText className="w-3 h-3 text-blue-500" />
-                                {exam}
-                              </li>
-                            ))}
+                            {normalizedExamCodes.map((code: string, idx: number) => {
+                              const label = getExamLabel(code);
+                              const critical = isCriticalExam(code);
+                              return (
+                                <li key={idx} className="text-sm flex items-center gap-2">
+                                  {critical ? (
+                                    <Beaker className="w-3 h-3 text-red-500" />
+                                  ) : (
+                                    <FileText className="w-3 h-3 text-blue-500" />
+                                  )}
+                                  <span className={critical ? "font-medium" : ""}>
+                                    {label}
+                                  </span>
+                                  {critical && (
+                                    <Badge variant="outline" className="text-xs text-red-600 border-red-300">
+                                      Crítico
+                                    </Badge>
+                                  )}
+                                </li>
+                              );
+                            })}
                           </ul>
                         </div>
                       )}
