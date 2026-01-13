@@ -618,6 +618,7 @@ export type Database = {
           legacy_migrated_at: string | null
           patient_id: string
           physical_exam: string | null
+          status: string
           updated_at: string
         }
         Insert: {
@@ -629,6 +630,7 @@ export type Database = {
           legacy_migrated_at?: string | null
           patient_id: string
           physical_exam?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -640,6 +642,7 @@ export type Database = {
           legacy_migrated_at?: string | null
           patient_id?: string
           physical_exam?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -4470,6 +4473,7 @@ export type Database = {
         Args: { original_id: string; salt?: string }
         Returns: string
       }
+      user_owns_patient: { Args: { p_patient_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "professional" | "viewer" | "patient" | "research"

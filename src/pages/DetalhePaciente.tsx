@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, ChevronDown, User, Activity, FileText, FlaskConical, ClipboardList, Brain, Calendar, CheckCircle2, AlertCircle, XCircle, Clock, TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle } from "lucide-react";
+import { Search, ChevronDown, User, Activity, FileText, FlaskConical, ClipboardList, Brain, Calendar, CheckCircle2, AlertCircle, XCircle, Clock, TrendingUp, Plus, Filter, Beaker, BarChart3, Pencil, Waves, Syringe, Pill, CheckCircle, Loader2, FolderOpen } from "lucide-react";
+import { toast } from "sonner";
 import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,40 @@ const DetalhePaciente = () => {
   const [selectedScreening, setSelectedScreening] = useState<Tables<"prp_screenings"> | null>(null);
   const [isScreeningModalOpen, setIsScreeningModalOpen] = useState(false);
   const [isProcedureModalOpen, setIsProcedureModalOpen] = useState(false);
+  const [isCreatingRecord, setIsCreatingRecord] = useState(false);
+
+  // Handler for creating new clinical record
+  const handleCreateNewRecord = async () => {
+    if (!selectedPatientId) return;
+
+    setIsCreatingRecord(true);
+    try {
+      const { data, error } = await supabase
+        .from("clinical_records")
+        .insert({
+          patient_id: selectedPatientId,
+          status: "draft",
+          chief_complaint: "",
+          anamnesis: "",
+          physical_exam: "",
+          clinical_diagnosis: "",
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      if (data?.id) {
+        toast.success("Novo prontuário criado");
+        navigate(`/patients/${selectedPatientId}/records/${data.id}`);
+      }
+    } catch (error) {
+      console.error("Erro ao criar prontuário:", error);
+      toast.error("Erro ao criar prontuário");
+    } finally {
+      setIsCreatingRecord(false);
+    }
+  };
 
   // Set patient from URL parameter on mount
   useEffect(() => {
@@ -293,10 +328,29 @@ const DetalhePaciente = () => {
                     <h3 className="text-lg font-semibold text-foreground">Prontuário Clínico</h3>
                     <p className="text-sm text-muted-foreground">Anamnese, diagnóstico e escalas do paciente</p>
                   </div>
-                  <Button size="lg" className="gap-2" onClick={() => navigate(`/prontuario/${selectedPatientId}`)}>
-                    <ClipboardList className="w-5 h-5" />
-                    Novo Prontuário
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="gap-2" 
+                      onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
+                    >
+                      <FolderOpen className="w-5 h-5" />
+                      Ver Histórico
+                    </Button>
+                    <Button 
+                      size="lg" 
+                      className="gap-2" 
+                      onClick={handleCreateNewRecord}
+                      disabled={isCreatingRecord}
+                    >
+                      {isCreatingRecord ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Plus className="w-5 h-5" />
+                      )}
+                      Novo Prontuário
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -329,6 +383,9 @@ const DetalhePaciente = () => {
                   </TabsTrigger>
                   <TabsTrigger value="triagem" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Histórico Triagens
+                  </TabsTrigger>
+                  <TabsTrigger value="prontuarios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                    Prontuários
                   </TabsTrigger>
                   <TabsTrigger value="historico" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Histórico Clínico
@@ -440,6 +497,36 @@ const DetalhePaciente = () => {
                 </TabsContent>
 
                 {/* Triagem Tab - Histórico de Triagens */}
+                {/* Prontuários Tab */}
+                <TabsContent value="prontuarios" className="mt-8">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                        <ClipboardList className="w-5 h-5 text-primary" />
+                        Prontuários Clínicos
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => navigate(`/patients/${selectedPatientId}/records`)}>
+                          <FolderOpen className="w-4 h-4 mr-2" />
+                          Ver Todos
+                        </Button>
+                        <Button onClick={handleCreateNewRecord} disabled={isCreatingRecord}>
+                          {isCreatingRecord ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                          Novo Prontuário
+                        </Button>
+                      </div>
+                    </div>
+                    <Card className="border-dashed">
+                      <CardContent className="py-8 text-center">
+                        <ClipboardList className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+                        <p className="text-muted-foreground">
+                          Clique em "Ver Todos" para acessar o histórico completo de prontuários.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
                 <TabsContent value="triagem" className="mt-8">
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium text-foreground flex items-center gap-2">

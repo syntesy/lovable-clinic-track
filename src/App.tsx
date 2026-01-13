@@ -8,8 +8,13 @@ import { Layout } from "./components/Layout";
 // Componente de redirect para rota legada do prontuário
 const ProntuarioRedirect = () => {
   const { id } = useParams();
-  return <Navigate to={`/prontuario/${id}`} replace />;
+  return <Navigate to={`/patients/${id}/records`} replace />;
 };
+
+// Import new clinical records pages
+import ClinicalRecordsList from "./pages/ClinicalRecordsList";
+import ClinicalRecordEditor from "./pages/ClinicalRecordEditor";
+import ClinicalRecordPrint from "./pages/ClinicalRecordPrint";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RequireAdminRole } from "./components/RequireAdminRole";
 import { RequireGovernanceRole } from "./components/RequireGovernanceRole";
@@ -136,18 +141,40 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          {/* Rota principal do Prontuário Clínico */}
+          {/* Clinical Records Routes - New Architecture */}
           <Route
-            path="/prontuario/:id"
+            path="/patients/:patientId/records"
             element={
               <ProtectedRoute>
                 <Layout>
-                  <ProntuarioClinico />
+                  <ClinicalRecordsList />
                 </Layout>
               </ProtectedRoute>
             }
           />
-          {/* Redirect do caminho antigo para o novo */}
+          <Route
+            path="/patients/:patientId/records/:recordId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ClinicalRecordEditor />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients/:patientId/records/:recordId/print"
+            element={
+              <ProtectedRoute>
+                <ClinicalRecordPrint />
+              </ProtectedRoute>
+            }
+          />
+          {/* Legacy prontuario route - redirect to new records list */}
+          <Route
+            path="/prontuario/:id"
+            element={<ProntuarioRedirect />}
+          />
           <Route
             path="/pacientes/:id/prontuario"
             element={<ProntuarioRedirect />}
