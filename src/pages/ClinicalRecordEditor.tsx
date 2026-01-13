@@ -76,7 +76,7 @@ export default function ClinicalRecordEditor() {
 
   // Tipo B: Carregar prontuário ESPECÍFICO por recordId (usando helper)
   const { data: clinicalRecord, isLoading: loadingRecord, error: recordError } = useQuery({
-    queryKey: ["clinical-record-editor", recordId, patientId],
+    queryKey: ["clinical-record", "byId", patientId, recordId],
     queryFn: async () => {
       if (!patientId || !recordId) throw new Error("IDs obrigatórios");
       console.log("[ClinicalRecordEditor] Loading specific record:", recordId);
@@ -181,17 +181,17 @@ export default function ClinicalRecordEditor() {
             duration: 6000,
           });
           // Recarregar dados para refletir estado real
-          await queryClient.invalidateQueries({ queryKey: ["clinical-record-editor", recordId, patientId] });
+          await queryClient.invalidateQueries({ queryKey: ["clinical-record", "byId", patientId, recordId] });
           return;
         }
         throw recordError;
       }
 
-      // Invalidate queries (including latest-clinical-record for overview refresh)
+      // Invalidate queries (padronizado)
       await queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
-      await queryClient.invalidateQueries({ queryKey: ["clinical-record", recordId] });
-      await queryClient.invalidateQueries({ queryKey: ["clinical-records-list", patientId] });
-      await queryClient.invalidateQueries({ queryKey: ["latest-clinical-record", patientId] });
+      await queryClient.invalidateQueries({ queryKey: ["clinical-record", "byId", patientId, recordId] });
+      await queryClient.invalidateQueries({ queryKey: ["clinical-record", "list", patientId] });
+      await queryClient.invalidateQueries({ queryKey: ["clinical-record", "latest", patientId] });
 
       if (finalize) {
         toast.success("Prontuário finalizado com sucesso!");

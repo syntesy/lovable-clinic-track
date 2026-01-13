@@ -66,7 +66,7 @@ export function ClinicalAssessmentChecklist({
   // Tipo A: Buscar dados do clinical_records mais recente (VISÃO GERAL de status)
   // Permitido usar getLatestClinicalRecord porque é checklist de status, não visualização específica
   const { data: clinicalRecord, isLoading, refetch } = useQuery({
-    queryKey: ["clinical-record-checklist", patientId],
+    queryKey: ["clinical-record", "latest", patientId],
     queryFn: async () => {
       // Primeiro, tentar migrar dados legados se necessário
       const { migrated } = await migrateIfNeeded(patientId, screeningId);

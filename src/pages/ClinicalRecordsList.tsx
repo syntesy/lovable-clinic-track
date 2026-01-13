@@ -63,7 +63,7 @@ export default function ClinicalRecordsList() {
 
   // Fetch clinical records
   const { data: records, isLoading } = useQuery({
-    queryKey: ["clinical-records-list", patientId],
+    queryKey: ["clinical-record", "list", patientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clinical_records")
@@ -123,7 +123,8 @@ export default function ClinicalRecordsList() {
       if (error) throw error;
 
       toast.success("Prontuário excluído");
-      queryClient.invalidateQueries({ queryKey: ["clinical-records-list", patientId] });
+      queryClient.invalidateQueries({ queryKey: ["clinical-record", "list", patientId] });
+      queryClient.invalidateQueries({ queryKey: ["clinical-record", "latest", patientId] });
     } catch (error) {
       console.error("Erro ao excluir prontuário:", error);
       toast.error("Erro ao excluir prontuário");

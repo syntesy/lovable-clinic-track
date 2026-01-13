@@ -28,7 +28,7 @@ export default function ClinicalRecordPrint() {
 
   // Tipo B: Carregar prontuário ESPECÍFICO por recordId (usando helper)
   const { data: record, isLoading, error: recordError } = useQuery({
-    queryKey: ["clinical-record-print", recordId, patientId],
+    queryKey: ["clinical-record", "byId", patientId, recordId],
     queryFn: async () => {
       if (!patientId || !recordId) throw new Error("IDs obrigatórios");
       console.log("[ClinicalRecordPrint] Loading specific record:", recordId);
