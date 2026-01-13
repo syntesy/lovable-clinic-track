@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getClinicalRecordById } from "@/lib/clinical-record-helpers";
 
 export default function ClinicalRecordEditor() {
   const { patientId, recordId } = useParams<{ patientId: string; recordId: string }>();
@@ -45,10 +46,18 @@ export default function ClinicalRecordEditor() {
   const [painNeuropathic, setPainNeuropathic] = useState(false);
   const [painNociplastic, setPainNociplastic] = useState(false);
   const [initialVas, setInitialVas] = useState<string>("");
-  
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
+  // Redirect if no recordId (guardrai: não abrir sem ID específico)
+  useEffect(() => {
+    if (!recordId && patientId) {
+      console.log("[ClinicalRecordEditor] No recordId, redirecting to list");
+      navigate(`/patients/${patientId}/records`, { replace: true });
+    }
+  }, [recordId, patientId, navigate]);
 
   // Fetch patient
   const { data: patient, isLoading: loadingPatient } = useQuery({
@@ -65,18 +74,13 @@ export default function ClinicalRecordEditor() {
     enabled: !!patientId,
   });
 
-  // Fetch clinical record by ID (NOT by patient_id)
+  // Tipo B: Carregar prontuário ESPECÍFICO por recordId (usando helper)
   const { data: clinicalRecord, isLoading: loadingRecord, error: recordError } = useQuery({
-    queryKey: ["clinical-record", recordId],
+    queryKey: ["clinical-record-editor", recordId, patientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clinical_records")
-        .select("*")
-        .eq("id", recordId)
-        .eq("patient_id", patientId)
-        .single();
-      if (error) throw error;
-      return data;
+      if (!patientId || !recordId) throw new Error("IDs obrigatórios");
+      console.log("[ClinicalRecordEditor] Loading specific record:", recordId);
+      return await getClinicalRecordById(patientId, recordId);
     },
     enabled: !!recordId && !!patientId,
   });

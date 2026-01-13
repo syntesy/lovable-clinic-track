@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getClinicalRecordById } from "@/lib/clinical-record-helpers";
 
 export default function ClinicalRecordPrint() {
   const { patientId, recordId } = useParams<{ patientId: string; recordId: string }>();
@@ -25,18 +26,13 @@ export default function ClinicalRecordPrint() {
     enabled: !!patientId,
   });
 
-  // Fetch clinical record
-  const { data: record, isLoading } = useQuery({
-    queryKey: ["clinical-record", recordId],
+  // Tipo B: Carregar prontuário ESPECÍFICO por recordId (usando helper)
+  const { data: record, isLoading, error: recordError } = useQuery({
+    queryKey: ["clinical-record-print", recordId, patientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clinical_records")
-        .select("*")
-        .eq("id", recordId)
-        .eq("patient_id", patientId)
-        .single();
-      if (error) throw error;
-      return data;
+      if (!patientId || !recordId) throw new Error("IDs obrigatórios");
+      console.log("[ClinicalRecordPrint] Loading specific record:", recordId);
+      return await getClinicalRecordById(patientId, recordId);
     },
     enabled: !!recordId && !!patientId,
   });

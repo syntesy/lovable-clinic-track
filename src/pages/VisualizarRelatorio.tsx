@@ -1,8 +1,8 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Mail } from "lucide-react";
+import { ArrowLeft, Printer, Mail, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
@@ -15,15 +15,21 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getClinicalRecordById, getLatestClinicalRecord } from "@/lib/clinical-record-helpers";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const VisualizarRelatorio = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState("");
 
-  const { data: patientReport, isLoading } = useQuery({
-    queryKey: ["patient-report-full", id],
+  // Pegar recordId da query string (se fornecido)
+  const recordIdFromQuery = searchParams.get("recordId");
+
+  const { data: patientReport, isLoading, error } = useQuery({
+    queryKey: ["patient-report-full", id, recordIdFromQuery],
     enabled: !!id,
     queryFn: async () => {
       const { data: patient, error: patientError } = await supabase
@@ -34,15 +40,23 @@ const VisualizarRelatorio = () => {
 
       if (patientError) throw patientError;
 
-      // Buscar o prontuário mais recente (ordenado por created_at DESC)
-      const { data: clinicalRecords } = await supabase
-        .from("clinical_records")
-        .select("*")
-        .eq("patient_id", id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      
-      const clinicalRecord = clinicalRecords && clinicalRecords.length > 0 ? clinicalRecords[0] : null;
+      // Se recordId foi fornecido, carregar prontuário específico
+      // Caso contrário, carregar o mais recente (comportamento de "Visão Geral")
+      let clinicalRecord = null;
+      if (recordIdFromQuery) {
+        // Tipo B: Carregar prontuário específico por ID
+        try {
+          clinicalRecord = await getClinicalRecordById(id!, recordIdFromQuery);
+          console.log("[VisualizarRelatorio] Loaded specific record:", recordIdFromQuery);
+        } catch (err) {
+          console.error("[VisualizarRelatorio] Record not found:", recordIdFromQuery);
+          throw new Error("Prontuário não encontrado");
+        }
+      } else {
+        // Tipo A: Visão geral - último prontuário (comportamento legado)
+        clinicalRecord = await getLatestClinicalRecord(id!);
+        console.log("[VisualizarRelatorio] Using latest record (overview mode)");
+      }
 
       const { data: protocols } = await supabase
         .from("mac_protocols")
@@ -78,6 +92,7 @@ const VisualizarRelatorio = () => {
         ultrasoundImages: ultrasoundImages || [],
         thermographyImages: thermographyImages || [],
         bloodTests: bloodTests || [],
+        isSpecificRecord: !!recordIdFromQuery,
       };
     },
   });
