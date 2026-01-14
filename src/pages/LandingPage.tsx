@@ -21,9 +21,7 @@ import {
   Percent,
   ShoppingBag,
 } from "lucide-react";
-import logoRhegen from "@/assets/logo-rhegen.png";
-import logoRhegenLight from "@/assets/logo-rhegen-light.png";
-import { useTheme } from "@/contexts/ThemeContext";
+import logoReghen from "@/assets/logo-reghen.png";
 import mockupScore from "@/assets/mockup-score-clinico.png";
 import mockupAvaliacao from "@/assets/mockup-avaliacao-clinica.png";
 import mockupRelatorios from "@/assets/mockup-relatorios.png";
@@ -177,8 +175,7 @@ const faqItems = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
-  const currentLogo = theme === 'light' ? logoRhegenLight : logoRhegen;
+  const currentLogo = logoReghen;
 
   const handleLogin = () => {
     navigate("/auth");

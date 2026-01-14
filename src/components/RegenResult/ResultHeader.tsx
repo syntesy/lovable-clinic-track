@@ -8,7 +8,7 @@ import { RegenEngineOutputs } from "@/types/regen-engine";
 import { RegenCanonical } from "@/types/regen-canonical";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import logoRhegen from "@/assets/logo-rhegen.png";
+import logoReghen from "@/assets/logo-reghen.png";
 
 interface ResultHeaderProps {
   engineOutputs: RegenEngineOutputs;
@@ -26,7 +26,7 @@ export function ResultHeader({ engineOutputs, canonical, caseId, patientName }: 
     <div className="mb-6">
       {/* Logo / Title */}
       <div className="text-center mb-4">
-        <img src={logoRhegen} alt="rhegen" className="h-10 mx-auto mb-2" />
+        <img src={logoReghen} alt="reghen" className="h-10 mx-auto mb-2" />
         <p className="text-muted-foreground text-sm">Resultado da Avaliação Clínica</p>
       </div>
 
