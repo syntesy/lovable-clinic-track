@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { ClinicalStage, STAGE_CONFIG } from '@/types/daily-dashboard';
 import { format } from 'date-fns';
+import { UserPlus, Search } from 'lucide-react';
+import { NewPatientModal } from './NewPatientModal';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface AddEventModalProps {
   open: boolean;
@@ -37,6 +52,9 @@ export function AddEventModal({ open, onOpenChange, selectedDate, onSubmit }: Ad
   const [patients, setPatients] = useState<PatientOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showNewPatientModal, setShowNewPatientModal] = useState(false);
+  const [patientSearchOpen, setPatientSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
   const [selectedPatient, setSelectedPatient] = useState<PatientOption | null>(null);
@@ -94,6 +112,25 @@ export function AddEventModal({ open, onOpenChange, selectedDate, onSubmit }: Ad
     fetchPatients();
   }, [open]);
 
+  // Filter patients based on search query
+  const filteredPatients = useMemo(() => {
+    if (!searchQuery) return patients;
+    const query = searchQuery.toLowerCase();
+    return patients.filter(p => p.name.toLowerCase().includes(query));
+  }, [patients, searchQuery]);
+
+  // Handle new patient created
+  const handlePatientCreated = (newPatient: { id: string; name: string }) => {
+    const patientOption: PatientOption = {
+      id: newPatient.id,
+      name: newPatient.name,
+      cases: [],
+    };
+    setPatients(prev => [...prev, patientOption]);
+    setSelectedPatient(patientOption);
+    setPatientSearchOpen(false);
+  };
+
   const handleSubmit = async () => {
     if (!selectedPatient || !todayAction) return;
 
@@ -122,41 +159,94 @@ export function AddEventModal({ open, onOpenChange, selectedDate, onSubmit }: Ad
       setTimeEnd('');
       setClinicalStage('avaliacao');
       setTodayAction('');
+      setSearchQuery('');
       onOpenChange(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Agendar Atendimento</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Agendar Atendimento</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Paciente */}
-          <div className="space-y-2">
-            <Label>Paciente *</Label>
-            <Select
-              value={selectedPatient?.id || ''}
-              onValueChange={(val) => {
-                const patient = patients.find(p => p.id === val);
-                setSelectedPatient(patient || null);
-                setSelectedCase('');
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? "Carregando..." : "Selecione o paciente"} />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="space-y-4">
+            {/* Paciente - Searchable with new patient option */}
+            <div className="space-y-2">
+              <Label>Paciente *</Label>
+              <Popover open={patientSearchOpen} onOpenChange={setPatientSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={patientSearchOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {selectedPatient ? selectedPatient.name : (loading ? "Carregando..." : "Selecione o paciente")}
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[350px] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput 
+                      placeholder="Buscar paciente..." 
+                      value={searchQuery}
+                      onValueChange={setSearchQuery}
+                    />
+                    <CommandList>
+                      <CommandEmpty className="py-2 px-4">
+                        <div className="text-sm text-muted-foreground mb-3">
+                          Nenhum paciente encontrado
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2"
+                          onClick={() => {
+                            setPatientSearchOpen(false);
+                            setShowNewPatientModal(true);
+                          }}
+                        >
+                          <UserPlus className="h-4 w-4" />
+                          Cadastrar novo paciente
+                        </Button>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {filteredPatients.map((p) => (
+                          <CommandItem
+                            key={p.id}
+                            value={p.id}
+                            onSelect={() => {
+                              setSelectedPatient(p);
+                              setSelectedCase('');
+                              setPatientSearchOpen(false);
+                              setSearchQuery('');
+                            }}
+                          >
+                            {p.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                      {filteredPatients.length > 0 && (
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setPatientSearchOpen(false);
+                              setShowNewPatientModal(true);
+                            }}
+                            className="text-primary"
+                          >
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Cadastrar novo paciente
+                          </CommandItem>
+                        </CommandGroup>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
 
           {/* Caso (opcional) */}
           {selectedPatient && selectedPatient.cases.length > 0 && (
@@ -243,7 +333,14 @@ export function AddEventModal({ open, onOpenChange, selectedDate, onSubmit }: Ad
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <NewPatientModal
+        open={showNewPatientModal}
+        onOpenChange={setShowNewPatientModal}
+        onPatientCreated={handlePatientCreated}
+      />
+    </>
   );
 }

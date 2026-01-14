@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, ChevronLeft, ChevronRight, Plus, Search, Clock, Layers } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Plus, Search, Clock, Layers, UserPlus } from 'lucide-react';
 import { format, addDays, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDailyDashboard } from '@/hooks/useDailyDashboard';
@@ -86,6 +87,7 @@ function getStoredViewMode(): ViewMode {
 }
 
 export default function DailyDashboard() {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>(getStoredViewMode);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -151,10 +153,16 @@ export default function DailyDashboard() {
                 : 'Eventos do dia organizados por etapa clínica'}
             </p>
           </div>
-          <Button onClick={() => setShowAddModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Atendimento
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/pacientes/novo')}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Novo Paciente
+            </Button>
+            <Button onClick={() => setShowAddModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Atendimento
+            </Button>
+          </div>
         </div>
 
         {/* Date Navigation */}
