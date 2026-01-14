@@ -335,41 +335,7 @@ const DetalhePaciente = () => {
             {/* Prescription Form Modal */}
             <PrescriptionFormModal open={isPrescriptionModalOpen} onOpenChange={setIsPrescriptionModalOpen} patientId={selectedPatientId!} patientName={patient?.full_name || ''} />
 
-            {/* Primary Action - Prontuário */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-foreground">Prontuário Clínico</h3>
-                    <p className="text-sm text-muted-foreground">Anamnese, diagnóstico e escalas do paciente</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="lg" 
-                      variant="outline"
-                      className="gap-2 border-primary/30 bg-primary/10 hover:bg-primary/20 text-foreground" 
-                      onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
-                    >
-                      <FolderOpen className="w-5 h-5" />
-                      Ver Histórico
-                    </Button>
-                    <Button 
-                      size="lg" 
-                      className="gap-2" 
-                      onClick={handleCreateNewRecord}
-                      disabled={isCreatingRecord}
-                    >
-                      {isCreatingRecord ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Plus className="w-5 h-5" />
-                      )}
-                      Novo Prontuário
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Quick Actions - Atalhos Principais */}
 
             {/* Quick Actions */}
             <Card className="bg-card/50 border-border">
@@ -401,7 +367,7 @@ const DetalhePaciente = () => {
                     Histórico Triagens
                   </TabsTrigger>
                   <TabsTrigger value="historico" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-                    Prontuário Clínico
+                    Atendimentos
                   </TabsTrigger>
                   <TabsTrigger value="exames" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Exames
@@ -438,14 +404,15 @@ const DetalhePaciente = () => {
                           <Skeleton className="h-7 w-3/4" />
                         ) : !latestClinicalRecord ? (
                           <div className="space-y-2">
-                            <p className="text-muted-foreground text-lg">Sem prontuários ainda</p>
+                            <p className="text-muted-foreground text-lg">Sem atendimentos ainda</p>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
+                              onClick={handleCreateNewRecord}
+                              disabled={isCreatingRecord}
                             >
-                              <Plus className="w-4 h-4 mr-1" />
-                              Novo Prontuário
+                              {isCreatingRecord ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+                              Novo Atendimento
                             </Button>
                           </div>
                         ) : (
@@ -609,15 +576,29 @@ const DetalhePaciente = () => {
                   </div>
                 </TabsContent>
 
-                {/* Histórico Tab - apenas sessões de tratamento */}
+                {/* Atendimentos Tab */}
                 <TabsContent value="historico" className="mt-8">
-                  <div className="space-y-8 max-w-3xl">
-                    {/* Histórico de Sessões */}
-                    <div className="space-y-4">
+                  <div className="space-y-6 max-w-3xl">
+                    <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
                         <Activity className="w-5 h-5 text-primary" />
-                        Sessões de Tratamento
+                        Atendimentos
                       </h3>
+                      <Button 
+                        onClick={handleCreateNewRecord} 
+                        disabled={isCreatingRecord}
+                        className="gap-2"
+                      >
+                        {isCreatingRecord ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                        Novo Atendimento
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-4">
                       {sessions && sessions.length > 0 ? sessions.map(session => <Card key={session.id} className="bg-card border-border">
                             <CardContent className="p-6">
                               <div className="flex items-start gap-5">
@@ -641,14 +622,14 @@ const DetalhePaciente = () => {
                           </Card>) : <Card className="bg-card border-border">
                           <CardContent className="py-12 text-center">
                             <Activity className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-                            <p className="text-muted-foreground mb-4">Nenhuma sessão registrada</p>
+                            <p className="text-muted-foreground mb-4">Nenhum atendimento registrado</p>
                             <Button onClick={handleCreateNewRecord} disabled={isCreatingRecord}>
                               {isCreatingRecord ? (
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                               ) : (
                                 <Plus className="w-4 h-4 mr-2" />
                               )}
-                              Criar Prontuário Clínico
+                              Novo Atendimento
                             </Button>
                           </CardContent>
                         </Card>}
