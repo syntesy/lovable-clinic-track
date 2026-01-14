@@ -1,9 +1,8 @@
 /**
  * Triagem Summary - Exibe resumo da triagem como READ-ONLY
- * Dados coletados por secretária/paciente (AUTORRELATO)
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, User, Stethoscope, Pill, Activity, Apple, Moon } from "lucide-react";
 import { RegenCanonical } from "@/types/regen-canonical";
@@ -53,18 +52,10 @@ export function TriageSummary({ canonical, rawAnswers }: TriageSummaryProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" />
-              Resumo da Triagem
-            </CardTitle>
-            <CardDescription>Dados coletados via questionário (autorrelato)</CardDescription>
-          </div>
-          <Badge variant="outline" className="text-xs">
-            AUTORRELATO
-          </Badge>
-        </div>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <User className="w-5 h-5 text-primary" />
+          Resumo da Triagem
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Safety Warnings */}
