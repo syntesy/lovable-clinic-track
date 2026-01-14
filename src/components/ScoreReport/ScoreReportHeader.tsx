@@ -1,16 +1,11 @@
-import logoRhegen from "@/assets/logo-rhegen.png";
-import logoRhegenLight from "@/assets/logo-rhegen-light.png";
-import { useTheme } from "@/contexts/ThemeContext";
+import logoReghen from "@/assets/logo-reghen.png";
 
 export function ScoreReportHeader() {
-  const { theme } = useTheme();
-  const currentLogo = theme === 'light' ? logoRhegenLight : logoRhegen;
-
   return (
     <div className="text-center mb-8 print:mb-6">
       <img 
-        src={currentLogo} 
-        alt="rhegen" 
+        src={logoReghen} 
+        alt="reghen"
         className="h-12 mx-auto mb-4"
       />
       <h1 className="text-2xl md:text-3xl font-bold text-foreground">

@@ -13,9 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
-import { useTheme } from "@/contexts/ThemeContext";
-import logoRhegen from "@/assets/logo-rhegen.png";
-import logoRhegenLight from "@/assets/logo-rhegen-light.png";
+import logoReghen from "@/assets/logo-reghen.png";
 
 // Menu items visible to all authenticated users (professional role)
 const menuItems = [
@@ -44,7 +42,6 @@ export function AppSidebar() {
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed" && !isMobile;
   const [isAdmin, setIsAdmin] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     checkAdminRole();
@@ -64,8 +61,8 @@ export function AppSidebar() {
     setIsAdmin(Boolean(data));
   };
 
-  // Logo conforme o tema
-  const currentLogo = theme === 'light' ? logoRhegenLight : logoRhegen;
+  // Logo única
+  const currentLogo = logoReghen;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar data-[state=open]:w-64 md:data-[state=open]:w-72">

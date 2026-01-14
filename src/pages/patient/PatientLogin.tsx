@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertCircle, Loader2 } from 'lucide-react';
-import logoRhegen from '@/assets/logo-rhegen.png';
+import logoReghen from '@/assets/logo-reghen.png';
 
 export default function PatientLogin() {
   const [surname, setSurname] = useState('');
@@ -57,8 +57,8 @@ export default function PatientLogin() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img 
-            src={logoRhegen} 
-            alt="rhegen" 
+            src={logoReghen} 
+            alt="reghen" 
             className="h-12 mx-auto mb-4"
           />
           <h1 className="text-2xl font-semibold text-foreground">

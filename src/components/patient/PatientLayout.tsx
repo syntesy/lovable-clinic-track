@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { usePatientAuth } from '@/contexts/PatientAuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import logoRhegen from '@/assets/logo-rhegen.png';
-import logoRhegenLight from '@/assets/logo-rhegen-light.png';
+import logoReghen from '@/assets/logo-reghen.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface PatientLayoutProps {
   children: ReactNode;
@@ -15,9 +13,7 @@ interface PatientLayoutProps {
 export function PatientLayout({ children }: PatientLayoutProps) {
   const { session, logout } = usePatientAuth();
   const navigate = useNavigate();
-  const { theme } = useTheme();
-
-  const currentLogo = theme === 'light' ? logoRhegenLight : logoRhegen;
+  const currentLogo = logoReghen;
 
   const handleLogout = () => {
     logout();

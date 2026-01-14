@@ -2,8 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import logoRhegen from "@/assets/logo-rhegen.png";
-import logoRhegenLight from "@/assets/logo-rhegen-light.png";
+import logoReghen from "@/assets/logo-reghen.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +11,6 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import SessionTimeout from "@/components/SessionTimeout";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ModeSwitch } from "@/components/edu/ModeSwitch";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -20,10 +18,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { logLogout, logSessionStart } = useAuditLog();
-  const { theme } = useTheme();
-
-  // Logo conforme o tema
-  const currentLogo = theme === 'light' ? logoRhegenLight : logoRhegen;
+  // Logo única
+  const currentLogo = logoReghen;
 
   // Registrar início da sessão
   useEffect(() => {

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import logoRhegen from "@/assets/logo-rhegen.png";
+import logoReghen from "@/assets/logo-reghen.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -366,8 +366,8 @@ export function PatientEvaluationReport({
               </div>
               <div className="text-right space-y-2">
                 <img 
-                  src={logoRhegen} 
-                  alt="rhegen" 
+                  src={logoReghen} 
+                  alt="reghen"
                   className="h-10 w-auto ml-auto opacity-90"
                 />
               </div>
@@ -663,8 +663,8 @@ export function PatientEvaluationReport({
             <div className="mt-10 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
-                  <img src={logoRhegen} alt="rhegen" className="h-5 w-auto opacity-60" />
-                  <span>Documento gerado pelo rhegen</span>
+                  <img src={logoReghen} alt="reghen" className="h-5 w-auto opacity-60" />
+                  <span>Documento gerado pelo reghen</span>
                 </div>
                 <span>{displayData.generatedDate}</span>
               </div>
