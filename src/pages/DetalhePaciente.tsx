@@ -400,11 +400,8 @@ const DetalhePaciente = () => {
                   <TabsTrigger value="triagem" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Histórico Triagens
                   </TabsTrigger>
-                  <TabsTrigger value="prontuarios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-                    Prontuários
-                  </TabsTrigger>
                   <TabsTrigger value="historico" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-                    Histórico Clínico
+                    Prontuário Clínico
                   </TabsTrigger>
                   <TabsTrigger value="exames" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
                     Exames
@@ -560,35 +557,6 @@ const DetalhePaciente = () => {
                 </TabsContent>
 
                 {/* Triagem Tab - Histórico de Triagens */}
-                {/* Prontuários Tab */}
-                <TabsContent value="prontuarios" className="mt-8">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                        <ClipboardList className="w-5 h-5 text-primary" />
-                        Prontuários Clínicos
-                      </h3>
-                      <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => navigate(`/patients/${selectedPatientId}/records`)}>
-                          <FolderOpen className="w-4 h-4 mr-2" />
-                          Ver Todos
-                        </Button>
-                        <Button onClick={handleCreateNewRecord} disabled={isCreatingRecord}>
-                          {isCreatingRecord ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-                          Novo Prontuário
-                        </Button>
-                      </div>
-                    </div>
-                    <Card className="border-dashed">
-                      <CardContent className="py-8 text-center">
-                        <ClipboardList className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-                        <p className="text-muted-foreground">
-                          Clique em "Ver Todos" para acessar o histórico completo de prontuários.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
 
                 <TabsContent value="triagem" className="mt-8">
                   <div className="space-y-4">
