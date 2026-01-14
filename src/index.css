@@ -8,209 +8,276 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* ===== TEMA REGENAPP - PALETA PREMIUM ===== */
-    /* Background principal #0B1220 (azul escuro) */
-    --background: 222 47% 8%;
-    /* Foreground #F1F3F7 (branco suave) */
-    --foreground: 220 14% 96%;
+    /* ===== PALETA OFICIAL REGHEN ===== */
+    
+    /* Base Colors */
+    /* Background: #1c2433 */
+    --background: 220 30% 16%;
+    /* Foreground: #e5e5e5 */
+    --foreground: 0 0% 90%;
 
-    /* Cards #0F1A2E (azul escuro secundário) */
-    --card: 220 51% 12%;
-    --card-foreground: 220 14% 96%;
+    /* Card Colors */
+    /* Card Background: #2a3040 */
+    --card: 224 22% 21%;
+    /* Card Foreground: #e5e5e5 */
+    --card-foreground: 0 0% 90%;
 
-    /* Popover */
-    --popover: 220 51% 12%;
-    --popover-foreground: 220 14% 96%;
+    /* Popover Colors */
+    /* Popover Background: #262b38 */
+    --popover: 222 20% 18%;
+    /* Popover Foreground: #e5e5e5 */
+    --popover-foreground: 0 0% 90%;
 
-    /* PRIMARY - Teal #4CC6B7 */
-    --primary: 170 50% 54%;
-    --primary-foreground: 222 47% 8%;
+    /* Primary Colors */
+    /* Primary: #e05d38 */
+    --primary: 13 74% 55%;
+    /* Primary Foreground: #ffffff */
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary */
-    --secondary: 220 51% 12%;
-    --secondary-foreground: 220 14% 96%;
+    /* Secondary Colors */
+    /* Secondary: #2a303e */
+    --secondary: 220 20% 20%;
+    /* Secondary Foreground: #e5e5e5 */
+    --secondary-foreground: 0 0% 90%;
 
-    /* Muted */
-    --muted: 220 51% 12%;
-    --muted-foreground: 218 14% 76%;
+    /* Muted Colors */
+    /* Muted: #2a303e */
+    --muted: 220 20% 20%;
+    /* Muted Foreground: #a3a3a3 */
+    --muted-foreground: 0 0% 64%;
 
-    /* Accent - Teal */
-    --accent: 170 50% 54%;
-    --accent-foreground: 222 47% 8%;
+    /* Accent Colors */
+    /* Accent: #2a3656 */
+    --accent: 220 35% 25%;
+    /* Accent Foreground: #bfdbfe */
+    --accent-foreground: 213 97% 87%;
 
-    /* Destructive */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 220 14% 96%;
+    /* Destructive Colors */
+    /* Destructive: #ef4444 */
+    --destructive: 0 84% 60%;
+    /* Destructive Foreground: #ffffff */
+    --destructive-foreground: 0 0% 100%;
 
-    /* Success - Teal */
-    --success: 170 50% 54%;
-    --success-foreground: 222 47% 8%;
+    /* Success - usando primary como base */
+    --success: 13 74% 55%;
+    --success-foreground: 0 0% 100%;
 
-    /* Warning - Gold #B39158 */
-    --warning: 36 32% 52%;
-    --warning-foreground: 222 47% 8%;
+    /* Warning - tom âmbar */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
     /* Gold (premium) */
-    --gold: 36 32% 52%;
-    --gold-foreground: 222 47% 8%;
+    --gold: 38 92% 50%;
+    --gold-foreground: 0 0% 100%;
 
-    /* Teal (accent) */
-    --teal: 170 50% 54%;
-    --teal-foreground: 222 47% 8%;
+    /* Teal (accent alternativo) */
+    --teal: 213 97% 87%;
+    --teal-foreground: 220 30% 16%;
 
-    /* Bordas #1B2A44 */
-    --border: 218 43% 19%;
-    --input: 220 51% 12%;
-    --ring: 170 50% 54%;
+    /* Border & Input Colors */
+    /* Border: #3d4354 */
+    --border: 225 16% 28%;
+    /* Input: #3d4354 */
+    --input: 225 16% 28%;
+    /* Ring: #e05d38 */
+    --ring: 13 74% 55%;
 
     --radius: 0.625rem;
 
     /* Clinical specific colors */
-    --clinical-safe: 170 50% 54%;
-    --clinical-caution: 36 32% 52%;
-    --clinical-danger: 0 72% 51%;
-    --clinical-neutral: 218 14% 76%;
+    --clinical-safe: 142 71% 45%;
+    --clinical-caution: 38 92% 50%;
+    --clinical-danger: 0 84% 60%;
+    --clinical-neutral: 0 0% 64%;
 
-    /* Sidebar - mesmo fundo */
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 218 14% 76%;
-    --sidebar-primary: 170 50% 54%;
-    --sidebar-primary-foreground: 222 47% 8%;
-    --sidebar-accent: 220 51% 12%;
-    --sidebar-accent-foreground: 220 14% 96%;
-    --sidebar-border: 218 43% 19%;
-    --sidebar-ring: 170 50% 54%;
+    /* Sidebar Colors */
+    /* Sidebar Background: #2a303f */
+    --sidebar-background: 220 21% 20%;
+    /* Sidebar Foreground: #e5e5e5 */
+    --sidebar-foreground: 0 0% 90%;
+    /* Sidebar Primary: #e05d38 */
+    --sidebar-primary: 13 74% 55%;
+    /* Sidebar Primary Foreground: #ffffff */
+    --sidebar-primary-foreground: 0 0% 100%;
+    /* Sidebar Accent: #2a3656 */
+    --sidebar-accent: 220 35% 25%;
+    /* Sidebar Accent Foreground: #bfdbfe */
+    --sidebar-accent-foreground: 213 97% 87%;
+    /* Sidebar Border: #3d4354 */
+    --sidebar-border: 225 16% 28%;
+    /* Sidebar Ring: #e05d38 */
+    --sidebar-ring: 13 74% 55%;
+
+    /* Chart Colors */
+    /* Chart 1: #86a7c8 */
+    --chart-1: 210 37% 65%;
+    /* Chart 2: #e6a08f */
+    --chart-2: 12 61% 73%;
+    /* Chart 3: #5a7ca6 */
+    --chart-3: 212 30% 50%;
+    /* Chart 4: #466494 */
+    --chart-4: 216 36% 43%;
+    /* Chart 5: #334c82 */
+    --chart-5: 218 43% 35%;
   }
 
-  /* ===== TEMA LIGHT REGENAPP ===== */
+  /* ===== TEMA LIGHT REGHEN ===== */
   .light {
-    /* Background claro suave */
+    /* Background claro */
     --background: 220 20% 97%;
     /* Foreground escuro */
-    --foreground: 222 47% 11%;
+    --foreground: 220 20% 15%;
 
     /* Cards com fundo branco */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 20% 15%;
 
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 20% 15%;
 
-    /* PRIMARY - Teal (mesmo tom, ajustado para contraste) */
-    --primary: 170 55% 40%;
+    /* Primary - #e05d38 (ajustado para contraste) */
+    --primary: 13 74% 48%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
     --secondary: 220 14% 92%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary-foreground: 220 20% 15%;
 
     /* Muted */
     --muted: 220 14% 92%;
     --muted-foreground: 220 10% 45%;
 
-    /* Accent - Teal */
-    --accent: 170 55% 40%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent */
+    --accent: 220 35% 90%;
+    --accent-foreground: 220 35% 25%;
 
     /* Destructive */
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success - Teal */
-    --success: 170 55% 40%;
+    /* Success */
+    --success: 142 71% 40%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning - Gold (mais saturado para contraste) */
-    --warning: 36 70% 45%;
+    /* Warning */
+    --warning: 38 92% 45%;
     --warning-foreground: 0 0% 100%;
 
     /* Gold (premium) */
-    --gold: 36 70% 45%;
+    --gold: 38 92% 45%;
     --gold-foreground: 0 0% 100%;
 
-    /* Teal (accent) */
-    --teal: 170 55% 40%;
+    /* Teal */
+    --teal: 213 80% 50%;
     --teal-foreground: 0 0% 100%;
 
     /* Bordas suaves */
     --border: 220 14% 85%;
-    --input: 220 14% 92%;
-    --ring: 170 55% 40%;
+    --input: 220 14% 90%;
+    --ring: 13 74% 48%;
 
-    /* Clinical specific colors - ajustados para contraste em fundo claro */
-    --clinical-safe: 170 55% 35%;
-    --clinical-caution: 36 80% 40%;
-    --clinical-danger: 0 72% 45%;
+    /* Clinical specific colors */
+    --clinical-safe: 142 71% 35%;
+    --clinical-caution: 38 92% 40%;
+    --clinical-danger: 0 84% 50%;
     --clinical-neutral: 220 10% 45%;
 
-    /* Sidebar light - texto escuro para legibilidade */
+    /* Sidebar light */
     --sidebar-background: 220 20% 97%;
-    --sidebar-foreground: 222 47% 25%;
-    --sidebar-primary: 170 55% 40%;
+    --sidebar-foreground: 220 20% 25%;
+    --sidebar-primary: 13 74% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 88%;
-    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-accent-foreground: 220 20% 15%;
     --sidebar-border: 220 14% 85%;
-    --sidebar-ring: 170 55% 40%;
+    --sidebar-ring: 13 74% 48%;
+
+    /* Chart Colors Light */
+    --chart-1: 210 45% 55%;
+    --chart-2: 12 70% 60%;
+    --chart-3: 212 40% 45%;
+    --chart-4: 216 45% 40%;
+    --chart-5: 218 50% 35%;
   }
 
-  /* ===== TEMA DARK REGENAPP ===== */
+  /* ===== TEMA DARK REGHEN ===== */
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 220 14% 96%;
+    /* Base Colors */
+    --background: 220 30% 16%;
+    --foreground: 0 0% 90%;
 
-    --card: 220 51% 12%;
-    --card-foreground: 220 14% 96%;
+    /* Card Colors */
+    --card: 224 22% 21%;
+    --card-foreground: 0 0% 90%;
 
-    --popover: 220 51% 12%;
-    --popover-foreground: 220 14% 96%;
+    /* Popover Colors */
+    --popover: 222 20% 18%;
+    --popover-foreground: 0 0% 90%;
 
-    --primary: 170 50% 54%;
-    --primary-foreground: 222 47% 8%;
+    /* Primary Colors */
+    --primary: 13 74% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 51% 12%;
-    --secondary-foreground: 220 14% 96%;
+    /* Secondary Colors */
+    --secondary: 220 20% 20%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 220 51% 12%;
-    --muted-foreground: 218 14% 76%;
+    /* Muted Colors */
+    --muted: 220 20% 20%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 170 50% 54%;
-    --accent-foreground: 222 47% 8%;
+    /* Accent Colors */
+    --accent: 220 35% 25%;
+    --accent-foreground: 213 97% 87%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 220 14% 96%;
+    /* Destructive Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 170 50% 54%;
-    --success-foreground: 222 47% 8%;
+    /* Success */
+    --success: 13 74% 55%;
+    --success-foreground: 0 0% 100%;
 
-    --warning: 36 32% 52%;
-    --warning-foreground: 222 47% 8%;
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --gold: 36 32% 52%;
-    --gold-foreground: 222 47% 8%;
+    /* Gold */
+    --gold: 38 92% 50%;
+    --gold-foreground: 0 0% 100%;
 
-    --teal: 170 50% 54%;
-    --teal-foreground: 222 47% 8%;
+    /* Teal */
+    --teal: 213 97% 87%;
+    --teal-foreground: 220 30% 16%;
 
-    --border: 218 43% 19%;
-    --input: 220 51% 12%;
-    --ring: 170 50% 54%;
+    /* Border & Input */
+    --border: 225 16% 28%;
+    --input: 225 16% 28%;
+    --ring: 13 74% 55%;
 
-    --clinical-safe: 170 50% 54%;
-    --clinical-caution: 36 32% 52%;
-    --clinical-danger: 0 72% 51%;
-    --clinical-neutral: 218 14% 76%;
+    /* Clinical */
+    --clinical-safe: 142 71% 45%;
+    --clinical-caution: 38 92% 50%;
+    --clinical-danger: 0 84% 60%;
+    --clinical-neutral: 0 0% 64%;
 
     /* Sidebar */
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 218 14% 76%;
-    --sidebar-primary: 170 50% 54%;
-    --sidebar-primary-foreground: 222 47% 8%;
-    --sidebar-accent: 220 51% 12%;
-    --sidebar-accent-foreground: 220 14% 96%;
-    --sidebar-border: 218 43% 19%;
-    --sidebar-ring: 170 50% 54%;
+    --sidebar-background: 220 21% 20%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 13 74% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 35% 25%;
+    --sidebar-accent-foreground: 213 97% 87%;
+    --sidebar-border: 225 16% 28%;
+    --sidebar-ring: 13 74% 55%;
+
+    /* Chart Colors */
+    --chart-1: 210 37% 65%;
+    --chart-2: 12 61% 73%;
+    --chart-3: 212 30% 50%;
+    --chart-4: 216 36% 43%;
+    --chart-5: 218 43% 35%;
   }
 }
 
