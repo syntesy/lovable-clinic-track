@@ -16,8 +16,6 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import {
-  StatusBanner,
-  LegalDisclaimer,
   TriageSummary,
   LabsPanel,
   ActionButtons,
@@ -380,41 +378,9 @@ export function AvaliacaoRegenapp({
     );
   }
 
-  // Formatar data do último prontuário para transparência
-  const lastRecordDate = clinicalRecordData?.created_at 
-    ? new Date(clinicalRecordData.created_at).toLocaleDateString("pt-BR")
-    : null;
-
   return (
     <div className="space-y-6">
-      {/* (A) STATUS & AVISOS */}
-      <StatusBanner 
-        status={currentStatus}
-        engineComputedAt={screening.engine_computed_at}
-        isStale={isStale || false}
-        onRecalculate={handleRecalculate}
-      />
-      
-      <LegalDisclaimer />
-
-      {/* Badge de transparência: dados baseados no ÚLTIMO prontuário */}
-      {lastRecordDate && (
-        <div className="flex items-center justify-between text-sm border border-blue-500/30 bg-blue-500/5 rounded-lg p-3">
-          <span className="text-blue-700 dark:text-blue-300">
-            📋 Dados clínicos baseados no <strong>ÚLTIMO prontuário</strong>: {lastRecordDate}
-          </span>
-          <Button
-            variant="link"
-            size="sm"
-            className="text-sm h-auto p-0 text-blue-600 dark:text-blue-400"
-            onClick={() => window.location.href = `/patients/${patientId}/records`}
-          >
-            Ver histórico de prontuários →
-          </Button>
-        </div>
-      )}
-
-      {/* (B) RESUMO DA TRIAGEM (READ-ONLY) */}
+      {/* (B) RESUMO DA TRIAGEM (READ-ONLY) - PRIMEIRO BLOCO */}
       <TriageSummary 
         canonical={canonical}
         rawAnswers={questionnaireResponses?.answers as Record<string, unknown> | null}
