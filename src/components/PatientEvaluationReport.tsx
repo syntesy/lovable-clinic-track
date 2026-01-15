@@ -36,9 +36,17 @@ interface PatientData {
 }
 
 interface ScreeningData {
+  id?: string;
+  created_at?: string;
   classification?: string | null;
   analysis_result?: string | null;
   questionnaire_responses?: unknown;
+}
+
+interface EvaluationSource {
+  evaluationId: string | null;
+  evaluationDate: string | null;
+  professionalResponsible: string | null;
 }
 
 interface SavedReport {
@@ -52,6 +60,7 @@ interface SavedReport {
     clinical_diagnosis: string | null;
     treated_region: string | null;
     dynamic_content?: DynamicReportContent;
+    evaluation_source?: EvaluationSource;
   };
 }
 
@@ -113,6 +122,12 @@ export function PatientEvaluationReport({
   const handleGenerate = async () => {
     if (!patient) return;
     
+    // VALIDAÇÃO: Não gerar sem avaliação
+    if (!latestScreening || !latestScreening.id) {
+      toast.error("Nenhuma avaliação encontrada. Crie uma avaliação para gerar o relatório.");
+      return;
+    }
+    
     setIsGenerating(true);
     
     try {
@@ -134,6 +149,13 @@ export function PatientEvaluationReport({
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Dados de rastreabilidade da avaliação
+      const evaluationSource: EvaluationSource = {
+        evaluationId: latestScreening.id || null,
+        evaluationDate: latestScreening.created_at || null,
+        professionalResponsible: professionalName,
+      };
+      
       // Prepare report content with dynamic data
       const reportContent = {
         patient_name: patient.full_name,
@@ -144,6 +166,7 @@ export function PatientEvaluationReport({
         treated_region: patient.treated_region,
         generated_date: new Date().toISOString(),
         dynamic_content: JSON.parse(JSON.stringify(generatedContent)),
+        evaluation_source: JSON.parse(JSON.stringify(evaluationSource)),
       };
 
       // Save to database
@@ -151,7 +174,7 @@ export function PatientEvaluationReport({
         .from('patient_evaluation_reports')
         .insert([{
           patient_id: patient.id,
-          report_content: reportContent as Json,
+          report_content: reportContent as unknown as Json,
           generated_by: user?.id,
           professional_name: professionalName,
           professional_registration: professionalRegistration,
@@ -168,7 +191,6 @@ export function PatientEvaluationReport({
       console.error('Error saving report:', error);
       toast.error("Erro ao salvar o relatório");
     } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -236,6 +258,12 @@ export function PatientEvaluationReport({
   const currentDate = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   // Get display data
+  const evaluationSource = viewingReport?.report_content?.evaluation_source || {
+    evaluationId: latestScreening?.id || null,
+    evaluationDate: latestScreening?.created_at || null,
+    professionalResponsible: professionalName,
+  };
+  
   const displayData = viewingReport ? {
     patientName: viewingReport.report_content.patient_name,
     classification: viewingReport.report_content.classification,
@@ -244,6 +272,7 @@ export function PatientEvaluationReport({
     professionalName: viewingReport.professional_name || professionalName,
     professionalRegistration: viewingReport.professional_registration || professionalRegistration,
     generatedDate: format(new Date(viewingReport.generated_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+    evaluationSource,
   } : {
     patientName: patient?.full_name || '',
     classification: latestScreening?.classification,
@@ -252,7 +281,11 @@ export function PatientEvaluationReport({
     professionalName,
     professionalRegistration,
     generatedDate: currentDate,
+    evaluationSource,
   };
+  
+  // Verifica se há avaliação disponível
+  const hasEvaluation = !!latestScreening?.id;
 
   const displayIsPRPIndicado = displayData.classification?.toUpperCase() === "APTO";
   const displayIsPRPComPreparo = displayData.classification?.toUpperCase() === "APTO_COM_PREPARO" ||
@@ -292,10 +325,26 @@ export function PatientEvaluationReport({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Aviso de ausência de avaliação */}
+          {!hasEvaluation && !viewingReport && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-amber-800">Nenhuma avaliação encontrada</p>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Crie uma avaliação clínica para poder gerar o relatório individualizado.
+                    O relatório é gerado exclusivamente a partir dos dados da avaliação.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="flex flex-wrap gap-3">
             <Button 
               onClick={handleGenerate} 
-              disabled={isGenerating}
+              disabled={isGenerating || (!hasEvaluation && !viewingReport)}
               className="gap-2"
               size="lg"
             >
@@ -748,8 +797,31 @@ export function PatientEvaluationReport({
               </div>
             </section>
 
+            {/* RASTREABILIDADE - Fontes da Avaliação */}
+            <div className="mt-8 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">Fontes da Avaliação (Rastreabilidade)</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-600">
+                <div>
+                  <span className="text-gray-400">ID da Avaliação:</span>
+                  <span className="ml-1 font-mono">{displayData.evaluationSource?.evaluationId || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Data da Avaliação:</span>
+                  <span className="ml-1">
+                    {displayData.evaluationSource?.evaluationDate 
+                      ? format(new Date(displayData.evaluationSource.evaluationDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Profissional:</span>
+                  <span className="ml-1">{displayData.evaluationSource?.professionalResponsible || displayData.professionalName}</span>
+                </div>
+              </div>
+            </div>
+
             {/* RODAPÉ */}
-            <div className="mt-10 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img src={logoReghen} alt="reghen" className="h-5 w-auto opacity-60" />
