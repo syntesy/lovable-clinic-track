@@ -120,11 +120,11 @@ const AtendimentoDetail = () => {
       return;
     }
     
-    // Check if prontuário has minimum data
+    // Check if prontuário has minimum data (relaxed: queixa+anamnese OU diagnóstico)
     if (!hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic)) {
-      toast.error("O prontuário precisa estar completo (queixa, anamnese, exame físico e diagnóstico) para gerar o relatório.", {
+      toast.error("O prontuário precisa ter pelo menos: queixa + anamnese OU diagnóstico clínico preenchido.", {
         action: {
-          label: "Abrir Prontuário",
+          label: "Completar Prontuário",
           onClick: () => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`),
         },
         duration: 6000,
@@ -436,7 +436,7 @@ const AtendimentoDetail = () => {
                   <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
                   <p className="text-foreground font-medium mb-2">Prontuário Incompleto</p>
                   <p className="text-muted-foreground mb-4">
-                    O prontuário precisa estar completo (queixa, anamnese, exame físico e diagnóstico) para gerar o relatório.
+                    O prontuário precisa ter pelo menos: queixa + anamnese OU diagnóstico clínico preenchido.
                   </p>
                   <Button 
                     variant="outline"

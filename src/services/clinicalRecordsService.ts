@@ -98,17 +98,32 @@ export async function ensureClinicalRecordForAttendance(
 
 /**
  * Check if a clinical record has minimum required data for report generation.
- * Required fields: chief_complaint, anamnesis, physical_exam, clinical_diagnosis
+ * 
+ * Relaxed criteria - considers "complete enough" if at least ONE of these is true:
+ * - Conjunto A (clínico básico): chief_complaint AND anamnesis filled
+ * - Conjunto B (diagnóstico): clinical_diagnosis filled
+ * - Conjunto C (exame): physical_exam AND clinical_diagnosis filled
+ * 
+ * This prevents UX issues where users "can never generate a report".
  */
 export function hasClinicalRecordMinimumData(record: ClinicalRecordBasic | null): boolean {
   if (!record) return false;
   
-  return Boolean(
-    record.chief_complaint?.trim() &&
-    record.anamnesis?.trim() &&
-    record.physical_exam?.trim() &&
-    record.clinical_diagnosis?.trim()
-  );
+  const hasChiefComplaint = !!record.chief_complaint?.trim();
+  const hasAnamnesis = !!record.anamnesis?.trim();
+  const hasPhysicalExam = !!record.physical_exam?.trim();
+  const hasDiagnosis = !!record.clinical_diagnosis?.trim();
+  
+  // Conjunto A: queixa + anamnese
+  const conjuntoA = hasChiefComplaint && hasAnamnesis;
+  
+  // Conjunto B: diagnóstico preenchido
+  const conjuntoB = hasDiagnosis;
+  
+  // Conjunto C: exame físico + diagnóstico
+  const conjuntoC = hasPhysicalExam && hasDiagnosis;
+  
+  return conjuntoA || conjuntoB || conjuntoC;
 }
 
 // ============ Legacy/Analytics functions (for backwards compatibility) ============
