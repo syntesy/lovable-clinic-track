@@ -5,6 +5,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logInfo, logWarn, logError } from "@/lib/telemetry";
 
 export interface ClinicalRecordBasic {
   id: string;
@@ -61,9 +62,16 @@ export async function createClinicalRecord(input: {
   if (error) {
     // Handle unique constraint violation (duplicate attendance_id)
     if (error.code === "23505" && error.message?.includes("attendance")) {
+      logInfo("clinical_record.ensure.unique_violation_handled", { attendanceId: input.attendanceId });
       // Already exists - fetch it instead
       const existing = await getClinicalRecordByAttendanceId(input.attendanceId);
       if (existing) return existing;
+    }
+    // Check for RLS/permission errors
+    if (error.code === "42501" || error.message?.toLowerCase().includes("permission")) {
+      logWarn("clinical_record.ensure.permission_denied", { attendanceId: input.attendanceId, code: error.code });
+    } else {
+      logError("clinical_record.ensure.error", { attendanceId: input.attendanceId, code: error.code, message: error.message });
     }
     throw error;
   }
@@ -81,19 +89,27 @@ export async function ensureClinicalRecordForAttendance(
   attendanceId: string,
   patientId: string
 ): Promise<ClinicalRecordBasic> {
+  logInfo("clinical_record.ensure.start", { attendanceId, patientId });
+  
   // First try to find existing record by attendance_id (FK lookup)
   const existing = await getClinicalRecordByAttendanceId(attendanceId);
 
   if (existing) {
+    logInfo("clinical_record.ensure.found_existing", { attendanceId, recordId: existing.id });
     return existing;
   }
 
+  logInfo("clinical_record.ensure.insert_attempt", { attendanceId });
+  
   // Create new record if none exists
   // Unique constraint on attendance_id prevents duplicates even with concurrent calls
-  return await createClinicalRecord({
+  const created = await createClinicalRecord({
     attendanceId,
     patientId,
   });
+  
+  logInfo("clinical_record.ensure.insert_success", { attendanceId, recordId: created.id });
+  return created;
 }
 
 /**

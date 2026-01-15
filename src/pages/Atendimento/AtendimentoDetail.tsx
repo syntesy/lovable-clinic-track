@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
+import { logInfo, logWarn, logError } from "@/lib/telemetry";
 import { 
   useAttendanceSession, 
   useAttendanceFiles,
@@ -83,6 +83,7 @@ const AtendimentoDetail = () => {
   const handleOpenOrCreateProntuario = useCallback(async () => {
     if (!attendance || !attendanceId || isCreatingRecord) return;
     
+    logInfo("clinical_record.open_or_create.clicked", { attendanceId });
     setIsCreatingRecord(true);
     try {
       // Use attendance_id FK for proper linking
@@ -96,10 +97,11 @@ const AtendimentoDetail = () => {
         queryKey: ["clinical-records-attendance", attendanceId] 
       });
       
+      logInfo("clinical_record.open_or_create.navigating", { recordId: record.id, attendanceId });
       // Navigate to the record editor with attendance context
       navigate(`/patients/${attendance.patient_id}/records/${record.id}?atendimento=${attendanceId}`);
-    } catch (error) {
-      console.error("Erro ao criar prontuário:", error);
+    } catch (error: any) {
+      logError("clinical_record.open_or_create.error", { attendanceId, code: error?.code });
       toast.error("Erro ao criar prontuário. Tente novamente.");
     } finally {
       setIsCreatingRecord(false);
@@ -108,8 +110,11 @@ const AtendimentoDetail = () => {
 
   // Handler: Generate Report with gating
   const handleGenerateReport = useCallback(() => {
+    logInfo("report.generate.clicked", { attendanceId: attendanceId || "unknown" });
+    
     // Check if prontuário exists
     if (!clinicalRecord) {
+      logWarn("report.generate.blocked.no_record", { attendanceId: attendanceId || "unknown" });
       toast.error("Para gerar relatório, é necessário criar o prontuário do atendimento primeiro.", {
         action: {
           label: "Criar Prontuário",
@@ -122,6 +127,7 @@ const AtendimentoDetail = () => {
     
     // Check if prontuário has minimum data (relaxed: queixa+anamnese OU diagnóstico)
     if (!hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic)) {
+      logWarn("report.generate.blocked.incomplete_record", { attendanceId: attendanceId || "unknown", recordId: clinicalRecord.id });
       toast.error("O prontuário precisa ter pelo menos: queixa + anamnese OU diagnóstico clínico preenchido.", {
         action: {
           label: "Completar Prontuário",
@@ -132,9 +138,10 @@ const AtendimentoDetail = () => {
       return;
     }
     
+    logInfo("report.generate.start", { attendanceId: attendanceId || "unknown", recordId: clinicalRecord.id });
     // Navigate to report step
     setCurrentStep("report");
-  }, [clinicalRecord, attendance, handleOpenOrCreateProntuario, navigate]);
+  }, [clinicalRecord, attendance, attendanceId, handleOpenOrCreateProntuario, navigate]);
   
   // Handle conclude attendance
   const handleConclude = async () => {
