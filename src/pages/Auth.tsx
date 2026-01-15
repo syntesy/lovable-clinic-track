@@ -178,21 +178,12 @@ export default function Auth() {
   };
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-background overflow-hidden z-[9999]"
-      style={{
-        backgroundImage: "url('/images/dna-login-bg-clean.png?v=2')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      {/* Overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-background/50 pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
 
       {/* Card container */}
-      <div className="relative flex flex-col items-center z-10">
+      <div className="w-full max-w-md flex flex-col items-center">
         {/* Glassmorphism Card */}
-        <Card className="w-[min(520px,90vw)] bg-card/95 backdrop-blur-xl border-border shadow-2xl rounded-3xl">
+        <Card className="w-full bg-card border-border shadow-lg rounded-2xl">
           <CardContent className="p-10 sm:px-12">
             {/* Logo */}
             <div className="w-full flex items-center justify-center mb-8">
