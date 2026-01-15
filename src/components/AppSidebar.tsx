@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays } from "lucide-react";
+import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -19,6 +19,7 @@ import logoReghen from "@/assets/logo-reghen.png";
 const menuItems = [
   { title: "Agenda Clínica", url: "/agenda", icon: CalendarDays },
   { title: "Pacientes", url: "/pacientes", icon: Users },
+  { title: "Atendimentos", url: "/atendimentos", icon: ClipboardList },
   { title: "Área do Paciente", url: "/patients/manage", icon: UserCog },
   { title: "Career Engine", url: "/career", icon: TrendingUp },
   { title: "Diligência & Compliance", url: "/diligence", icon: Shield },

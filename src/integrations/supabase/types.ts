@@ -68,6 +68,95 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_files: {
+        Row: {
+          attendance_ref: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_type: string
+          id: string
+          mime_type: string | null
+          patient_id: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          attendance_ref: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_type: string
+          id?: string
+          mime_type?: string | null
+          patient_id: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          attendance_ref?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          mime_type?: string | null
+          patient_id?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_files_attendance_ref_fkey"
+            columns: ["attendance_ref"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_files_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          involves_orthobiologics: boolean
+          patient_id: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          involves_orthobiologics?: boolean
+          patient_id: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          involves_orthobiologics?: boolean
+          patient_id?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_sessions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
