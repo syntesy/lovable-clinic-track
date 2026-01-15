@@ -8,7 +8,7 @@
  * porque exibe "status geral" da avaliação, não um prontuário específico para edição.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,12 +17,18 @@ import { Button } from "@/components/ui/button";
 
 import {
   TriageSummary,
-  LabsPanel,
   ActionButtons,
   ExamRequestModal,
   PreReportModal
 } from "@/components/RegenEvaluation";
 import { ClinicalAssessmentChecklist } from "@/components/RegenEvaluation/ClinicalAssessmentChecklist";
+import { DynamicLabsPanel } from "@/components/RegenEvaluation/DynamicLabsPanel";
+import { 
+  extractExamsFromTriage, 
+  updateExamsWithValidation,
+  areAllCriticalExamsValid 
+} from "@/types/triage-exams";
+import { ExamGroup } from "@/types/screening";
 
 import { RegenResultView } from "@/components/RegenResult";
 import { ObservationalRegistryCard } from "@/components/registry/ObservationalRegistryCard";
@@ -30,8 +36,7 @@ import { RegenCanonical } from "@/types/regen-canonical";
 import { RegenEngineOutputs } from "@/types/regen-engine";
 import { 
   RegenCaseStatus, 
-  computeCaseStatus,
-  ValidatedLabData,
+  isClinicalAssessmentComplete,
 } from "@/types/regen-case-status";
 import { runRegenEngine } from "@/lib/regen-engine";
 import { buildRegenCanonicalFromTriagem } from "@/lib/regen-canonical-adapter";
@@ -125,17 +130,45 @@ export function AvaliacaoRegenapp({
   // Usar tipo direto do helper (não precisa de cast)
   const clinicalRecordData = clinicalRecord;
 
-  // Calcular status atual - LENDO DO clinical_records (FONTE ÚNICA)
-  const currentStatus: RegenCaseStatus = screening ? computeCaseStatus({
-    triage_completed_at: screening.triage_completed_at,
-    // FONTE ÚNICA: ler do clinical_records, não do prp_screenings
-    clinical_chief_complaint: clinicalRecordData?.chief_complaint ?? null,
-    clinical_anamnesis: clinicalRecordData?.anamnesis ?? null,
-    clinical_physical_exam: clinicalRecordData?.physical_exam ?? null,
-    clinical_diagnosis: clinicalRecordData?.clinical_diagnosis ?? null,
-    labs_validated: screening.labs_validated as unknown as Record<string, ValidatedLabData> | null,
-    regen_engine_outputs: engineOutputs
-  }) : "S0";
+  // Extrair exames da triagem (fonte única)
+  const triageExams = useMemo(() => {
+    const exams = extractExamsFromTriage(
+      screening?.analysis_result || null,
+      screening?.recommended_exams as unknown as ExamGroup[] | null
+    );
+    return updateExamsWithValidation(
+      exams,
+      screening?.labs_validated as Record<string, { status: string; value?: number | null; date?: string | null }> | null,
+      screening?.labs_collected_date || null
+    );
+  }, [screening?.analysis_result, screening?.recommended_exams, screening?.labs_validated, screening?.labs_collected_date]);
+
+  // Calcular status atual - USANDO DADOS DINÂMICOS DA TRIAGEM
+  const currentStatus: RegenCaseStatus = useMemo(() => {
+    if (!screening) return "S0";
+    
+    // S3: Score definitivo já existe
+    if (engineOutputs) return "S3";
+    
+    // Verificar avaliação clínica
+    const clinicalComplete = isClinicalAssessmentComplete({
+      clinical_chief_complaint: clinicalRecordData?.chief_complaint ?? null,
+      clinical_anamnesis: clinicalRecordData?.anamnesis ?? null,
+      clinical_physical_exam: clinicalRecordData?.physical_exam ?? null,
+      clinical_diagnosis: clinicalRecordData?.clinical_diagnosis ?? null
+    });
+    
+    // S2: Avaliação clínica completa + exames CRÍTICOS da triagem válidos
+    if (clinicalComplete && areAllCriticalExamsValid(triageExams)) {
+      return "S2";
+    }
+    
+    // S1: Avaliação clínica completa, mas exames pendentes
+    if (clinicalComplete) return "S1";
+    
+    // S0: Apenas triagem concluída
+    return "S0";
+  }, [screening, engineOutputs, clinicalRecordData, triageExams]);
 
   // Detectar se resultado está desatualizado (stale)
   const isStale = screening && engineOutputs && 
@@ -393,11 +426,13 @@ export function AvaliacaoRegenapp({
         disabled={currentStatus === "S3"}
       />
 
-      {/* (D) EXAMES */}
-      <LabsPanel
+      {/* (D) EXAMES - Dinâmico da Triagem */}
+      <DynamicLabsPanel
         screeningId={screeningId}
         canonical={canonical}
-        labsValidated={screening.labs_validated as Record<string, { status: string }> | null}
+        analysisResult={screening.analysis_result}
+        recommendedExams={screening.recommended_exams as unknown as ExamGroup[] | null}
+        labsValidated={screening.labs_validated as Record<string, { status: string; value?: number | null; date?: string | null }> | null}
         labsCollectedDate={screening.labs_collected_date}
         onSave={handleLabsSave}
         disabled={currentStatus === "S3"}

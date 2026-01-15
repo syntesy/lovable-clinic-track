@@ -7,6 +7,8 @@ export { TriageSummary } from "./TriageSummary";
 export { ClinicalAssessmentForm } from "./ClinicalAssessmentForm";
 export { ClinicalAssessmentChecklist } from "./ClinicalAssessmentChecklist";
 export { LabsPanel } from "./LabsPanel";
+export { DynamicLabsPanel } from "./DynamicLabsPanel";
+export { DynamicLabsChecklist } from "./DynamicLabsChecklist";
 export { ActionButtons } from "./ActionButtons";
 export { ExamRequestModal } from "./ExamRequestModal";
 export { PreReportModal } from "./PreReportModal";
