@@ -129,6 +129,10 @@ export type Database = {
           created_at: string
           id: string
           involves_orthobiologics: boolean
+          last_report_duration_ms: number | null
+          last_report_generated_at: string | null
+          last_report_record_id: string | null
+          last_report_type: string | null
           patient_id: string
           title: string | null
           user_id: string
@@ -139,6 +143,10 @@ export type Database = {
           created_at?: string
           id?: string
           involves_orthobiologics?: boolean
+          last_report_duration_ms?: number | null
+          last_report_generated_at?: string | null
+          last_report_record_id?: string | null
+          last_report_type?: string | null
           patient_id: string
           title?: string | null
           user_id: string
@@ -149,6 +157,10 @@ export type Database = {
           created_at?: string
           id?: string
           involves_orthobiologics?: boolean
+          last_report_duration_ms?: number | null
+          last_report_generated_at?: string | null
+          last_report_record_id?: string | null
+          last_report_type?: string | null
           patient_id?: string
           title?: string | null
           user_id?: string

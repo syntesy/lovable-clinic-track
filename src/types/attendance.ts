@@ -10,6 +10,11 @@ export interface AttendanceSession {
   user_id: string;
   closed_at: string | null;
   closed_by: string | null; // Audit trail: who closed the attendance
+  // Report audit trail fields
+  last_report_generated_at: string | null;
+  last_report_record_id: string | null;
+  last_report_type: 'preview' | 'pdf' | null;
+  last_report_duration_ms: number | null;
 }
 
 // Helper to check if attendance is closed
