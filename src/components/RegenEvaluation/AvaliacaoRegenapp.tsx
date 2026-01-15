@@ -437,6 +437,7 @@ export function AvaliacaoRegenapp({
         labsCollectedDate={screening.labs_collected_date}
         onSave={handleLabsSave}
         disabled={currentStatus === "S3"}
+        patientName={patientName}
       />
 
       {/* (E) AÇÕES */}

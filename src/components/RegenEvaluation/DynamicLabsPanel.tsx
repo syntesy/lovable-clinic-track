@@ -28,8 +28,10 @@ import {
   Info,
   Shield,
   ShieldAlert,
-  ShieldX
+  ShieldX,
+  ClipboardList
 } from "lucide-react";
+import { ExamRequestModal } from "./ExamRequestModal";
 import {
   Tooltip,
   TooltipContent,
@@ -64,6 +66,7 @@ interface DynamicLabsPanelProps {
   labsCollectedDate?: string | null;
   onSave?: () => void;
   disabled?: boolean;
+  patientName?: string;
 }
 
 interface LabInputState {
@@ -157,8 +160,10 @@ export function DynamicLabsPanel({
   labsValidated,
   labsCollectedDate,
   onSave,
-  disabled = false
+  disabled = false,
+  patientName
 }: DynamicLabsPanelProps) {
+  const [examModalOpen, setExamModalOpen] = useState(false);
   // Extrair exames da triagem (fonte única de verdade)
   const triageExams = useMemo(() => {
     const exams = extractExamsFromTriage(analysisResult, recommendedExams);
@@ -399,7 +404,18 @@ export function DynamicLabsPanel({
               Exames definidos pela Triagem de Ortobiológicos
             </CardDescription>
           </div>
-          <S2StatusBadge triageExams={updatedTriageExams} />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setExamModalOpen(true)}
+              className="gap-1.5"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Ver Solicitação
+            </Button>
+            <S2StatusBadge triageExams={updatedTriageExams} />
+          </div>
         </div>
         
         {/* Resumo automático */}
@@ -542,6 +558,14 @@ export function DynamicLabsPanel({
           </Button>
         </div>
       </CardContent>
+
+      {/* Modal de Solicitação de Exames */}
+      <ExamRequestModal
+        open={examModalOpen}
+        onOpenChange={setExamModalOpen}
+        patientName={patientName}
+        recommendedExams={updatedTriageExams.map(e => e.code)}
+      />
     </Card>
   );
 }
