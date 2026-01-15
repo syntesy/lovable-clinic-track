@@ -6,6 +6,14 @@
  */
 
 import { ExamGroup } from "./screening";
+import { toZonedTime, formatInTimeZone } from "date-fns-tz";
+import { differenceInDays } from "date-fns";
+
+/** Timezone padrão para Brasil */
+const SAO_PAULO_TZ = "America/Sao_Paulo";
+
+/** Validade padrão de exames em dias */
+const DEFAULT_VALIDITY_DAYS = 90;
 
 /**
  * Estrutura mínima de um exame para renderização na avaliação
@@ -104,18 +112,58 @@ export function getExamLabel(code: string): string {
 }
 
 /**
+ * Obtém a data atual no timezone de São Paulo
+ */
+function getNowSaoPaulo(): Date {
+  return toZonedTime(new Date(), SAO_PAULO_TZ);
+}
+
+/**
+ * Verifica se a data de coleta está expirada (> 90 dias)
+ */
+export function isExamExpired(collectedAt: string | null, validityDays: number = DEFAULT_VALIDITY_DAYS): boolean {
+  if (!collectedAt) return false; // Sem data = não é desatualizado, é pendente
+  
+  try {
+    const collectedDate = toZonedTime(new Date(collectedAt), SAO_PAULO_TZ);
+    const now = getNowSaoPaulo();
+    const daysDiff = differenceInDays(now, collectedDate);
+    return daysDiff > validityDays;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ordena exames: críticos primeiro, depois opcionais
+ * Dentro de cada grupo, ordena por label em pt-BR
+ */
+export function sortTriageExams(exams: TriageExamItem[]): TriageExamItem[] {
+  const ptBRCollator = new Intl.Collator("pt-BR", { sensitivity: "base" });
+  
+  return [...exams].sort((a, b) => {
+    // Primeiro: críticos antes de opcionais
+    if (a.is_critical !== b.is_critical) {
+      return a.is_critical ? -1 : 1;
+    }
+    // Segundo: ordenar por label em pt-BR
+    return ptBRCollator.compare(a.label, b.label);
+  });
+}
+
+/**
  * Extrai exames da triagem de ortobiológicos
  * 
  * @param analysisResult - Campo analysis_result (JSON string ou null)
  * @param recommendedExams - Campo recommended_exams (JSONB ou null)
- * @returns Lista de exames com estrutura normalizada
+ * @returns Lista de exames com estrutura normalizada (deduplicada e ordenada)
  */
 export function extractExamsFromTriage(
   analysisResult: string | null,
   recommendedExams: ExamGroup[] | unknown[] | null
 ): TriageExamItem[] {
   const exams: TriageExamItem[] = [];
-  const seenCodes = new Set<string>();
+  const seenCodes = new Set<string>(); // Para deduplicação por code
 
   // Primeiro: tentar extrair de analysis_result (formato mais recente)
   if (analysisResult) {
@@ -129,10 +177,13 @@ export function extractExamsFromTriage(
       // Exames obrigatórios são críticos
       for (const exam of required) {
         const code = typeof exam === "string" ? exam : exam?.code || exam?.name || "";
-        if (code && !seenCodes.has(normalizeExamCode(code))) {
-          seenCodes.add(normalizeExamCode(code));
+        const normalizedCode = normalizeExamCode(code);
+        
+        // DEDUPLICAÇÃO: pular se já processado
+        if (code && !seenCodes.has(normalizedCode)) {
+          seenCodes.add(normalizedCode);
           exams.push({
-            code: normalizeExamCode(code),
+            code: normalizedCode,
             label: getExamLabel(code),
             status: "pendente",
             is_critical: true,
@@ -145,10 +196,13 @@ export function extractExamsFromTriage(
       // Exames opcionais não são críticos
       for (const exam of optional) {
         const code = typeof exam === "string" ? exam : exam?.code || exam?.name || "";
-        if (code && !seenCodes.has(normalizeExamCode(code))) {
-          seenCodes.add(normalizeExamCode(code));
+        const normalizedCode = normalizeExamCode(code);
+        
+        // DEDUPLICAÇÃO: pular se já processado
+        if (code && !seenCodes.has(normalizedCode)) {
+          seenCodes.add(normalizedCode);
           exams.push({
-            code: normalizeExamCode(code),
+            code: normalizedCode,
             label: getExamLabel(code),
             status: "pendente",
             is_critical: false,
@@ -158,9 +212,9 @@ export function extractExamsFromTriage(
         }
       }
       
-      // Se conseguiu extrair exames do analysis_result, retorna
+      // Se conseguiu extrair exames do analysis_result, retorna ordenado
       if (exams.length > 0) {
-        return exams;
+        return sortTriageExams(exams);
       }
     } catch {
       // Fallback para recommended_exams
@@ -180,6 +234,8 @@ export function extractExamsFromTriage(
         
         for (const examName of groupExams) {
           const normalizedCode = normalizeExamCode(examName);
+          
+          // DEDUPLICAÇÃO: pular se já processado
           if (!seenCodes.has(normalizedCode)) {
             seenCodes.add(normalizedCode);
             exams.push({
@@ -196,11 +252,16 @@ export function extractExamsFromTriage(
     }
   }
 
-  return exams;
+  // Retorna ordenado
+  return sortTriageExams(exams);
 }
 
 /**
  * Atualiza status dos exames baseado nos resultados validados
+ * 
+ * REGRA DE STATUS "desatualizado":
+ * - collected_at existe E diferença entre hoje e collected_at > 90 dias
+ * - Usa timezone America/Sao_Paulo
  */
 export function updateExamsWithValidation(
   exams: TriageExamItem[],
@@ -209,33 +270,47 @@ export function updateExamsWithValidation(
 ): TriageExamItem[] {
   if (!labsValidated) return exams;
   
-  return exams.map(exam => {
+  const updatedExams = exams.map(exam => {
     const validation = labsValidated[exam.code];
+    const effectiveDate = validation?.date || labsCollectedDate;
+    
     if (!validation) {
-      return { ...exam, status: "pendente" as const, collected_at: labsCollectedDate };
+      return { ...exam, status: "pendente" as const, collected_at: effectiveDate };
     }
     
     const hasValue = validation.value !== null && validation.value !== undefined;
-    const hasDate = validation.date || labsCollectedDate;
     
-    if (validation.status === "USE" && hasValue && hasDate) {
-      return { 
-        ...exam, 
-        status: "válido" as const, 
-        collected_at: validation.date || labsCollectedDate 
-      };
-    }
-    
-    if (validation.status === "REPEAT" || validation.status === "REQUEST") {
+    // Verificar se está desatualizado (> 90 dias)
+    if (effectiveDate && isExamExpired(effectiveDate)) {
       return { 
         ...exam, 
         status: "desatualizado" as const, 
-        collected_at: validation.date || labsCollectedDate 
+        collected_at: effectiveDate 
       };
     }
     
-    return { ...exam, status: "pendente" as const, collected_at: labsCollectedDate };
+    // Verificar status do backend
+    if (validation.status === "REPEAT" || validation.status === "REQUEST") {
+      return { 
+        ...exam, 
+        status: validation.status === "REPEAT" ? "desatualizado" as const : "pendente" as const, 
+        collected_at: effectiveDate 
+      };
+    }
+    
+    if (validation.status === "USE" && hasValue && effectiveDate) {
+      return { 
+        ...exam, 
+        status: "válido" as const, 
+        collected_at: effectiveDate 
+      };
+    }
+    
+    return { ...exam, status: "pendente" as const, collected_at: effectiveDate };
   });
+
+  // Manter ordenação determinística
+  return sortTriageExams(updatedExams);
 }
 
 /**
@@ -247,9 +322,25 @@ export function getCriticalExams(exams: TriageExamItem[]): TriageExamItem[] {
 
 /**
  * Verifica se todos os exames críticos estão válidos
+ * 
+ * REGRA S2 (NÃO NEGOCIÁVEL):
+ * - Considera EXCLUSIVAMENTE is_critical === true E status === "válido"
+ * - Labels, nomes ou tipo de exame NÃO influenciam esta verificação
+ * - Se não há exames críticos, retorna FALSE (não pode avançar)
  */
 export function areAllCriticalExamsValid(exams: TriageExamItem[]): boolean {
   const criticalExams = getCriticalExams(exams);
-  if (criticalExams.length === 0) return false; // Sem exames críticos = não válido
-  return criticalExams.every(e => e.status === "válido");
+  
+  // Sem exames críticos = NÃO PODE AVANÇAR (precisa de triagem)
+  if (criticalExams.length === 0) return false;
+  
+  // TODOS os críticos devem ter status === "válido"
+  return criticalExams.every(e => e.is_critical === true && e.status === "válido");
+}
+
+/**
+ * Verifica se existe triagem com exames definidos
+ */
+export function hasTriageExams(exams: TriageExamItem[]): boolean {
+  return exams.length > 0;
 }

@@ -18,9 +18,10 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { TriageExamItem, areAllCriticalExamsValid, getCriticalExams } from "@/types/triage-exams";
+import { formatInTimeZone } from "date-fns-tz";
+import { TriageExamItem, areAllCriticalExamsValid, getCriticalExams, hasTriageExams } from "@/types/triage-exams";
+
+const SAO_PAULO_TZ = "America/Sao_Paulo";
 
 interface DynamicLabsChecklistProps {
   triageExams: TriageExamItem[];
@@ -35,16 +36,26 @@ export function DynamicLabsChecklist({
 }: DynamicLabsChecklistProps) {
   
   // Estado vazio: nenhuma triagem
-  if (triageExams.length === 0) {
+  if (!hasTriageExams(triageExams)) {
     return (
-      <Alert>
+      <Alert variant="destructive">
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Nenhuma triagem de ortobiológicos encontrada para este paciente.
+          <strong>Nenhuma triagem de ortobiológicos encontrada.</strong>
+          <br />
+          <span className="text-sm">Ações bloqueadas até que a triagem seja realizada.</span>
         </AlertDescription>
       </Alert>
     );
   }
+
+  const formatDate = (dateStr: string) => {
+    try {
+      return formatInTimeZone(new Date(dateStr), SAO_PAULO_TZ, "dd/MM/yyyy");
+    } catch {
+      return "-";
+    }
+  };
 
   const getStatusInfo = (exam: TriageExamItem) => {
     const validation = labsValidated?.[exam.code];
@@ -75,9 +86,9 @@ export function DynamicLabsChecklist({
         label: "Válido",
         tooltip: `Valor: ${validation.value ?? '-'} | Data: ${
           validation.date 
-            ? format(new Date(validation.date), "dd/MM/yyyy", { locale: ptBR }) 
+            ? formatDate(validation.date) 
             : exam.collected_at 
-              ? format(new Date(exam.collected_at), "dd/MM/yyyy", { locale: ptBR })
+              ? formatDate(exam.collected_at)
               : "-"
         }`
       };
@@ -127,7 +138,7 @@ export function DynamicLabsChecklist({
         <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded text-sm">
           <AlertTriangle className="h-4 w-4 text-orange-600 flex-shrink-0" />
           <span className="text-orange-700 dark:text-orange-300">
-            Exames desatualizados (coletados em {format(new Date(showStaleDate), "dd/MM/yyyy", { locale: ptBR })}).
+            Exames desatualizados (coletados em {formatDate(showStaleDate)}).
             Atualize os exames para prosseguir.
           </span>
         </div>

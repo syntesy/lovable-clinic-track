@@ -22,7 +22,8 @@ import {
   TriageExamItem, 
   extractExamsFromTriage, 
   updateExamsWithValidation,
-  areAllCriticalExamsValid 
+  areAllCriticalExamsValid,
+  hasTriageExams
 } from "@/types/triage-exams";
 import { ExamGroup } from "@/types/screening";
 
@@ -80,8 +81,10 @@ export function DynamicLabsPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [validationResults, setValidationResults] = useState(labsValidated || null);
 
-  // Se não há exames da triagem, exibir mensagem
-  if (triageExams.length === 0) {
+  // BLOQUEIO SEM TRIAGEM: Se não há exames da triagem, bloquear todas as ações
+  const hasExams = hasTriageExams(triageExams);
+  
+  if (!hasExams) {
     return (
       <Card>
         <CardHeader className="pb-3">
@@ -91,13 +94,15 @@ export function DynamicLabsPanel({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert>
+          <Alert variant="destructive">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Nenhuma triagem de ortobiológicos encontrada para este paciente.
+              <strong>Nenhuma triagem de ortobiológicos encontrada para este paciente.</strong>
               <br />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm">
                 Realize a triagem primeiro para definir os exames necessários.
+                <br />
+                <em className="text-xs">Ações bloqueadas: salvar exames, validar exames, avançar status clínico (S2).</em>
               </span>
             </AlertDescription>
           </Alert>
