@@ -3619,6 +3619,42 @@ export type Database = {
           },
         ]
       }
+      report_snapshots: {
+        Row: {
+          created_at: string
+          evaluation_id: string | null
+          generated_at: string
+          generator_version: string
+          id: string
+          patient_id: string
+          report_hash: string
+          report_json: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          evaluation_id?: string | null
+          generated_at?: string
+          generator_version: string
+          id?: string
+          patient_id: string
+          report_hash: string
+          report_json: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          evaluation_id?: string | null
+          generated_at?: string
+          generator_version?: string
+          id?: string
+          patient_id?: string
+          report_hash?: string
+          report_json?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       research_config: {
         Row: {
           created_at: string

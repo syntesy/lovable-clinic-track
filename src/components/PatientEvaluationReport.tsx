@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { 
   FileText, Download, Sparkles, AlertCircle, CheckCircle2, 
   Target, Leaf, Clock, Heart, MessageSquare, History, Eye, Trash2,
-  FlaskConical, AlertTriangle
+  FlaskConical, AlertTriangle, Info
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +25,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { generateDynamicReportContent, DynamicReportContent } from "@/lib/report-generator";
+import { useReportSnapshot } from "@/hooks/useReportSnapshot";
+import { REPORT_GENERATOR_VERSION } from "@/lib/report-version";
 
 interface PatientData {
   id: string;
@@ -47,6 +49,7 @@ interface EvaluationSource {
   evaluationId: string | null;
   evaluationDate: string | null;
   professionalResponsible: string | null;
+  generatorVersion: string;
 }
 
 interface SavedReport {
@@ -71,6 +74,34 @@ interface PatientEvaluationReportProps {
   professionalRegistration?: string;
 }
 
+/**
+ * Formata a data da avaliação para exibição no lastro
+ * Formato: DD/MM/AAAA às HH:mm (ou apenas DD/MM/AAAA se não houver hora)
+ */
+function formatEvaluationDateForDisplay(dateString: string | null | undefined): string {
+  if (!dateString) {
+    return "data não informada";
+  }
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return "data não informada";
+    }
+    
+    // Verifica se tem hora significativa (não é meia-noite)
+    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+    
+    if (hasTime) {
+      return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    } else {
+      return format(date, "dd/MM/yyyy", { locale: ptBR });
+    }
+  } catch {
+    return "data não informada";
+  }
+}
+
 export function PatientEvaluationReport({ 
   patient, 
   latestScreening,
@@ -79,18 +110,30 @@ export function PatientEvaluationReport({
 }: PatientEvaluationReportProps) {
   const [isGenerated, setIsGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [viewingReport, setViewingReport] = useState<SavedReport | null>(null);
   const [deleteReportId, setDeleteReportId] = useState<string | null>(null);
   const [dynamicContent, setDynamicContent] = useState<DynamicReportContent | null>(null);
+  const [currentReportJson, setCurrentReportJson] = useState<Record<string, unknown> | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+  
+  const { createSnapshot } = useReportSnapshot();
 
   const isPRPIndicado = latestScreening?.classification?.toUpperCase() === "APTO";
   const isPRPComPreparo = latestScreening?.classification?.toUpperCase() === "APTO_COM_PREPARO" ||
                          latestScreening?.classification?.toUpperCase() === "NAO_APTO_PREPARO";
   const isPRPNaoIndicado = latestScreening?.classification?.toUpperCase() === "NAO_APTO" || 
                           latestScreening?.classification?.toUpperCase() === "CONTRAINDICADO";
+
+  // Determina se a seção educacional deve ser renderizada
+  const shouldRenderEducationalContent = (classification: string | null | undefined): boolean => {
+    if (!classification) return false;
+    const classUpper = classification.toUpperCase();
+    // Só renderizar se PRP está "considerado" / "planejado" / "em avaliação"
+    return classUpper === "APTO" || classUpper === "APTO_COM_PREPARO" || classUpper === "NAO_APTO_PREPARO";
+  };
 
   // Fetch saved reports
   useEffect(() => {
@@ -149,11 +192,12 @@ export function PatientEvaluationReport({
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Dados de rastreabilidade da avaliação
+      // Dados de rastreabilidade da avaliação (incluindo versão do gerador)
       const evaluationSource: EvaluationSource = {
         evaluationId: latestScreening.id || null,
         evaluationDate: latestScreening.created_at || null,
         professionalResponsible: professionalName,
+        generatorVersion: REPORT_GENERATOR_VERSION,
       };
       
       // Prepare report content with dynamic data
@@ -168,6 +212,9 @@ export function PatientEvaluationReport({
         dynamic_content: JSON.parse(JSON.stringify(generatedContent)),
         evaluation_source: JSON.parse(JSON.stringify(evaluationSource)),
       };
+
+      // Guardar JSON para uso no snapshot
+      setCurrentReportJson(reportContent);
 
       // Save to database
       const { error } = await supabase
@@ -191,6 +238,7 @@ export function PatientEvaluationReport({
       console.error('Error saving report:', error);
       toast.error("Erro ao salvar o relatório");
     } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -234,25 +282,53 @@ export function PatientEvaluationReport({
       );
       setDynamicContent(generatedContent);
     }
+    setCurrentReportJson(report.report_content as unknown as Record<string, unknown>);
     setIsGenerated(false);
   };
 
   const handleExportPDF = async () => {
     if (!reportRef.current || !patient) return;
-
-    const html2pdf = (await import('html2pdf.js')).default;
     
-    const fileName = `Relatorio_Avaliacao_${patient.full_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    setIsExporting(true);
     
-    const options = {
-      margin: [10, 10, 10, 10],
-      filename: fileName,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    try {
+      // PASSO 1: Criar snapshot imutável ANTES de gerar o PDF
+      if (currentReportJson) {
+        const snapshot = await createSnapshot({
+          evaluationId: displayData.evaluationSource?.evaluationId || null,
+          patientId: patient.id,
+          reportJson: currentReportJson,
+        });
+        
+        if (snapshot) {
+          console.log('Snapshot criado:', snapshot.id, 'Hash:', snapshot.report_hash);
+        } else {
+          console.warn('Falha ao criar snapshot - continuando com exportação');
+        }
+      }
+      
+      // PASSO 2: Gerar PDF a partir do conteúdo atual (que já é do snapshot/relatório)
+      const html2pdf = (await import('html2pdf.js')).default;
+      
+      const fileName = `Relatorio_Avaliacao_${patient.full_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      
+      const options = {
+        margin: [10, 10, 10, 10],
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
 
-    html2pdf().set(options).from(reportRef.current).save();
+      await html2pdf().set(options).from(reportRef.current).save();
+      
+      toast.success("PDF exportado com sucesso! Snapshot salvo para auditoria.");
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error("Erro ao exportar PDF");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const currentDate = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -262,6 +338,7 @@ export function PatientEvaluationReport({
     evaluationId: latestScreening?.id || null,
     evaluationDate: latestScreening?.created_at || null,
     professionalResponsible: professionalName,
+    generatorVersion: REPORT_GENERATOR_VERSION,
   };
   
   const displayData = viewingReport ? {
@@ -286,6 +363,9 @@ export function PatientEvaluationReport({
   
   // Verifica se há avaliação disponível
   const hasEvaluation = !!latestScreening?.id;
+  
+  // Determina se deve mostrar seção educacional
+  const showEducationalContent = shouldRenderEducationalContent(displayData.classification);
 
   const displayIsPRPIndicado = displayData.classification?.toUpperCase() === "APTO";
   const displayIsPRPComPreparo = displayData.classification?.toUpperCase() === "APTO_COM_PREPARO" ||
@@ -320,7 +400,7 @@ export function PatientEvaluationReport({
               </p>
             </div>
             <Badge variant="outline" className="text-xs">
-              Personalizado
+              v{REPORT_GENERATOR_VERSION}
             </Badge>
           </div>
         </CardHeader>
@@ -358,9 +438,10 @@ export function PatientEvaluationReport({
                 variant="outline"
                 className="gap-2"
                 size="lg"
+                disabled={isExporting}
               >
                 <Download className="w-4 h-4" />
-                Exportar PDF
+                {isExporting ? "Exportando..." : "Exportar PDF"}
               </Button>
             )}
 
@@ -370,6 +451,7 @@ export function PatientEvaluationReport({
                   setViewingReport(null);
                   setIsGenerated(false);
                   setDynamicContent(null);
+                  setCurrentReportJson(null);
                 }} 
                 variant="ghost"
                 className="gap-2"
@@ -449,6 +531,10 @@ export function PatientEvaluationReport({
                 <h1 className="text-2xl font-bold">
                   Relatório de Avaliação e Plano Terapêutico
                 </h1>
+                {/* LINHA DE LASTRO (CONFIANÇA) */}
+                <p className="text-white/80 text-sm italic">
+                  Este relatório foi gerado com base na avaliação clínica registrada em {formatEvaluationDateForDisplay(displayData.evaluationSource?.evaluationDate)}.
+                </p>
                 <div className="space-y-1">
                   <p className="text-lg font-medium">{displayData.patientName}</p>
                   <p className="text-white/80 text-sm">
@@ -502,30 +588,18 @@ export function PatientEvaluationReport({
               </div>
             )}
             
-            {/* 1. OBJETIVO DO RELATÓRIO */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Target className="w-4 h-4 text-[hsl(149,20%,37%)]" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900">1. Objetivo do Relatório</h2>
-              </div>
-              <div className="pl-10">
-                <p className="text-gray-700 leading-relaxed">
-                  {dynamicContent.objectiveText}
-                </p>
-              </div>
-            </section>
-
-            <Separator className="bg-gray-200" />
-
-            {/* 2. O QUE FOI IDENTIFICADO NA AVALIAÇÃO */}
+            {/* ===== ORDEM OBRIGATÓRIA DO CONTEÚDO ===== */}
+            
+            {/* (a) IDENTIFICAÇÃO JÁ ESTÁ NA CAPA */}
+            {/* (b) LASTRO JÁ ESTÁ NA CAPA */}
+            
+            {/* (c) 1. ACHADOS DA AVALIAÇÃO */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <CheckCircle2 className="w-4 h-4 text-[hsl(149,20%,37%)]" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">2. O Que Foi Identificado na Avaliação</h2>
+                <h2 className="text-lg font-semibold text-gray-900">1. Achados da Avaliação Clínica</h2>
               </div>
               <div className="pl-10 space-y-3">
                 {/* Queixa Principal */}
@@ -540,7 +614,7 @@ export function PatientEvaluationReport({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {dynamicContent.identifiedFindings.diagnosis && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Diagnóstico</p>
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Hipótese Diagnóstica</p>
                       <p className="text-gray-900 font-medium">{dynamicContent.identifiedFindings.diagnosis}</p>
                     </div>
                   )}
@@ -588,7 +662,7 @@ export function PatientEvaluationReport({
                 {/* Fatores Nutricionais/Funcionais */}
                 {dynamicContent.identifiedFindings.functionalLimitations.length > 0 && (
                   <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-100">
-                    <p className="text-sm text-amber-700 uppercase tracking-wide mb-2">Fatores Nutricionais/Metabólicos Identificados</p>
+                    <p className="text-sm text-amber-700 uppercase tracking-wide mb-2">Fatores Nutricionais/Metabólicos</p>
                     <ul className="space-y-1">
                       {dynamicContent.identifiedFindings.functionalLimitations.map((limitation, idx) => (
                         <li key={idx} className="text-gray-700 flex items-start gap-2">
@@ -604,7 +678,24 @@ export function PatientEvaluationReport({
 
             <Separator className="bg-gray-200" />
 
-            {/* 3. INDICAÇÃO DO PRP */}
+            {/* (d) 2. INTERPRETAÇÃO CLÍNICA / RACIOCÍNIO */}
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Target className="w-4 h-4 text-[hsl(149,20%,37%)]" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">2. Interpretação Clínica</h2>
+              </div>
+              <div className="pl-10">
+                <p className="text-gray-700 leading-relaxed">
+                  {dynamicContent.objectiveText}
+                </p>
+              </div>
+            </section>
+
+            <Separator className="bg-gray-200" />
+
+            {/* (e) 3. DECISÃO TERAPÊUTICA */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -615,16 +706,29 @@ export function PatientEvaluationReport({
                   }`} />
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  3. {displayIsPRPIndicado 
-                    ? "Indicação para PRP" 
-                    : displayIsPRPComPreparo 
-                      ? "Necessidade de Preparo Antes do PRP" 
-                      : displayIsPRPNaoIndicado
-                        ? "Contraindicação Atual para PRP"
-                        : "Avaliação de Elegibilidade para PRP"}
+                  3. Decisão Terapêutica
                 </h2>
               </div>
               <div className="pl-10 space-y-3">
+                {/* Badge de status */}
+                <div className="flex items-center gap-2">
+                  <Badge className={`${
+                    displayIsPRPIndicado 
+                      ? 'bg-green-100 text-green-800 border-green-200' 
+                      : displayIsPRPNaoIndicado 
+                        ? 'bg-amber-100 text-amber-800 border-amber-200' 
+                        : 'bg-blue-100 text-blue-800 border-blue-200'
+                  }`}>
+                    {displayIsPRPIndicado 
+                      ? "PRP Indicado" 
+                      : displayIsPRPComPreparo 
+                        ? "PRP com Preparo Necessário" 
+                        : displayIsPRPNaoIndicado
+                          ? "PRP Não Indicado Atualmente"
+                          : "Em Avaliação"}
+                  </Badge>
+                </div>
+                
                 <div className={`rounded-lg p-4 border ${
                   displayIsPRPIndicado 
                     ? 'bg-green-50 border-green-100' 
@@ -648,7 +752,7 @@ export function PatientEvaluationReport({
 
             <Separator className="bg-gray-200" />
 
-            {/* 4. PLANO TERAPÊUTICO */}
+            {/* (f) 4. PLANO TERAPÊUTICO INDIVIDUALIZADO */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -660,7 +764,7 @@ export function PatientEvaluationReport({
                 {dynamicContent.therapeuticPlan.prepSteps.length > 0 ? (
                   <div className="space-y-3">
                     <p className="text-gray-700 leading-relaxed">
-                      Com base nos achados da sua avaliação, o seguinte plano foi elaborado:
+                      Com base nos achados da sua avaliação, as seguintes etapas foram definidas:
                     </p>
                     <div className="grid gap-3">
                       {dynamicContent.therapeuticPlan.prepSteps.map((step, idx) => (
@@ -676,8 +780,8 @@ export function PatientEvaluationReport({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-700">
-                    O plano terapêutico será definido após análise completa dos dados clínicos e laboratoriais.
+                  <p className="text-gray-600 italic">
+                    Plano terapêutico detalhado não informado na avaliação.
                   </p>
                 )}
                 
@@ -723,70 +827,77 @@ export function PatientEvaluationReport({
               </div>
             </section>
 
-            <Separator className="bg-gray-200" />
+            {/* (g) CONTEÚDO EDUCACIONAL - CONDICIONAL */}
+            {showEducationalContent && (
+              <>
+                <Separator className="bg-gray-200" />
 
-            {/* 5. QUANDO O PRP PASSA A FAZER SENTIDO */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-[hsl(149,20%,37%)]" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900">5. Condições para Terapia Regenerativa</h2>
-              </div>
-              <div className="pl-10">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                  <p className="text-gray-700 leading-relaxed mb-4">
-                    {displayIsPRPIndicado 
-                      ? "Você já atende às condições para o tratamento regenerativo. Os próximos passos serão discutidos com seu profissional."
-                      : "O momento ideal para terapia regenerativa é identificado quando as seguintes condições são atendidas:"}
-                  </p>
-                  {!displayIsPRPIndicado && dynamicContent.prpConditions.length > 0 && (
-                    <ul className="space-y-2 text-gray-700">
-                      {dynamicContent.prpConditions.map((condition, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                          <span>{condition}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <Separator className="bg-gray-200" />
-
-            {/* 6. O QUE O PACIENTE PODE ESPERAR */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-[hsl(149,20%,37%)]" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900">6. O Que Você Pode Esperar</h2>
-              </div>
-              <div className="pl-10 space-y-4">
-                <div className="grid gap-3">
-                  {dynamicContent.expectations.map((expectation, idx) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-primary text-xs font-bold">{idx + 1}</span>
-                      </div>
-                      <p className="text-gray-700">{expectation}</p>
+                {/* 5. CONDIÇÕES PARA TERAPIA REGENERATIVA */}
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-[hsl(149,20%,37%)]" />
                     </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+                    <h2 className="text-lg font-semibold text-gray-900">5. Condições para Terapia Regenerativa</h2>
+                  </div>
+                  <div className="pl-10">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <p className="text-gray-700 leading-relaxed mb-4">
+                        {displayIsPRPIndicado 
+                          ? "Você já atende às condições para o tratamento regenerativo."
+                          : "O momento ideal para terapia regenerativa é identificado quando:"}
+                      </p>
+                      {!displayIsPRPIndicado && dynamicContent.prpConditions.length > 0 && (
+                        <ul className="space-y-2 text-gray-700">
+                          {dynamicContent.prpConditions.map((condition, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                              <span>{condition}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                <Separator className="bg-gray-200" />
+
+                {/* 6. O QUE VOCÊ PODE ESPERAR */}
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Heart className="w-4 h-4 text-[hsl(149,20%,37%)]" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-gray-900">6. O Que Você Pode Esperar</h2>
+                  </div>
+                  <div className="pl-10 space-y-4">
+                    <div className="grid gap-3">
+                      {dynamicContent.expectations.map((expectation, idx) => (
+                        <div key={idx} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-primary text-xs font-bold">{idx + 1}</span>
+                          </div>
+                          <p className="text-gray-700">{expectation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
 
             <Separator className="bg-gray-200" />
 
-            {/* 7. CONSIDERAÇÕES FINAIS */}
+            {/* CONSIDERAÇÕES FINAIS */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <MessageSquare className="w-4 h-4 text-[hsl(149,20%,37%)]" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">7. Considerações Finais</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {showEducationalContent ? "7. Considerações Finais" : "5. Considerações Finais"}
+                </h2>
               </div>
               <div className="pl-10">
                 <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-5 border border-primary/10">
@@ -799,23 +910,28 @@ export function PatientEvaluationReport({
 
             {/* RASTREABILIDADE - Fontes da Avaliação */}
             <div className="mt-8 bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">Fontes da Avaliação (Rastreabilidade)</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-600">
+              <div className="flex items-center gap-2 mb-3">
+                <Info className="w-4 h-4 text-gray-400" />
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Fontes da Avaliação (Rastreabilidade)</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs text-gray-600">
                 <div>
                   <span className="text-gray-400">ID da Avaliação:</span>
-                  <span className="ml-1 font-mono">{displayData.evaluationSource?.evaluationId || 'N/A'}</span>
+                  <span className="ml-1 font-mono text-[10px]">{displayData.evaluationSource?.evaluationId || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Data da Avaliação:</span>
                   <span className="ml-1">
-                    {displayData.evaluationSource?.evaluationDate 
-                      ? format(new Date(displayData.evaluationSource.evaluationDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                      : 'N/A'}
+                    {formatEvaluationDateForDisplay(displayData.evaluationSource?.evaluationDate)}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-400">Profissional:</span>
                   <span className="ml-1">{displayData.evaluationSource?.professionalResponsible || displayData.professionalName}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Versão do Gerador:</span>
+                  <span className="ml-1 font-mono">{displayData.evaluationSource?.generatorVersion || REPORT_GENERATOR_VERSION}</span>
                 </div>
               </div>
             </div>
@@ -825,7 +941,7 @@ export function PatientEvaluationReport({
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img src={logoReghen} alt="reghen" className="h-5 w-auto opacity-60" />
-                  <span>Documento gerado pelo reghen • Relatório individualizado</span>
+                  <span>Documento gerado pelo reghen • Relatório individualizado • v{REPORT_GENERATOR_VERSION}</span>
                 </div>
                 <span>{displayData.generatedDate}</span>
               </div>
