@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoReghen from "@/assets/logo-reghen.png";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -142,19 +143,19 @@ export function PatientEvaluationReport({
         clinical_diagnosis: patient.clinical_diagnosis,
         treated_region: patient.treated_region,
         generated_date: new Date().toISOString(),
-        dynamic_content: generatedContent,
+        dynamic_content: JSON.parse(JSON.stringify(generatedContent)),
       };
 
       // Save to database
       const { error } = await supabase
         .from('patient_evaluation_reports')
-        .insert({
+        .insert([{
           patient_id: patient.id,
-          report_content: reportContent,
+          report_content: reportContent as Json,
           generated_by: user?.id,
           professional_name: professionalName,
           professional_registration: professionalRegistration,
-        });
+        }]);
 
       if (error) throw error;
 
