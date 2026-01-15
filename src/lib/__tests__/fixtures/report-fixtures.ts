@@ -240,12 +240,80 @@ export const FIXTURE_COLUNA_NEUROPATICO: TestFixture = {
 };
 
 /**
+ * FIXTURE D: Joelho crônico VARIANTE (diferenças em dor/duração)
+ * Para QA de validação que relatórios diferentes são gerados
+ */
+export const FIXTURE_JOELHO_CRONICO_VARIANTE: TestFixture = {
+  name: "Joelho Crônico - Variante",
+  description: "Outro paciente com joelho crônico mas com dor menor e duração diferente",
+  patient: {
+    id: "test-patient-joelho-002",
+    full_name: "Carlos Pereira (Teste)",
+    age: 62,
+    gender: "M",
+    clinical_diagnosis: "Artrose de Joelho Grau II",
+    treated_region: "Joelho Esquerdo",
+  },
+  screening: {
+    id: "test-screening-joelho-002",
+    created_at: new Date().toISOString(),
+    classification: "APTO",
+    analysis_result: JSON.stringify({
+      eligibility: {
+        overall_status: "APTO",
+        prp: { status: "elegivel", notes: "Exames OK" },
+      },
+      key_reasons: [
+        "Quadro crônico com grau moderado de degeneração",
+        "Sem contraindicações",
+        "Exames laboratoriais satisfatórios",
+      ],
+      requested_exams: {
+        required: [],
+        optional: ["Hemograma de controle"],
+      },
+      next_steps: {
+        what_to_do_now: "Agendar PRP",
+        timeline: "2 semanas",
+      },
+    }),
+    questionnaire_responses: {
+      answers: {
+        regiao_principal: "joelho",
+        diagnostico_suspeito: "artrose",
+        tempo_dor: "m3_6", // 3-6 meses (diferente da fixture A)
+        dor_escala: 5, // Dor moderada (diferente de 8)
+        red_flags: ["nenhum"],
+        fatores_preparo: ["nenhum"],
+        fatores_nutricionais: ["nenhum"],
+        medicamentos: [],
+        fisioterapia_6_semanas: false,
+        prp_prf_bmac_anterior: "nunca",
+        cirurgia_previa_regiao: false,
+        qualidade_sono: "boa",
+        nivel_estresse: "baixo",
+        consumo_alcool_2x_semana: false,
+        procedimento_considerado: "prp",
+      },
+    },
+  },
+  expectedContent: {
+    shouldHaveRegion: true,
+    shouldHaveDuration: true,
+    shouldHavePainIntensity: true,
+    shouldHaveClinicalFindings: false,
+    prpClassification: 'apto',
+  },
+};
+
+/**
  * Lista de todas as fixtures disponíveis
  */
 export const ALL_TEST_FIXTURES: TestFixture[] = [
   FIXTURE_JOELHO_CRONICO,
   FIXTURE_OMBRO_AGUDO,
   FIXTURE_COLUNA_NEUROPATICO,
+  FIXTURE_JOELHO_CRONICO_VARIANTE,
 ];
 
 /**
