@@ -217,11 +217,23 @@ const AtendimentosList = () => {
           )}
         </div>
 
-        {/* List */}
+        {/* Info */}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
+        ) : selectedPatientId === "all" ? (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Selecione um paciente
+              </h3>
+              <p className="text-muted-foreground">
+                Use o filtro acima para selecionar o paciente e ver seus atendimentos
+              </p>
+            </CardContent>
+          </Card>
         ) : filteredAttendances.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
@@ -230,70 +242,60 @@ const AtendimentosList = () => {
                 Nenhum atendimento encontrado
               </h3>
               <p className="text-muted-foreground mb-6">
-                {hasActiveFilters 
-                  ? "Tente ajustar os filtros para ver mais resultados"
-                  : "Comece criando um novo atendimento para um paciente"
+                {dateFrom || dateTo 
+                  ? "Tente ajustar os filtros de data para ver mais resultados"
+                  : "Este paciente não possui atendimentos registrados"
                 }
               </p>
-              {hasActiveFilters ? (
-                <Button variant="outline" onClick={clearFilters}>
+              {(dateFrom || dateTo) ? (
+                <Button variant="outline" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
                   <X className="w-4 h-4 mr-2" />
-                  Limpar filtros
+                  Limpar filtros de data
                 </Button>
               ) : (
                 <Button onClick={() => navigate("/atendimentos/novo")}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Criar Primeiro Atendimento
+                  Criar Atendimento
                 </Button>
               )}
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {filteredAttendances?.map((attendance) => (
-              <Card
-                key={attendance.id}
-                className="hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => navigate(`/atendimentos/${attendance.id}`)}
-              >
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-primary" />
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center">
+                <p className="text-lg font-medium text-foreground mb-2">
+                  {filteredAttendances.length} atendimento{filteredAttendances.length !== 1 ? 's' : ''} encontrado{filteredAttendances.length !== 1 ? 's' : ''}
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  Clique em um atendimento na lista abaixo para visualizar os detalhes
+                </p>
+              </div>
+              <div className="mt-6 space-y-2">
+                {filteredAttendances.map((attendance) => (
+                  <div
+                    key={attendance.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:border-primary/50 hover:bg-accent/50 transition-all cursor-pointer"
+                    onClick={() => navigate(`/atendimentos/${attendance.id}`)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-foreground">
+                        {format(new Date(attendance.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      </span>
+                      {attendance.involves_orthobiologics && (
+                        <Badge variant="outline" className="gap-1">
+                          <FlaskConical className="w-3 h-3" />
+                          Ortobiológicos
+                        </Badge>
+                      )}
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-foreground truncate">
-                          {attendance.patients?.full_name || "Paciente"}
-                        </h3>
-                        {attendance.involves_orthobiologics && (
-                          <Badge variant="outline" className="gap-1 flex-shrink-0">
-                            <FlaskConical className="w-3 h-3" />
-                            Ortobiológicos
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>
-                          {format(new Date(attendance.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        </span>
-                        {attendance.patients?.age && (
-                          <>
-                            <span className="text-muted-foreground/50">•</span>
-                            <span>{attendance.patients.age} anos</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
