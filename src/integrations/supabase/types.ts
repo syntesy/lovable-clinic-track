@@ -125,6 +125,7 @@ export type Database = {
       attendance_sessions: {
         Row: {
           closed_at: string | null
+          closed_by: string | null
           created_at: string
           id: string
           involves_orthobiologics: boolean
@@ -134,6 +135,7 @@ export type Database = {
         }
         Insert: {
           closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           id?: string
           involves_orthobiologics?: boolean
@@ -143,6 +145,7 @@ export type Database = {
         }
         Update: {
           closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           id?: string
           involves_orthobiologics?: boolean
@@ -3713,6 +3716,7 @@ export type Database = {
       }
       report_snapshots: {
         Row: {
+          attendance_ref: string | null
           created_at: string
           evaluation_id: string | null
           generated_at: string
@@ -3724,6 +3728,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attendance_ref?: string | null
           created_at?: string
           evaluation_id?: string | null
           generated_at?: string
@@ -3735,6 +3740,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attendance_ref?: string | null
           created_at?: string
           evaluation_id?: string | null
           generated_at?: string
@@ -3745,7 +3751,15 @@ export type Database = {
           report_json?: Json
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "report_snapshots_attendance_ref_fkey"
+            columns: ["attendance_ref"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       research_config: {
         Row: {

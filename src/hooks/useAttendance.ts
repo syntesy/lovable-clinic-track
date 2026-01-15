@@ -198,20 +198,43 @@ export function useDeleteAttendanceFile() {
   });
 }
 
-// Hook to close an attendance session
+// Hook to close an attendance session (idempotent - only closes if not already closed)
 export function useCloseAttendance() {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (attendanceId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+      
+      // Idempotent: only update if closed_at IS NULL
       const { data, error } = await supabase
         .from("attendance_sessions")
-        .update({ closed_at: new Date().toISOString() })
+        .update({ 
+          closed_at: new Date().toISOString(),
+          closed_by: user.id 
+        })
         .eq("id", attendanceId)
+        .is("closed_at", null) // CRITICAL: prevents double-close
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        // If no rows affected (already closed), fetch current state
+        if (error.code === "PGRST116") {
+          const { data: existing } = await supabase
+            .from("attendance_sessions")
+            .select("*")
+            .eq("id", attendanceId)
+            .single();
+          
+          if (existing?.closed_at) {
+            // Already closed - return existing (idempotent success)
+            return existing as AttendanceSession;
+          }
+        }
+        throw error;
+      }
       return data as AttendanceSession;
     },
     onSuccess: (data) => {

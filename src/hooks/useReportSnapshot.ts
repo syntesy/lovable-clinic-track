@@ -10,6 +10,7 @@ export interface ReportSnapshotData {
   evaluationId: string | null;
   patientId: string;
   reportJson: Record<string, unknown>;
+  attendanceRef?: string | null; // Links report to specific attendance session
 }
 
 export interface ReportSnapshot {
@@ -93,6 +94,7 @@ export function useReportSnapshot() {
           generator_version: REPORT_GENERATOR_VERSION,
           report_hash: reportHash,
           report_json: stableJson as unknown as Json,
+          attendance_ref: data.attendanceRef || null, // Links to specific attendance
         })
         .select()
         .single();
