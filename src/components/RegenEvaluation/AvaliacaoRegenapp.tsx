@@ -26,7 +26,8 @@ import { DynamicLabsPanel } from "@/components/RegenEvaluation/DynamicLabsPanel"
 import { 
   extractExamsFromTriage, 
   updateExamsWithValidation,
-  areAllCriticalExamsValid 
+  areAllCriticalExamsValid,
+  hasTriageExams
 } from "@/types/triage-exams";
 import { ExamGroup } from "@/types/screening";
 
