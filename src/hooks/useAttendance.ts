@@ -1,0 +1,253 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { AttendanceSession, AttendanceFile, formatAttendanceTitle } from "@/types/attendance";
+import { toast } from "sonner";
+
+// Hook to fetch attendance sessions for a patient
+export function usePatientAttendances(patientId: string | null) {
+  return useQuery({
+    queryKey: ["attendance-sessions", patientId],
+    queryFn: async () => {
+      if (!patientId) return [];
+      
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .select("*")
+        .eq("patient_id", patientId)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data as AttendanceSession[];
+    },
+    enabled: !!patientId,
+  });
+}
+
+// Hook to fetch a single attendance session
+export function useAttendanceSession(attendanceId: string | null) {
+  return useQuery({
+    queryKey: ["attendance-session", attendanceId],
+    queryFn: async () => {
+      if (!attendanceId) return null;
+      
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .select("*")
+        .eq("id", attendanceId)
+        .single();
+      
+      if (error) throw error;
+      return data as AttendanceSession;
+    },
+    enabled: !!attendanceId,
+  });
+}
+
+// Hook to fetch attendance files
+export function useAttendanceFiles(attendanceId: string | null) {
+  return useQuery({
+    queryKey: ["attendance-files", attendanceId],
+    queryFn: async () => {
+      if (!attendanceId) return [];
+      
+      const { data, error } = await supabase
+        .from("attendance_files")
+        .select("*")
+        .eq("attendance_ref", attendanceId)
+        .order("uploaded_at", { ascending: false });
+      
+      if (error) throw error;
+      return data as AttendanceFile[];
+    },
+    enabled: !!attendanceId,
+  });
+}
+
+// Hook to create a new attendance session
+export function useCreateAttendance() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      patientId, 
+      involvesOrthobiologics = false 
+    }: { 
+      patientId: string; 
+      involvesOrthobiologics?: boolean;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+      
+      const title = formatAttendanceTitle(new Date().toISOString());
+      
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .insert({
+          patient_id: patientId,
+          involves_orthobiologics: involvesOrthobiologics,
+          title,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as AttendanceSession;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["attendance-sessions", data.patient_id] });
+      toast.success("Novo atendimento criado");
+    },
+    onError: (error) => {
+      console.error("Error creating attendance:", error);
+      toast.error("Erro ao criar atendimento");
+    },
+  });
+}
+
+// Hook to upload a file to an attendance
+export function useUploadAttendanceFile() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({
+      attendanceId,
+      patientId,
+      file,
+      fileType,
+      description,
+    }: {
+      attendanceId: string;
+      patientId: string;
+      file: File;
+      fileType: 'exam' | 'report' | 'image' | 'photo' | 'other';
+      description?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+      
+      // Upload file to storage
+      const filePath = `${user.id}/${attendanceId}/${Date.now()}_${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("attendance-files")
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+      
+      // Create file record
+      const { data, error } = await supabase
+        .from("attendance_files")
+        .insert({
+          attendance_ref: attendanceId,
+          patient_id: patientId,
+          file_path: filePath,
+          file_name: file.name,
+          mime_type: file.type,
+          file_type: fileType,
+          description: description || null,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as AttendanceFile;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["attendance-files", data.attendance_ref] });
+      toast.success("Arquivo enviado com sucesso");
+    },
+    onError: (error) => {
+      console.error("Error uploading file:", error);
+      toast.error("Erro ao enviar arquivo");
+    },
+  });
+}
+
+// Hook to delete an attendance file
+export function useDeleteAttendanceFile() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (file: AttendanceFile) => {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from("attendance-files")
+        .remove([file.file_path]);
+      
+      if (storageError) console.warn("Error deleting from storage:", storageError);
+      
+      // Delete record
+      const { error } = await supabase
+        .from("attendance_files")
+        .delete()
+        .eq("id", file.id);
+      
+      if (error) throw error;
+      return file.attendance_ref;
+    },
+    onSuccess: (attendanceId) => {
+      queryClient.invalidateQueries({ queryKey: ["attendance-files", attendanceId] });
+      toast.success("Arquivo removido");
+    },
+    onError: (error) => {
+      console.error("Error deleting file:", error);
+      toast.error("Erro ao remover arquivo");
+    },
+  });
+}
+
+// Helper hook to get records within attendance time window
+export function useAttendanceRecords(attendanceSession: AttendanceSession | null, patientId: string | null) {
+  const attendanceStartAt = attendanceSession?.created_at;
+  
+  // Fetch clinical records within time window
+  const clinicalRecordsQuery = useQuery({
+    queryKey: ["clinical-records-attendance", patientId, attendanceStartAt],
+    queryFn: async () => {
+      if (!patientId || !attendanceStartAt) return null;
+      
+      const { data, error } = await supabase
+        .from("clinical_records")
+        .select("*")
+        .eq("patient_id", patientId)
+        .gte("created_at", attendanceStartAt)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!patientId && !!attendanceStartAt,
+  });
+  
+  // Fetch screening within time window
+  const screeningQuery = useQuery({
+    queryKey: ["screening-attendance", patientId, attendanceStartAt],
+    queryFn: async () => {
+      if (!patientId || !attendanceStartAt) return null;
+      
+      const { data, error } = await supabase
+        .from("prp_screenings")
+        .select("*")
+        .eq("patient_id", patientId)
+        .gte("created_at", attendanceStartAt)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!patientId && !!attendanceStartAt,
+  });
+  
+  return {
+    clinicalRecord: clinicalRecordsQuery.data,
+    isLoadingClinicalRecord: clinicalRecordsQuery.isLoading,
+    screening: screeningQuery.data,
+    isLoadingScreening: screeningQuery.isLoading,
+  };
+}
