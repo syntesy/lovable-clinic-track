@@ -706,6 +706,7 @@ export type Database = {
       clinical_records: {
         Row: {
           anamnesis: string | null
+          attendance_id: string | null
           chief_complaint: string | null
           clinical_diagnosis: string | null
           created_at: string
@@ -718,6 +719,7 @@ export type Database = {
         }
         Insert: {
           anamnesis?: string | null
+          attendance_id?: string | null
           chief_complaint?: string | null
           clinical_diagnosis?: string | null
           created_at?: string
@@ -730,6 +732,7 @@ export type Database = {
         }
         Update: {
           anamnesis?: string | null
+          attendance_id?: string | null
           chief_complaint?: string | null
           clinical_diagnosis?: string | null
           created_at?: string
@@ -741,6 +744,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "clinical_records_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clinical_records_patient_id_fkey"
             columns: ["patient_id"]

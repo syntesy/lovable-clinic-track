@@ -249,40 +249,33 @@ export function useCloseAttendance() {
   });
 }
 
-// Helper hook to get records within attendance time window
+// Helper hook to get records for an attendance
+// Uses attendance_id FK for clinical records (proper relationship)
+// Uses time window for screening (legacy - until FK added)
 export function useAttendanceRecords(attendanceSession: AttendanceSession | null, patientId: string | null) {
+  const attendanceId = attendanceSession?.id;
   const attendanceStartAt = attendanceSession?.created_at;
   const attendanceEndAt = attendanceSession?.closed_at;
   
-  // Fetch clinical records within time window
+  // Fetch clinical record by attendance_id FK (primary method)
   const clinicalRecordsQuery = useQuery({
-    queryKey: ["clinical-records-attendance", patientId, attendanceStartAt, attendanceEndAt],
+    queryKey: ["clinical-records-attendance", attendanceId],
     queryFn: async () => {
-      if (!patientId || !attendanceStartAt) return null;
+      if (!attendanceId) return null;
       
-      let query = supabase
+      const { data, error } = await supabase
         .from("clinical_records")
-        .select("*")
-        .eq("patient_id", patientId)
-        .gte("created_at", attendanceStartAt);
-      
-      // If attendance is closed, also apply upper bound
-      if (attendanceEndAt) {
-        query = query.lte("created_at", attendanceEndAt);
-      }
-      
-      const { data, error } = await query
-        .order("created_at", { ascending: false })
-        .limit(1)
+        .select("id, patient_id, attendance_id, status, created_at, chief_complaint, anamnesis, physical_exam, clinical_diagnosis")
+        .eq("attendance_id", attendanceId)
         .maybeSingle();
       
       if (error) throw error;
       return data;
     },
-    enabled: !!patientId && !!attendanceStartAt,
+    enabled: !!attendanceId,
   });
   
-  // Fetch screening within time window
+  // Fetch screening within time window (until FK added to prp_screenings)
   const screeningQuery = useQuery({
     queryKey: ["screening-attendance", patientId, attendanceStartAt, attendanceEndAt],
     queryFn: async () => {

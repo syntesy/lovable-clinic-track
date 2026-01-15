@@ -81,30 +81,30 @@ const AtendimentoDetail = () => {
   
   // Handler: Create or Open clinical record (prontuário)
   const handleOpenOrCreateProntuario = useCallback(async () => {
-    if (!attendance || isCreatingRecord) return;
+    if (!attendance || !attendanceId || isCreatingRecord) return;
     
     setIsCreatingRecord(true);
     try {
+      // Use attendance_id FK for proper linking
       const record = await ensureClinicalRecordForAttendance(
-        attendance.patient_id,
-        attendance.created_at,
-        attendance.closed_at
+        attendanceId,
+        attendance.patient_id
       );
       
       // Invalidate query to refresh the view
       await queryClient.invalidateQueries({ 
-        queryKey: ["clinical-records-attendance", attendance.patient_id] 
+        queryKey: ["clinical-records-attendance", attendanceId] 
       });
       
-      // Navigate to the record editor
-      navigate(`/patients/${attendance.patient_id}/records/${record.id}`);
+      // Navigate to the record editor with attendance context
+      navigate(`/patients/${attendance.patient_id}/records/${record.id}?atendimento=${attendanceId}`);
     } catch (error) {
       console.error("Erro ao criar prontuário:", error);
       toast.error("Erro ao criar prontuário. Tente novamente.");
     } finally {
       setIsCreatingRecord(false);
     }
-  }, [attendance, isCreatingRecord, navigate, queryClient]);
+  }, [attendance, attendanceId, isCreatingRecord, navigate, queryClient]);
 
   // Handler: Generate Report with gating
   const handleGenerateReport = useCallback(() => {
@@ -125,7 +125,7 @@ const AtendimentoDetail = () => {
       toast.error("O prontuário precisa estar completo (queixa, anamnese, exame físico e diagnóstico) para gerar o relatório.", {
         action: {
           label: "Abrir Prontuário",
-          onClick: () => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord.id}`),
+          onClick: () => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`),
         },
         duration: 6000,
       });
@@ -234,7 +234,7 @@ const AtendimentoDetail = () => {
                   {!isClosed && (
                     <Button
                       variant="outline"
-                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}`)}
+                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`)}
                     >
                       Editar Prontuário
                     </Button>
@@ -289,7 +289,7 @@ const AtendimentoDetail = () => {
                   {!isClosed && (
                     <Button
                       variant="outline"
-                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}`)}
+                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`)}
                     >
                       Editar Prontuário
                     </Button>
@@ -440,9 +440,9 @@ const AtendimentoDetail = () => {
                   </p>
                   <Button 
                     variant="outline"
-                    onClick={() => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord?.id}`)}
+                    onClick={() => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord?.id}?atendimento=${attendanceId}`)}
                   >
-                    Abrir Prontuário
+                    Completar Prontuário
                   </Button>
                 </div>
               )}
