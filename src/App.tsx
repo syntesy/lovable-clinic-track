@@ -62,7 +62,7 @@ import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "
 import { CareerDashboard } from "./pages/Career";
 import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
 import DailyDashboard from "./pages/DailyDashboard";
-import { AtendimentosList, AtendimentoDetail } from "./pages/Atendimento";
+import { AtendimentosList, AtendimentoDetail, NovoAtendimento } from "./pages/Atendimento";
 // Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -105,6 +105,7 @@ const App = () => (
           
           {/* Atendimentos Routes */}
           <Route path="/atendimentos" element={<ProtectedRoute><Layout><AtendimentosList /></Layout></ProtectedRoute>} />
+          <Route path="/atendimentos/novo" element={<ProtectedRoute><Layout><NovoAtendimento /></Layout></ProtectedRoute>} />
           <Route path="/atendimentos/:attendanceId" element={<ProtectedRoute><Layout><AtendimentoDetail /></Layout></ProtectedRoute>} />
           
           {/* Daily Clinical Dashboard */}

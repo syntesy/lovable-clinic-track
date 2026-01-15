@@ -63,7 +63,7 @@ const AtendimentosList = () => {
               Gerencie todos os atendimentos clínicos
             </p>
           </div>
-          <Button onClick={() => navigate("/pacientes")} className="gap-2">
+          <Button onClick={() => navigate("/atendimentos/novo")} className="gap-2">
             <Plus className="w-4 h-4" />
             Novo Atendimento
           </Button>
@@ -101,7 +101,7 @@ const AtendimentosList = () => {
                 }
               </p>
               {!searchQuery && (
-                <Button onClick={() => navigate("/pacientes")}>
+                <Button onClick={() => navigate("/atendimentos/novo")}>
                   <Plus className="w-4 h-4 mr-2" />
                   Criar Primeiro Atendimento
                 </Button>
