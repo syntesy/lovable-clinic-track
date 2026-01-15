@@ -8,8 +8,8 @@ import {
   Target, Leaf, Clock, Heart, MessageSquare, History, Eye, Trash2,
   FlaskConical, AlertTriangle, Info
 } from "lucide-react";
-import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toZonedTime, format as formatTz } from "date-fns-tz";
 import logoReghen from "@/assets/logo-reghen.png";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
@@ -25,8 +25,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { generateDynamicReportContent, DynamicReportContent } from "@/lib/report-generator";
-import { useReportSnapshot } from "@/hooks/useReportSnapshot";
+import { useReportSnapshot, ReportSnapshot } from "@/hooks/useReportSnapshot";
 import { REPORT_GENERATOR_VERSION } from "@/lib/report-version";
+
+const SAO_PAULO_TZ = "America/Sao_Paulo";
 
 interface PatientData {
   id: string;
@@ -75,8 +77,28 @@ interface PatientEvaluationReportProps {
 }
 
 /**
- * Formata a data da avaliação para exibição no lastro
- * Formato: DD/MM/AAAA às HH:mm (ou apenas DD/MM/AAAA se não houver hora)
+ * Formata a data para timezone America/Sao_Paulo
+ */
+function formatDateSaoPaulo(dateString: string | null | undefined, formatStr: string = "dd/MM/yyyy 'às' HH:mm"): string {
+  if (!dateString) {
+    return "data não informada";
+  }
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return "data não informada";
+    }
+    
+    const zonedDate = toZonedTime(date, SAO_PAULO_TZ);
+    return formatTz(zonedDate, formatStr, { timeZone: SAO_PAULO_TZ, locale: ptBR });
+  } catch {
+    return "data não informada";
+  }
+}
+
+/**
+ * Formata a data da avaliação para exibição no lastro (timezone SP)
  */
 function formatEvaluationDateForDisplay(dateString: string | null | undefined): string {
   if (!dateString) {
@@ -89,13 +111,17 @@ function formatEvaluationDateForDisplay(dateString: string | null | undefined): 
       return "data não informada";
     }
     
-    // Verifica se tem hora significativa (não é meia-noite)
-    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+    const zonedDate = toZonedTime(date, SAO_PAULO_TZ);
+    
+    // Verifica se tem hora significativa (não é meia-noite no timezone SP)
+    const hours = zonedDate.getHours();
+    const minutes = zonedDate.getMinutes();
+    const hasTime = hours !== 0 || minutes !== 0;
     
     if (hasTime) {
-      return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+      return formatTz(zonedDate, "dd/MM/yyyy 'às' HH:mm", { timeZone: SAO_PAULO_TZ, locale: ptBR });
     } else {
-      return format(date, "dd/MM/yyyy", { locale: ptBR });
+      return formatTz(zonedDate, "dd/MM/yyyy", { timeZone: SAO_PAULO_TZ, locale: ptBR });
     }
   } catch {
     return "data não informada";
@@ -289,28 +315,39 @@ export function PatientEvaluationReport({
   const handleExportPDF = async () => {
     if (!reportRef.current || !patient) return;
     
+    // ANTI-DUPLO CLIQUE: já está exportando
+    if (isExporting) return;
+    
     setIsExporting(true);
     
     try {
+      let snapshotData: ReportSnapshot | null = null;
+      
       // PASSO 1: Criar snapshot imutável ANTES de gerar o PDF
       if (currentReportJson) {
-        const snapshot = await createSnapshot({
+        snapshotData = await createSnapshot({
           evaluationId: displayData.evaluationSource?.evaluationId || null,
           patientId: patient.id,
           reportJson: currentReportJson,
         });
         
-        if (snapshot) {
-          console.log('Snapshot criado:', snapshot.id, 'Hash:', snapshot.report_hash);
+        if (snapshotData) {
+          console.log('Snapshot criado/recuperado:', snapshotData.id, 'Hash:', snapshotData.report_hash);
         } else {
           console.warn('Falha ao criar snapshot - continuando com exportação');
         }
       }
       
-      // PASSO 2: Gerar PDF a partir do conteúdo atual (que já é do snapshot/relatório)
+      // PASSO 2: Gerar PDF a partir do conteúdo renderizado
+      // O conteúdo já foi carregado do snapshot/relatório salvo
       const html2pdf = (await import('html2pdf.js')).default;
       
-      const fileName = `Relatorio_Avaliacao_${patient.full_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      // Usar timezone SP para nome do arquivo
+      const now = new Date();
+      const zonedNow = toZonedTime(now, SAO_PAULO_TZ);
+      const dateStr = formatTz(zonedNow, 'yyyy-MM-dd', { timeZone: SAO_PAULO_TZ });
+      
+      const fileName = `Relatorio_Avaliacao_${patient.full_name.replace(/\s+/g, '_')}_${dateStr}.pdf`;
       
       const options = {
         margin: [10, 10, 10, 10],
@@ -322,7 +359,8 @@ export function PatientEvaluationReport({
 
       await html2pdf().set(options).from(reportRef.current).save();
       
-      toast.success("PDF exportado com sucesso! Snapshot salvo para auditoria.");
+      const snapshotInfo = snapshotData ? ` (Snapshot: ${snapshotData.id.slice(0, 8)}...)` : '';
+      toast.success(`PDF exportado com sucesso!${snapshotInfo}`);
     } catch (error) {
       console.error('Error exporting PDF:', error);
       toast.error("Erro ao exportar PDF");
@@ -331,7 +369,9 @@ export function PatientEvaluationReport({
     }
   };
 
-  const currentDate = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  // Formatar data atual em timezone SP
+  const nowZoned = toZonedTime(new Date(), SAO_PAULO_TZ);
+  const currentDate = formatTz(nowZoned, "dd 'de' MMMM 'de' yyyy", { timeZone: SAO_PAULO_TZ, locale: ptBR });
 
   // Get display data
   const evaluationSource = viewingReport?.report_content?.evaluation_source || {
@@ -348,7 +388,7 @@ export function PatientEvaluationReport({
     treatedRegion: viewingReport.report_content.treated_region,
     professionalName: viewingReport.professional_name || professionalName,
     professionalRegistration: viewingReport.professional_registration || professionalRegistration,
-    generatedDate: format(new Date(viewingReport.generated_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+    generatedDate: formatDateSaoPaulo(viewingReport.generated_at, "dd 'de' MMMM 'de' yyyy"),
     evaluationSource,
   } : {
     patientName: patient?.full_name || '',
@@ -484,7 +524,7 @@ export function PatientEvaluationReport({
                     <FileText className="w-4 h-4 text-primary" />
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        Relatório de {format(new Date(report.generated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        Relatório de {formatDateSaoPaulo(report.generated_at)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Por: {report.professional_name || 'Profissional'}

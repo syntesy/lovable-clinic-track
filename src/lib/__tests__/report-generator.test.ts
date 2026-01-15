@@ -194,4 +194,59 @@ describe.skipIf(isProduction)('Report Generator QA Tests', () => {
       }
     });
   });
+  
+  describe('QA Extra: Avaliações Semelhantes com Diferenças', () => {
+    
+    it('dois joelhos crônicos com dor/duração diferentes devem gerar relatórios diferentes', () => {
+      // Fixture A: Joelho crônico - dor 8/10, >6 meses
+      const fixtureA = ALL_TEST_FIXTURES.find(f => f.name === 'Joelho Crônico')!;
+      // Fixture D: Joelho crônico variante - dor 5/10, 3-6 meses
+      const fixtureD = ALL_TEST_FIXTURES.find(f => f.name === 'Joelho Crônico - Variante')!;
+      
+      expect(fixtureA).toBeDefined();
+      expect(fixtureD).toBeDefined();
+      
+      const contentA = generateDynamicReportContent(
+        {
+          classification: fixtureA.screening.classification,
+          analysis_result: fixtureA.screening.analysis_result,
+          questionnaire_responses: fixtureA.screening.questionnaire_responses,
+        },
+        {
+          clinical_diagnosis: fixtureA.patient.clinical_diagnosis,
+          treated_region: fixtureA.patient.treated_region,
+        }
+      );
+      
+      const contentD = generateDynamicReportContent(
+        {
+          classification: fixtureD.screening.classification,
+          analysis_result: fixtureD.screening.analysis_result,
+          questionnaire_responses: fixtureD.screening.questionnaire_responses,
+        },
+        {
+          clinical_diagnosis: fixtureD.patient.clinical_diagnosis,
+          treated_region: fixtureD.patient.treated_region,
+        }
+      );
+      
+      // Intensidade da dor deve ser diferente
+      expect(contentA.identifiedFindings.painIntensity).not.toEqual(
+        contentD.identifiedFindings.painIntensity
+      );
+      
+      // Duração deve ser diferente  
+      expect(contentA.identifiedFindings.duration).not.toEqual(
+        contentD.identifiedFindings.duration
+      );
+      
+      // Classificação PRP pode ser diferente (APTO_COM_PREPARO vs APTO)
+      expect(contentA.prpIndicationReason).not.toEqual(contentD.prpIndicationReason);
+      
+      // Achados clínicos devem ter diferenças
+      const findingsA = JSON.stringify(contentA.identifiedFindings.clinicalFindings);
+      const findingsD = JSON.stringify(contentD.identifiedFindings.clinicalFindings);
+      expect(findingsA).not.toEqual(findingsD);
+    });
+  });
 });

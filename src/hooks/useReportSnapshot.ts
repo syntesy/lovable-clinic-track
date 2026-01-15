@@ -1,7 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
-import { generateReportJsonHash } from "@/lib/report-hash";
+import { generateReportJsonHash, stableStringify } from "@/lib/report-hash";
 import { REPORT_GENERATOR_VERSION } from "@/lib/report-version";
 import type { Json } from "@/integrations/supabase/types";
+import { toZonedTime, format as formatTz } from "date-fns-tz";
+
+const SAO_PAULO_TZ = "America/Sao_Paulo";
 
 export interface ReportSnapshotData {
   evaluationId: string | null;
@@ -22,12 +25,33 @@ export interface ReportSnapshot {
 }
 
 /**
+ * Formata data para timezone America/Sao_Paulo
+ */
+export function formatDateSaoPaulo(date: Date | string, formatStr: string = "dd/MM/yyyy 'às' HH:mm"): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const zonedDate = toZonedTime(dateObj, SAO_PAULO_TZ);
+  return formatTz(zonedDate, formatStr, { timeZone: SAO_PAULO_TZ });
+}
+
+/**
+ * Retorna data atual em timezone America/Sao_Paulo como ISO string
+ */
+export function getNowSaoPauloISO(): string {
+  const now = new Date();
+  const zonedDate = toZonedTime(now, SAO_PAULO_TZ);
+  return zonedDate.toISOString();
+}
+
+/**
  * Hook para gerenciamento de snapshots imutáveis de relatórios
  */
 export function useReportSnapshot() {
   /**
    * Cria um snapshot imutável do relatório ANTES de exportar PDF
    * Retorna o snapshot criado para uso na geração do PDF
+   * 
+   * Idempotência: Se já existir um snapshot com mesmo hash + evaluation_id,
+   * retorna o existente em vez de criar duplicado
    */
   const createSnapshot = async (data: ReportSnapshotData): Promise<ReportSnapshot | null> => {
     try {
@@ -37,10 +61,29 @@ export function useReportSnapshot() {
         throw new Error("Usuário não autenticado");
       }
 
-      // Gerar hash do conteúdo para integridade
+      // Gerar hash do conteúdo para integridade (usando stable stringify)
       const reportHash = await generateReportJsonHash(data.reportJson);
 
-      // Inserir snapshot
+      // IDEMPOTÊNCIA: Verificar se já existe snapshot idêntico
+      // Mesmo hash + mesmo evaluation_id = mesmo conteúdo
+      const { data: existingSnapshot } = await supabase
+        .from('report_snapshots')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('report_hash', reportHash)
+        .eq('evaluation_id', data.evaluationId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (existingSnapshot) {
+        console.log('Snapshot idêntico já existe:', existingSnapshot.id);
+        return existingSnapshot as ReportSnapshot;
+      }
+
+      // Inserir snapshot com dados serializados de forma estável
+      const stableJson = JSON.parse(stableStringify(data.reportJson));
+      
       const { data: snapshot, error } = await supabase
         .from('report_snapshots')
         .insert({
@@ -49,7 +92,7 @@ export function useReportSnapshot() {
           user_id: user.id,
           generator_version: REPORT_GENERATOR_VERSION,
           report_hash: reportHash,
-          report_json: data.reportJson as unknown as Json,
+          report_json: stableJson as unknown as Json,
         })
         .select()
         .single();
@@ -108,5 +151,6 @@ export function useReportSnapshot() {
     getSnapshotsByPatient,
     getSnapshotById,
     generatorVersion: REPORT_GENERATOR_VERSION,
+    formatDateSaoPaulo,
   };
 }

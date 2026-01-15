@@ -1,6 +1,32 @@
 /**
  * Geração de hash SHA-256 para integridade de relatórios
+ * Utiliza stable stringify para garantir hash determinístico
  */
+
+/**
+ * Ordena as chaves de um objeto recursivamente para garantir
+ * serialização determinística (stable stringify)
+ */
+function stableStringify(obj: unknown): string {
+  if (obj === null || obj === undefined) {
+    return JSON.stringify(obj);
+  }
+  
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(item => stableStringify(item)).join(',') + ']';
+  }
+  
+  if (typeof obj === 'object') {
+    const sortedKeys = Object.keys(obj as Record<string, unknown>).sort();
+    const pairs = sortedKeys.map(key => {
+      const value = (obj as Record<string, unknown>)[key];
+      return JSON.stringify(key) + ':' + stableStringify(value);
+    });
+    return '{' + pairs.join(',') + '}';
+  }
+  
+  return JSON.stringify(obj);
+}
 
 /**
  * Gera um hash SHA-256 de uma string usando a Web Crypto API
@@ -16,8 +42,14 @@ export async function generateReportHash(content: string): Promise<string> {
 
 /**
  * Gera hash de um objeto JSON para verificação de integridade
+ * Utiliza stable stringify para garantir resultado determinístico
  */
 export async function generateReportJsonHash(reportJson: unknown): Promise<string> {
-  const jsonString = JSON.stringify(reportJson, null, 0); // Sem formatação para consistência
+  const jsonString = stableStringify(reportJson);
   return generateReportHash(jsonString);
 }
+
+/**
+ * Exporta stable stringify para uso em comparações
+ */
+export { stableStringify };
