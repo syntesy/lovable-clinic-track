@@ -1,27 +1,38 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   Plus, 
   Calendar, 
   User, 
   FlaskConical, 
-  Search,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  X,
+  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { AttendanceSession } from "@/types/attendance";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 const AtendimentosList = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   // Fetch all attendance sessions for the current user
   const { data: attendances, isLoading } = useQuery({
@@ -47,10 +58,57 @@ const AtendimentosList = () => {
     },
   });
 
-  const filteredAttendances = attendances?.filter(a => 
-    a.patients?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    a.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Get unique patients for the dropdown
+  const uniquePatients = useMemo(() => {
+    if (!attendances) return [];
+    const patientsMap = new Map<string, { id: string; full_name: string }>();
+    attendances.forEach(a => {
+      if (a.patients && !patientsMap.has(a.patients.id)) {
+        patientsMap.set(a.patients.id, { id: a.patients.id, full_name: a.patients.full_name });
+      }
+    });
+    return Array.from(patientsMap.values()).sort((a, b) => 
+      a.full_name.localeCompare(b.full_name)
+    );
+  }, [attendances]);
+
+  // Filter attendances
+  const filteredAttendances = useMemo(() => {
+    if (!attendances) return [];
+    
+    return attendances.filter(a => {
+      // Patient filter
+      if (selectedPatientId !== "all" && a.patients?.id !== selectedPatientId) {
+        return false;
+      }
+      
+      // Date from filter
+      if (dateFrom) {
+        const attendanceDate = new Date(a.created_at);
+        if (isBefore(attendanceDate, startOfDay(dateFrom))) {
+          return false;
+        }
+      }
+      
+      // Date to filter
+      if (dateTo) {
+        const attendanceDate = new Date(a.created_at);
+        if (isAfter(attendanceDate, endOfDay(dateTo))) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [attendances, selectedPatientId, dateFrom, dateTo]);
+
+  const hasActiveFilters = selectedPatientId !== "all" || dateFrom || dateTo;
+
+  const clearFilters = () => {
+    setSelectedPatientId("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,17 +127,94 @@ const AtendimentosList = () => {
           </Button>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por paciente..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        {/* Filters */}
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Patient Filter */}
+            <div className="w-full sm:w-72">
+              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
+                <SelectTrigger className="bg-card">
+                  <User className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="Filtrar por paciente" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="all">Todos os pacientes</SelectItem>
+                  {uniquePatients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date From Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 bg-card"
+                >
+                  <Calendar className="w-4 h-4" />
+                  {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Data inicial"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Date To Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 bg-card"
+                >
+                  <Calendar className="w-4 h-4" />
+                  {dateTo ? format(dateTo, "dd/MM/yyyy") : "Data final"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={clearFilters}
+                className="gap-1 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+                Limpar filtros
+              </Button>
+            )}
           </div>
+
+          {/* Active filters count */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="w-4 h-4" />
+              <span>
+                {filteredAttendances.length} atendimento{filteredAttendances.length !== 1 ? 's' : ''} encontrado{filteredAttendances.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* List */}
@@ -87,7 +222,7 @@ const AtendimentosList = () => {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : filteredAttendances?.length === 0 ? (
+        ) : filteredAttendances.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
               <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -95,12 +230,17 @@ const AtendimentosList = () => {
                 Nenhum atendimento encontrado
               </h3>
               <p className="text-muted-foreground mb-6">
-                {searchQuery 
-                  ? "Tente buscar com outros termos"
+                {hasActiveFilters 
+                  ? "Tente ajustar os filtros para ver mais resultados"
                   : "Comece criando um novo atendimento para um paciente"
                 }
               </p>
-              {!searchQuery && (
+              {hasActiveFilters ? (
+                <Button variant="outline" onClick={clearFilters}>
+                  <X className="w-4 h-4 mr-2" />
+                  Limpar filtros
+                </Button>
+              ) : (
                 <Button onClick={() => navigate("/atendimentos/novo")}>
                   <Plus className="w-4 h-4 mr-2" />
                   Criar Primeiro Atendimento
