@@ -103,7 +103,6 @@ export function AddProcedureModal({ open, onOpenChange, patientId, onSuccess }: 
         procedure_name: selectedItem.name,
         procedure_date: format(procedureDate, "yyyy-MM-dd"),
         notes: notes || null,
-        therapy_item_code: selectedItem.code,
       });
 
       if (error) throw error;
