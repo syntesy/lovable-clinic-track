@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AttendanceSession, AttendanceFile, formatAttendanceTitle } from "@/types/attendance";
+import { AttendanceSession, AttendanceFile, formatAttendanceTitle, isAttendanceClosed } from "@/types/attendance";
 import { toast } from "sonner";
 
 // Hook to fetch attendance sessions for a patient
@@ -198,21 +198,57 @@ export function useDeleteAttendanceFile() {
   });
 }
 
+// Hook to close an attendance session
+export function useCloseAttendance() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (attendanceId: string) => {
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .update({ closed_at: new Date().toISOString() })
+        .eq("id", attendanceId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as AttendanceSession;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["attendance-session", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["attendance-sessions", data.patient_id] });
+      toast.success("Atendimento concluído");
+    },
+    onError: (error) => {
+      console.error("Error closing attendance:", error);
+      toast.error("Erro ao concluir atendimento");
+    },
+  });
+}
+
 // Helper hook to get records within attendance time window
 export function useAttendanceRecords(attendanceSession: AttendanceSession | null, patientId: string | null) {
   const attendanceStartAt = attendanceSession?.created_at;
+  const attendanceEndAt = attendanceSession?.closed_at;
   
   // Fetch clinical records within time window
   const clinicalRecordsQuery = useQuery({
-    queryKey: ["clinical-records-attendance", patientId, attendanceStartAt],
+    queryKey: ["clinical-records-attendance", patientId, attendanceStartAt, attendanceEndAt],
     queryFn: async () => {
       if (!patientId || !attendanceStartAt) return null;
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("clinical_records")
         .select("*")
         .eq("patient_id", patientId)
-        .gte("created_at", attendanceStartAt)
+        .gte("created_at", attendanceStartAt);
+      
+      // If attendance is closed, also apply upper bound
+      if (attendanceEndAt) {
+        query = query.lte("created_at", attendanceEndAt);
+      }
+      
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -225,15 +261,22 @@ export function useAttendanceRecords(attendanceSession: AttendanceSession | null
   
   // Fetch screening within time window
   const screeningQuery = useQuery({
-    queryKey: ["screening-attendance", patientId, attendanceStartAt],
+    queryKey: ["screening-attendance", patientId, attendanceStartAt, attendanceEndAt],
     queryFn: async () => {
       if (!patientId || !attendanceStartAt) return null;
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("prp_screenings")
         .select("*")
         .eq("patient_id", patientId)
-        .gte("created_at", attendanceStartAt)
+        .gte("created_at", attendanceStartAt);
+      
+      // If attendance is closed, also apply upper bound
+      if (attendanceEndAt) {
+        query = query.lte("created_at", attendanceEndAt);
+      }
+      
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();

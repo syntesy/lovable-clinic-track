@@ -8,6 +8,12 @@ export interface AttendanceSession {
   involves_orthobiologics: boolean;
   title: string | null;
   user_id: string;
+  closed_at: string | null;
+}
+
+// Helper to check if attendance is closed
+export function isAttendanceClosed(attendance: AttendanceSession | null): boolean {
+  return attendance?.closed_at != null;
 }
 
 export interface AttendanceFile {

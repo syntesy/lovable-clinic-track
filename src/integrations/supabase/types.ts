@@ -124,6 +124,7 @@ export type Database = {
       }
       attendance_sessions: {
         Row: {
+          closed_at: string | null
           created_at: string
           id: string
           involves_orthobiologics: boolean
@@ -132,6 +133,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          closed_at?: string | null
           created_at?: string
           id?: string
           involves_orthobiologics?: boolean
@@ -140,6 +142,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          closed_at?: string | null
           created_at?: string
           id?: string
           involves_orthobiologics?: boolean
