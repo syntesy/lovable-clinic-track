@@ -38,6 +38,7 @@ const AtendimentoDetail = () => {
   const [currentStep, setCurrentStep] = useState("complaint");
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   
   // Fetch attendance session
   const { 
@@ -142,6 +143,52 @@ const AtendimentoDetail = () => {
     // Navigate to report step
     setCurrentStep("report");
   }, [clinicalRecord, attendance, attendanceId, handleOpenOrCreateProntuario, navigate]);
+
+  // Handler: Export PDF with full telemetry
+  const handleExportPdf = useCallback(async () => {
+    if (!clinicalRecord || !patient || isExportingPdf) return;
+    
+    const t0 = performance.now();
+    const recordId = clinicalRecord.id;
+    
+    logInfo("report.generate.export_start", { attendanceId: attendanceId || "unknown", recordId });
+    setIsExportingPdf(true);
+    
+    try {
+      // TODO: Replace with actual report generation logic when implemented
+      // For now, navigate to the existing report visualization page
+      navigate(`/relatorio/${clinicalRecord.id}`);
+      
+      const ms = Math.round(performance.now() - t0);
+      logInfo("report.generate.success", { 
+        attendanceId: attendanceId || "unknown", 
+        recordId, 
+        hasExport: true, 
+        ms 
+      });
+      
+      toast.success("Relatório gerado com sucesso!");
+    } catch (error: any) {
+      const ms = Math.round(performance.now() - t0);
+      logError("report.generate.error", { 
+        attendanceId: attendanceId || "unknown", 
+        recordId, 
+        code: error?.code || "UNKNOWN",
+        message: error?.message?.slice(0, 50),
+        ms
+      });
+      toast.error("Erro ao gerar relatório. Tente novamente.");
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [clinicalRecord, patient, isExportingPdf, attendanceId, navigate]);
+
+  // Handler: Preview report
+  const handlePreviewReport = useCallback(() => {
+    if (!clinicalRecord) return;
+    logInfo("report.preview.clicked", { attendanceId: attendanceId || "unknown", recordId: clinicalRecord.id });
+    navigate(`/relatorio/${clinicalRecord.id}`);
+  }, [clinicalRecord, attendanceId, navigate]);
   
   // Handle conclude attendance
   const handleConclude = async () => {
@@ -476,10 +523,17 @@ const AtendimentoDetail = () => {
                     </AlertDescription>
                   </Alert>
                   <div className="flex gap-2">
-                    <Button>
-                      Gerar Relatório PDF
+                    <Button onClick={handleExportPdf} disabled={isExportingPdf}>
+                      {isExportingPdf ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Gerando...
+                        </>
+                      ) : (
+                        "Gerar Relatório PDF"
+                      )}
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={handlePreviewReport}>
                       Visualizar Preview
                     </Button>
                   </div>
