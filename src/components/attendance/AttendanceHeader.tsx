@@ -8,10 +8,11 @@ import {
   FileText, 
   CheckCircle,
   ArrowLeft,
-  User
+  User,
+  Lock
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AttendanceSession, AttendanceStatus } from "@/types/attendance";
+import { AttendanceSession, AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
 
 interface AttendanceHeaderProps {
   attendance: AttendanceSession;
@@ -22,6 +23,7 @@ interface AttendanceHeaderProps {
   onGenerateReport?: () => void;
   onConclude?: () => void;
   isSaving?: boolean;
+  isConcluding?: boolean;
 }
 
 const statusLabels: Record<AttendanceStatus, { label: string; className: string }> = {
@@ -40,15 +42,21 @@ export function AttendanceHeader({
   onGenerateReport,
   onConclude,
   isSaving,
+  isConcluding,
 }: AttendanceHeaderProps) {
   const navigate = useNavigate();
   const statusInfo = statusLabels[status];
+  const isClosed = isAttendanceClosed(attendance);
   
   const formattedDate = format(
     new Date(attendance.created_at),
     "dd 'de' MMMM 'de' yyyy",
     { locale: ptBR }
   );
+  
+  const closedDate = attendance.closed_at 
+    ? format(new Date(attendance.closed_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
+    : null;
 
   return (
     <div className="bg-card border-b border-border sticky top-0 z-40">
@@ -64,12 +72,23 @@ export function AttendanceHeader({
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-semibold text-foreground truncate">
-              ATENDIMENTO — {formattedDate}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-foreground truncate">
+                ATENDIMENTO — {formattedDate}
+              </h1>
+              {isClosed && (
+                <Badge variant="outline" className="bg-muted text-muted-foreground gap-1">
+                  <Lock className="w-3 h-3" />
+                  Concluído
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-muted-foreground mt-1">
               <User className="w-4 h-4" />
               <span className="text-sm">{patientName}</span>
+              {closedDate && (
+                <span className="text-xs">• Concluído em {closedDate}</span>
+              )}
             </div>
           </div>
         </div>
@@ -94,7 +113,7 @@ export function AttendanceHeader({
           </div>
 
           <div className="flex items-center gap-2">
-            {onSave && (
+            {!isClosed && onSave && (
               <Button
                 variant="outline"
                 size="sm"
@@ -119,10 +138,11 @@ export function AttendanceHeader({
               </Button>
             )}
             
-            {onConclude && status === "S3" && (
+            {!isClosed && onConclude && status === "S3" && (
               <Button
                 size="sm"
                 onClick={onConclude}
+                disabled={isConcluding}
                 className="gap-1.5"
               >
                 <CheckCircle className="w-4 h-4" />

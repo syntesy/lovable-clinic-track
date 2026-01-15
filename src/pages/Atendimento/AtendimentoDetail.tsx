@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle, FlaskConical, Plus } from "lucide-react";
+import { Loader2, AlertCircle, FlaskConical, Plus, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -12,14 +12,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   useAttendanceSession, 
   useAttendanceFiles,
-  useAttendanceRecords 
+  useAttendanceRecords,
+  useCloseAttendance
 } from "@/hooks/useAttendance";
 import { 
   AttendanceStepper, 
   AttendanceHeader, 
   AttendanceDocumentsStep 
 } from "@/components/attendance";
-import { getVisibleSteps, AttendanceStatus } from "@/types/attendance";
+import { getVisibleSteps, AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
 
 // Import existing components for steps (reusing, not changing logic)
 import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
@@ -37,6 +38,12 @@ const AtendimentoDetail = () => {
     isLoading: isLoadingAttendance,
     error: attendanceError 
   } = useAttendanceSession(attendanceId ?? null);
+  
+  // Close attendance mutation
+  const closeAttendance = useCloseAttendance();
+  
+  // Check if attendance is closed
+  const isClosed = isAttendanceClosed(attendance ?? null);
   
   // Fetch attendance files for counter
   const { data: files = [] } = useAttendanceFiles(attendanceId ?? null);
@@ -64,6 +71,15 @@ const AtendimentoDetail = () => {
     isLoadingClinicalRecord,
     isLoadingScreening 
   } = useAttendanceRecords(attendance ?? null, attendance?.patient_id ?? null);
+  
+  // Handle conclude attendance
+  const handleConclude = async () => {
+    if (!attendance) return;
+    if (!confirm("Tem certeza que deseja concluir este atendimento? Após a conclusão, não será possível fazer novas alterações.")) {
+      return;
+    }
+    await closeAttendance.mutateAsync(attendance.id);
+  };
   
   // Determine current clinical status (S0-S3)
   const currentStatus: AttendanceStatus = useMemo(() => {
@@ -118,6 +134,17 @@ const AtendimentoDetail = () => {
   }
   
   const renderStepContent = () => {
+    // Show locked message for closed attendances
+    const renderClosedAlert = () => (
+      <Alert className="mb-4">
+        <Lock className="h-4 w-4" />
+        <AlertTitle>Atendimento Concluído</AlertTitle>
+        <AlertDescription>
+          Este atendimento foi concluído. As informações estão disponíveis apenas para visualização.
+        </AlertDescription>
+      </Alert>
+    );
+    
     switch (currentStep) {
       case "complaint":
         return (
@@ -129,6 +156,7 @@ const AtendimentoDetail = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {isClosed && renderClosedAlert()}
               {clinicalRecord ? (
                 <div className="space-y-4">
                   <div>
@@ -139,22 +167,26 @@ const AtendimentoDetail = () => {
                     <Label className="text-sm text-muted-foreground">Anamnese</Label>
                     <p className="mt-1 whitespace-pre-wrap">{clinicalRecord.anamnesis || "Não informado"}</p>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}`)}
-                  >
-                    Editar Prontuário
-                  </Button>
+                  {!isClosed && (
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}`)}
+                    >
+                      Editar Prontuário
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">
                     Nenhum prontuário criado para este atendimento
                   </p>
-                  <Button onClick={() => navigate(`/patients/${attendance.patient_id}/records/new`)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar Prontuário
-                  </Button>
+                  {!isClosed && (
+                    <Button onClick={() => navigate(`/patients/${attendance.patient_id}/records/new`)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Criar Prontuário
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -171,6 +203,7 @@ const AtendimentoDetail = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {isClosed && renderClosedAlert()}
               {clinicalRecord ? (
                 <div className="space-y-4">
                   <div>
@@ -181,12 +214,14 @@ const AtendimentoDetail = () => {
                     <Label className="text-sm text-muted-foreground">Diagnóstico Clínico</Label>
                     <p className="mt-1">{clinicalRecord.clinical_diagnosis || "Não informado"}</p>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}`)}
-                  >
-                    Editar Prontuário
-                  </Button>
+                  {!isClosed && (
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}`)}
+                    >
+                      Editar Prontuário
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -210,6 +245,7 @@ const AtendimentoDetail = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {isClosed && renderClosedAlert()}
               {screening ? (
                 <AvaliacaoRegenapp
                   patientId={attendance.patient_id}
@@ -220,12 +256,14 @@ const AtendimentoDetail = () => {
                   <p className="text-muted-foreground mb-4">
                     Nenhuma triagem realizada para este atendimento
                   </p>
-                  <Button 
-                    onClick={() => navigate(`/triagem-biologica?paciente=${attendance.patient_id}`)}
-                  >
-                    <FlaskConical className="w-4 h-4 mr-2" />
-                    Iniciar Triagem
-                  </Button>
+                  {!isClosed && (
+                    <Button 
+                      onClick={() => navigate(`/triagem-biologica?paciente=${attendance.patient_id}`)}
+                    >
+                      <FlaskConical className="w-4 h-4 mr-2" />
+                      Iniciar Triagem
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -243,6 +281,7 @@ const AtendimentoDetail = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {isClosed && renderClosedAlert()}
               {screening ? (
                 <AvaliacaoRegenapp
                   patientId={attendance.patient_id}
@@ -263,7 +302,7 @@ const AtendimentoDetail = () => {
           <AttendanceDocumentsStep
             attendanceId={attendance.id}
             patientId={attendance.patient_id}
-            disabled={currentStatus === "S3"}
+            disabled={isClosed}
           />
         );
         
@@ -342,8 +381,10 @@ const AtendimentoDetail = () => {
         patientName={patient?.full_name || "Carregando..."}
         status={currentStatus}
         fileCount={files.length}
-        onSave={() => {/* TODO */}}
-        onGenerateReport={() => navigate(`#report`)}
+        onSave={!isClosed ? () => {/* TODO */} : undefined}
+        onGenerateReport={() => setCurrentStep("report")}
+        onConclude={handleConclude}
+        isConcluding={closeAttendance.isPending}
       />
       
       {/* Main Content */}
