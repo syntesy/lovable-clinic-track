@@ -46,6 +46,9 @@ Este documento descreve os eventos de telemetria e índices de performance imple
 | `report.generate.export_start` | info | `{ attendanceId, recordId }` | Iniciando exportação PDF |
 | `report.generate.success` | info | `{ attendanceId, recordId, hasExport, ms }` | Geração/exportação concluída |
 | `report.generate.error` | error | `{ attendanceId, recordId, code, message }` | Erro na geração (message sanitizada) |
+| `report.preview.clicked` | info | `{ attendanceId, recordId }` | Usuário clicou em visualizar preview |
+| `report.persist.success` | info | `{ attendanceId, recordId, type, ms }` | Metadados do relatório persistidos |
+| `report.persist.error` | error | `{ attendanceId, recordId, code }` | Erro ao persistir metadados (não impede geração) |
 
 ---
 

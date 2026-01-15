@@ -1,7 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, AlertCircle, FlaskConical, Plus, Lock, FileText } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Loader2, AlertCircle, FlaskConical, Plus, Lock, FileText, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -144,6 +146,37 @@ const AtendimentoDetail = () => {
     setCurrentStep("report");
   }, [clinicalRecord, attendance, attendanceId, handleOpenOrCreateProntuario, navigate]);
 
+  // Helper: Persist report metadata to attendance (audit trail)
+  const persistReportMetadata = useCallback(async (
+    type: 'preview' | 'pdf',
+    recordId: string,
+    durationMs: number
+  ) => {
+    if (!attendanceId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("attendance_sessions")
+        .update({
+          last_report_generated_at: new Date().toISOString(),
+          last_report_record_id: recordId,
+          last_report_type: type,
+          last_report_duration_ms: durationMs,
+        })
+        .eq("id", attendanceId);
+
+      if (error) throw error;
+      
+      logInfo("report.persist.success", { attendanceId, recordId, type, ms: durationMs });
+      
+      // Invalidate to refresh the attendance data
+      queryClient.invalidateQueries({ queryKey: ["attendance", attendanceId] });
+    } catch (error: any) {
+      // Fail silently - don't break report generation
+      logError("report.persist.error", { attendanceId, recordId, code: error?.code });
+    }
+  }, [attendanceId, queryClient]);
+
   // Handler: Export PDF with full telemetry
   const handleExportPdf = useCallback(async () => {
     if (!clinicalRecord || !patient || isExportingPdf) return;
@@ -167,6 +200,9 @@ const AtendimentoDetail = () => {
         ms 
       });
       
+      // Persist audit trail (async, non-blocking)
+      persistReportMetadata('pdf', recordId, ms);
+      
       toast.success("Relatório gerado com sucesso!");
     } catch (error: any) {
       const ms = Math.round(performance.now() - t0);
@@ -181,14 +217,22 @@ const AtendimentoDetail = () => {
     } finally {
       setIsExportingPdf(false);
     }
-  }, [clinicalRecord, patient, isExportingPdf, attendanceId, navigate]);
+  }, [clinicalRecord, patient, isExportingPdf, attendanceId, navigate, persistReportMetadata]);
 
   // Handler: Preview report
-  const handlePreviewReport = useCallback(() => {
+  const handlePreviewReport = useCallback(async () => {
     if (!clinicalRecord) return;
-    logInfo("report.preview.clicked", { attendanceId: attendanceId || "unknown", recordId: clinicalRecord.id });
+    const t0 = performance.now();
+    const recordId = clinicalRecord.id;
+    
+    logInfo("report.preview.clicked", { attendanceId: attendanceId || "unknown", recordId });
+    
+    // Persist audit trail (async, non-blocking)
+    const ms = Math.round(performance.now() - t0);
+    persistReportMetadata('preview', recordId, ms);
+    
     navigate(`/relatorio/${clinicalRecord.id}`);
-  }, [clinicalRecord, attendanceId, navigate]);
+  }, [clinicalRecord, attendanceId, navigate, persistReportMetadata]);
   
   // Handle conclude attendance
   const handleConclude = async () => {
@@ -537,6 +581,23 @@ const AtendimentoDetail = () => {
                       Visualizar Preview
                     </Button>
                   </div>
+                  
+                  {/* Last report info (audit trail) */}
+                  {attendance?.last_report_generated_at && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                      <Clock className="w-4 h-4" />
+                      <span>
+                        Último relatório gerado em{" "}
+                        {format(new Date(attendance.last_report_generated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        {attendance.last_report_type && (
+                          <span className="ml-1">
+                            ({attendance.last_report_type === 'pdf' ? 'PDF' : 'Preview'})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  
                   {files.length > 0 && (
                     <div className="mt-4 pt-4 border-t">
                       <p className="text-sm text-muted-foreground">
