@@ -9,6 +9,7 @@ export interface AttendanceSession {
   title: string | null;
   user_id: string;
   closed_at: string | null;
+  closed_by: string | null; // Audit trail: who closed the attendance
 }
 
 // Helper to check if attendance is closed
