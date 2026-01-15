@@ -218,13 +218,23 @@ export default function ClinicalRecordEditor() {
   }
 
   if (recordError || !clinicalRecord) {
+    // Check if we came from an attendance context
+    const searchParams = new URLSearchParams(window.location.search);
+    const fromAttendance = searchParams.get("atendimento");
+    
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(`/patients/${patientId}/records`)}
+            onClick={() => {
+              if (fromAttendance) {
+                navigate(`/atendimentos/${fromAttendance}`);
+              } else {
+                navigate(`/patients/${patientId}/records`);
+              }
+            }}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -237,9 +247,25 @@ export default function ClinicalRecordEditor() {
             <p className="text-muted-foreground mb-4">
               O prontuário solicitado não foi encontrado ou você não tem permissão para acessá-lo.
             </p>
-            <Button onClick={() => navigate(`/patients/${patientId}/records`)}>
-              Voltar ao Histórico
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              {fromAttendance && (
+                <Button onClick={() => navigate(`/atendimentos/${fromAttendance}`)}>
+                  Voltar ao Atendimento
+                </Button>
+              )}
+              <Button 
+                variant={fromAttendance ? "outline" : "default"}
+                onClick={() => navigate(`/patients/${patientId}/records`)}
+              >
+                Voltar ao Histórico de Prontuários
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`/atendimentos`)}
+              >
+                Ver Atendimentos
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

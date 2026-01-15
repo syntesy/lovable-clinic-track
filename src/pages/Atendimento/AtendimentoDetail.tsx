@@ -1,13 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle, FlaskConical, Plus, Lock } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, AlertCircle, FlaskConical, Plus, Lock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 import { 
   useAttendanceSession, 
@@ -21,6 +21,11 @@ import {
   AttendanceDocumentsStep 
 } from "@/components/attendance";
 import { getVisibleSteps, AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
+import { 
+  ensureClinicalRecordForAttendance, 
+  hasClinicalRecordMinimumData,
+  ClinicalRecordBasic 
+} from "@/services/clinicalRecordsService";
 
 // Import existing components for steps (reusing, not changing logic)
 import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
@@ -28,9 +33,11 @@ import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
 const AtendimentoDetail = () => {
   const { attendanceId } = useParams<{ attendanceId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const [currentStep, setCurrentStep] = useState("complaint");
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   
   // Fetch attendance session
   const { 
@@ -71,6 +78,63 @@ const AtendimentoDetail = () => {
     isLoadingClinicalRecord,
     isLoadingScreening 
   } = useAttendanceRecords(attendance ?? null, attendance?.patient_id ?? null);
+  
+  // Handler: Create or Open clinical record (prontuário)
+  const handleOpenOrCreateProntuario = useCallback(async () => {
+    if (!attendance || isCreatingRecord) return;
+    
+    setIsCreatingRecord(true);
+    try {
+      const record = await ensureClinicalRecordForAttendance(
+        attendance.patient_id,
+        attendance.created_at,
+        attendance.closed_at
+      );
+      
+      // Invalidate query to refresh the view
+      await queryClient.invalidateQueries({ 
+        queryKey: ["clinical-records-attendance", attendance.patient_id] 
+      });
+      
+      // Navigate to the record editor
+      navigate(`/patients/${attendance.patient_id}/records/${record.id}`);
+    } catch (error) {
+      console.error("Erro ao criar prontuário:", error);
+      toast.error("Erro ao criar prontuário. Tente novamente.");
+    } finally {
+      setIsCreatingRecord(false);
+    }
+  }, [attendance, isCreatingRecord, navigate, queryClient]);
+
+  // Handler: Generate Report with gating
+  const handleGenerateReport = useCallback(() => {
+    // Check if prontuário exists
+    if (!clinicalRecord) {
+      toast.error("Para gerar relatório, é necessário criar o prontuário do atendimento primeiro.", {
+        action: {
+          label: "Criar Prontuário",
+          onClick: handleOpenOrCreateProntuario,
+        },
+        duration: 6000,
+      });
+      return;
+    }
+    
+    // Check if prontuário has minimum data
+    if (!hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic)) {
+      toast.error("O prontuário precisa estar completo (queixa, anamnese, exame físico e diagnóstico) para gerar o relatório.", {
+        action: {
+          label: "Abrir Prontuário",
+          onClick: () => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord.id}`),
+        },
+        duration: 6000,
+      });
+      return;
+    }
+    
+    // Navigate to report step
+    setCurrentStep("report");
+  }, [clinicalRecord, attendance, handleOpenOrCreateProntuario, navigate]);
   
   // Handle conclude attendance
   const handleConclude = async () => {
@@ -178,12 +242,20 @@ const AtendimentoDetail = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground mb-4">
                     Nenhum prontuário criado para este atendimento
                   </p>
                   {!isClosed && (
-                    <Button onClick={() => navigate(`/patients/${attendance.patient_id}/records/new`)}>
-                      <Plus className="w-4 h-4 mr-2" />
+                    <Button 
+                      onClick={handleOpenOrCreateProntuario}
+                      disabled={isCreatingRecord}
+                    >
+                      {isCreatingRecord ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4 mr-2" />
+                      )}
                       Criar Prontuário
                     </Button>
                   )}
@@ -325,6 +397,11 @@ const AtendimentoDetail = () => {
         );
         
       case "report":
+        // Gating: Check if clinical record exists and has minimum data
+        const hasRecord = !!clinicalRecord;
+        const hasMinData = hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic | null);
+        const canGenerateReport = hasRecord && hasMinData && (attendance?.involves_orthobiologics ? currentStatus === "S3" : true);
+        
         return (
           <Card>
             <CardHeader>
@@ -334,13 +411,61 @@ const AtendimentoDetail = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {currentStatus === "S3" ? (
+              {/* Gating: No clinical record */}
+              {!hasRecord && (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-foreground font-medium mb-2">Prontuário Necessário</p>
+                  <p className="text-muted-foreground mb-4">
+                    Para gerar o relatório, é necessário criar o prontuário do atendimento primeiro.
+                  </p>
+                  <Button onClick={handleOpenOrCreateProntuario} disabled={isCreatingRecord}>
+                    {isCreatingRecord ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4 mr-2" />
+                    )}
+                    Criar Prontuário
+                  </Button>
+                </div>
+              )}
+              
+              {/* Gating: Clinical record exists but incomplete */}
+              {hasRecord && !hasMinData && (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                  <p className="text-foreground font-medium mb-2">Prontuário Incompleto</p>
+                  <p className="text-muted-foreground mb-4">
+                    O prontuário precisa estar completo (queixa, anamnese, exame físico e diagnóstico) para gerar o relatório.
+                  </p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord?.id}`)}
+                  >
+                    Abrir Prontuário
+                  </Button>
+                </div>
+              )}
+              
+              {/* Gating: Prontuário OK but orthobiologics needs S3 */}
+              {hasRecord && hasMinData && attendance?.involves_orthobiologics && currentStatus !== "S3" && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Relatório disponível após conclusão do Score Definitivo (S3)</p>
+                  <p className="text-sm mt-2">Status atual: {currentStatus}</p>
+                </div>
+              )}
+              
+              {/* Ready to generate */}
+              {canGenerateReport && (
                 <div className="space-y-4">
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Score Definitivo Disponível</AlertTitle>
+                    <AlertTitle>Pronto para Gerar Relatório</AlertTitle>
                     <AlertDescription>
-                      O score definitivo foi gerado. Você pode gerar o relatório final.
+                      {attendance?.involves_orthobiologics 
+                        ? "O score definitivo foi gerado. Você pode gerar o relatório final."
+                        : "O prontuário está completo. Você pode gerar o relatório final."
+                      }
                     </AlertDescription>
                   </Alert>
                   <div className="flex gap-2">
@@ -358,10 +483,6 @@ const AtendimentoDetail = () => {
                       </p>
                     </div>
                   )}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Relatório disponível após conclusão do Score Definitivo (S3)</p>
                 </div>
               )}
             </CardContent>
@@ -382,7 +503,7 @@ const AtendimentoDetail = () => {
         status={currentStatus}
         fileCount={files.length}
         onSave={!isClosed ? () => {/* TODO */} : undefined}
-        onGenerateReport={() => setCurrentStep("report")}
+        onGenerateReport={handleGenerateReport}
         onConclude={handleConclude}
         isConcluding={closeAttendance.isPending}
       />
