@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   FileText, Download, Sparkles, AlertCircle, CheckCircle2, 
-  Target, Leaf, Clock, Heart, MessageSquare, History, Eye, Trash2
+  Target, Leaf, Clock, Heart, MessageSquare, History, Eye, Trash2,
+  FlaskConical, AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { generateDynamicReportContent, DynamicReportContent } from "@/lib/report-generator";
 
 interface PatientData {
   id: string;
@@ -35,6 +37,7 @@ interface PatientData {
 interface ScreeningData {
   classification?: string | null;
   analysis_result?: string | null;
+  questionnaire_responses?: unknown;
 }
 
 interface SavedReport {
@@ -47,6 +50,7 @@ interface SavedReport {
     classification: string | null;
     clinical_diagnosis: string | null;
     treated_region: string | null;
+    dynamic_content?: DynamicReportContent;
   };
 }
 
@@ -69,10 +73,12 @@ export function PatientEvaluationReport({
   const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [viewingReport, setViewingReport] = useState<SavedReport | null>(null);
   const [deleteReportId, setDeleteReportId] = useState<string | null>(null);
+  const [dynamicContent, setDynamicContent] = useState<DynamicReportContent | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const isPRPIndicado = latestScreening?.classification?.toUpperCase() === "APTO";
-  const isPRPComPreparo = latestScreening?.classification?.toUpperCase() === "APTO_COM_PREPARO";
+  const isPRPComPreparo = latestScreening?.classification?.toUpperCase() === "APTO_COM_PREPARO" ||
+                         latestScreening?.classification?.toUpperCase() === "NAO_APTO_PREPARO";
   const isPRPNaoIndicado = latestScreening?.classification?.toUpperCase() === "NAO_APTO" || 
                           latestScreening?.classification?.toUpperCase() === "CONTRAINDICADO";
 
@@ -95,7 +101,7 @@ export function PatientEvaluationReport({
         .order('generated_at', { ascending: false });
 
       if (error) throw error;
-      setSavedReports((data || []) as SavedReport[]);
+      setSavedReports((data || []) as unknown as SavedReport[]);
     } catch (error) {
       console.error('Error fetching reports:', error);
     } finally {
@@ -109,10 +115,25 @@ export function PatientEvaluationReport({
     setIsGenerating(true);
     
     try {
+      // Gerar conteúdo dinâmico baseado nos dados reais
+      const generatedContent = generateDynamicReportContent(
+        {
+          classification: latestScreening?.classification,
+          analysis_result: latestScreening?.analysis_result,
+          questionnaire_responses: latestScreening?.questionnaire_responses as Record<string, unknown> | null,
+        },
+        {
+          clinical_diagnosis: patient.clinical_diagnosis,
+          treated_region: patient.treated_region,
+        }
+      );
+      
+      setDynamicContent(generatedContent);
+      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Prepare report content
+      // Prepare report content with dynamic data
       const reportContent = {
         patient_name: patient.full_name,
         patient_age: patient.age,
@@ -121,6 +142,7 @@ export function PatientEvaluationReport({
         clinical_diagnosis: patient.clinical_diagnosis,
         treated_region: patient.treated_region,
         generated_date: new Date().toISOString(),
+        dynamic_content: generatedContent,
       };
 
       // Save to database
@@ -169,10 +191,32 @@ export function PatientEvaluationReport({
     }
   };
 
+  const handleViewReport = (report: SavedReport) => {
+    setViewingReport(report);
+    // Se o relatório salvo tem dynamic_content, use-o
+    if (report.report_content.dynamic_content) {
+      setDynamicContent(report.report_content.dynamic_content);
+    } else {
+      // Relatórios antigos: gerar conteúdo dinamicamente (fallback)
+      const generatedContent = generateDynamicReportContent(
+        {
+          classification: report.report_content.classification,
+          analysis_result: null,
+          questionnaire_responses: null,
+        },
+        {
+          clinical_diagnosis: report.report_content.clinical_diagnosis,
+          treated_region: report.report_content.treated_region,
+        }
+      );
+      setDynamicContent(generatedContent);
+    }
+    setIsGenerated(false);
+  };
+
   const handleExportPDF = async () => {
     if (!reportRef.current || !patient) return;
 
-    // Importação dinâmica do html2pdf
     const html2pdf = (await import('html2pdf.js')).default;
     
     const fileName = `Relatorio_Avaliacao_${patient.full_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
@@ -190,7 +234,7 @@ export function PatientEvaluationReport({
 
   const currentDate = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
-  // Get display data (either from viewing a saved report or current patient data)
+  // Get display data
   const displayData = viewingReport ? {
     patientName: viewingReport.report_content.patient_name,
     classification: viewingReport.report_content.classification,
@@ -210,7 +254,8 @@ export function PatientEvaluationReport({
   };
 
   const displayIsPRPIndicado = displayData.classification?.toUpperCase() === "APTO";
-  const displayIsPRPComPreparo = displayData.classification?.toUpperCase() === "APTO_COM_PREPARO";
+  const displayIsPRPComPreparo = displayData.classification?.toUpperCase() === "APTO_COM_PREPARO" ||
+                                 displayData.classification?.toUpperCase() === "NAO_APTO_PREPARO";
   const displayIsPRPNaoIndicado = displayData.classification?.toUpperCase() === "NAO_APTO" || 
                                   displayData.classification?.toUpperCase() === "CONTRAINDICADO";
 
@@ -237,11 +282,11 @@ export function PatientEvaluationReport({
                 Relatório de Avaliação e Plano Terapêutico
               </CardTitle>
               <p className="text-sm text-muted-foreground max-w-xl">
-                Documento explicativo para o paciente sobre diagnóstico, decisões clínicas e plano de tratamento.
+                Documento individualizado baseado nos dados reais da avaliação do paciente.
               </p>
             </div>
             <Badge variant="outline" className="text-xs">
-              Premium
+              Personalizado
             </Badge>
           </div>
         </CardHeader>
@@ -254,7 +299,7 @@ export function PatientEvaluationReport({
               size="lg"
             >
               <Sparkles className="w-4 h-4" />
-              {isGenerating ? "Gerando..." : "Gerar Relatório para o Paciente"}
+              {isGenerating ? "Gerando..." : "Gerar Relatório Individualizado"}
             </Button>
             
             {(isGenerated || viewingReport) && (
@@ -274,6 +319,7 @@ export function PatientEvaluationReport({
                 onClick={() => {
                   setViewingReport(null);
                   setIsGenerated(false);
+                  setDynamicContent(null);
                 }} 
                 variant="ghost"
                 className="gap-2"
@@ -317,10 +363,7 @@ export function PatientEvaluationReport({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        setViewingReport(report);
-                        setIsGenerated(false);
-                      }}
+                      onClick={() => handleViewReport(report)}
                       className="gap-1"
                     >
                       <Eye className="w-4 h-4" />
@@ -343,7 +386,7 @@ export function PatientEvaluationReport({
       )}
 
       {/* Relatório Gerado ou Visualizado */}
-      {(isGenerated || viewingReport) && (
+      {(isGenerated || viewingReport) && dynamicContent && (
         <div 
           ref={reportRef}
           className="bg-white text-gray-900 rounded-xl shadow-lg overflow-hidden print:shadow-none"
@@ -392,6 +435,23 @@ export function PatientEvaluationReport({
           {/* CONTEÚDO DO RELATÓRIO */}
           <div className="p-8 space-y-8">
             
+            {/* AVISO DE DADOS AUSENTES */}
+            {dynamicContent.missingData.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-amber-800">Dados não identificados na avaliação:</p>
+                    <ul className="mt-1 text-sm text-amber-700 list-disc list-inside">
+                      {dynamicContent.missingData.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* 1. OBJETIVO DO RELATÓRIO */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
@@ -402,8 +462,7 @@ export function PatientEvaluationReport({
               </div>
               <div className="pl-10">
                 <p className="text-gray-700 leading-relaxed">
-                  Este documento tem como objetivo explicar de forma clara e acessível os achados da sua avaliação, 
-                  o raciocínio por trás das decisões clínicas e o plano terapêutico proposto.
+                  {dynamicContent.objectiveText}
                 </p>
               </div>
             </section>
@@ -419,33 +478,83 @@ export function PatientEvaluationReport({
                 <h2 className="text-lg font-semibold text-gray-900">2. O Que Foi Identificado na Avaliação</h2>
               </div>
               <div className="pl-10 space-y-3">
-                {displayData.clinicalDiagnosis ? (
+                {/* Queixa Principal */}
+                {dynamicContent.identifiedFindings.mainComplaint && (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Diagnóstico Clínico</p>
-                    <p className="text-gray-900 font-medium">{displayData.clinicalDiagnosis}</p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Queixa Principal</p>
+                    <p className="text-gray-900 font-medium">{dynamicContent.identifiedFindings.mainComplaint}</p>
                   </div>
-                ) : null}
+                )}
                 
-                {displayData.treatedRegion ? (
+                {/* Diagnóstico e Região */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {dynamicContent.identifiedFindings.diagnosis && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Diagnóstico</p>
+                      <p className="text-gray-900 font-medium">{dynamicContent.identifiedFindings.diagnosis}</p>
+                    </div>
+                  )}
+                  
+                  {dynamicContent.identifiedFindings.region && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Região Avaliada</p>
+                      <p className="text-gray-900 font-medium">{dynamicContent.identifiedFindings.region}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Tempo e Intensidade */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {dynamicContent.identifiedFindings.duration && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Duração dos Sintomas</p>
+                      <p className="text-gray-900 font-medium">{dynamicContent.identifiedFindings.duration}</p>
+                    </div>
+                  )}
+                  
+                  {dynamicContent.identifiedFindings.painIntensity && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Intensidade da Dor</p>
+                      <p className="text-gray-900 font-medium">{dynamicContent.identifiedFindings.painIntensity}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Achados Clínicos */}
+                {dynamicContent.identifiedFindings.clinicalFindings.length > 0 && (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Região Tratada</p>
-                    <p className="text-gray-900 font-medium">{displayData.treatedRegion}</p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Achados Clínicos Relevantes</p>
+                    <ul className="space-y-1">
+                      {dynamicContent.identifiedFindings.clinicalFindings.map((finding, idx) => (
+                        <li key={idx} className="text-gray-700 flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <span>{finding}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ) : null}
+                )}
                 
-                {!displayData.clinicalDiagnosis && !displayData.treatedRegion && (
-                  <p className="text-gray-700 leading-relaxed">
-                    Durante a avaliação inicial, foram analisados diversos aspectos do seu quadro clínico, 
-                    incluindo histórico de dor, limitações funcionais e exames complementares. 
-                    Essas informações serão utilizadas para definir o melhor caminho terapêutico para o seu caso.
-                  </p>
+                {/* Fatores Nutricionais/Funcionais */}
+                {dynamicContent.identifiedFindings.functionalLimitations.length > 0 && (
+                  <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-100">
+                    <p className="text-sm text-amber-700 uppercase tracking-wide mb-2">Fatores Nutricionais/Metabólicos Identificados</p>
+                    <ul className="space-y-1">
+                      {dynamicContent.identifiedFindings.functionalLimitations.map((limitation, idx) => (
+                        <li key={idx} className="text-gray-700 flex items-start gap-2">
+                          <span className="text-amber-600 mt-1">•</span>
+                          <span>{limitation}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             </section>
 
             <Separator className="bg-gray-200" />
 
-            {/* 3. POR QUE O PRP NÃO É INDICADO NESTE MOMENTO (CONDICIONAL) */}
+            {/* 3. INDICAÇÃO DO PRP */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -457,45 +566,31 @@ export function PatientEvaluationReport({
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">
                   3. {displayIsPRPIndicado 
-                    ? "Por Que o PRP Está Indicado" 
+                    ? "Indicação para PRP" 
                     : displayIsPRPComPreparo 
-                      ? "Por Que Precisamos Preparar Primeiro" 
-                      : "Por Que o PRP Não É Indicado Neste Momento"}
+                      ? "Necessidade de Preparo Antes do PRP" 
+                      : displayIsPRPNaoIndicado
+                        ? "Contraindicação Atual para PRP"
+                        : "Avaliação de Elegibilidade para PRP"}
                 </h2>
               </div>
-              <div className="pl-10">
-                {displayIsPRPIndicado ? (
-                  <div className="bg-green-50 border border-green-100 rounded-lg p-4">
-                    <p className="text-gray-700 leading-relaxed">
-                      <strong className="text-green-700">Boa notícia!</strong> Com base na sua avaliação atual, 
-                      você apresenta condições favoráveis para realizar o tratamento com PRP (Plasma Rico em Plaquetas). 
-                      Seu organismo demonstra estar preparado para responder de forma adequada a este tipo de terapia regenerativa.
-                    </p>
-                  </div>
-                ) : displayIsPRPComPreparo ? (
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                    <p className="text-gray-700 leading-relaxed">
-                      <strong className="text-blue-700">Preparação necessária:</strong> O PRP pode ser uma excelente opção 
-                      para o seu caso, mas primeiro precisamos preparar o terreno. Isso significa que seu tecido precisa 
-                      de alguns ajustes antes de receber o tratamento regenerativo, garantindo assim melhores resultados.
-                    </p>
-                  </div>
-                ) : displayIsPRPNaoIndicado ? (
-                  <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
-                    <p className="text-gray-700 leading-relaxed">
-                      <strong className="text-amber-700">Atenção ao momento:</strong> Neste momento, o PRP não é a melhor 
-                      opção para você. Isso não significa que nunca será indicado, mas sim que seu organismo precisa de 
-                      outras intervenções primeiro. Quando um tecido está muito inflamado, desorganizado ou com baixa 
-                      capacidade de resposta, aplicar PRP pode não trazer os benefícios esperados.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 border border-gray-100 rounded-lg p-4">
-                    <p className="text-gray-700 leading-relaxed">
-                      A indicação do PRP depende de diversos fatores clínicos e laboratoriais que são avaliados 
-                      individualmente. O objetivo é sempre garantir que seu organismo esteja nas melhores condições 
-                      para responder ao tratamento regenerativo.
-                    </p>
+              <div className="pl-10 space-y-3">
+                <div className={`rounded-lg p-4 border ${
+                  displayIsPRPIndicado 
+                    ? 'bg-green-50 border-green-100' 
+                    : displayIsPRPNaoIndicado 
+                      ? 'bg-amber-50 border-amber-100' 
+                      : 'bg-blue-50 border-blue-100'
+                }`}>
+                  <p className="text-gray-700 leading-relaxed">
+                    {dynamicContent.prpIndicationReason}
+                  </p>
+                </div>
+                
+                {dynamicContent.prpNotes && (
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Observação Clínica</p>
+                    <p className="text-gray-700">{dynamicContent.prpNotes}</p>
                   </div>
                 )}
               </div>
@@ -503,49 +598,78 @@ export function PatientEvaluationReport({
 
             <Separator className="bg-gray-200" />
 
-            {/* 4. PLANO DE PREPARO DO SOLO */}
+            {/* 4. PLANO TERAPÊUTICO */}
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Leaf className="w-4 h-4 text-[hsl(149,20%,37%)]" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">4. Plano de Preparo do Solo</h2>
+                <h2 className="text-lg font-semibold text-gray-900">4. Plano Terapêutico Individualizado</h2>
               </div>
               <div className="pl-10 space-y-4">
-                <p className="text-gray-700 leading-relaxed">
-                  Assim como um jardim precisa de solo preparado para que as sementes germinem, 
-                  seu tecido precisa de condições adequadas para responder ao tratamento. 
-                  O plano terapêutico é estruturado em etapas:
-                </p>
+                {dynamicContent.therapeuticPlan.prepSteps.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-gray-700 leading-relaxed">
+                      Com base nos achados da sua avaliação, o seguinte plano foi elaborado:
+                    </p>
+                    <div className="grid gap-3">
+                      {dynamicContent.therapeuticPlan.prepSteps.map((step, idx) => (
+                        <div key={idx} className="bg-gray-50 rounded-lg p-4 border-l-4 border-primary">
+                          <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-primary text-xs font-bold">{idx + 1}</span>
+                            </div>
+                            <p className="text-gray-700">{step}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-700">
+                    O plano terapêutico será definido após análise completa dos dados clínicos e laboratoriais.
+                  </p>
+                )}
                 
-                <div className="grid gap-4">
-                  <div className="bg-red-50/50 rounded-lg p-4 border-l-4 border-red-400">
-                    <h3 className="font-semibold text-gray-900 mb-2">Etapa 1: Redução da Inflamação</h3>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      Antes de estimular a regeneração, é fundamental controlar processos inflamatórios excessivos. 
-                      Utilizamos técnicas específicas para modular a resposta inflamatória sem suprimi-la completamente, 
-                      pois a inflamação controlada é parte do processo de cura.
-                    </p>
+                {/* Exames Solicitados */}
+                {(dynamicContent.therapeuticPlan.requiredExams.length > 0 || dynamicContent.therapeuticPlan.optionalExams.length > 0) && (
+                  <div className="bg-blue-50/50 rounded-lg p-4 border border-blue-100">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FlaskConical className="w-4 h-4 text-blue-600" />
+                      <p className="font-medium text-blue-800">Exames Laboratoriais</p>
+                    </div>
+                    
+                    {dynamicContent.therapeuticPlan.requiredExams.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-sm text-blue-700 font-medium mb-1">Obrigatórios:</p>
+                        <ul className="list-disc list-inside text-gray-700 text-sm">
+                          {dynamicContent.therapeuticPlan.requiredExams.map((exam, idx) => (
+                            <li key={idx}>{exam}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {dynamicContent.therapeuticPlan.optionalExams.length > 0 && (
+                      <div>
+                        <p className="text-sm text-blue-700 font-medium mb-1">Complementares:</p>
+                        <ul className="list-disc list-inside text-gray-700 text-sm">
+                          {dynamicContent.therapeuticPlan.optionalExams.map((exam, idx) => (
+                            <li key={idx}>{exam}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="bg-purple-50/50 rounded-lg p-4 border-l-4 border-purple-400">
-                    <h3 className="font-semibold text-gray-900 mb-2">Etapa 2: Modulação Neural</h3>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      A dor crônica pode criar padrões neurais que perpetuam o problema. 
-                      Trabalhamos para "recalibrar" a comunicação entre seu sistema nervoso e os tecidos afetados, 
-                      restaurando a sensibilidade normal e melhorando a função.
-                    </p>
+                )}
+                
+                {/* Timeline */}
+                {dynamicContent.therapeuticPlan.timeline && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm">Prazo estimado: {dynamicContent.therapeuticPlan.timeline}</span>
                   </div>
-                  
-                  <div className="bg-green-50/50 rounded-lg p-4 border-l-4 border-green-400">
-                    <h3 className="font-semibold text-gray-900 mb-2">Etapa 3: Estímulo Metabólico Tecidual</h3>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      Preparamos o tecido para receber e responder adequadamente aos estímulos regenerativos. 
-                      Isso inclui melhorar a circulação local, aumentar a oxigenação e criar condições ideais 
-                      para que seu próprio corpo possa se regenerar.
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </section>
 
@@ -557,33 +681,25 @@ export function PatientEvaluationReport({
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Clock className="w-4 h-4 text-[hsl(149,20%,37%)]" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">5. Quando o PRP Passa a Fazer Sentido</h2>
+                <h2 className="text-lg font-semibold text-gray-900">5. Condições para Terapia Regenerativa</h2>
               </div>
               <div className="pl-10">
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                   <p className="text-gray-700 leading-relaxed mb-4">
-                    O PRP se torna uma opção quando seu organismo demonstra estar pronto. 
-                    <strong> Não trabalhamos com datas fixas, mas sim com condições clínicas.</strong> 
-                    O momento ideal é identificado quando:
+                    {displayIsPRPIndicado 
+                      ? "Você já atende às condições para o tratamento regenerativo. Os próximos passos serão discutidos com seu profissional."
+                      : "O momento ideal para terapia regenerativa é identificado quando as seguintes condições são atendidas:"}
                   </p>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>A inflamação está controlada e o tecido está mais organizado</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>Os exames laboratoriais indicam boa capacidade regenerativa</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>A dor neural está modulada e você apresenta melhora funcional</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>Seu corpo está apto a responder positivamente ao estímulo biológico</span>
-                    </li>
-                  </ul>
+                  {!displayIsPRPIndicado && dynamicContent.prpConditions.length > 0 && (
+                    <ul className="space-y-2 text-gray-700">
+                      {dynamicContent.prpConditions.map((condition, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                          <span>{condition}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             </section>
@@ -600,41 +716,14 @@ export function PatientEvaluationReport({
               </div>
               <div className="pl-10 space-y-4">
                 <div className="grid gap-3">
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-green-600 text-xs font-bold">1</span>
+                  {dynamicContent.expectations.map((expectation, idx) => (
+                    <div key={idx} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-primary text-xs font-bold">{idx + 1}</span>
+                      </div>
+                      <p className="text-gray-700">{expectation}</p>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Melhora Progressiva</h4>
-                      <p className="text-gray-600 text-sm">
-                        A recuperação é gradual e contínua. Cada sessão contribui para a evolução do seu quadro.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-blue-600 text-xs font-bold">2</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Importância da Adesão</h4>
-                      <p className="text-gray-600 text-sm">
-                        Seu compromisso com o tratamento é fundamental. Seguir as orientações maximiza os resultados.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-purple-600 text-xs font-bold">3</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Acompanhamento Contínuo</h4>
-                      <p className="text-gray-600 text-sm">
-                        Monitoramos sua evolução constantemente, ajustando o plano conforme necessário.
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </section>
@@ -651,9 +740,8 @@ export function PatientEvaluationReport({
               </div>
               <div className="pl-10">
                 <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-5 border border-primary/10">
-                  <p className="text-gray-800 leading-relaxed italic">
-                    "As decisões do seu tratamento são baseadas no comportamento do tecido e não apenas no nome do diagnóstico. 
-                    Cada pessoa é única, e nosso objetivo é encontrar o caminho mais adequado para a sua recuperação."
+                  <p className="text-gray-800 leading-relaxed">
+                    {dynamicContent.finalConsiderations}
                   </p>
                 </div>
               </div>
@@ -664,7 +752,7 @@ export function PatientEvaluationReport({
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img src={logoReghen} alt="reghen" className="h-5 w-auto opacity-60" />
-                  <span>Documento gerado pelo reghen</span>
+                  <span>Documento gerado pelo reghen • Relatório individualizado</span>
                 </div>
                 <span>{displayData.generatedDate}</span>
               </div>
