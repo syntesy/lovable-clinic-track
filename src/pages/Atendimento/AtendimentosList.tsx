@@ -34,8 +34,22 @@ const AtendimentosList = () => {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
+  // Fetch all patients for the dropdown
+  const { data: allPatients, isLoading: loadingPatients } = useQuery({
+    queryKey: ["all-patients-for-dropdown"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("patients")
+        .select("id, full_name")
+        .order("full_name", { ascending: true });
+
+      if (error) throw error;
+      return data as { id: string; full_name: string }[];
+    },
+  });
+
   // Fetch all attendance sessions for the current user
-  const { data: attendances, isLoading } = useQuery({
+  const { data: attendances, isLoading: loadingAttendances } = useQuery({
     queryKey: ["all-attendance-sessions"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,19 +72,7 @@ const AtendimentosList = () => {
     },
   });
 
-  // Get unique patients for the dropdown
-  const uniquePatients = useMemo(() => {
-    if (!attendances) return [];
-    const patientsMap = new Map<string, { id: string; full_name: string }>();
-    attendances.forEach(a => {
-      if (a.patients && !patientsMap.has(a.patients.id)) {
-        patientsMap.set(a.patients.id, { id: a.patients.id, full_name: a.patients.full_name });
-      }
-    });
-    return Array.from(patientsMap.values()).sort((a, b) => 
-      a.full_name.localeCompare(b.full_name)
-    );
-  }, [attendances]);
+  const isLoading = loadingPatients || loadingAttendances;
 
   // Filter attendances
   const filteredAttendances = useMemo(() => {
@@ -139,7 +141,7 @@ const AtendimentosList = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
                   <SelectItem value="all">Todos os pacientes</SelectItem>
-                  {uniquePatients.map((patient) => (
+                  {allPatients?.map((patient) => (
                     <SelectItem key={patient.id} value={patient.id}>
                       {patient.full_name}
                     </SelectItem>
