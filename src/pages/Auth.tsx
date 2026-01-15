@@ -7,14 +7,17 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import logoReghen from "@/assets/logo-reghen.png";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { validateSignup, loginSchema } from "@/lib/password-validation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 export default function Auth() {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
-  const {
-    logLogin
-  } = useAuditLog();
+  const { toast } = useToast();
+  const { logLogin } = useAuditLog();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +28,6 @@ export default function Auth() {
   const [lockoutMessage, setLockoutMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  // Verificar rate limit ao carregar
   useEffect(() => {
     checkRateLimit();
   }, []);
@@ -58,7 +60,6 @@ export default function Auth() {
       
       if (data) {
         setRemainingAttempts(data.remainingAttempts);
-        // Só bloqueia se lockoutEndsAt existir (bloqueio ativo)
         if (data.lockoutEndsAt) {
           setLockoutMessage(data.message);
         } else if (data.remainingAttempts !== undefined && data.remainingAttempts <= 2 && data.message !== 'OK') {
@@ -85,20 +86,19 @@ export default function Auth() {
       console.error('Erro ao registrar sucesso:', err);
     }
   };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setFieldErrors({});
 
-    // Verificar se está bloqueado
     if (lockoutMessage) {
       setError(lockoutMessage);
       setLoading(false);
       return;
     }
 
-    // Validar campos
     const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
       const errors: Record<string, string[]> = {};
@@ -132,13 +132,13 @@ export default function Auth() {
     }
     setLoading(false);
   };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setFieldErrors({});
 
-    // Validar todos os campos com schema forte
     const validation = validateSignup({ email, password, fullName });
     if (!validation.valid) {
       setFieldErrors(validation.errors);
@@ -176,374 +176,204 @@ export default function Auth() {
     }
     setLoading(false);
   };
-  return <div style={{
-    position: "fixed",
-    inset: 0,
-    width: "100vw",
-    height: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1C2939",
-    backgroundImage: "url('/images/dna-login-bg-clean.png?v=2')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    overflow: "hidden",
-    zIndex: 9999
-  }}>
-      {/* Overlay sutil para profundidade */}
-      <div style={{
-      position: "absolute",
-      inset: 0,
-      background: "radial-gradient(ellipse at center, transparent 30%, rgba(27, 38, 54, 0.5) 100%)",
-      pointerEvents: "none"
-    }} />
 
-      {/* Container do card */}
-      <div style={{
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      zIndex: 10
-    }}>
-        {/* Card glassmorphism */}
-        <div style={{
-        width: "min(520px, 90vw)",
-        backgroundColor: "rgba(27, 38, 54, 0.92)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderRadius: "24px",
-        padding: "40px 50px 40px 50px",
-        boxShadow: "0 25px 60px rgba(0, 0, 0, 0.4)",
-        border: "1px solid #253441"
-      }}>
-          {/* Logo dentro do card */}
-          <div style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: "30px"
-        }}>
-            <img src={logoReghen} alt="reghen" style={{
-            width: "280px",
-            height: "auto",
-            objectFit: "contain"
-          }} />
-          </div>
+  return (
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-background overflow-hidden z-[9999]"
+      style={{
+        backgroundImage: "url('/images/dna-login-bg-clean.png?v=2')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-background/50 pointer-events-none" />
 
-          {/* Título */}
-          <h1 style={{
-          color: "#FEFEFE",
-          fontSize: "24px",
-          fontWeight: 600,
-          letterSpacing: "3px",
-          textAlign: "center",
-          marginBottom: "30px",
-          fontFamily: "Inter, sans-serif"
-        }}>
-            {isSignUp ? "CADASTRO" : "LOG-IN"}
-          </h1>
-
-          {/* Badge de segurança */}
-          <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-          marginBottom: "30px",
-          padding: "8px 16px",
-          backgroundColor: "#293E48",
-          borderRadius: "20px",
-          border: "1px solid #253441"
-        }}>
-            <Shield style={{
-            width: "14px",
-            height: "14px",
-            color: "#79B997"
-          }} />
-            <span style={{
-            color: "#B7BBC0",
-            fontSize: "11px",
-            fontFamily: "Inter, sans-serif"
-          }}>Conformidade LGPD </span>
-          </div>
-
-          {/* Aviso de bloqueio */}
-          {lockoutMessage && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "12px 16px",
-              backgroundColor: "rgba(255, 77, 77, 0.1)",
-              border: "1px solid rgba(255, 77, 77, 0.3)",
-              borderRadius: "12px",
-              marginBottom: "20px"
-            }}>
-              <AlertTriangle style={{ width: "16px", height: "16px", color: "#FF4D4D" }} />
-              <span style={{ color: "#FF6B6B", fontSize: "12px", fontFamily: "Inter, sans-serif" }}>
-                {lockoutMessage}
-              </span>
+      {/* Card container */}
+      <div className="relative flex flex-col items-center z-10">
+        {/* Glassmorphism Card */}
+        <Card className="w-[min(520px,90vw)] bg-card/95 backdrop-blur-xl border-border shadow-2xl rounded-3xl">
+          <CardContent className="p-10 sm:px-12">
+            {/* Logo */}
+            <div className="w-full flex items-center justify-center mb-8">
+              <img 
+                src={logoReghen} 
+                alt="reghen" 
+                className="w-[280px] h-auto object-contain"
+              />
             </div>
-          )}
 
-          {/* Aviso de tentativas restantes */}
-          {!lockoutMessage && remainingAttempts !== null && remainingAttempts < 5 && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 16px",
-              backgroundColor: "rgba(255, 140, 66, 0.1)",
-              border: "1px solid rgba(255, 140, 66, 0.3)",
-              borderRadius: "12px",
-              marginBottom: "20px"
-            }}>
-              <AlertTriangle style={{ width: "14px", height: "14px", color: "#FF8C42" }} />
-              <span style={{ color: "#FF8C42", fontSize: "11px", fontFamily: "Inter, sans-serif" }}>
-                {remainingAttempts} tentativa(s) restante(s)
-              </span>
+            {/* Title */}
+            <h1 className="text-foreground text-2xl font-semibold tracking-[3px] text-center mb-8">
+              {isSignUp ? "CADASTRO" : "LOG-IN"}
+            </h1>
+
+            {/* LGPD Badge */}
+            <div className="flex items-center justify-center mb-8">
+              <Badge variant="secondary" className="gap-2 px-4 py-2 bg-accent border-border">
+                <Shield className="w-3.5 h-3.5 text-primary" />
+                <span className="text-muted-foreground text-xs">Conformidade LGPD</span>
+              </Badge>
             </div>
-          )}
 
-          <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
-            {/* Campo Nome (apenas no cadastro) */}
-            {isSignUp && <div style={{
-            marginBottom: "25px"
-          }}>
-                <label style={{
-              display: "block",
-              color: "#FEFEFE",
-              fontSize: "14px",
-              fontWeight: 500,
-              marginBottom: "8px",
-              fontFamily: "Inter, sans-serif"
-            }}>
-                  Nome Completo
-                </label>
-                <input type="text" placeholder="Seu nome completo" value={fullName} onChange={e => setFullName(e.target.value)} required style={{
-              width: "100%",
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom: fieldErrors.fullName ? "1px solid #FF6B6B" : "1px solid #253441",
-              padding: "12px 0",
-              color: "#FEFEFE",
-              fontSize: "14px",
-              outline: "none",
-              fontFamily: "Inter, sans-serif"
-            }} />
-                {fieldErrors.fullName && (
-                  <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
-                    {fieldErrors.fullName[0]}
+            {/* Lockout Warning */}
+            {lockoutMessage && (
+              <Alert variant="destructive" className="mb-5 bg-destructive/10 border-destructive/30">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-destructive text-sm">
+                  {lockoutMessage}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Remaining Attempts Warning */}
+            {!lockoutMessage && remainingAttempts !== null && remainingAttempts < 5 && (
+              <Alert className="mb-5 bg-warning/10 border-warning/30">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <AlertDescription className="text-warning text-sm">
+                  {remainingAttempts} tentativa(s) restante(s)
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="space-y-6">
+              {/* Name Field (signup only) */}
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-foreground">
+                    Nome Completo
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    required
+                    className={`bg-secondary/50 border-border rounded-full px-4 py-3 h-12 text-foreground placeholder:text-muted-foreground ${
+                      fieldErrors.fullName ? 'border-destructive' : ''
+                    }`}
+                  />
+                  {fieldErrors.fullName && (
+                    <span className="text-destructive text-xs">
+                      {fieldErrors.fullName[0]}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Email Field */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-foreground">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  name="email"
+                  autoComplete="username"
+                  inputMode="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  className={`bg-secondary/50 border-border rounded-full px-4 py-3 h-12 text-foreground placeholder:text-muted-foreground ${
+                    fieldErrors.email ? 'border-destructive' : ''
+                  }`}
+                />
+                {fieldErrors.email && (
+                  <span className="text-destructive text-xs">
+                    {fieldErrors.email[0]}
                   </span>
                 )}
-              </div>}
+              </div>
 
-            {/* Campo Email */}
-            <div style={{
-            marginBottom: "25px"
-          }}>
-              <label style={{
-              display: "block",
-              color: "#FEFEFE",
-              fontSize: "14px",
-              fontWeight: 500,
-              marginBottom: "8px",
-              fontFamily: "Inter, sans-serif"
-            }}>
-                Email
-              </label>
-              <input 
-                type="email" 
-                name="email"
-                autoComplete="username"
-                inputMode="email"
-                placeholder="seu@email.com" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                required 
-                style={{
-                  width: "100%",
-                  backgroundColor: "rgba(37, 52, 65, 0.5)",
-                  border: fieldErrors.email ? "1px solid #FF6B6B" : "1px solid #253441",
-                  borderRadius: "26px",
-                  padding: "12px 16px",
-                  color: "#FEFEFE",
-                  fontSize: "14px",
-                  outline: "none",
-                  fontFamily: "Inter, sans-serif"
-                }} 
-              />
-              {fieldErrors.email && (
-                <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
-                  {fieldErrors.email[0]}
-                </span>
+              {/* Password Field */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground">
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  name="password"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  placeholder={isSignUp ? "Mín. 8 caracteres, maiúscula, número e símbolo" : "Sua senha"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={isSignUp ? 8 : 1}
+                  className={`bg-secondary/50 border-border rounded-full px-4 py-3 h-12 text-foreground placeholder:text-muted-foreground ${
+                    fieldErrors.password ? 'border-destructive' : ''
+                  }`}
+                />
+                {isSignUp && <PasswordStrengthIndicator password={password} />}
+                {fieldErrors.password && (
+                  <span className="text-destructive text-xs">
+                    {fieldErrors.password[0]}
+                  </span>
+                )}
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <p className="text-destructive text-sm text-center">
+                  {error}
+                </p>
               )}
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading || !!lockoutMessage}
+                className="w-full h-13 rounded-full text-base font-medium shadow-lg disabled:opacity-70"
+                style={{
+                  backgroundColor: lockoutMessage ? 'hsl(var(--muted))' : 'hsl(var(--primary))',
+                  boxShadow: lockoutMessage ? 'none' : '0 4px 20px hsl(var(--primary) / 0.3)'
+                }}
+              >
+                {loading ? "Aguarde..." : lockoutMessage ? "Bloqueado" : isSignUp ? "Cadastrar" : "Entrar"}
+              </Button>
+            </form>
+
+            {/* Toggle Login/Signup */}
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError("");
+                  setFieldErrors({});
+                }}
+                className="text-muted-foreground text-sm hover:text-foreground transition-colors underline"
+              >
+                {isSignUp ? "Já tem conta? Faça login" : "Não tem conta? Cadastre-se"}
+              </button>
             </div>
 
-            {/* Campo Password */}
-            <div style={{
-            marginBottom: "30px"
-          }}>
-              <label style={{
-              display: "block",
-              color: "#FEFEFE",
-              fontSize: "14px",
-              fontWeight: 500,
-              marginBottom: "8px",
-              fontFamily: "Inter, sans-serif"
-            }}>
-                Senha
-              </label>
-              <input 
-                type="password" 
-                name="password"
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                placeholder={isSignUp ? "Mín. 8 caracteres, maiúscula, número e símbolo" : "Sua senha"} 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                required 
-                minLength={isSignUp ? 8 : 1} 
-                style={{
-                  width: "100%",
-                  backgroundColor: "rgba(37, 52, 65, 0.5)",
-                  border: fieldErrors.password ? "1px solid #FF6B6B" : "1px solid #253441",
-                  borderRadius: "26px",
-                  padding: "12px 16px",
-                  color: "#FEFEFE",
-                  fontSize: "14px",
-                  outline: "none",
-                  fontFamily: "Inter, sans-serif"
-                }} 
-              />
-              {isSignUp && <PasswordStrengthIndicator password={password} />}
-              {fieldErrors.password && (
-                <span style={{ color: "#FF6B6B", fontSize: "11px", fontFamily: "Inter, sans-serif", marginTop: "4px", display: "block" }}>
-                  {fieldErrors.password[0]}
-                </span>
-              )}
+            {/* Page Indicator Dots */}
+            <div className="flex justify-center gap-2 mt-6">
+              <div className={`w-2 h-2 rounded-full transition-colors ${
+                isSignUp ? 'bg-border' : 'bg-muted-foreground'
+              }`} />
+              <div className={`w-2 h-2 rounded-full transition-colors ${
+                isSignUp ? 'bg-muted-foreground' : 'bg-border'
+              }`} />
             </div>
 
-            {/* Mensagem de erro */}
-            {error && <p style={{
-            color: "#FF6B6B",
-            fontSize: "12px",
-            textAlign: "center",
-            marginBottom: "15px",
-            fontFamily: "Inter, sans-serif"
-          }}>
-                {error}
-              </p>}
-
-            {/* Botão principal */}
-            <button type="submit" disabled={loading || !!lockoutMessage} style={{
-            width: "100%",
-            height: "52px",
-            backgroundColor: lockoutMessage ? "#555" : "#79B997",
-            border: "none",
-            borderRadius: "26px",
-            color: "#FEFEFE",
-            fontSize: "16px",
-            fontWeight: 500,
-            cursor: (loading || lockoutMessage) ? "not-allowed" : "pointer",
-            opacity: (loading || lockoutMessage) ? 0.7 : 1,
-            transition: "all 0.2s ease",
-            fontFamily: "Inter, sans-serif",
-            boxShadow: lockoutMessage ? "none" : "0 4px 20px rgba(121, 185, 151, 0.3)"
-          }} onMouseEnter={e => {
-            if (!loading && !lockoutMessage) {
-              e.currentTarget.style.filter = "brightness(1.1)";
-            }
-          }} onMouseLeave={e => {
-            e.currentTarget.style.filter = "brightness(1)";
-          }}>
-              {loading ? "Aguarde..." : lockoutMessage ? "Bloqueado" : isSignUp ? "Cadastrar" : "Entrar"}
-            </button>
-          </form>
-
-          {/* Link para alternar entre login e cadastro */}
-          <div style={{
-          marginTop: "25px",
-          textAlign: "center"
-        }}>
-            <button type="button" onClick={() => {
-            setIsSignUp(!isSignUp);
-            setError("");
-            setFieldErrors({});
-          }} style={{
-            background: "none",
-            border: "none",
-            color: "#B7BBC0",
-            fontSize: "13px",
-            cursor: "pointer",
-            fontFamily: "Inter, sans-serif",
-            textDecoration: "underline"
-          }}>
-              {isSignUp ? "Já tem conta? Faça login" : "Não tem conta? Cadastre-se"}
-            </button>
-          </div>
-
-          {/* Indicador de página (3 dots) */}
-          <div style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "8px",
-          marginTop: "25px"
-        }}>
-            <div style={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            backgroundColor: isSignUp ? "#253441" : "#B7BBC0"
-          }} />
-            <div style={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            backgroundColor: isSignUp ? "#B7BBC0" : "#253441"
-          }} />
-          </div>
-
-          {/* Link para área do paciente */}
-          <div style={{
-            marginTop: "30px",
-            paddingTop: "20px",
-            borderTop: "1px solid #253441",
-            textAlign: "center"
-          }}>
-            <Link 
-              to="/patient/login"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                color: "#B7BBC0",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-                textDecoration: "none",
-                padding: "10px 20px",
-                borderRadius: "20px",
-                backgroundColor: "rgba(121, 185, 151, 0.1)",
-                border: "1px solid rgba(121, 185, 151, 0.3)",
-                transition: "all 0.2s ease"
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = "rgba(121, 185, 151, 0.2)";
-                e.currentTarget.style.borderColor = "rgba(121, 185, 151, 0.5)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = "rgba(121, 185, 151, 0.1)";
-                e.currentTarget.style.borderColor = "rgba(121, 185, 151, 0.3)";
-              }}
-            >
-              <User style={{ width: "16px", height: "16px", color: "#79B997" }} />
-              <span>Sou Paciente</span>
-            </Link>
-          </div>
-        </div>
+            {/* Patient Portal Link */}
+            <div className="mt-8 pt-6 border-t border-border text-center">
+              <Link 
+                to="/patient/login"
+                className="inline-flex items-center gap-2 text-muted-foreground text-sm px-5 py-2.5 rounded-full bg-primary/10 border border-primary/30 hover:bg-primary/20 hover:border-primary/50 transition-all"
+              >
+                <User className="w-4 h-4 text-primary" />
+                <span>Sou Paciente</span>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </div>;
+    </div>
+  );
 }
