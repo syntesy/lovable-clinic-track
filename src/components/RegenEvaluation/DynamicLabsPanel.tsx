@@ -3,6 +3,12 @@
  * 
  * REGRA FUNDAMENTAL: Os exames são definidos pela Triagem de Ortobiológicos.
  * Este componente apenas coleta e valida os exames solicitados.
+ * 
+ * UX FINAL:
+ * - Badge S2 no topo (APTO/PENDENTE/INDISPONÍVEL)
+ * - Microlegendas por exame
+ * - Resumo automático
+ * - Mensagens de bloqueio claras
  */
 
 import { useState, useMemo } from "react";
@@ -12,7 +18,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, FlaskConical, CheckCircle2, AlertTriangle, XCircle, Calendar, Info } from "lucide-react";
+import { 
+  Save, 
+  FlaskConical, 
+  CheckCircle2, 
+  AlertTriangle, 
+  XCircle, 
+  Calendar, 
+  Info,
+  Shield,
+  ShieldAlert,
+  ShieldX
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { computeDIE } from "@/lib/regen-engine";
@@ -23,7 +45,8 @@ import {
   extractExamsFromTriage, 
   updateExamsWithValidation,
   areAllCriticalExamsValid,
-  hasTriageExams
+  hasTriageExams,
+  getCriticalExams
 } from "@/types/triage-exams";
 import { ExamGroup } from "@/types/screening";
 
@@ -46,6 +69,84 @@ interface DynamicLabsPanelProps {
 interface LabInputState {
   value: string;
   date: string;
+}
+
+/**
+ * Badge S2 Component - Exibe status de aptidão para Score Definitivo
+ */
+function S2StatusBadge({ triageExams }: { triageExams: TriageExamItem[] }) {
+  if (!hasTriageExams(triageExams)) {
+    return (
+      <Badge variant="outline" className="gap-1.5 text-muted-foreground border-muted">
+        <ShieldX className="h-3.5 w-3.5" />
+        S2: INDISPONÍVEL
+      </Badge>
+    );
+  }
+
+  const allCriticalValid = areAllCriticalExamsValid(triageExams);
+
+  if (allCriticalValid) {
+    return (
+      <Badge className="gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+        <Shield className="h-3.5 w-3.5" />
+        S2: APTO
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="secondary" className="gap-1.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 dark:border-amber-700">
+      <ShieldAlert className="h-3.5 w-3.5" />
+      S2: PENDENTE
+    </Badge>
+  );
+}
+
+/**
+ * Microlegenda por exame (para inputs)
+ */
+function ExamInputMicroBadge({ exam }: { exam: TriageExamItem }) {
+  if (exam.status === "desatualizado") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-orange-50 text-orange-700 border-orange-300 dark:bg-orange-900/20 dark:text-orange-400">
+            DESATUALIZADO
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Coletado há mais de 90 dias — repetir exame.
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (exam.status === "pendente") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400">
+            PENDENTE
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Aguardando inserção do resultado.
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (exam.status === "válido") {
+    return (
+      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400">
+        <CheckCircle2 className="h-3 w-3 mr-0.5" />
+        OK
+      </Badge>
+    );
+  }
+
+  return null;
 }
 
 export function DynamicLabsPanel({
@@ -88,10 +189,13 @@ export function DynamicLabsPanel({
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <FlaskConical className="w-5 h-5 text-primary" />
-            Exames Laboratoriais
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FlaskConical className="w-5 h-5 text-primary" />
+              Exames Laboratoriais
+            </CardTitle>
+            <S2StatusBadge triageExams={triageExams} />
+          </div>
         </CardHeader>
         <CardContent>
           <Alert variant="destructive">
@@ -100,10 +204,12 @@ export function DynamicLabsPanel({
               <strong>Nenhuma triagem de ortobiológicos encontrada para este paciente.</strong>
               <br />
               <span className="text-sm">
-                Realize a triagem primeiro para definir os exames necessários.
-                <br />
-                <em className="text-xs">Ações bloqueadas: salvar exames, validar exames, avançar status clínico (S2).</em>
+                Crie uma triagem de ortobiológicos para definir os exames.
               </span>
+              <br />
+              <em className="text-xs text-muted-foreground">
+                Ações bloqueadas: salvar exames, validar exames, avançar status clínico (S2).
+              </em>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -273,6 +379,10 @@ export function DynamicLabsPanel({
   const criticalExams = updatedTriageExams.filter(e => e.is_critical);
   const optionalExams = updatedTriageExams.filter(e => !e.is_critical);
 
+  // Resumo para header
+  const validCriticalCount = criticalExams.filter(e => e.status === "válido").length;
+  const validOptionalCount = optionalExams.filter(e => e.status === "válido").length;
+
   return (
     <Card className={allCriticalValid ? "border-green-500/50" : ""}>
       <CardHeader className="pb-3">
@@ -289,9 +399,13 @@ export function DynamicLabsPanel({
               Exames definidos pela Triagem de Ortobiológicos
             </CardDescription>
           </div>
-          <Badge variant="outline">
-            {triageExams.length} exames solicitados
-          </Badge>
+          <S2StatusBadge triageExams={updatedTriageExams} />
+        </div>
+        
+        {/* Resumo automático */}
+        <div className="text-sm text-muted-foreground bg-muted/30 px-3 py-2 rounded-md mt-2">
+          Críticos: {validCriticalCount} válidos de {criticalExams.length}
+          {optionalExams.length > 0 && ` · Opcionais: ${validOptionalCount} de ${optionalExams.length}`}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -313,6 +427,16 @@ export function DynamicLabsPanel({
           </div>
         </div>
 
+        {/* Mensagem de bloqueio S2 pendente */}
+        {!allCriticalValid && criticalExams.length > 0 && (
+          <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded text-sm">
+            <ShieldAlert className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <span className="text-amber-700 dark:text-amber-300">
+              Preencha e valide todos os exames críticos para avançar.
+            </span>
+          </div>
+        )}
+
         {/* Exames Críticos */}
         {criticalExams.length > 0 && (
           <div className="space-y-2">
@@ -324,9 +448,21 @@ export function DynamicLabsPanel({
               {criticalExams.map(exam => (
                 <div key={exam.code} className="flex items-center gap-3 p-3 border border-amber-200 dark:border-amber-800 rounded-lg bg-amber-50/50 dark:bg-amber-950/20">
                   <div className="flex-1 space-y-1">
-                    <Label htmlFor={`lab-${exam.code}`} className="text-sm font-medium">
-                      {exam.label}
-                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor={`lab-${exam.code}`} className="text-sm font-medium">
+                        {exam.label}
+                      </Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-800/30 dark:text-amber-400">
+                            CRÍTICO
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          Necessário para avançar no preparo.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <Input
                       id={`lab-${exam.code}`}
                       type="text"
@@ -337,8 +473,9 @@ export function DynamicLabsPanel({
                       className="h-9"
                     />
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex flex-col gap-1 items-end">
                     {getStatusBadge(validationResults?.[exam.code]?.status)}
+                    <ExamInputMicroBadge exam={exam} />
                   </div>
                 </div>
               ))}
@@ -369,8 +506,9 @@ export function DynamicLabsPanel({
                       className="h-9"
                     />
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex flex-col gap-1 items-end">
                     {getStatusBadge(validationResults?.[exam.code]?.status)}
+                    <ExamInputMicroBadge exam={exam} />
                   </div>
                 </div>
               ))}
