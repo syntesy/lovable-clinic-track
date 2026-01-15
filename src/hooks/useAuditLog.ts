@@ -164,6 +164,57 @@ export function useAuditLog() {
     });
   }, [logAction]);
 
+  // === Attendance Events (Governança v1.1) ===
+  
+  const logAttendanceCreated = useCallback((attendanceId: string, patientId: string, involvesOrthobiologics: boolean) => {
+    return logAction({
+      action: "ATTENDANCE_CREATED",
+      tableName: "attendance_sessions",
+      recordId: attendanceId,
+      additionalInfo: { 
+        patient_id: patientId,
+        involves_orthobiologics: involvesOrthobiologics,
+      },
+    });
+  }, [logAction]);
+
+  const logAttendanceClosed = useCallback((attendanceId: string, patientId: string) => {
+    return logAction({
+      action: "ATTENDANCE_CLOSED",
+      tableName: "attendance_sessions",
+      recordId: attendanceId,
+      additionalInfo: { 
+        patient_id: patientId,
+        closed_at: new Date().toISOString(),
+      },
+    });
+  }, [logAction]);
+
+  const logAttendanceFileUploaded = useCallback((fileId: string, attendanceId: string, fileName: string, fileType: string) => {
+    return logAction({
+      action: "ATTENDANCE_FILE_UPLOADED",
+      tableName: "attendance_files",
+      recordId: fileId,
+      additionalInfo: { 
+        attendance_ref: attendanceId,
+        file_name: fileName,
+        file_type: fileType,
+      },
+    });
+  }, [logAction]);
+
+  const logReportSnapshotCreated = useCallback((snapshotId: string, patientId: string, attendanceRef?: string) => {
+    return logAction({
+      action: "REPORT_SNAPSHOT_CREATED",
+      tableName: "report_snapshots",
+      recordId: snapshotId,
+      additionalInfo: { 
+        patient_id: patientId,
+        attendance_ref: attendanceRef || null,
+      },
+    });
+  }, [logAction]);
+
   return {
     logAction,
     logLogin,
@@ -178,5 +229,10 @@ export function useAuditLog() {
     logDocumentAccess,
     logSessionStart,
     logSessionEnd,
+    // Attendance events
+    logAttendanceCreated,
+    logAttendanceClosed,
+    logAttendanceFileUploaded,
+    logReportSnapshotCreated,
   };
 }
