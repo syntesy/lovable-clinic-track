@@ -432,15 +432,27 @@ const DetalhePaciente = () => {
                           </>
                         )}
                         {latestClinicalRecord && (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0 text-xs text-muted-foreground hover:text-primary"
-                            onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Ver histórico de prontuários
-                          </Button>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs text-muted-foreground hover:text-primary"
+                              onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
+                            >
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              Ver histórico de prontuários
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCreateNewRecord}
+                              disabled={isCreatingRecord}
+                              className="gap-1"
+                            >
+                              {isCreatingRecord ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                              Nova Avaliação Clínica
+                            </Button>
+                          </div>
                         )}
                       </CardContent>
                     </Card>
