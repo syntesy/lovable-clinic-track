@@ -3,24 +3,39 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
   ArrowLeft, 
-  Search, 
   User, 
   UserPlus,
   Loader2,
-  FlaskConical
+  FlaskConical,
+  ChevronDown,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateAttendance } from "@/hooks/useAttendance";
+import { cn } from "@/lib/utils";
 
 const NovoAtendimento = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [involvesOrthobiologics, setInvolvesOrthobiologics] = useState(false);
+  const [open, setOpen] = useState(false);
   const createAttendance = useCreateAttendance();
 
   // Fetch all patients
@@ -36,14 +51,14 @@ const NovoAtendimento = () => {
     },
   });
 
-  const filteredPatients = patients?.filter(p =>
-    p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const selectedPatient = patients?.find(p => p.id === selectedPatientId);
 
-  const handleSelectPatient = async (patientId: string) => {
+  const handleCreateAttendance = async () => {
+    if (!selectedPatientId) return;
+    
     try {
       const result = await createAttendance.mutateAsync({
-        patientId,
+        patientId: selectedPatientId,
         involvesOrthobiologics,
       });
       
@@ -57,7 +72,7 @@ const NovoAtendimento = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Button
@@ -77,23 +92,124 @@ const NovoAtendimento = () => {
           </p>
         </div>
 
+        {/* Patient Selection Card */}
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              Selecionar Paciente
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Patient Dropdown */}
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between h-12 text-left font-normal"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Carregando pacientes...
+                    </span>
+                  ) : selectedPatient ? (
+                    <span className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{selectedPatient.full_name}</span>
+                        {selectedPatient.age && (
+                          <span className="text-xs text-muted-foreground">
+                            {selectedPatient.age} anos
+                          </span>
+                        )}
+                      </div>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Selecione um paciente...</span>
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50 bg-popover border border-border shadow-lg" align="start">
+                <Command className="bg-popover">
+                  <CommandInput placeholder="Buscar paciente..." className="h-10" />
+                  <CommandList className="max-h-[300px]">
+                    <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+                      Nenhum paciente encontrado.
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {patients?.map((patient) => (
+                        <CommandItem
+                          key={patient.id}
+                          value={patient.full_name}
+                          onSelect={() => {
+                            setSelectedPatientId(patient.id);
+                            setOpen(false);
+                          }}
+                          className="flex items-center gap-3 py-3 cursor-pointer"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <User className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{patient.full_name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {patient.age ? `${patient.age} anos` : "Idade não informada"}
+                              {patient.gender && (
+                                <> • {patient.gender === "male" ? "Masculino" : 
+                                      patient.gender === "female" ? "Feminino" : patient.gender}</>
+                              )}
+                            </p>
+                          </div>
+                          <Check
+                            className={cn(
+                              "h-4 w-4 text-primary",
+                              selectedPatientId === patient.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            {/* New Patient Button */}
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/novo-paciente")}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <UserPlus className="w-4 h-4" />
+              Cadastrar Novo Paciente
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Options */}
         <Card className="mb-6">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Opções do Atendimento</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FlaskConical className="w-5 h-5 text-primary" />
+              Opções do Atendimento
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FlaskConical className="w-5 h-5 text-primary" />
-                <div>
-                  <Label htmlFor="orthobiologics" className="font-medium">
-                    Envolve Ortobiológicos
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Marque se este atendimento incluirá procedimentos com ortobiológicos
-                  </p>
-                </div>
+              <div>
+                <Label htmlFor="orthobiologics" className="font-medium">
+                  Envolve Ortobiológicos
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Marque se este atendimento incluirá procedimentos com ortobiológicos
+                </p>
               </div>
               <Switch
                 id="orthobiologics"
@@ -104,101 +220,22 @@ const NovoAtendimento = () => {
           </CardContent>
         </Card>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar paciente por nome..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* New Patient Button */}
-        <div className="mb-6">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/novo-paciente")}
-            className="gap-2"
-          >
-            <UserPlus className="w-4 h-4" />
-            Cadastrar Novo Paciente
-          </Button>
-        </div>
-
-        {/* Patient List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : filteredPatients?.length === 0 ? (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                Nenhum paciente encontrado
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                {searchQuery 
-                  ? "Tente buscar com outros termos"
-                  : "Cadastre um paciente para iniciar um atendimento"
-                }
-              </p>
-              {!searchQuery && (
-                <Button onClick={() => navigate("/novo-paciente")}>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Cadastrar Paciente
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground mb-4">
-              {filteredPatients?.length} paciente(s) encontrado(s)
-            </p>
-            {filteredPatients?.map((patient) => (
-              <Card
-                key={patient.id}
-                className="hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => handleSelectPatient(patient.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 text-primary" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-foreground truncate">
-                        {patient.full_name}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {patient.age && <span>{patient.age} anos</span>}
-                        {patient.age && patient.gender && (
-                          <span className="text-muted-foreground/50">•</span>
-                        )}
-                        {patient.gender && (
-                          <span>
-                            {patient.gender === "male" ? "Masculino" : 
-                             patient.gender === "female" ? "Feminino" : patient.gender}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {createAttendance.isPending && (
-                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        {/* Action Button */}
+        <Button
+          onClick={handleCreateAttendance}
+          disabled={!selectedPatientId || createAttendance.isPending}
+          className="w-full h-12 text-base font-medium"
+          size="lg"
+        >
+          {createAttendance.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Criando atendimento...
+            </>
+          ) : (
+            "Iniciar Atendimento"
+          )}
+        </Button>
       </div>
     </div>
   );
