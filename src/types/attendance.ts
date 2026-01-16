@@ -44,24 +44,38 @@ export interface AttendanceStepConfig {
   icon: string;
 }
 
-// Step definitions for the Attendance flow (clinically correct sequence)
-// 1) Avaliação Clínica → 2) Triagem (opcional) → 3) Plano Terapêutico → 4) Anexos → 5) Relatório
-export const ATTENDANCE_STEPS: AttendanceStepConfig[] = [
-  { id: 'clinical', label: 'Avaliação Clínica', icon: 'stethoscope' },
-  { id: 'triage', label: 'Triagem', icon: 'flask-conical' },
-  { id: 'plan', label: 'Plano Terapêutico', icon: 'clipboard-list' },
-  { id: 'attachments', label: 'Anexos', icon: 'paperclip' },
-  { id: 'report', label: 'Relatório', icon: 'file-text' },
-];
+// Re-export domain contracts as single source of truth
+export { 
+  type AttendanceStepId,
+  INITIAL_STEP,
+  getStepsForAttendance,
+  isValidStep,
+  normalizeStep,
+  canAccessStep,
+  validateStepForAttendance,
+} from '@/domain/attendanceFlow';
 
-// Helper to get visible steps based on attendance type
-// If involves_orthobiologics is true, show triage step; otherwise hide it
+// Step UI configuration (labels, icons)
+// Follows the domain contract order
+export const STEP_UI_CONFIG: Record<string, { label: string; icon: string }> = {
+  clinical: { label: 'Avaliação Clínica', icon: 'stethoscope' },
+  triage: { label: 'Triagem', icon: 'flask-conical' },
+  plan: { label: 'Plano Terapêutico', icon: 'clipboard-list' },
+  attachments: { label: 'Anexos', icon: 'paperclip' },
+  report: { label: 'Relatório', icon: 'file-text' },
+};
+
+/**
+ * @deprecated Use getStepsForAttendance from domain/attendanceFlow instead
+ * Kept for backward compatibility
+ */
 export function getVisibleSteps(involvesOrthobiologics: boolean): AttendanceStepConfig[] {
-  if (involvesOrthobiologics) {
-    return ATTENDANCE_STEPS;
-  }
-  // Hide triage step for non-orthobiologic attendances
-  return ATTENDANCE_STEPS.filter(step => step.id !== 'triage');
+  const { getStepsForAttendance } = require('@/domain/attendanceFlow');
+  const stepIds = getStepsForAttendance({ involves_orthobiologics: involvesOrthobiologics });
+  return stepIds.map((id: string) => ({
+    id,
+    ...(STEP_UI_CONFIG[id] || { label: id, icon: 'file-text' }),
+  }));
 }
 
 // Helper to format attendance title
