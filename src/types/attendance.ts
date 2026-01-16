@@ -53,10 +53,14 @@ export const ATTENDANCE_STEPS: AttendanceStepConfig[] = [
   { id: 'report', label: 'Relatório', icon: 'file-text' },
 ];
 
-// Helper to get visible steps
-// (Kept as a function to preserve existing call-sites)
-export function getVisibleSteps(_involvesOrthobiologics: boolean): AttendanceStepConfig[] {
-  return ATTENDANCE_STEPS;
+// Helper to get visible steps based on attendance type
+// If involves_orthobiologics is true, show triage step; otherwise hide it
+export function getVisibleSteps(involvesOrthobiologics: boolean): AttendanceStepConfig[] {
+  if (involvesOrthobiologics) {
+    return ATTENDANCE_STEPS;
+  }
+  // Hide triage step for non-orthobiologic attendances
+  return ATTENDANCE_STEPS.filter(step => step.id !== 'triage');
 }
 
 // Helper to format attendance title

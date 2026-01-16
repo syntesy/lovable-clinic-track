@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock } from "lucide-react";
+import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -15,8 +15,10 @@ import {
   useAttendanceSession,
   useAttendanceFiles,
   useAttendanceRecords,
-  useCloseAttendance
+  useCloseAttendance,
+  useUpdateAttendanceType
 } from "@/hooks/useAttendance";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AttendanceStepper,
   AttendanceHeader
@@ -51,6 +53,9 @@ const AtendimentoDetail = () => {
 
   // Close attendance mutation
   const closeAttendance = useCloseAttendance();
+  
+  // Update attendance type mutation
+  const updateAttendanceType = useUpdateAttendanceType();
 
   // Check if attendance is closed
   const isClosed = isAttendanceClosed(attendance ?? null);
@@ -111,7 +116,12 @@ const AtendimentoDetail = () => {
     };
   }, [attendance, attendanceId, clinicalRecord, isClosed, isCreatingRecord, queryClient]);
 
-  // Handler: Open clinical assessment editor (backed by clinical record)
+  // Redirect from triage step if attendance is not orthobiologic
+  useEffect(() => {
+    if (currentStep === "triage" && attendance && !attendance.involves_orthobiologics) {
+      setCurrentStep("plan");
+    }
+  }, [currentStep, attendance]);
   const handleOpenClinicalAssessment = useCallback(async () => {
     if (!attendance || !attendanceId) return;
 
@@ -300,53 +310,107 @@ const AtendimentoDetail = () => {
     switch (currentStep) {
       case "clinical":
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Avaliação Clínica</CardTitle>
-              <CardDescription>
-                Registre queixa, anamnese, exame físico e diagnóstico
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isClosed && renderClosedAlert()}
-
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Queixa Principal</Label>
-                  <p className="mt-1">{clinicalRecord?.chief_complaint || "Não informado"}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Anamnese</Label>
-                  <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.anamnesis || "Não informado"}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Exame Físico</Label>
-                  <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.physical_exam || "Não informado"}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Diagnóstico Clínico</Label>
-                  <p className="mt-1">{clinicalRecord?.clinical_diagnosis || "Não informado"}</p>
-                </div>
-
-                {!isClosed && (
-                  <Button
-                    variant="outline"
-                    onClick={handleOpenClinicalAssessment}
-                    disabled={isCreatingRecord}
-                  >
-                    {isCreatingRecord ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Abrindo...
-                      </>
-                    ) : (
-                      "Abrir Avaliação Clínica"
-                    )}
-                  </Button>
+          <div className="space-y-6">
+            {/* Attendance Type Selector */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FlaskConical className="w-4 h-4" />
+                  Tipo de Atendimento
+                </CardTitle>
+                <CardDescription>
+                  Selecione se este atendimento envolve terapias ortobiológicas. Isso habilita a Triagem específica (opcional).
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={attendance.involves_orthobiologics ? "orthobiologic" : "non-orthobiologic"}
+                  onValueChange={(value) => {
+                    if (isClosed) return;
+                    const isOrtho = value === "orthobiologic";
+                    updateAttendanceType.mutate({
+                      attendanceId: attendance.id,
+                      involvesOrthobiologics: isOrtho
+                    });
+                  }}
+                  disabled={isClosed || updateAttendanceType.isPending}
+                  className="flex flex-col sm:flex-row gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="orthobiologic" id="orthobiologic" />
+                    <Label htmlFor="orthobiologic" className="cursor-pointer">
+                      <span className="font-medium">Ortobiológico</span>
+                      <span className="text-muted-foreground text-sm ml-2">(com Triagem)</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="non-orthobiologic" id="non-orthobiologic" />
+                    <Label htmlFor="non-orthobiologic" className="cursor-pointer">
+                      <span className="font-medium">Não Ortobiológico</span>
+                      <span className="text-muted-foreground text-sm ml-2">(sem Triagem)</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {attendance.involves_orthobiologics && (
+                  <p className="text-sm text-muted-foreground mt-3">
+                    ✓ Triagem disponível (opcional). Você pode realizá-la agora ou depois.
+                  </p>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Clinical Assessment Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Stethoscope className="w-5 h-5" />
+                  Avaliação Clínica
+                </CardTitle>
+                <CardDescription>
+                  Registre queixa, anamnese, exame físico e diagnóstico
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isClosed && renderClosedAlert()}
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Queixa Principal</Label>
+                    <p className="mt-1">{clinicalRecord?.chief_complaint || "Não informado"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Anamnese</Label>
+                    <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.anamnesis || "Não informado"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Exame Físico</Label>
+                    <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.physical_exam || "Não informado"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Diagnóstico Clínico</Label>
+                    <p className="mt-1">{clinicalRecord?.clinical_diagnosis || "Não informado"}</p>
+                  </div>
+
+                  {!isClosed && (
+                    <Button
+                      variant="outline"
+                      onClick={handleOpenClinicalAssessment}
+                      disabled={isCreatingRecord}
+                    >
+                      {isCreatingRecord ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Abrindo...
+                        </>
+                      ) : (
+                        "Abrir Avaliação Clínica"
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         );
 
       case "triage":
