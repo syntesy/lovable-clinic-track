@@ -36,8 +36,8 @@ const AtendimentoDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Default step is "triage" (first clinical step)
-  const [currentStep, setCurrentStep] = useState("triage");
+  // Default step is "clinical" (first clinical step - Avaliação Clínica)
+  const [currentStep, setCurrentStep] = useState("clinical");
   const [completedSteps] = useState<string[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -298,42 +298,6 @@ const AtendimentoDetail = () => {
     );
 
     switch (currentStep) {
-      case "triage":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FlaskConical className="w-5 h-5" />
-                Triagem
-              </CardTitle>
-              <CardDescription>
-                Questionário de triagem, scores e elegibilidade
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isClosed && renderClosedAlert()}
-              {screening ? (
-                <AvaliacaoRegenapp
-                  patientId={attendance.patient_id}
-                  patientName={patient?.full_name}
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
-                    Nenhuma triagem realizada para este atendimento
-                  </p>
-                  {!isClosed && (
-                    <Button onClick={() => navigate(`/triagem-biologica?paciente=${attendance.patient_id}`)}>
-                      <FlaskConical className="w-4 h-4 mr-2" />
-                      Iniciar Triagem
-                    </Button>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-
       case "clinical":
         return (
           <Card>
@@ -384,6 +348,49 @@ const AtendimentoDetail = () => {
             </CardContent>
           </Card>
         );
+
+      case "triage":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FlaskConical className="w-5 h-5" />
+                Triagem (Opcional)
+              </CardTitle>
+              <CardDescription>
+                Questionário de triagem, scores e elegibilidade — pode ser pulado
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isClosed && renderClosedAlert()}
+              {screening ? (
+                <AvaliacaoRegenapp
+                  patientId={attendance.patient_id}
+                  patientName={patient?.full_name}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    Triagem não realizada — esta etapa é opcional
+                  </p>
+                  {!isClosed && (
+                    <div className="flex gap-2 justify-center">
+                      <Button onClick={() => navigate(`/triagem-biologica?paciente=${attendance.patient_id}`)}>
+                        <FlaskConical className="w-4 h-4 mr-2" />
+                        Iniciar Triagem
+                      </Button>
+                      <Button variant="outline" onClick={() => setCurrentStep("plan")}>
+                        Pular Triagem
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case "plan":
 
       case "plan":
         return (
