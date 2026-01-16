@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock, Stethoscope } from "lucide-react";
+import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock, Stethoscope, ClipboardList, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -33,6 +33,10 @@ import {
 
 // Import existing components for steps (reusing, not changing logic)
 import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
+import { AddProcedureModal } from "@/components/AddProcedureModal";
+import { PrescriptionFormModal } from "@/components/patient/PrescriptionFormModal";
+import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
+import { PatientProceduresList } from "@/components/patient/PatientProceduresList";
 
 const AtendimentoDetail = () => {
   const { attendanceId } = useParams<{ attendanceId: string }>();
@@ -44,6 +48,10 @@ const AtendimentoDetail = () => {
   const [completedSteps] = useState<string[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  // Plan step modals
+  const [isAddProcedureOpen, setIsAddProcedureOpen] = useState(false);
+  const [isAddPrescriptionOpen, setIsAddPrescriptionOpen] = useState(false);
 
   // Fetch attendance session
   const {
@@ -439,20 +447,95 @@ const AtendimentoDetail = () => {
 
       case "plan":
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Plano Terapêutico</CardTitle>
-              <CardDescription>
-                Defina o plano de tratamento para o paciente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Plano terapêutico em desenvolvimento</p>
-                <p className="text-sm mt-1">Esta funcionalidade será implementada em breve</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardList className="w-5 h-5" />
+                  Plano Terapêutico
+                </CardTitle>
+                <CardDescription>
+                  Registre procedimentos e prescrições/orientações para este paciente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={() => setIsAddProcedureOpen(true)} disabled={isClosed}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Procedimento
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddPrescriptionOpen(true)}
+                    disabled={isClosed || !attendance || !patient?.full_name}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Prescrição
+                  </Button>
+                </div>
+
+                {isClosed && (
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Atendimento concluído: alterações estão desabilitadas.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Procedimentos</CardTitle>
+                  <CardDescription>Procedimentos planejados/realizados</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {attendance ? (
+                    <PatientProceduresList patientId={attendance.patient_id} />
+                  ) : (
+                    <div className="text-muted-foreground text-center py-8">Carregando...</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Prescrições</CardTitle>
+                  <CardDescription>Orientações, medicações e suplementações</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {attendance ? (
+                    <PatientPrescriptionsList patientId={attendance.patient_id} patientName={patient?.full_name ?? "Paciente"} />
+                  ) : (
+                    <div className="text-muted-foreground text-center py-8">Carregando...</div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {attendance && (
+              <>
+                <AddProcedureModal
+                  open={isAddProcedureOpen}
+                  onOpenChange={setIsAddProcedureOpen}
+                  patientId={attendance.patient_id}
+                  onSuccess={async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["patient-procedures", attendance.patient_id],
+                    });
+                  }}
+                />
+
+                {patient?.full_name && (
+                  <PrescriptionFormModal
+                    open={isAddPrescriptionOpen}
+                    onOpenChange={setIsAddPrescriptionOpen}
+                    patientId={attendance.patient_id}
+                    patientName={patient.full_name}
+                  />
+                )}
+              </>
+            )}
+          </div>
         );
 
       case "report": {
