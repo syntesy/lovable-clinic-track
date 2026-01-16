@@ -1,9 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, AlertCircle, FlaskConical, Plus, Lock, FileText, Clock } from "lucide-react";
+import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,10 +17,10 @@ import {
   useAttendanceRecords,
   useCloseAttendance
 } from "@/hooks/useAttendance";
-import { 
-  AttendanceStepper, 
-  AttendanceHeader, 
-  AttendanceDocumentsStep 
+import {
+  AttendanceStepper,
+  AttendanceHeader,
+  AttendanceDocumentsStep
 } from "@/components/attendance";
 import { getVisibleSteps, AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
 import { 
@@ -37,7 +37,7 @@ const AtendimentoDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  const [currentStep, setCurrentStep] = useState("complaint");
+  const [currentStep, setCurrentStep] = useState("triage");
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -82,69 +82,81 @@ const AtendimentoDetail = () => {
     isLoadingScreening 
   } = useAttendanceRecords(attendance ?? null, attendance?.patient_id ?? null);
   
-  // Handler: Create or Open clinical record (prontuário)
-  const handleOpenOrCreateProntuario = useCallback(async () => {
-    if (!attendance || !attendanceId || isCreatingRecord) return;
-    
-    logInfo("clinical_record.open_or_create.clicked", { attendanceId });
+  // Ensure clinical record exists automatically (internal system detail)
+  // This avoids forcing a manual "Criar Prontuário" action at the start of the attendance.
+  useEffect(() => {
+    if (!attendance || !attendanceId) return;
+    if (isClosed) return;
+    if (clinicalRecord) return;
+    if (isCreatingRecord) return;
+
+    let cancelled = false;
+
+    (async () => {
+      setIsCreatingRecord(true);
+      try {
+        await ensureClinicalRecordForAttendance(attendanceId, attendance.patient_id);
+        if (!cancelled) {
+          await queryClient.invalidateQueries({
+            queryKey: ["clinical-records-attendance", attendanceId],
+          });
+        }
+      } catch (error: any) {
+        // Fail silently: we don't want to block the clinical flow.
+        logError("clinical_record.autocreate.error", { attendanceId, code: error?.code });
+      } finally {
+        if (!cancelled) setIsCreatingRecord(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [attendance, attendanceId, clinicalRecord, isClosed, isCreatingRecord, queryClient]);
+
+  // Handler: Open clinical assessment editor (backed by clinical record)
+  const handleOpenClinicalAssessment = useCallback(async () => {
+    if (!attendance || !attendanceId) return;
+
     setIsCreatingRecord(true);
     try {
-      // Use attendance_id FK for proper linking
-      const record = await ensureClinicalRecordForAttendance(
-        attendanceId,
-        attendance.patient_id
-      );
-      
-      // Invalidate query to refresh the view
-      await queryClient.invalidateQueries({ 
-        queryKey: ["clinical-records-attendance", attendanceId] 
-      });
-      
-      logInfo("clinical_record.open_or_create.navigating", { recordId: record.id, attendanceId });
-      // Navigate to the record editor with attendance context
+      const record = await ensureClinicalRecordForAttendance(attendanceId, attendance.patient_id);
+      await queryClient.invalidateQueries({ queryKey: ["clinical-records-attendance", attendanceId] });
       navigate(`/patients/${attendance.patient_id}/records/${record.id}?atendimento=${attendanceId}`);
     } catch (error: any) {
-      logError("clinical_record.open_or_create.error", { attendanceId, code: error?.code });
-      toast.error("Erro ao criar prontuário. Tente novamente.");
+      logError("clinical_record.open_clinical_assessment.error", { attendanceId, code: error?.code });
+      toast.error("Erro ao abrir avaliação clínica. Tente novamente.");
     } finally {
       setIsCreatingRecord(false);
     }
-  }, [attendance, attendanceId, isCreatingRecord, navigate, queryClient]);
+  }, [attendance, attendanceId, navigate, queryClient]);
 
   // Handler: Generate Report with gating
   const handleGenerateReport = useCallback(() => {
     logInfo("report.generate.clicked", { attendanceId: attendanceId || "unknown" });
-    
-    // Check if prontuário exists
+
+    // Clinical assessment must exist
     if (!clinicalRecord) {
       logWarn("report.generate.blocked.no_record", { attendanceId: attendanceId || "unknown" });
-      toast.error("Para gerar relatório, é necessário criar o prontuário do atendimento primeiro.", {
-        action: {
-          label: "Criar Prontuário",
-          onClick: handleOpenOrCreateProntuario,
-        },
-        duration: 6000,
-      });
+      toast.error("Para gerar relatório, complete a avaliação clínica primeiro.");
+      setCurrentStep("clinical");
       return;
     }
-    
+
     // Check if prontuário has minimum data (relaxed: queixa+anamnese OU diagnóstico)
     if (!hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic)) {
-      logWarn("report.generate.blocked.incomplete_record", { attendanceId: attendanceId || "unknown", recordId: clinicalRecord.id });
-      toast.error("O prontuário precisa ter pelo menos: queixa + anamnese OU diagnóstico clínico preenchido.", {
-        action: {
-          label: "Completar Prontuário",
-          onClick: () => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`),
-        },
-        duration: 6000,
+      logWarn("report.generate.blocked.incomplete_record", {
+        attendanceId: attendanceId || "unknown",
+        recordId: clinicalRecord.id,
       });
+      toast.error("A avaliação clínica precisa ter pelo menos: queixa + anamnese OU diagnóstico clínico.");
+      setCurrentStep("clinical");
       return;
     }
-    
+
     logInfo("report.generate.start", { attendanceId: attendanceId || "unknown", recordId: clinicalRecord.id });
-    // Navigate to report step
     setCurrentStep("report");
-  }, [clinicalRecord, attendance, attendanceId, handleOpenOrCreateProntuario, navigate]);
+  }, [clinicalRecord, attendanceId]);
 
   // Helper: Persist report metadata to attendance (audit trail)
   const persistReportMetadata = useCallback(async (
@@ -260,7 +272,7 @@ const AtendimentoDetail = () => {
     return "S1";
   }, [attendance, screening]);
   
-  // Visible steps based on orthobiologics flag
+  // Visible steps (clinical sequence)
   const visibleSteps = useMemo(
     () => getVisibleSteps(attendance?.involves_orthobiologics ?? false),
     [attendance?.involves_orthobiologics]
@@ -308,110 +320,16 @@ const AtendimentoDetail = () => {
     );
     
     switch (currentStep) {
-      case "complaint":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Queixa Principal & História Clínica</CardTitle>
-              <CardDescription>
-                Registre a queixa principal e história do paciente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isClosed && renderClosedAlert()}
-              {clinicalRecord ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Queixa Principal</Label>
-                    <p className="mt-1">{clinicalRecord.chief_complaint || "Não informado"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Anamnese</Label>
-                    <p className="mt-1 whitespace-pre-wrap">{clinicalRecord.anamnesis || "Não informado"}</p>
-                  </div>
-                  {!isClosed && (
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`)}
-                    >
-                      Editar Prontuário
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Nenhum prontuário criado para este atendimento
-                  </p>
-                  {!isClosed && (
-                    <Button 
-                      onClick={handleOpenOrCreateProntuario}
-                      disabled={isCreatingRecord}
-                    >
-                      {isCreatingRecord ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Plus className="w-4 h-4 mr-2" />
-                      )}
-                      Criar Prontuário
-                    </Button>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-        
-      case "exam":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Exame Físico & Achados</CardTitle>
-              <CardDescription>
-                Registre os achados do exame físico
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isClosed && renderClosedAlert()}
-              {clinicalRecord ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Exame Físico</Label>
-                    <p className="mt-1 whitespace-pre-wrap">{clinicalRecord.physical_exam || "Não informado"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Diagnóstico Clínico</Label>
-                    <p className="mt-1">{clinicalRecord.clinical_diagnosis || "Não informado"}</p>
-                  </div>
-                  {!isClosed && (
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`)}
-                    >
-                      Editar Prontuário
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Complete a etapa anterior primeiro
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-        
       case "triage":
         return (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FlaskConical className="w-5 h-5" />
-                Triagem de Ortobiológicos
+                Triagem
               </CardTitle>
               <CardDescription>
-                Avaliação para tratamento com ortobiológicos
+                Questionário de triagem, scores e elegibilidade
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -427,9 +345,7 @@ const AtendimentoDetail = () => {
                     Nenhuma triagem realizada para este atendimento
                   </p>
                   {!isClosed && (
-                    <Button 
-                      onClick={() => navigate(`/triagem-biologica?paciente=${attendance.patient_id}`)}
-                    >
+                    <Button onClick={() => navigate(`/triagem-biologica?paciente=${attendance.patient_id}`)}>
                       <FlaskConical className="w-4 h-4 mr-2" />
                       Iniciar Triagem
                     </Button>
@@ -439,43 +355,58 @@ const AtendimentoDetail = () => {
             </CardContent>
           </Card>
         );
-        
-      case "labs":
-        // S2 - Labs step - reuse existing component via AvaliacaoRegenapp
+
+      case "clinical":
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Exames Laboratoriais (S2)</CardTitle>
+              <CardTitle>Avaliação Clínica</CardTitle>
               <CardDescription>
-                Validação dos exames laboratoriais solicitados na triagem
+                Registre queixa, anamnese, exame físico e diagnóstico
               </CardDescription>
             </CardHeader>
             <CardContent>
               {isClosed && renderClosedAlert()}
-              {screening ? (
-                <AvaliacaoRegenapp
-                  patientId={attendance.patient_id}
-                  patientName={patient?.full_name}
-                />
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>S2 Indisponível</p>
-                  <p className="text-sm mt-1">Complete a triagem primeiro</p>
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm text-muted-foreground">Queixa Principal</Label>
+                  <p className="mt-1">{clinicalRecord?.chief_complaint || "Não informado"}</p>
                 </div>
-              )}
+                <div>
+                  <Label className="text-sm text-muted-foreground">Anamnese</Label>
+                  <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.anamnesis || "Não informado"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Exame Físico</Label>
+                  <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.physical_exam || "Não informado"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Diagnóstico Clínico</Label>
+                  <p className="mt-1">{clinicalRecord?.clinical_diagnosis || "Não informado"}</p>
+                </div>
+
+                {!isClosed && (
+                  <Button
+                    variant="outline"
+                    onClick={handleOpenClinicalAssessment}
+                    disabled={isCreatingRecord}
+                  >
+                    {isCreatingRecord ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Abrindo...
+                      </>
+                    ) : (
+                      "Abrir Avaliação Clínica"
+                    )}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         );
-        
-      case "documents":
-        return (
-          <AttendanceDocumentsStep
-            attendanceId={attendance.id}
-            patientId={attendance.patient_id}
-            disabled={isClosed}
-          />
-        );
-        
+
       case "plan":
         return (
           <Card>
@@ -493,77 +424,59 @@ const AtendimentoDetail = () => {
             </CardContent>
           </Card>
         );
-        
-      case "report":
-        // Gating: Check if clinical record exists and has minimum data
+
+      case "report": {
         const hasRecord = !!clinicalRecord;
         const hasMinData = hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic | null);
-        const canGenerateReport = hasRecord && hasMinData && (attendance?.involves_orthobiologics ? currentStatus === "S3" : true);
-        
+        const canGenerateReport =
+          hasRecord &&
+          hasMinData &&
+          (attendance?.involves_orthobiologics ? currentStatus === "S3" : true);
+
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Relatório & Exportação</CardTitle>
+              <CardTitle>Relatório</CardTitle>
               <CardDescription>
                 Gere e exporte o relatório final do atendimento
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Gating: No clinical record */}
               {!hasRecord && (
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-foreground font-medium mb-2">Prontuário Necessário</p>
-                  <p className="text-muted-foreground mb-4">
-                    Para gerar o relatório, é necessário criar o prontuário do atendimento primeiro.
-                  </p>
-                  <Button onClick={handleOpenOrCreateProntuario} disabled={isCreatingRecord}>
-                    {isCreatingRecord ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Plus className="w-4 h-4 mr-2" />
-                    )}
-                    Criar Prontuário
-                  </Button>
+                <div className="text-center py-8 text-muted-foreground">
+                  Preparando avaliação clínica...
                 </div>
               )}
-              
-              {/* Gating: Clinical record exists but incomplete */}
+
               {hasRecord && !hasMinData && (
                 <div className="text-center py-8">
                   <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-                  <p className="text-foreground font-medium mb-2">Prontuário Incompleto</p>
+                  <p className="text-foreground font-medium mb-2">Avaliação Clínica Incompleta</p>
                   <p className="text-muted-foreground mb-4">
-                    O prontuário precisa ter pelo menos: queixa + anamnese OU diagnóstico clínico preenchido.
+                    Preencha pelo menos: queixa + anamnese OU diagnóstico clínico.
                   </p>
-                  <Button 
-                    variant="outline"
-                    onClick={() => navigate(`/patients/${attendance?.patient_id}/records/${clinicalRecord?.id}?atendimento=${attendanceId}`)}
-                  >
-                    Completar Prontuário
+                  <Button variant="outline" onClick={() => setCurrentStep("clinical")}>
+                    Ir para Avaliação Clínica
                   </Button>
                 </div>
               )}
-              
-              {/* Gating: Prontuário OK but orthobiologics needs S3 */}
+
               {hasRecord && hasMinData && attendance?.involves_orthobiologics && currentStatus !== "S3" && (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>Relatório disponível após conclusão do Score Definitivo (S3)</p>
                   <p className="text-sm mt-2">Status atual: {currentStatus}</p>
                 </div>
               )}
-              
-              {/* Ready to generate */}
+
               {canGenerateReport && (
                 <div className="space-y-4">
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Pronto para Gerar Relatório</AlertTitle>
                     <AlertDescription>
-                      {attendance?.involves_orthobiologics 
+                      {attendance?.involves_orthobiologics
                         ? "O score definitivo foi gerado. Você pode gerar o relatório final."
-                        : "O prontuário está completo. Você pode gerar o relatório final."
-                      }
+                        : "A avaliação clínica está completa. Você pode gerar o relatório final."}
                     </AlertDescription>
                   </Alert>
                   <div className="flex gap-2">
@@ -581,8 +494,7 @@ const AtendimentoDetail = () => {
                       Visualizar Preview
                     </Button>
                   </div>
-                  
-                  {/* Last report info (audit trail) */}
+
                   {attendance?.last_report_generated_at && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                       <Clock className="w-4 h-4" />
@@ -597,7 +509,7 @@ const AtendimentoDetail = () => {
                       </span>
                     </div>
                   )}
-                  
+
                   {files.length > 0 && (
                     <div className="mt-4 pt-4 border-t">
                       <p className="text-sm text-muted-foreground">
@@ -610,7 +522,8 @@ const AtendimentoDetail = () => {
             </CardContent>
           </Card>
         );
-        
+      }
+
       default:
         return null;
     }
