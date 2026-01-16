@@ -21,11 +21,11 @@ interface QuickUploadModalProps {
   patientId: string;
 }
 
-type FileType = 'exam' | 'report' | 'image' | 'photo' | 'other';
+type FileType = "exam" | "report" | "image" | "photo" | "other";
 
 interface PendingFile {
   file: File;
-  customName: string;
+  displayName: string;
   fileType: FileType;
 }
 
@@ -38,17 +38,21 @@ export function QuickUploadModal({
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const uploadMutation = useUploadAttendanceFile();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles?.length) return;
 
-    const rejected = Array.from(selectedFiles).filter((f) => f.size > 20 * 1024 * 1024);
+    const rejected = Array.from(selectedFiles).filter(
+      (f) => f.size > 20 * 1024 * 1024
+    );
     if (rejected.length > 0) {
       toast.error(
-        `Alguns arquivos excedem 20MB e foram ignorados: ${rejected.map((f) => f.name).join(", ")}`
+        `Alguns arquivos excedem 20MB e foram ignorados: ${rejected
+          .map((f) => f.name)
+          .join(", ")}`
       );
     }
 
@@ -56,7 +60,7 @@ export function QuickUploadModal({
       .filter((file) => file.size <= 20 * 1024 * 1024)
       .map((file) => ({
         file,
-        customName: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for display
+        displayName: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for display
         fileType: "other" as FileType,
       }));
 
@@ -83,21 +87,21 @@ export function QuickUploadModal({
     setIsUploading(true);
     try {
       for (const pf of pendingFiles) {
-        const safeName = (pf.customName || "").trim();
+        const safeName = (pf.displayName || "").trim();
         if (!safeName) {
           throw new Error("Informe um nome para o arquivo antes de enviar.");
         }
 
-        // Create a new file name with the custom name + original extension
+        // Add original extension to display name
         const ext = pf.file.name.split(".").pop() || "";
-        const finalName = safeName + (ext ? `.${ext}` : "");
+        const finalDisplayName = safeName + (ext ? `.${ext}` : "");
 
         await uploadMutation.mutateAsync({
           attendanceId,
           patientId,
           file: pf.file,
           fileType: pf.fileType,
-          description: finalName,
+          description: finalDisplayName,
         });
       }
 
@@ -106,7 +110,7 @@ export function QuickUploadModal({
     } catch (e) {
       const msg =
         typeof e === "object" && e && "message" in e
-          ? String((e as any).message)
+          ? String((e as Error).message)
           : "Erro ao enviar arquivo";
       toast.error(msg);
     } finally {
@@ -167,7 +171,7 @@ export function QuickUploadModal({
               <Label className="text-sm font-medium">
                 Arquivos selecionados ({pendingFiles.length})
               </Label>
-              
+
               {pendingFiles.map((pf, index) => (
                 <div
                   key={index}
@@ -181,9 +185,11 @@ export function QuickUploadModal({
                       </p>
                       <div className="space-y-2">
                         <Input
-                          value={pf.customName}
+                          value={pf.displayName}
                           onChange={(e) =>
-                            updatePendingFile(index, { customName: e.target.value })
+                            updatePendingFile(index, {
+                              displayName: e.target.value,
+                            })
                           }
                           placeholder="Nome do arquivo"
                           className="h-8 text-sm"
