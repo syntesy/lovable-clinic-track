@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +10,12 @@ import {
   CheckCircle,
   ArrowLeft,
   User,
-  Lock
+  Lock,
+  Upload
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AttendanceSession, AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
+import { QuickUploadModal } from "./QuickUploadModal";
 
 interface AttendanceHeaderProps {
   attendance: AttendanceSession;
@@ -45,6 +48,7 @@ export function AttendanceHeader({
   isConcluding,
 }: AttendanceHeaderProps) {
   const navigate = useNavigate();
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const statusInfo = statusLabels[status];
   const isClosed = isAttendanceClosed(attendance);
   
@@ -113,6 +117,19 @@ export function AttendanceHeader({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Upload button - always visible if not closed */}
+            {!isClosed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setUploadModalOpen(true)}
+                className="gap-1.5"
+              >
+                <Upload className="w-4 h-4" />
+                Anexar
+              </Button>
+            )}
+            
             {!isClosed && onSave && (
               <Button
                 variant="outline"
@@ -152,6 +169,14 @@ export function AttendanceHeader({
           </div>
         </div>
       </div>
+      
+      {/* Quick Upload Modal */}
+      <QuickUploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        attendanceId={attendance.id}
+        patientId={attendance.patient_id}
+      />
     </div>
   );
 }
