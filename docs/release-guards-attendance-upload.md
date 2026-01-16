@@ -136,7 +136,51 @@ if (!canUploadInStep(currentStep)) {
 
 ---
 
-## 7. Referência Rápida
+## 7. Motor Procedure-Locked (Ortobiológicos)
+
+### Regra Máxima
+
+**Qualquer conteúdo gerado (next_steps, exames, alertas, bloqueios) é derivado SOMENTE do(s) procedimento(s) selecionado(s).**
+
+Se PRP é selecionado, é **PROIBIDO** aparecer termos de BMEC/BMA/medula.
+
+### Arquivos Relevantes
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/domain/orthoBioProcedures.ts` | Catálogo de procedimentos, gerador `generateOrthoBioPlan` |
+| `src/components/orthobio/NextStepCard.tsx` | Card "Próximo Passo" procedure-locked |
+| `src/domain/__tests__/orthoBioPlan.test.ts` | Testes de isolamento por procedimento |
+
+### Como usar
+
+```typescript
+import { 
+  generateOrthoBioPlan, 
+  mapTaxonomyToProcedureCode,
+  PROCEDURE_CATALOG 
+} from '@/domain/orthoBioProcedures';
+
+// Gerar plano para PRP
+const plan = generateOrthoBioPlan({
+  procedure_codes: ["PRP"],
+  patient_factors: { nsaid_recent: true }
+});
+
+// plan.next_steps_text → texto procedure-locked
+// plan.required_exams → exames SOMENTE do PRP
+// plan.alerts → alertas SOMENTE do PRP
+```
+
+### Testes do Motor
+
+```bash
+npx vitest run src/domain/__tests__/orthoBioPlan.test.ts
+```
+
+---
+
+## 8. Referência Rápida
 
 ```typescript
 import { 
@@ -150,4 +194,10 @@ import {
   canUploadInStep,          // Verifica se upload é permitido
   UPLOAD_BLOCKED_MESSAGE,   // Mensagem de erro para upload bloqueado
 } from '@/domain/uploadContracts';
+
+import {
+  generateOrthoBioPlan,     // Gera plano procedure-locked
+  mapTaxonomyToProcedureCode, // Mapeia código de taxonomia para procedimento
+  PROCEDURE_CATALOG,        // Catálogo de procedimentos
+} from '@/domain/orthoBioProcedures';
 ```
