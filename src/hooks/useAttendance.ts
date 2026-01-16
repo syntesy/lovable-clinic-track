@@ -152,17 +152,22 @@ export function useUploadAttendanceFile() {
       file,
       fileType,
       description,
+      customFileName,
     }: {
       attendanceId: string;
       patientId: string;
       file: File;
       fileType: 'exam' | 'report' | 'image' | 'photo' | 'other';
       description?: string;
+      customFileName?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
       
-      // Upload file to storage
+      // Use custom file name if provided, otherwise use original
+      const displayFileName = customFileName || file.name;
+      
+      // Upload file to storage (keep original file for storage path)
       const filePath = `${user.id}/${attendanceId}/${Date.now()}_${file.name}`;
       
       const { error: uploadError } = await supabase.storage
@@ -171,14 +176,14 @@ export function useUploadAttendanceFile() {
       
       if (uploadError) throw uploadError;
       
-      // Create file record
+      // Create file record with custom file name
       const { data, error } = await supabase
         .from("attendance_files")
         .insert({
           attendance_ref: attendanceId,
           patient_id: patientId,
           file_path: filePath,
-          file_name: file.name,
+          file_name: displayFileName,
           mime_type: file.type,
           file_type: fileType,
           description: description || null,
