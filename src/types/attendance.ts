@@ -45,11 +45,12 @@ export interface AttendanceStepConfig {
 }
 
 // Step definitions for the Attendance flow (clinically correct sequence)
-// 1) Avaliação Clínica → 2) Triagem (opcional) → 3) Plano Terapêutico → 4) Relatório
+// 1) Avaliação Clínica → 2) Triagem (opcional) → 3) Plano Terapêutico → 4) Anexos → 5) Relatório
 export const ATTENDANCE_STEPS: AttendanceStepConfig[] = [
   { id: 'clinical', label: 'Avaliação Clínica', icon: 'stethoscope' },
   { id: 'triage', label: 'Triagem', icon: 'flask-conical' },
   { id: 'plan', label: 'Plano Terapêutico', icon: 'clipboard-list' },
+  { id: 'attachments', label: 'Anexos', icon: 'paperclip' },
   { id: 'report', label: 'Relatório', icon: 'file-text' },
 ];
 

@@ -24,7 +24,6 @@ import {
   AttendanceHeader,
   AttendanceDocumentsStep,
 } from "@/components/attendance";
-import { QuickUploadModal } from "@/components/attendance/QuickUploadModal";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
 import {
@@ -54,9 +53,6 @@ const AtendimentoDetail = () => {
   // Plan step modals
   const [isAddProcedureOpen, setIsAddProcedureOpen] = useState(false);
   const [isAddPrescriptionOpen, setIsAddPrescriptionOpen] = useState(false);
-  
-  // Upload modal state for stepper
-  const [isStepperUploadOpen, setIsStepperUploadOpen] = useState(false);
 
   // Fetch attendance session
   const {
@@ -543,6 +539,19 @@ const AtendimentoDetail = () => {
           </div>
         );
 
+      case "attachments":
+        return (
+          <div className="space-y-6">
+            {attendanceId && attendance?.patient_id && (
+              <AttendanceDocumentsStep
+                attendanceId={attendanceId}
+                patientId={attendance.patient_id}
+                disabled={isClosed}
+              />
+            )}
+          </div>
+        );
+
       case "report": {
         const hasRecord = !!clinicalRecord;
         const hasMinData = hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic | null);
@@ -633,7 +642,13 @@ const AtendimentoDetail = () => {
                     {files.length > 0 && (
                       <div className="mt-4 pt-4 border-t">
                         <p className="text-sm text-muted-foreground">
-                          {files.length} arquivo(s) anexado(s) a este atendimento
+                          {files.length} arquivo(s) anexado(s) — <button 
+                            type="button"
+                            onClick={() => setCurrentStep("attachments")} 
+                            className="text-primary hover:underline"
+                          >
+                            ver anexos
+                          </button>
                         </p>
                       </div>
                     )}
@@ -641,15 +656,6 @@ const AtendimentoDetail = () => {
                 )}
               </CardContent>
             </Card>
-
-            {/* Sempre mostrar anexos do atendimento nesta etapa */}
-            {attendanceId && attendance?.patient_id && (
-              <AttendanceDocumentsStep
-                attendanceId={attendanceId}
-                patientId={attendance.patient_id}
-                disabled={isClosed}
-              />
-            )}
           </div>
         );
       }
@@ -671,6 +677,7 @@ const AtendimentoDetail = () => {
         onGenerateReport={handleGenerateReport}
         onConclude={handleConclude}
         isConcluding={closeAttendance.isPending}
+        onNavigateToAttachments={() => setCurrentStep("attachments")}
       />
 
       {/* Main Content */}
@@ -682,8 +689,6 @@ const AtendimentoDetail = () => {
             currentStep={currentStep}
             onStepChange={setCurrentStep}
             completedSteps={completedSteps}
-            onUploadClick={() => setIsStepperUploadOpen(true)}
-            isClosed={isClosed}
           />
         </div>
 
@@ -692,14 +697,6 @@ const AtendimentoDetail = () => {
           {renderStepContent()}
         </div>
       </div>
-      
-      {/* Upload Modal for Stepper */}
-      <QuickUploadModal
-        open={isStepperUploadOpen}
-        onOpenChange={setIsStepperUploadOpen}
-        attendanceId={attendance.id}
-        patientId={attendance.patient_id}
-      />
     </div>
   );
 };
