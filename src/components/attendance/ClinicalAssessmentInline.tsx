@@ -44,25 +44,21 @@ export function ClinicalAssessmentInline({
     setAnamnesis(clinicalRecord.anamnesis ?? "");
     setPhysicalExam(clinicalRecord.physical_exam ?? "");
     setClinicalDiagnosis(clinicalRecord.clinical_diagnosis ?? "");
-  }, [clinicalRecord]);
 
-  // Auto-open editor for brand new/empty record (runs once)
-  useEffect(() => {
-    if (hasAutoOpened) return;
-    if (!clinicalRecord) return;
-    if (isClosed) return;
+    // Auto-open editor for brand new/empty record (runs once)
+    if (!hasAutoOpened && !isClosed) {
+      const hasAny =
+        !!clinicalRecord.chief_complaint?.trim() ||
+        !!clinicalRecord.anamnesis?.trim() ||
+        !!clinicalRecord.physical_exam?.trim() ||
+        !!clinicalRecord.clinical_diagnosis?.trim();
 
-    const hasAny =
-      !!clinicalRecord.chief_complaint?.trim() ||
-      !!clinicalRecord.anamnesis?.trim() ||
-      !!clinicalRecord.physical_exam?.trim() ||
-      !!clinicalRecord.clinical_diagnosis?.trim();
-
-    if (!hasAny) {
-      setIsEditing(true);
-      setHasAutoOpened(true);
+      if (!hasAny) {
+        setIsEditing(true);
+        setHasAutoOpened(true);
+      }
     }
-  }, [hasAutoOpened, clinicalRecord, isClosed]);
+  }, [clinicalRecord, isClosed, hasAutoOpened]);
 
   const handleSave = async () => {
     if (!clinicalRecord) return;
@@ -93,24 +89,34 @@ export function ClinicalAssessmentInline({
     }
   };
 
+  // If no record yet, auto-create immediately (don't wait for user click)
+  useEffect(() => {
+    if (clinicalRecord) {
+      console.log("[ClinicalAssessmentInline] Record exists:", clinicalRecord.id);
+      return; // already have it
+    }
+    if (isClosed) {
+      console.log("[ClinicalAssessmentInline] Closed, skipping create");
+      return;
+    }
+    if (isBusy) {
+      console.log("[ClinicalAssessmentInline] Already busy creating...");
+      return; // already creating
+    }
+
+    // Trigger creation automatically
+    console.log("[ClinicalAssessmentInline] Triggering auto-create...");
+    onEnsureRecord();
+  }, [clinicalRecord, isClosed, isBusy, onEnsureRecord]);
+
   if (!clinicalRecord) {
+    // Show loading state while creating/fetching
     return (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          {isBusy ? "Preparando avaliação clínica..." : "Nenhuma avaliação clínica iniciada."}
-        </p>
-        {!isClosed && (
-          <Button onClick={onEnsureRecord} disabled={isBusy}>
-            {isBusy ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Abrindo...
-              </>
-            ) : (
-              "Iniciar Avaliação Clínica"
-            )}
-          </Button>
-        )}
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm">Preparando avaliação clínica...</span>
+        </div>
       </div>
     );
   }
