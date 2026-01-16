@@ -24,6 +24,7 @@ import {
   AttendanceHeader,
   AttendanceDocumentsStep,
 } from "@/components/attendance";
+import { QuickUploadModal } from "@/components/attendance/QuickUploadModal";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
 import {
@@ -53,6 +54,9 @@ const AtendimentoDetail = () => {
   // Plan step modals
   const [isAddProcedureOpen, setIsAddProcedureOpen] = useState(false);
   const [isAddPrescriptionOpen, setIsAddPrescriptionOpen] = useState(false);
+  
+  // Upload modal state for stepper
+  const [isStepperUploadOpen, setIsStepperUploadOpen] = useState(false);
 
   // Fetch attendance session
   const {
@@ -678,6 +682,8 @@ const AtendimentoDetail = () => {
             currentStep={currentStep}
             onStepChange={setCurrentStep}
             completedSteps={completedSteps}
+            onUploadClick={() => setIsStepperUploadOpen(true)}
+            isClosed={isClosed}
           />
         </div>
 
@@ -686,6 +692,14 @@ const AtendimentoDetail = () => {
           {renderStepContent()}
         </div>
       </div>
+      
+      {/* Upload Modal for Stepper */}
+      <QuickUploadModal
+        open={isStepperUploadOpen}
+        onOpenChange={setIsStepperUploadOpen}
+        attendanceId={attendance.id}
+        patientId={attendance.patient_id}
+      />
     </div>
   );
 };
