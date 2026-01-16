@@ -23,6 +23,7 @@ import {
   AttendanceStepper,
   AttendanceHeader
 } from "@/components/attendance";
+import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
 import {
   ensureClinicalRecordForAttendance,
@@ -123,45 +124,22 @@ const AtendimentoDetail = () => {
     }
   }, [currentStep, attendance]);
 
-  // Auto-open clinical assessment form for new attendances with empty data
-  const [hasAutoOpened, setHasAutoOpened] = useState(false);
-  
-  useEffect(() => {
-    // Only auto-open once, on clinical step, when record exists but has no data
-    if (hasAutoOpened) return;
-    if (currentStep !== "clinical") return;
-    if (!attendance || !attendanceId) return;
-    if (isClosed) return;
-    if (isCreatingRecord) return;
-    if (!clinicalRecord) return; // Wait for record to be created/loaded
-    
-    // Check if the clinical record has any filled data
-    const hasData = clinicalRecord.chief_complaint || 
-                    clinicalRecord.anamnesis || 
-                    clinicalRecord.physical_exam || 
-                    clinicalRecord.clinical_diagnosis;
-    
-    if (!hasData) {
-      // Auto-open the form for new attendances with empty clinical record
-      setHasAutoOpened(true);
-      navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`);
-    }
-  }, [hasAutoOpened, currentStep, attendance, attendanceId, isClosed, isCreatingRecord, clinicalRecord, navigate]);
-  const handleOpenClinicalAssessment = useCallback(async () => {
+
+  const handleEnsureClinicalAssessment = useCallback(async () => {
     if (!attendance || !attendanceId) return;
 
     setIsCreatingRecord(true);
     try {
-      const record = await ensureClinicalRecordForAttendance(attendanceId, attendance.patient_id);
+      await ensureClinicalRecordForAttendance(attendanceId, attendance.patient_id);
       await queryClient.invalidateQueries({ queryKey: ["clinical-records-attendance", attendanceId] });
-      navigate(`/patients/${attendance.patient_id}/records/${record.id}?atendimento=${attendanceId}`);
     } catch (error: any) {
-      logError("clinical_record.open_clinical_assessment.error", { attendanceId, code: error?.code });
-      toast.error("Erro ao abrir avaliação clínica. Tente novamente.");
+      logError("clinical_record.ensure.error", { attendanceId, code: error?.code });
+      toast.error("Erro ao iniciar avaliação clínica. Tente novamente.");
     } finally {
       setIsCreatingRecord(false);
     }
-  }, [attendance, attendanceId, navigate, queryClient]);
+  }, [attendance, attendanceId, queryClient]);
+
 
   // Handler: Generate Report with gating
   const handleGenerateReport = useCallback(() => {
@@ -399,39 +377,19 @@ const AtendimentoDetail = () => {
                 {isClosed && renderClosedAlert()}
 
                 <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Queixa Principal</Label>
-                    <p className="mt-1">{clinicalRecord?.chief_complaint || "Não informado"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Anamnese</Label>
-                    <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.anamnesis || "Não informado"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Exame Físico</Label>
-                    <p className="mt-1 whitespace-pre-wrap">{clinicalRecord?.physical_exam || "Não informado"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Diagnóstico Clínico</Label>
-                    <p className="mt-1">{clinicalRecord?.clinical_diagnosis || "Não informado"}</p>
-                  </div>
-
-                  {!isClosed && (
-                    <Button
-                      variant="outline"
-                      onClick={handleOpenClinicalAssessment}
-                      disabled={isCreatingRecord}
-                    >
-                      {isCreatingRecord ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Abrindo...
-                        </>
-                      ) : (
-                        "Abrir Avaliação Clínica"
-                      )}
-                    </Button>
-                  )}
+                  <ClinicalAssessmentInline
+                    attendanceId={attendanceId!}
+                    patientId={attendance.patient_id}
+                    clinicalRecord={clinicalRecord as ClinicalRecordBasic | null}
+                    isClosed={isClosed}
+                    isBusy={isCreatingRecord}
+                    onEnsureRecord={handleEnsureClinicalAssessment}
+                    onSaved={async () => {
+                      await queryClient.invalidateQueries({
+                        queryKey: ["clinical-records-attendance", attendanceId],
+                      });
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
