@@ -42,27 +42,21 @@ export interface AttendanceStepConfig {
   id: string;
   label: string;
   icon: string;
-  isConditional?: boolean; // Only shown if involves_orthobiologics
-  requiresOrthobiologics?: boolean;
 }
 
-// Step definitions for the horizontal stepper
+// Step definitions for the Attendance flow (clinical sequence)
+// 1) Triagem → 2) Avaliação Clínica → 3) Plano Terapêutico → 4) Relatório
 export const ATTENDANCE_STEPS: AttendanceStepConfig[] = [
-  { id: 'complaint', label: 'Queixa & História', icon: 'stethoscope' },
-  { id: 'exam', label: 'Exame & Achados', icon: 'activity' },
-  { id: 'triage', label: 'Triagem de Ortobiológicos', icon: 'flask-conical', isConditional: true, requiresOrthobiologics: true },
-  { id: 'labs', label: 'Exames Laboratoriais', icon: 'test-tube', isConditional: true, requiresOrthobiologics: true },
-  { id: 'documents', label: 'Documentos & Imagens', icon: 'paperclip' },
+  { id: 'triage', label: 'Triagem', icon: 'flask-conical' },
+  { id: 'clinical', label: 'Avaliação Clínica', icon: 'stethoscope' },
   { id: 'plan', label: 'Plano Terapêutico', icon: 'clipboard-list' },
-  { id: 'report', label: 'Relatório & Exportação', icon: 'file-text' },
+  { id: 'report', label: 'Relatório', icon: 'file-text' },
 ];
 
-// Helper to get visible steps based on orthobiologics flag
-export function getVisibleSteps(involvesOrthobiologics: boolean): AttendanceStepConfig[] {
-  return ATTENDANCE_STEPS.filter(step => {
-    if (!step.isConditional) return true;
-    return involvesOrthobiologics;
-  });
+// Helper to get visible steps
+// (Kept as a function to preserve existing call-sites)
+export function getVisibleSteps(_involvesOrthobiologics: boolean): AttendanceStepConfig[] {
+  return ATTENDANCE_STEPS;
 }
 
 // Helper to format attendance title
