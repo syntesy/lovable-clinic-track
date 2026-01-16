@@ -2,10 +2,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { 
   Stethoscope, 
-  Activity, 
   FlaskConical, 
-  TestTube, 
-  Paperclip, 
   ClipboardList, 
   FileText,
   Check
@@ -14,10 +11,7 @@ import { getVisibleSteps, AttendanceStepConfig } from "@/types/attendance";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'stethoscope': Stethoscope,
-  'activity': Activity,
   'flask-conical': FlaskConical,
-  'test-tube': TestTube,
-  'paperclip': Paperclip,
   'clipboard-list': ClipboardList,
   'file-text': FileText,
 };

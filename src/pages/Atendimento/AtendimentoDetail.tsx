@@ -11,22 +11,21 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logInfo, logWarn, logError } from "@/lib/telemetry";
-import { 
-  useAttendanceSession, 
+import {
+  useAttendanceSession,
   useAttendanceFiles,
   useAttendanceRecords,
   useCloseAttendance
 } from "@/hooks/useAttendance";
 import {
   AttendanceStepper,
-  AttendanceHeader,
-  AttendanceDocumentsStep
+  AttendanceHeader
 } from "@/components/attendance";
-import { getVisibleSteps, AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
-import { 
-  ensureClinicalRecordForAttendance, 
+import { AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
+import {
+  ensureClinicalRecordForAttendance,
   hasClinicalRecordMinimumData,
-  ClinicalRecordBasic 
+  ClinicalRecordBasic
 } from "@/services/clinicalRecordsService";
 
 // Import existing components for steps (reusing, not changing logic)
@@ -36,28 +35,29 @@ const AtendimentoDetail = () => {
   const { attendanceId } = useParams<{ attendanceId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
+  // Default step is "triage" (first clinical step)
   const [currentStep, setCurrentStep] = useState("triage");
-  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const [completedSteps] = useState<string[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-  
+
   // Fetch attendance session
-  const { 
-    data: attendance, 
+  const {
+    data: attendance,
     isLoading: isLoadingAttendance,
-    error: attendanceError 
+    error: attendanceError
   } = useAttendanceSession(attendanceId ?? null);
-  
+
   // Close attendance mutation
   const closeAttendance = useCloseAttendance();
-  
+
   // Check if attendance is closed
   const isClosed = isAttendanceClosed(attendance ?? null);
-  
+
   // Fetch attendance files for counter
   const { data: files = [] } = useAttendanceFiles(attendanceId ?? null);
-  
+
   // Fetch patient info
   const { data: patient } = useQuery({
     queryKey: ["patient", attendance?.patient_id],
@@ -73,15 +73,13 @@ const AtendimentoDetail = () => {
     },
     enabled: !!attendance?.patient_id,
   });
-  
+
   // Fetch records within attendance time window
-  const { 
-    clinicalRecord, 
-    screening,
-    isLoadingClinicalRecord,
-    isLoadingScreening 
-  } = useAttendanceRecords(attendance ?? null, attendance?.patient_id ?? null);
-  
+  const { clinicalRecord, screening } = useAttendanceRecords(
+    attendance ?? null,
+    attendance?.patient_id ?? null
+  );
+
   // Ensure clinical record exists automatically (internal system detail)
   // This avoids forcing a manual "Criar Prontuário" action at the start of the attendance.
   useEffect(() => {
@@ -102,7 +100,6 @@ const AtendimentoDetail = () => {
           });
         }
       } catch (error: any) {
-        // Fail silently: we don't want to block the clinical flow.
         logError("clinical_record.autocreate.error", { attendanceId, code: error?.code });
       } finally {
         if (!cancelled) setIsCreatingRecord(false);
@@ -135,7 +132,6 @@ const AtendimentoDetail = () => {
   const handleGenerateReport = useCallback(() => {
     logInfo("report.generate.clicked", { attendanceId: attendanceId || "unknown" });
 
-    // Clinical assessment must exist
     if (!clinicalRecord) {
       logWarn("report.generate.blocked.no_record", { attendanceId: attendanceId || "unknown" });
       toast.error("Para gerar relatório, complete a avaliação clínica primeiro.");
@@ -143,7 +139,6 @@ const AtendimentoDetail = () => {
       return;
     }
 
-    // Check if prontuário has minimum data (relaxed: queixa+anamnese OU diagnóstico)
     if (!hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic)) {
       logWarn("report.generate.blocked.incomplete_record", {
         attendanceId: attendanceId || "unknown",
@@ -165,7 +160,7 @@ const AtendimentoDetail = () => {
     durationMs: number
   ) => {
     if (!attendanceId) return;
-    
+
     try {
       const { error } = await supabase
         .from("attendance_sessions")
@@ -178,13 +173,10 @@ const AtendimentoDetail = () => {
         .eq("id", attendanceId);
 
       if (error) throw error;
-      
+
       logInfo("report.persist.success", { attendanceId, recordId, type, ms: durationMs });
-      
-      // Invalidate to refresh the attendance data
       queryClient.invalidateQueries({ queryKey: ["attendance", attendanceId] });
     } catch (error: any) {
-      // Fail silently - don't break report generation
       logError("report.persist.error", { attendanceId, recordId, code: error?.code });
     }
   }, [attendanceId, queryClient]);
@@ -192,35 +184,31 @@ const AtendimentoDetail = () => {
   // Handler: Export PDF with full telemetry
   const handleExportPdf = useCallback(async () => {
     if (!clinicalRecord || !patient || isExportingPdf) return;
-    
+
     const t0 = performance.now();
     const recordId = clinicalRecord.id;
-    
+
     logInfo("report.generate.export_start", { attendanceId: attendanceId || "unknown", recordId });
     setIsExportingPdf(true);
-    
+
     try {
-      // TODO: Replace with actual report generation logic when implemented
-      // For now, navigate to the existing report visualization page
       navigate(`/relatorio/${clinicalRecord.id}`);
-      
+
       const ms = Math.round(performance.now() - t0);
-      logInfo("report.generate.success", { 
-        attendanceId: attendanceId || "unknown", 
-        recordId, 
-        hasExport: true, 
-        ms 
+      logInfo("report.generate.success", {
+        attendanceId: attendanceId || "unknown",
+        recordId,
+        hasExport: true,
+        ms
       });
-      
-      // Persist audit trail (async, non-blocking)
+
       persistReportMetadata('pdf', recordId, ms);
-      
       toast.success("Relatório gerado com sucesso!");
     } catch (error: any) {
       const ms = Math.round(performance.now() - t0);
-      logError("report.generate.error", { 
-        attendanceId: attendanceId || "unknown", 
-        recordId, 
+      logError("report.generate.error", {
+        attendanceId: attendanceId || "unknown",
+        recordId,
         code: error?.code || "UNKNOWN",
         message: error?.message?.slice(0, 50),
         ms
@@ -236,16 +224,15 @@ const AtendimentoDetail = () => {
     if (!clinicalRecord) return;
     const t0 = performance.now();
     const recordId = clinicalRecord.id;
-    
+
     logInfo("report.preview.clicked", { attendanceId: attendanceId || "unknown", recordId });
-    
-    // Persist audit trail (async, non-blocking)
+
     const ms = Math.round(performance.now() - t0);
     persistReportMetadata('preview', recordId, ms);
-    
+
     navigate(`/relatorio/${clinicalRecord.id}`);
   }, [clinicalRecord, attendanceId, navigate, persistReportMetadata]);
-  
+
   // Handle conclude attendance
   const handleConclude = async () => {
     if (!attendance) return;
@@ -254,30 +241,22 @@ const AtendimentoDetail = () => {
     }
     await closeAttendance.mutateAsync(attendance.id);
   };
-  
+
   // Determine current clinical status (S0-S3)
   const currentStatus: AttendanceStatus = useMemo(() => {
     if (!attendance?.involves_orthobiologics) return "S1";
     if (!screening) return "S0";
-    
-    // Check if labs are validated (S2 complete)
+
     if (screening.labs_validated) {
-      // Check if has REGEN result (S3) - use canonical_hash as indicator
       if (screening.canonical_hash) {
         return "S3";
       }
       return "S2";
     }
-    
+
     return "S1";
   }, [attendance, screening]);
-  
-  // Visible steps (clinical sequence)
-  const visibleSteps = useMemo(
-    () => getVisibleSteps(attendance?.involves_orthobiologics ?? false),
-    [attendance?.involves_orthobiologics]
-  );
-  
+
   if (isLoadingAttendance) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -285,7 +264,7 @@ const AtendimentoDetail = () => {
       </div>
     );
   }
-  
+
   if (attendanceError || !attendance) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -306,9 +285,8 @@ const AtendimentoDetail = () => {
       </div>
     );
   }
-  
+
   const renderStepContent = () => {
-    // Show locked message for closed attendances
     const renderClosedAlert = () => (
       <Alert className="mb-4">
         <Lock className="h-4 w-4" />
@@ -318,7 +296,7 @@ const AtendimentoDetail = () => {
         </AlertDescription>
       </Alert>
     );
-    
+
     switch (currentStep) {
       case "triage":
         return (
@@ -444,6 +422,7 @@ const AtendimentoDetail = () => {
             <CardContent>
               {!hasRecord && (
                 <div className="text-center py-8 text-muted-foreground">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                   Preparando avaliação clínica...
                 </div>
               )}
@@ -528,7 +507,7 @@ const AtendimentoDetail = () => {
         return null;
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -542,7 +521,7 @@ const AtendimentoDetail = () => {
         onConclude={handleConclude}
         isConcluding={closeAttendance.isPending}
       />
-      
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Stepper */}
@@ -554,7 +533,7 @@ const AtendimentoDetail = () => {
             completedSteps={completedSteps}
           />
         </div>
-        
+
         {/* Step Content */}
         <div className="space-y-6">
           {renderStepContent()}
