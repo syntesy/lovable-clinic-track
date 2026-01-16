@@ -122,6 +122,31 @@ const AtendimentoDetail = () => {
       setCurrentStep("plan");
     }
   }, [currentStep, attendance]);
+
+  // Auto-open clinical assessment form for new attendances with empty data
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
+  
+  useEffect(() => {
+    // Only auto-open once, on clinical step, when record exists but has no data
+    if (hasAutoOpened) return;
+    if (currentStep !== "clinical") return;
+    if (!attendance || !attendanceId) return;
+    if (isClosed) return;
+    if (isCreatingRecord) return;
+    if (!clinicalRecord) return; // Wait for record to be created/loaded
+    
+    // Check if the clinical record has any filled data
+    const hasData = clinicalRecord.chief_complaint || 
+                    clinicalRecord.anamnesis || 
+                    clinicalRecord.physical_exam || 
+                    clinicalRecord.clinical_diagnosis;
+    
+    if (!hasData) {
+      // Auto-open the form for new attendances with empty clinical record
+      setHasAutoOpened(true);
+      navigate(`/patients/${attendance.patient_id}/records/${clinicalRecord.id}?atendimento=${attendanceId}`);
+    }
+  }, [hasAutoOpened, currentStep, attendance, attendanceId, isClosed, isCreatingRecord, clinicalRecord, navigate]);
   const handleOpenClinicalAssessment = useCallback(async () => {
     if (!attendance || !attendanceId) return;
 
