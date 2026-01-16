@@ -145,27 +145,25 @@ export function useUpdateAttendanceType() {
 export function useUploadAttendanceFile() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  return useMutation<AttendanceFile, Error, {
+    attendanceId: string;
+    patientId: string;
+    file: File;
+    fileType: 'exam' | 'report' | 'image' | 'photo' | 'other';
+    description?: string;
+  }>({
     mutationFn: async ({
       attendanceId,
       patientId,
       file,
       fileType,
       description,
-      customFileName,
-    }: {
-      attendanceId: string;
-      patientId: string;
-      file: File;
-      fileType: 'exam' | 'report' | 'image' | 'photo' | 'other';
-      description?: string;
-      customFileName?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
-      
-      // Use custom file name if provided, otherwise use original
-      const displayFileName = customFileName || file.name;
+
+      // If description is provided, use it as the display name
+      const displayFileName = description?.trim() ? description.trim() : file.name;
       
       // Upload file to storage (keep original file for storage path)
       const filePath = `${user.id}/${attendanceId}/${Date.now()}_${file.name}`;
@@ -201,7 +199,11 @@ export function useUploadAttendanceFile() {
     },
     onError: (error) => {
       console.error("Error uploading file:", error);
-      toast.error("Erro ao enviar arquivo");
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? String((error as any).message)
+          : "Erro ao enviar arquivo";
+      toast.error(message);
     },
   });
 }
