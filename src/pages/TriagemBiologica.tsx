@@ -23,6 +23,7 @@ import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModa
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { Tables } from "@/integrations/supabase/types";
 import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
+import { NextStepCard, mapQuestionnaireToPatientFactors } from "@/components/orthobio";
 
 interface UploadedFile {
   id: string;
@@ -1254,23 +1255,12 @@ export default function TriagemBiologica() {
                       </Card>
                     )}
 
-                    {/* Card 6: Próximo Passo */}
-                    {analysisResult.next_steps?.what_to_do_now && (
-                      <Card className="bg-card/95 backdrop-blur border-border/50 border-primary/30">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base font-medium flex items-center gap-2 text-primary">
-                            <ArrowRight className="w-4 h-4" />
-                            Próximo Passo
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm font-medium">{analysisResult.next_steps.what_to_do_now}</p>
-                          {analysisResult.next_steps.timeline && (
-                            <p className="text-xs text-muted-foreground mt-1">{analysisResult.next_steps.timeline}</p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
+                    {/* Card 6: Próximo Passo - Procedure-Locked */}
+                    <NextStepCard
+                      procedureCode={answers.procedimento_considerado}
+                      patientFactors={mapQuestionnaireToPatientFactors(answers.medicamentos, answers.red_flags)}
+                      legacyNextSteps={analysisResult.next_steps}
+                    />
 
                     {/* Botão Ver JSON (opcional) */}
                     <div className="flex justify-end">
