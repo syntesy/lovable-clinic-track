@@ -165,8 +165,15 @@ export function useUploadAttendanceFile() {
       // If description is provided, use it as the display name
       const displayFileName = description?.trim() ? description.trim() : file.name;
       
-      // Upload file to storage (keep original file for storage path)
-      const filePath = `${user.id}/${attendanceId}/${Date.now()}_${file.name}`;
+      // Sanitize file name for storage path (remove special chars, spaces, accents)
+      const sanitizedFileName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // remove accents
+        .replace(/[^a-zA-Z0-9._-]/g, "_") // replace special chars with underscore
+        .replace(/_+/g, "_"); // collapse multiple underscores
+      
+      // Upload file to storage with sanitized path
+      const filePath = `${user.id}/${attendanceId}/${Date.now()}_${sanitizedFileName}`;
       
       const { error: uploadError } = await supabase.storage
         .from("attendance-files")
