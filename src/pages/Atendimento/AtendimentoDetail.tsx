@@ -391,8 +391,6 @@ const AtendimentoDetail = () => {
         );
 
       case "plan":
-
-      case "plan":
         return (
           <Card>
             <CardHeader>
