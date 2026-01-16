@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +9,10 @@ import {
   CheckCircle,
   ArrowLeft,
   User,
-  Lock,
-  Upload
+  Lock
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AttendanceSession, AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
-import { QuickUploadModal } from "./QuickUploadModal";
 
 interface AttendanceHeaderProps {
   attendance: AttendanceSession;
@@ -27,6 +24,7 @@ interface AttendanceHeaderProps {
   onConclude?: () => void;
   isSaving?: boolean;
   isConcluding?: boolean;
+  onNavigateToAttachments?: () => void;
 }
 
 const statusLabels: Record<AttendanceStatus, { label: string; className: string }> = {
@@ -46,9 +44,9 @@ export function AttendanceHeader({
   onConclude,
   isSaving,
   isConcluding,
+  onNavigateToAttachments,
 }: AttendanceHeaderProps) {
   const navigate = useNavigate();
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const statusInfo = statusLabels[status];
   const isClosed = isAttendanceClosed(attendance);
   
@@ -113,7 +111,7 @@ export function AttendanceHeader({
             <Badge 
               variant="secondary" 
               className="gap-1 cursor-pointer hover:bg-secondary/80 transition-colors"
-              onClick={() => setUploadModalOpen(true)}
+              onClick={onNavigateToAttachments}
             >
               <Paperclip className="w-3 h-3" />
               {fileCount} arquivo{fileCount !== 1 ? 's' : ''}
@@ -160,14 +158,6 @@ export function AttendanceHeader({
           </div>
         </div>
       </div>
-      
-      {/* Quick Upload Modal */}
-      <QuickUploadModal
-        open={uploadModalOpen}
-        onOpenChange={setUploadModalOpen}
-        attendanceId={attendance.id}
-        patientId={attendance.patient_id}
-      />
     </div>
   );
 }
