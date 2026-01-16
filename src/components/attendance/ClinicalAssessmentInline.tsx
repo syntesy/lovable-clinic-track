@@ -33,6 +33,9 @@ export function ClinicalAssessmentInline({
   const [clinicalDiagnosis, setClinicalDiagnosis] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Track if we've already auto-opened to prevent loops
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
+
   // Sync form when record changes
   useEffect(() => {
     if (!clinicalRecord) return;
@@ -41,16 +44,25 @@ export function ClinicalAssessmentInline({
     setAnamnesis(clinicalRecord.anamnesis ?? "");
     setPhysicalExam(clinicalRecord.physical_exam ?? "");
     setClinicalDiagnosis(clinicalRecord.clinical_diagnosis ?? "");
+  }, [clinicalRecord]);
 
-    // Auto-open editor for brand new/empty record
+  // Auto-open editor for brand new/empty record (runs once)
+  useEffect(() => {
+    if (hasAutoOpened) return;
+    if (!clinicalRecord) return;
+    if (isClosed) return;
+
     const hasAny =
       !!clinicalRecord.chief_complaint?.trim() ||
       !!clinicalRecord.anamnesis?.trim() ||
       !!clinicalRecord.physical_exam?.trim() ||
       !!clinicalRecord.clinical_diagnosis?.trim();
 
-    if (!hasAny && !isClosed) setIsEditing(true);
-  }, [clinicalRecord, isClosed]);
+    if (!hasAny) {
+      setIsEditing(true);
+      setHasAutoOpened(true);
+    }
+  }, [hasAutoOpened, clinicalRecord, isClosed]);
 
   const handleSave = async () => {
     if (!clinicalRecord) return;
