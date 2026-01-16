@@ -24,6 +24,11 @@ import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { Tables } from "@/integrations/supabase/types";
 import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 import { NextStepCard, mapQuestionnaireToPatientFactors } from "@/components/orthobio";
+import { 
+  generateOrthoBioPlan, 
+  mapTaxonomyToProcedureCode,
+  type ProcedureCode 
+} from "@/domain/orthoBioProcedures";
 
 interface UploadedFile {
   id: string;
@@ -1568,7 +1573,32 @@ export default function TriagemBiologica() {
                     <>
                       <ScrollArea className="h-[200px] pr-4">
                         <div className="text-sm text-foreground/80 whitespace-pre-wrap">
-                          {patientOrientations || analysisResult.next_steps?.what_to_do_now || "Orientações disponíveis na análise completa."}
+                          {(() => {
+                            // Procedure-locked: Generate orientations from selected procedure only
+                            if (patientOrientations) return patientOrientations;
+                            
+                            // Use procedure-locked generator instead of LLM next_steps
+                            const procedureCode = answers.procedimento_considerado;
+                            if (procedureCode) {
+                              let procCode: ProcedureCode | null = null;
+                              const directCodes: ProcedureCode[] = ["PRP", "PRF", "BMA", "BMEC", "NANOFAT"];
+                              if (directCodes.includes(procedureCode.toUpperCase() as ProcedureCode)) {
+                                procCode = procedureCode.toUpperCase() as ProcedureCode;
+                              } else {
+                                procCode = mapTaxonomyToProcedureCode(procedureCode);
+                              }
+                              
+                              if (procCode) {
+                                const plan = generateOrthoBioPlan({
+                                  procedure_codes: [procCode],
+                                  patient_factors: mapQuestionnaireToPatientFactors(answers.medicamentos, answers.red_flags),
+                                });
+                                return plan.next_steps_text;
+                              }
+                            }
+                            
+                            return "Orientações disponíveis na análise completa.";
+                          })()}
                         </div>
                       </ScrollArea>
                       <Button 
@@ -1654,7 +1684,30 @@ export default function TriagemBiologica() {
         onOpenChange={setPrintPreviewOpen}
         type={printPreviewType}
         patientName={selectedPatient?.full_name || ""}
-        content={printPreviewType === "exams" ? getExamsForPrint() : (patientOrientations || "")}
+        content={printPreviewType === "exams" ? getExamsForPrint() : (() => {
+          // Procedure-locked: Use generator for orientations print
+          if (patientOrientations) return patientOrientations;
+          
+          const procedureCode = answers.procedimento_considerado;
+          if (procedureCode) {
+            let procCode: ProcedureCode | null = null;
+            const directCodes: ProcedureCode[] = ["PRP", "PRF", "BMA", "BMEC", "NANOFAT"];
+            if (directCodes.includes(procedureCode.toUpperCase() as ProcedureCode)) {
+              procCode = procedureCode.toUpperCase() as ProcedureCode;
+            } else {
+              procCode = mapTaxonomyToProcedureCode(procedureCode);
+            }
+            
+            if (procCode) {
+              const plan = generateOrthoBioPlan({
+                procedure_codes: [procCode],
+                patient_factors: mapQuestionnaireToPatientFactors(answers.medicamentos, answers.red_flags),
+              });
+              return plan.next_steps_text;
+            }
+          }
+          return "";
+        })()}
       />
 
       {/* Extracted Text Preview Modal */}
