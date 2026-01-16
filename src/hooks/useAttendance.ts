@@ -105,6 +105,42 @@ export function useCreateAttendance() {
   });
 }
 
+// Hook to update attendance type (orthobiologic or not)
+export function useUpdateAttendanceType() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      attendanceId, 
+      involvesOrthobiologics 
+    }: { 
+      attendanceId: string; 
+      involvesOrthobiologics: boolean;
+    }) => {
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .update({ involves_orthobiologics: involvesOrthobiologics })
+        .eq("id", attendanceId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as AttendanceSession;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["attendance-session", data.id] });
+      toast.success(data.involves_orthobiologics 
+        ? "Atendimento marcado como Ortobiológico" 
+        : "Atendimento marcado como Não Ortobiológico"
+      );
+    },
+    onError: (error) => {
+      console.error("Error updating attendance type:", error);
+      toast.error("Erro ao atualizar tipo de atendimento");
+    },
+  });
+}
+
 // Hook to upload a file to an attendance
 export function useUploadAttendanceFile() {
   const queryClient = useQueryClient();
