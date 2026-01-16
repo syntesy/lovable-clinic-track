@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { 
   Stethoscope, 
@@ -8,7 +8,14 @@ import {
   Check,
   Paperclip
 } from "lucide-react";
-import { getVisibleSteps, AttendanceStepConfig } from "@/types/attendance";
+import { 
+  getStepsForAttendance, 
+  canAccessStep,
+  isValidStep,
+  type AttendanceStepId 
+} from "@/domain/attendanceFlow";
+import { STEP_UI_CONFIG } from "@/types/attendance";
+import { toast } from "sonner";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'stethoscope': Stethoscope,
@@ -21,7 +28,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 interface AttendanceStepperProps {
   involvesOrthobiologics: boolean;
   currentStep: string;
-  onStepChange: (stepId: string) => void;
+  onStepChange: (stepId: AttendanceStepId) => void;
   completedSteps?: string[];
   className?: string;
 }
@@ -33,28 +40,47 @@ export function AttendanceStepper({
   completedSteps = [],
   className,
 }: AttendanceStepperProps) {
+  // Use domain contract for steps
+  const attendance = useMemo(() => ({ involves_orthobiologics: involvesOrthobiologics }), [involvesOrthobiologics]);
+  
   const visibleSteps = useMemo(
-    () => getVisibleSteps(involvesOrthobiologics),
-    [involvesOrthobiologics]
+    () => getStepsForAttendance(attendance),
+    [attendance]
   );
 
-  const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
+  const currentIndex = visibleSteps.findIndex(s => s === currentStep);
+
+  // Guarded step change handler
+  const handleStepChange = useCallback((stepId: AttendanceStepId) => {
+    if (!isValidStep(stepId)) {
+      console.warn(`[AttendanceStepper] Invalid step: ${stepId}`);
+      return;
+    }
+    
+    if (!canAccessStep(stepId, attendance)) {
+      toast.error("Esta etapa não está disponível para este tipo de atendimento.");
+      return;
+    }
+    
+    onStepChange(stepId);
+  }, [attendance, onStepChange]);
 
   return (
     <div className={cn("w-full", className)}>
       {/* Mobile: Vertical compact */}
       <div className="md:hidden">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 px-1">
-          {visibleSteps.map((step, index) => {
-            const Icon = iconMap[step.icon] || FileText;
-            const isActive = step.id === currentStep;
-            const isCompleted = completedSteps.includes(step.id);
+          {visibleSteps.map((stepId, index) => {
+            const config = STEP_UI_CONFIG[stepId] || { label: stepId, icon: 'file-text' };
+            const Icon = iconMap[config.icon] || FileText;
+            const isActive = stepId === currentStep;
+            const isCompleted = completedSteps.includes(stepId);
             const isPast = index < currentIndex;
 
             return (
               <button
-                key={step.id}
-                onClick={() => onStepChange(step.id)}
+                key={stepId}
+                onClick={() => handleStepChange(stepId)}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg whitespace-nowrap transition-colors flex-shrink-0",
                   isActive 
@@ -76,7 +102,7 @@ export function AttendanceStepper({
         </div>
         <div className="mt-2 px-1">
           <p className="text-sm font-medium text-foreground">
-            {visibleSteps[currentIndex]?.label}
+            {currentIndex >= 0 ? STEP_UI_CONFIG[visibleSteps[currentIndex]]?.label : ''}
           </p>
         </div>
       </div>
@@ -84,17 +110,18 @@ export function AttendanceStepper({
       {/* Desktop: Horizontal stepper */}
       <div className="hidden md:block">
         <div className="flex items-center justify-between">
-          {visibleSteps.map((step, index) => {
-            const Icon = iconMap[step.icon] || FileText;
-            const isActive = step.id === currentStep;
-            const isCompleted = completedSteps.includes(step.id);
+          {visibleSteps.map((stepId, index) => {
+            const config = STEP_UI_CONFIG[stepId] || { label: stepId, icon: 'file-text' };
+            const Icon = iconMap[config.icon] || FileText;
+            const isActive = stepId === currentStep;
+            const isCompleted = completedSteps.includes(stepId);
             const isPast = index < currentIndex;
             const isLast = index === visibleSteps.length - 1;
 
             return (
-              <div key={step.id} className="flex items-center flex-1">
+              <div key={stepId} className="flex items-center flex-1">
                 <button
-                  onClick={() => onStepChange(step.id)}
+                  onClick={() => handleStepChange(stepId)}
                   className={cn(
                     "flex flex-col items-center gap-2 p-2 rounded-lg transition-colors group",
                     isActive && "ring-2 ring-primary ring-offset-2"
@@ -126,7 +153,7 @@ export function AttendanceStepper({
                         : "text-muted-foreground"
                     )}
                   >
-                    {step.label}
+                    {config.label}
                   </span>
                 </button>
                 

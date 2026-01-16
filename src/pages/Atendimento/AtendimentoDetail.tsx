@@ -25,7 +25,16 @@ import {
   AttendanceDocumentsStep,
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
-import { AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
+import { 
+  AttendanceStatus, 
+  isAttendanceClosed,
+  type AttendanceStepId 
+} from "@/types/attendance";
+import {
+  INITIAL_STEP,
+  validateStepForAttendance,
+  canAccessStep,
+} from "@/domain/attendanceFlow";
 import {
   ensureClinicalRecordForAttendance,
   hasClinicalRecordMinimumData,
@@ -44,9 +53,9 @@ const AtendimentoDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Default step is "clinical" (first clinical step - Avaliação Clínica)
-  const [currentStep, setCurrentStep] = useState("clinical");
-  const [completedSteps] = useState<string[]>([]);
+  // Default step is INITIAL_STEP from domain contract
+  const [currentStep, setCurrentStep] = useState<AttendanceStepId>(INITIAL_STEP);
+  const [completedSteps] = useState<AttendanceStepId[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
@@ -126,12 +135,23 @@ const AtendimentoDetail = () => {
     };
   }, [attendance, attendanceId, clinicalRecord, isClosed, isCreatingRecord, queryClient]);
 
-  // Redirect from triage step if attendance is not orthobiologic
+  // Validate and normalize step when attendance changes
   useEffect(() => {
-    if (currentStep === "triage" && attendance && !attendance.involves_orthobiologics) {
-      setCurrentStep("plan");
+    if (!attendance) return;
+    
+    const validatedStep = validateStepForAttendance(currentStep, { involves_orthobiologics: attendance.involves_orthobiologics });
+    if (validatedStep !== currentStep) {
+      setCurrentStep(validatedStep);
     }
   }, [currentStep, attendance]);
+
+  // Guarded step change handler
+  const handleStepChange = useCallback((step: AttendanceStepId) => {
+    if (!attendance) return;
+    
+    const validatedStep = validateStepForAttendance(step, { involves_orthobiologics: attendance.involves_orthobiologics });
+    setCurrentStep(validatedStep);
+  }, [attendance]);
 
 
   const handleEnsureClinicalAssessment = useCallback(async () => {
@@ -677,7 +697,7 @@ const AtendimentoDetail = () => {
         onGenerateReport={handleGenerateReport}
         onConclude={handleConclude}
         isConcluding={closeAttendance.isPending}
-        onNavigateToAttachments={() => setCurrentStep("attachments")}
+        onNavigateToAttachments={() => handleStepChange("attachments")}
       />
 
       {/* Main Content */}
@@ -687,7 +707,7 @@ const AtendimentoDetail = () => {
           <AttendanceStepper
             involvesOrthobiologics={attendance.involves_orthobiologics}
             currentStep={currentStep}
-            onStepChange={setCurrentStep}
+            onStepChange={handleStepChange}
             completedSteps={completedSteps}
           />
         </div>
