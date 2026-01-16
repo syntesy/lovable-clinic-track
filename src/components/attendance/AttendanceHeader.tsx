@@ -110,26 +110,17 @@ export function AttendanceHeader({
               </Badge>
             )}
             
-            <Badge variant="secondary" className="gap-1">
+            <Badge 
+              variant="secondary" 
+              className="gap-1 cursor-pointer hover:bg-secondary/80 transition-colors"
+              onClick={() => setUploadModalOpen(true)}
+            >
               <Paperclip className="w-3 h-3" />
               {fileCount} arquivo{fileCount !== 1 ? 's' : ''}
             </Badge>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Upload button - always visible if not closed */}
-            {!isClosed && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setUploadModalOpen(true)}
-                className="gap-1.5"
-              >
-                <Upload className="w-4 h-4" />
-                Anexar
-              </Button>
-            )}
-            
             {!isClosed && onSave && (
               <Button
                 variant="outline"

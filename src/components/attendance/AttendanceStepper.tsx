@@ -5,9 +5,11 @@ import {
   FlaskConical, 
   ClipboardList, 
   FileText,
-  Check
+  Check,
+  Paperclip
 } from "lucide-react";
 import { getVisibleSteps, AttendanceStepConfig } from "@/types/attendance";
+import { Button } from "@/components/ui/button";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'stethoscope': Stethoscope,
@@ -22,6 +24,8 @@ interface AttendanceStepperProps {
   onStepChange: (stepId: string) => void;
   completedSteps?: string[];
   className?: string;
+  onUploadClick?: () => void;
+  isClosed?: boolean;
 }
 
 export function AttendanceStepper({
@@ -30,6 +34,8 @@ export function AttendanceStepper({
   onStepChange,
   completedSteps = [],
   className,
+  onUploadClick,
+  isClosed = false,
 }: AttendanceStepperProps) {
   const visibleSteps = useMemo(
     () => getVisibleSteps(involvesOrthobiologics),
@@ -139,6 +145,21 @@ export function AttendanceStepper({
               </div>
             );
           })}
+          
+          {/* Upload button at end of stepper */}
+          {!isClosed && onUploadClick && (
+            <div className="flex items-center ml-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onUploadClick}
+                className="gap-1.5"
+              >
+                <Paperclip className="w-4 h-4" />
+                Anexar
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
