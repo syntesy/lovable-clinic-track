@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Loader2, FileText, X } from "lucide-react";
+import { toast } from "sonner";
 import { useUploadAttendanceFile } from "@/hooks/useAttendance";
 
 interface QuickUploadModalProps {
@@ -44,14 +45,23 @@ export function QuickUploadModal({
     const selectedFiles = e.target.files;
     if (!selectedFiles?.length) return;
 
-    const newFiles: PendingFile[] = Array.from(selectedFiles).map((file) => ({
-      file,
-      customName: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for display
-      fileType: 'other' as FileType,
-    }));
+    const rejected = Array.from(selectedFiles).filter((f) => f.size > 20 * 1024 * 1024);
+    if (rejected.length > 0) {
+      toast.error(
+        `Alguns arquivos excedem 20MB e foram ignorados: ${rejected.map((f) => f.name).join(", ")}`
+      );
+    }
+
+    const newFiles: PendingFile[] = Array.from(selectedFiles)
+      .filter((file) => file.size <= 20 * 1024 * 1024)
+      .map((file) => ({
+        file,
+        customName: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for display
+        fileType: "other" as FileType,
+      }));
 
     setPendingFiles((prev) => [...prev, ...newFiles]);
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -73,36 +83,47 @@ export function QuickUploadModal({
     setIsUploading(true);
     try {
       for (const pf of pendingFiles) {
-        // Create a new file with the custom name + original extension
-        const ext = pf.file.name.split('.').pop() || '';
-        const finalName = pf.customName + (ext ? `.${ext}` : '');
-        
+        const safeName = (pf.customName || "").trim();
+        if (!safeName) {
+          throw new Error("Informe um nome para o arquivo antes de enviar.");
+        }
+
+        // Create a new file name with the custom name + original extension
+        const ext = pf.file.name.split(".").pop() || "";
+        const finalName = safeName + (ext ? `.${ext}` : "");
+
         await uploadMutation.mutateAsync({
           attendanceId,
           patientId,
           file: pf.file,
           fileType: pf.fileType,
-          description: pf.customName,
-          customFileName: finalName,
+          description: finalName,
         });
       }
 
       setPendingFiles([]);
       onOpenChange(false);
+    } catch (e) {
+      const msg =
+        typeof e === "object" && e && "message" in e
+          ? String((e as any).message)
+          : "Erro ao enviar arquivo";
+      toast.error(msg);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleClose = () => {
-    if (!isUploading) {
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (isUploading) return;
+    if (!nextOpen) {
       setPendingFiles([]);
-      onOpenChange(false);
     }
+    onOpenChange(nextOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -206,7 +227,11 @@ export function QuickUploadModal({
 
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={handleClose} disabled={isUploading}>
+          <Button
+            variant="outline"
+            onClick={() => handleDialogOpenChange(false)}
+            disabled={isUploading}
+          >
             Cancelar
           </Button>
           <Button
