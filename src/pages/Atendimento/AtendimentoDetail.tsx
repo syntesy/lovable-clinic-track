@@ -21,7 +21,8 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AttendanceStepper,
-  AttendanceHeader
+  AttendanceHeader,
+  AttendanceDocumentsStep,
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { AttendanceStatus, isAttendanceClosed } from "@/types/attendance";
@@ -547,94 +548,105 @@ const AtendimentoDetail = () => {
           (attendance?.involves_orthobiologics ? currentStatus === "S3" : true);
 
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatório</CardTitle>
-              <CardDescription>
-                Gere e exporte o relatório final do atendimento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!hasRecord && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                  Preparando avaliação clínica...
-                </div>
-              )}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatório</CardTitle>
+                <CardDescription>
+                  Gere e exporte o relatório final do atendimento
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!hasRecord && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                    Preparando avaliação clínica...
+                  </div>
+                )}
 
-              {hasRecord && !hasMinData && (
-                <div className="text-center py-8">
-                  <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-                  <p className="text-foreground font-medium mb-2">Avaliação Clínica Incompleta</p>
-                  <p className="text-muted-foreground mb-4">
-                    Preencha pelo menos: queixa + anamnese OU diagnóstico clínico.
-                  </p>
-                  <Button variant="outline" onClick={() => setCurrentStep("clinical")}>
-                    Ir para Avaliação Clínica
-                  </Button>
-                </div>
-              )}
-
-              {hasRecord && hasMinData && attendance?.involves_orthobiologics && currentStatus !== "S3" && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Relatório disponível após conclusão do Score Definitivo (S3)</p>
-                  <p className="text-sm mt-2">Status atual: {currentStatus}</p>
-                </div>
-              )}
-
-              {canGenerateReport && (
-                <div className="space-y-4">
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Pronto para Gerar Relatório</AlertTitle>
-                    <AlertDescription>
-                      {attendance?.involves_orthobiologics
-                        ? "O score definitivo foi gerado. Você pode gerar o relatório final."
-                        : "A avaliação clínica está completa. Você pode gerar o relatório final."}
-                    </AlertDescription>
-                  </Alert>
-                  <div className="flex gap-2">
-                    <Button onClick={handleExportPdf} disabled={isExportingPdf}>
-                      {isExportingPdf ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Gerando...
-                        </>
-                      ) : (
-                        "Gerar Relatório PDF"
-                      )}
-                    </Button>
-                    <Button variant="outline" onClick={handlePreviewReport}>
-                      Visualizar Preview
+                {hasRecord && !hasMinData && (
+                  <div className="text-center py-8">
+                    <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                    <p className="text-foreground font-medium mb-2">Avaliação Clínica Incompleta</p>
+                    <p className="text-muted-foreground mb-4">
+                      Preencha pelo menos: queixa + anamnese OU diagnóstico clínico.
+                    </p>
+                    <Button variant="outline" onClick={() => setCurrentStep("clinical")}>
+                      Ir para Avaliação Clínica
                     </Button>
                   </div>
+                )}
 
-                  {attendance?.last_report_generated_at && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-                      <Clock className="w-4 h-4" />
-                      <span>
-                        Último relatório gerado em{" "}
-                        {format(new Date(attendance.last_report_generated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        {attendance.last_report_type && (
-                          <span className="ml-1">
-                            ({attendance.last_report_type === 'pdf' ? 'PDF' : 'Preview'})
-                          </span>
+                {hasRecord && hasMinData && attendance?.involves_orthobiologics && currentStatus !== "S3" && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Relatório disponível após conclusão do Score Definitivo (S3)</p>
+                    <p className="text-sm mt-2">Status atual: {currentStatus}</p>
+                  </div>
+                )}
+
+                {canGenerateReport && (
+                  <div className="space-y-4">
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Pronto para Gerar Relatório</AlertTitle>
+                      <AlertDescription>
+                        {attendance?.involves_orthobiologics
+                          ? "O score definitivo foi gerado. Você pode gerar o relatório final."
+                          : "A avaliação clínica está completa. Você pode gerar o relatório final."}
+                      </AlertDescription>
+                    </Alert>
+                    <div className="flex gap-2">
+                      <Button onClick={handleExportPdf} disabled={isExportingPdf}>
+                        {isExportingPdf ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Gerando...
+                          </>
+                        ) : (
+                          "Gerar Relatório PDF"
                         )}
-                      </span>
+                      </Button>
+                      <Button variant="outline" onClick={handlePreviewReport}>
+                        Visualizar Preview
+                      </Button>
                     </div>
-                  )}
 
-                  {files.length > 0 && (
-                    <div className="mt-4 pt-4 border-t">
-                      <p className="text-sm text-muted-foreground">
-                        {files.length} arquivo(s) anexado(s) a este atendimento
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    {attendance?.last_report_generated_at && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                        <Clock className="w-4 h-4" />
+                        <span>
+                          Último relatório gerado em{" "}
+                          {format(new Date(attendance.last_report_generated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          {attendance.last_report_type && (
+                            <span className="ml-1">
+                              ({attendance.last_report_type === "pdf" ? "PDF" : "Preview"})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+
+                    {files.length > 0 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <p className="text-sm text-muted-foreground">
+                          {files.length} arquivo(s) anexado(s) a este atendimento
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Sempre mostrar anexos do atendimento nesta etapa */}
+            {attendanceId && attendance?.patient_id && (
+              <AttendanceDocumentsStep
+                attendanceId={attendanceId}
+                patientId={attendance.patient_id}
+                disabled={isClosed}
+              />
+            )}
+          </div>
         );
       }
 
