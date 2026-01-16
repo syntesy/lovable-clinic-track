@@ -1811,6 +1811,214 @@ export type Database = {
           },
         ]
       }
+      mentors: {
+        Row: {
+          bio: string | null
+          clinical_areas: string[] | null
+          created_at: string
+          headline: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          photo_url: string | null
+          slug: string
+          specialty: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          clinical_areas?: string[] | null
+          created_at?: string
+          headline?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          photo_url?: string | null
+          slug: string
+          specialty: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          clinical_areas?: string[] | null
+          created_at?: string
+          headline?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          photo_url?: string | null
+          slug?: string
+          specialty?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      mentorship_enrollments: {
+        Row: {
+          completed_at: string | null
+          enrolled_at: string
+          id: string
+          mentorship_id: string
+          payment_status: string | null
+          session_id: string | null
+          status: string
+          stripe_payment_id: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          enrolled_at?: string
+          id?: string
+          mentorship_id: string
+          payment_status?: string | null
+          session_id?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          enrolled_at?: string
+          id?: string
+          mentorship_id?: string
+          payment_status?: string | null
+          session_id?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorship_enrollments_mentorship_id_fkey"
+            columns: ["mentorship_id"]
+            isOneToOne: false
+            referencedRelation: "mentorships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentorship_enrollments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mentorship_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentorship_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          meeting_url: string | null
+          mentorship_id: string
+          scheduled_at: string
+          spots_available: number | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meeting_url?: string | null
+          mentorship_id: string
+          scheduled_at: string
+          spots_available?: number | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meeting_url?: string | null
+          mentorship_id?: string
+          scheduled_at?: string
+          spots_available?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorship_sessions_mentorship_id_fkey"
+            columns: ["mentorship_id"]
+            isOneToOne: false
+            referencedRelation: "mentorships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentorships: {
+        Row: {
+          clinical_area: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          max_spots: number | null
+          meeting_url: string | null
+          mentor_id: string
+          modality: string
+          price_cents: number
+          slug: string
+          target_audience: string | null
+          title: string
+          topics: string[] | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          clinical_area?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          max_spots?: number | null
+          meeting_url?: string | null
+          mentor_id: string
+          modality?: string
+          price_cents?: number
+          slug: string
+          target_audience?: string | null
+          title: string
+          topics?: string[] | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          clinical_area?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          max_spots?: number | null
+          meeting_url?: string | null
+          mentor_id?: string
+          modality?: string
+          price_cents?: number
+          slug?: string
+          target_audience?: string | null
+          title?: string
+          topics?: string[] | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorships_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ortobiologicos_protocols: {
         Row: {
           application_site: string | null
@@ -4616,10 +4824,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_edu_admin: { Args: { _user_id: string }; Returns: boolean }
       is_healthcare_professional: {
         Args: { _user_id: string }
         Returns: boolean
       }
+      is_mentor: { Args: { _user_id: string }; Returns: boolean }
       log_audit_action: {
         Args: {
           p_action: string
