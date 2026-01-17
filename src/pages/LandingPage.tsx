@@ -130,7 +130,7 @@ export default function LandingPage() {
       {/* Sophisticated layered background - matching SelectEnvironmentPage */}
       {/* Using will-change and transform for GPU acceleration, avoiding blur for performance */}
       <motion.div 
-        className="fixed inset-0 bg-gradient-to-b from-background via-background to-background will-change-transform"
+        className="fixed inset-0 bg-gradient-to-b from-background via-background to-background"
         style={{ y: backgroundY }}
         aria-hidden="true"
       />
