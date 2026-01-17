@@ -128,18 +128,8 @@ export default function Auth() {
     } else {
       await recordSuccessfulLogin();
       await logLogin();
-      // Check for saved environment preference
-      const lastEnv = localStorage.getItem("regenapp_last_environment");
-      if (lastEnv && ["clinical", "academy", "patient"].includes(lastEnv)) {
-        const routes: Record<string, string> = {
-          clinical: "/pacientes",
-          academy: "/academy/home",
-          patient: "/patient/login"
-        };
-        navigate(routes[lastEnv]);
-      } else {
-        navigate("/select-environment");
-      }
+      // Always show environment selection after login
+      navigate("/select-environment");
     }
     setLoading(false);
   };
