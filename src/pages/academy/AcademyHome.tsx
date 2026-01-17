@@ -29,14 +29,14 @@ const AcademyHome = () => {
       title: "Quero mentoria clínica",
       description: "Conecte-se com especialistas para discutir seus casos",
       icon: Users,
-      href: "/mentorias",
+      href: "/academy/mentorias",
       color: "bg-primary/10 text-primary",
     },
     {
       title: "Quero estudar ciência aplicada",
       description: "Artigos científicos com comentários clínicos",
       icon: Microscope,
-      href: "/ciencia-aplicada",
+      href: "/academy/ciencia-aplicada",
       color: "bg-emerald-500/10 text-emerald-600",
     },
     {
@@ -50,7 +50,7 @@ const AcademyHome = () => {
       title: "Minha jornada profissional",
       description: "Acompanhe seu desenvolvimento e conquistas",
       icon: TrendingUp,
-      href: "/minha-jornada",
+      href: "/academy/minha-jornada",
       color: "bg-purple-500/10 text-purple-600",
     },
   ];
@@ -74,11 +74,11 @@ const AcademyHome = () => {
               e construa uma carreira sólida em terapias regenerativas.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button size="lg" onClick={() => navigate("/mentorias")}>
+              <Button size="lg" onClick={() => navigate("/academy/mentorias")}>
                 <Users className="w-4 h-4 mr-2" />
                 Explorar Mentorias
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/mentores")}>
+              <Button size="lg" variant="outline" onClick={() => navigate("/academy/mentores")}>
                 Conhecer Mentores
               </Button>
               <Button size="lg" variant="ghost" onClick={() => navigate("/edu/cohorts")}>
@@ -143,7 +143,7 @@ const AcademyHome = () => {
                   Sessões exclusivas com especialistas renomados
                 </p>
               </div>
-              <Button variant="outline" onClick={() => navigate("/mentorias")}>
+              <Button variant="outline" onClick={() => navigate("/academy/mentorias")}>
                 Ver todas
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -153,7 +153,7 @@ const AcademyHome = () => {
                 <Card 
                   key={mentorship.id}
                   className="cursor-pointer hover:shadow-lg transition-all group"
-                  onClick={() => navigate(`/mentorias/${mentorship.slug}`)}
+                  onClick={() => navigate(`/academy/mentorias/${mentorship.slug}`)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -225,7 +225,7 @@ const AcademyHome = () => {
                   Especialistas que transformam prática em resultados
                 </p>
               </div>
-              <Button variant="outline" onClick={() => navigate("/mentores")}>
+              <Button variant="outline" onClick={() => navigate("/academy/mentores")}>
                 Ver todos
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -235,7 +235,7 @@ const AcademyHome = () => {
                 <Card 
                   key={mentor.id}
                   className="cursor-pointer hover:shadow-lg transition-all group text-center"
-                  onClick={() => navigate(`/mentores/${mentor.slug}`)}
+                  onClick={() => navigate(`/academy/mentores/${mentor.slug}`)}
                 >
                   <CardHeader className="pb-2">
                     <Avatar className="w-20 h-20 mx-auto mb-3 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all">
@@ -290,7 +290,7 @@ const AcademyHome = () => {
                     Artigos comentados, aulas baseadas em evidência e discussões 
                     que conectam a ciência ao dia a dia do consultório.
                   </p>
-                  <Button onClick={() => navigate("/ciencia-aplicada")}>
+                  <Button onClick={() => navigate("/academy/ciencia-aplicada")}>
                     Explorar Biblioteca
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
