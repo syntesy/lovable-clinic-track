@@ -20,17 +20,58 @@ const MyMentorshipsPage = () => {
   const navigate = useNavigate();
   const { data: enrollments = [], isLoading } = useMyMentorships();
 
-  const upcomingEnrollments = enrollments.filter(e => 
-    e.session && isFuture(new Date(e.session.scheduled_at)) && e.status !== 'cancelled'
+  // Active enrollments - user can access content
+  const activeEnrollments = enrollments.filter(e => 
+    e.status === 'active' || e.status === 'confirmed'
+  );
+
+  const upcomingEnrollments = activeEnrollments.filter(e => 
+    e.session && isFuture(new Date(e.session.scheduled_at))
   );
 
   const pastEnrollments = enrollments.filter(e => 
     e.session && isPast(new Date(e.session.scheduled_at)) || e.status === 'completed'
   );
 
+  // Pending - awaiting payment or manual approval
   const pendingEnrollments = enrollments.filter(e => 
-    e.status === 'pending' && e.payment_status === 'pending'
+    e.status === 'pending' || e.status === 'pending_manual'
   );
+
+  const getStatusBadge = (enrollment: typeof enrollments[0]) => {
+    if (enrollment.status === 'pending_manual') {
+      return (
+        <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-blue-500/30">
+          <Clock className="w-3 h-3 mr-1" />
+          Aguardando aprovação
+        </Badge>
+      );
+    }
+    if (enrollment.status === 'pending') {
+      return (
+        <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
+          <Clock className="w-3 h-3 mr-1" />
+          Pagamento pendente
+        </Badge>
+      );
+    }
+    if (enrollment.status === 'expired') {
+      return (
+        <Badge variant="secondary" className="bg-red-500/10 text-red-600 border-red-500/30">
+          Expirado
+        </Badge>
+      );
+    }
+    if (enrollment.status === 'active' || enrollment.status === 'confirmed') {
+      return (
+        <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/30">
+          <CheckCircle2 className="w-3 h-3 mr-1" />
+          Confirmado
+        </Badge>
+      );
+    }
+    return <Badge variant="outline">{enrollment.status}</Badge>;
+  };
 
   if (isLoading) {
     return (
@@ -76,7 +117,7 @@ const MyMentorshipsPage = () => {
                 Você ainda não se inscreveu em nenhuma mentoria. 
                 Explore nosso catálogo e encontre a mentoria ideal para você.
               </p>
-              <Button onClick={() => navigate("/mentorias")}>
+              <Button onClick={() => navigate("/academy/mentorias")}>
                 Explorar mentorias
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -109,7 +150,7 @@ const MyMentorshipsPage = () => {
                       <Button 
                         variant="outline" 
                         className="mt-4"
-                        onClick={() => navigate("/mentorias")}
+                        onClick={() => navigate("/academy/mentorias")}
                       >
                         Explorar mentorias
                       </Button>
@@ -158,7 +199,7 @@ const MyMentorshipsPage = () => {
                               )}
                               <Button 
                                 variant="outline"
-                                onClick={() => navigate(`/mentorias/${enrollment.mentorship?.slug}`)}
+                                onClick={() => navigate(`/academy/mentorias/${enrollment.mentorship?.slug}`)}
                               >
                                 Ver detalhes
                               </Button>
@@ -184,24 +225,32 @@ const MyMentorshipsPage = () => {
                 ) : (
                   <div className="space-y-4">
                     {pendingEnrollments.map((enrollment) => (
-                      <Card key={enrollment.id} className="border-amber-500/30 bg-amber-500/5">
+                      <Card 
+                        key={enrollment.id} 
+                        className={enrollment.status === 'pending_manual' 
+                          ? "border-blue-500/30 bg-blue-500/5" 
+                          : "border-amber-500/30 bg-amber-500/5"
+                        }
+                      >
                         <CardContent className="py-6">
                           <div className="flex flex-col md:flex-row md:items-center gap-4">
                             <div className="flex-1">
-                              <Badge variant="secondary" className="mb-2">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Pagamento pendente
-                              </Badge>
-                              <h3 className="text-lg font-semibold text-foreground mb-1">
+                              {getStatusBadge(enrollment)}
+                              <h3 className="text-lg font-semibold text-foreground mb-1 mt-2">
                                 {enrollment.mentorship?.title || 'Mentoria'}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                Complete o pagamento para confirmar sua inscrição.
+                                {enrollment.status === 'pending_manual' 
+                                  ? "Sua solicitação foi enviada. Aguarde aprovação do mentor/administrador."
+                                  : "Complete o pagamento para confirmar sua inscrição."
+                                }
                               </p>
                             </div>
-                            <Button>
-                              Completar pagamento
-                            </Button>
+                            {enrollment.status === 'pending' && (
+                              <Button onClick={() => navigate(`/academy/mentorias/${enrollment.mentorship?.slug}`)}>
+                                Completar pagamento
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -246,7 +295,7 @@ const MyMentorshipsPage = () => {
                             </div>
                             <Button 
                               variant="outline"
-                              onClick={() => navigate(`/mentorias/${enrollment.mentorship?.slug}`)}
+                              onClick={() => navigate(`/academy/mentorias/${enrollment.mentorship?.slug}`)}
                             >
                               Ver detalhes
                             </Button>

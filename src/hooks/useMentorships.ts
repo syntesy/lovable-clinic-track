@@ -40,13 +40,22 @@ export interface MentorshipEnrollment {
   user_id: string;
   mentorship_id: string;
   session_id: string | null;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  payment_status: 'pending' | 'paid' | 'refunded';
+  status: 'pending' | 'pending_manual' | 'active' | 'confirmed' | 'completed' | 'cancelled' | 'expired';
+  payment_status: 'pending' | 'pending_manual' | 'paid' | 'refunded' | 'expired';
   stripe_payment_id: string | null;
+  stripe_session_id: string | null;
   enrolled_at: string;
   completed_at: string | null;
   mentorship?: Mentorship;
   session?: MentorshipSession;
+}
+
+export interface EnrollmentResponse {
+  url?: string;
+  manual?: boolean;
+  enrollmentId?: string;
+  message?: string;
+  error?: string;
 }
 
 export interface MentorshipFilters {
@@ -239,24 +248,25 @@ export function useEnrollInMentorship() {
     }: { 
       mentorshipId: string; 
       sessionId?: string;
-    }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+    }): Promise<EnrollmentResponse> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Usuário não autenticado');
 
-      const { data, error } = await supabase
-        .from('mentorship_enrollments' as any)
-        .insert({
-          user_id: user.id,
-          mentorship_id: mentorshipId,
-          session_id: sessionId || null,
-          status: 'pending',
-          payment_status: 'pending',
-        })
-        .select()
-        .single();
+      // Call the edge function to handle checkout/enrollment
+      const { data, error } = await supabase.functions.invoke('create-mentorship-checkout', {
+        body: { mentorshipId, sessionId },
+      });
 
-      if (error) throw error;
-      return data as unknown as MentorshipEnrollment;
+      if (error) {
+        console.error('Erro ao processar inscrição:', error);
+        throw new Error(error.message || 'Erro ao processar inscrição');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return data as EnrollmentResponse;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-mentorships'] });
