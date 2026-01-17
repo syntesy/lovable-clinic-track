@@ -1813,47 +1813,71 @@ export type Database = {
       }
       mentors: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           bio: string | null
           clinical_areas: string[] | null
           created_at: string
+          email: string | null
+          formation: string | null
           headline: string | null
           id: string
           is_active: boolean | null
           is_featured: boolean | null
+          linkedin_url: string | null
           name: string
+          onboarding_completed: boolean | null
           photo_url: string | null
           slug: string
           specialty: string
+          status: Database["public"]["Enums"]["mentor_status"] | null
+          terms_accepted_at: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           bio?: string | null
           clinical_areas?: string[] | null
           created_at?: string
+          email?: string | null
+          formation?: string | null
           headline?: string | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
+          linkedin_url?: string | null
           name: string
+          onboarding_completed?: boolean | null
           photo_url?: string | null
           slug: string
           specialty: string
+          status?: Database["public"]["Enums"]["mentor_status"] | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           bio?: string | null
           clinical_areas?: string[] | null
           created_at?: string
+          email?: string | null
+          formation?: string | null
           headline?: string | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
+          linkedin_url?: string | null
           name?: string
+          onboarding_completed?: boolean | null
           photo_url?: string | null
           slug?: string
           specialty?: string
+          status?: Database["public"]["Enums"]["mentor_status"] | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -4822,6 +4846,7 @@ export type Database = {
         Returns: string
       }
       generate_snapshot_code: { Args: never; Returns: string }
+      get_mentor_by_user_id: { Args: { _user_id: string }; Returns: string }
       get_next_snapshot_version: {
         Args: { p_dimension_id: string; p_time_window: string }
         Returns: number
@@ -4833,12 +4858,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved_mentor: { Args: never; Returns: boolean }
       is_edu_admin: { Args: { _user_id: string }; Returns: boolean }
       is_healthcare_professional: {
         Args: { _user_id: string }
         Returns: boolean
       }
       is_mentor: { Args: { _user_id: string }; Returns: boolean }
+      is_mentor_owner: { Args: { _mentor_id: string }; Returns: boolean }
       is_mentorship_owner: {
         Args: { _mentor_id: string; _user_id: string }
         Returns: boolean
@@ -4887,6 +4914,7 @@ export type Database = {
         | "rejeitada"
         | "arquivada"
       evidence_level: "ia" | "ib" | "iia" | "iib" | "iii" | "iv" | "v"
+      mentor_status: "pending_review" | "approved" | "rejected" | "suspended"
       study_design:
         | "rct"
         | "cohort"
@@ -5050,6 +5078,7 @@ export const Constants = {
         "arquivada",
       ],
       evidence_level: ["ia", "ib", "iia", "iib", "iii", "iv", "v"],
+      mentor_status: ["pending_review", "approved", "rejected", "suspended"],
       study_design: [
         "rct",
         "cohort",
