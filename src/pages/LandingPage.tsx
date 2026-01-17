@@ -1,12 +1,13 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 import { ArrowRight } from "lucide-react";
 import logoReghen from "@/assets/logo-reghen.png";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -39,21 +40,39 @@ export default function LandingPage() {
 
   const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
 
-  const handleLogin = () => {
-    navigate("/auth");
-  };
+  // Deep link preservation for redirect after auth
+  const getRedirectPath = useCallback(() => {
+    const params = new URLSearchParams(location.search);
+    const redirectTo = params.get("redirect");
+    return redirectTo || "/select-environment";
+  }, [location.search]);
 
-  const handleSignup = () => {
-    navigate("/auth?mode=signup");
-  };
+  const handleLogin = useCallback(() => {
+    const redirectPath = getRedirectPath();
+    navigate(`/auth?redirect=${encodeURIComponent(redirectPath)}`);
+  }, [navigate, getRedirectPath]);
 
-  const handleProsseguir = () => {
+  const handleSignup = useCallback(() => {
+    const redirectPath = getRedirectPath();
+    navigate(`/auth?mode=signup&redirect=${encodeURIComponent(redirectPath)}`);
+  }, [navigate, getRedirectPath]);
+
+  const handleProsseguir = useCallback(() => {
     if (isLoggedIn) {
       navigate("/select-environment");
     } else {
-      navigate("/auth");
+      navigate("/auth?redirect=%2Fselect-environment");
     }
-  };
+  }, [isLoggedIn, navigate]);
+
+  // Keyboard handler for cards
+  const handleCardKeyDown = useCallback((e: React.KeyboardEvent, title: string) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      // Cards are informational, no action needed - but we provide feedback
+      console.log(`Card "${title}" activated via keyboard`);
+    }
+  }, []);
 
   // Animation variants - refined easing matching SelectEnvironmentPage (slower for quiet luxury)
   const fadeUp = {
@@ -100,37 +119,53 @@ export default function LandingPage() {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background relative overflow-hidden">
+      {/* Skip link for accessibility */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg"
+      >
+        Ir para conteúdo principal
+      </a>
+
       {/* Sophisticated layered background - matching SelectEnvironmentPage */}
+      {/* Using will-change and transform for GPU acceleration, avoiding blur for performance */}
       <motion.div 
-        className="fixed inset-0 bg-gradient-to-b from-background via-background to-background"
+        className="fixed inset-0 bg-gradient-to-b from-background via-background to-background will-change-transform"
         style={{ y: backgroundY }}
+        aria-hidden="true"
       />
       
-      {/* Subtle radial gradients for depth */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.03),transparent)]" />
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_60%_40%_at_100%_100%,hsl(var(--accent)/0.04),transparent)]" />
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_50%_50%_at_0%_80%,hsl(var(--primary)/0.02),transparent)]" />
+      {/* Subtle radial gradients for depth - purely decorative */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.03),transparent)]" aria-hidden="true" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_60%_40%_at_100%_100%,hsl(var(--accent)/0.04),transparent)]" aria-hidden="true" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_50%_50%_at_0%_80%,hsl(var(--primary)/0.02),transparent)]" aria-hidden="true" />
       
-      {/* Ultra-subtle grid pattern */}
+      {/* Ultra-subtle grid pattern - decorative */}
       <div 
         className="fixed inset-0 opacity-[0.012]"
         style={{
           backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
           backgroundSize: '80px 80px'
         }}
+        aria-hidden="true"
       />
 
-      {/* Noise texture overlay */}
+      {/* Noise texture overlay - decorative */}
       <div 
         className="fixed inset-0 opacity-[0.02] pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
         }}
+        aria-hidden="true"
       />
 
       {/* ===== HERO SECTION ===== */}
-      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-12">
-        {/* Logo - discreto no topo */}
+      <section 
+        id="main-content"
+        className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-12"
+        aria-labelledby="hero-heading"
+      >
+        {/* Logo - discreto no topo, fixed dimensions to prevent CLS */}
         <motion.div
           initial="hidden"
           animate="visible"
@@ -140,16 +175,20 @@ export default function LandingPage() {
         >
           <motion.img
             src={logoReghen}
-            alt="REGHEN"
+            alt="REGHEN - Infraestrutura para medicina regenerativa"
             className="h-16 md:h-20 w-auto object-contain"
             style={{ filter: "brightness(0.95)" }}
             whileHover={!prefersReducedMotion ? { scale: 1.02, filter: "brightness(1)" } : {}}
             transition={{ duration: 0.5 }}
+            width={200}
+            height={80}
+            loading="eager"
           />
         </motion.div>
 
         {/* Headline principal - com quebra de linha deliberada */}
         <motion.h1
+          id="hero-heading"
           initial="hidden"
           animate="visible"
           variants={fadeUp}
@@ -183,13 +222,15 @@ export default function LandingPage() {
           padronização de condutas e alinhamento rigoroso com evidência científica.
         </motion.p>
 
-        {/* CTAs - hierarquia clara */}
+        {/* CTAs - hierarquia clara com tab order correto */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={0.4}
           className="flex flex-col sm:flex-row items-center gap-4 mb-8"
+          role="group"
+          aria-label="Ações principais"
         >
           <motion.button
             onClick={handleSignup}
@@ -197,6 +238,7 @@ export default function LandingPage() {
             whileHover={!prefersReducedMotion ? { scale: 1.02, y: -1 } : {}}
             whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}
             transition={{ duration: 0.4 }}
+            aria-label="Criar conta no REGHEN"
           >
             Criar conta
           </motion.button>
@@ -206,6 +248,7 @@ export default function LandingPage() {
             whileHover={!prefersReducedMotion ? { scale: 1.02, y: -1 } : {}}
             whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}
             transition={{ duration: 0.4 }}
+            aria-label="Entrar na sua conta"
           >
             Entrar
           </motion.button>
@@ -218,16 +261,18 @@ export default function LandingPage() {
           variants={fadeUp}
           custom={0.5}
           className="text-muted-foreground/35 text-[11px] tracking-[0.2em] font-light"
+          aria-hidden="true"
         >
           Um único ecossistema. Experiências claramente definidas.
         </motion.p>
 
-        {/* Scroll indicator - ultra discreto */}
+        {/* Scroll indicator - ultra discreto, decorative */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 1.2 }}
           className="absolute bottom-12 left-1/2 -translate-x-1/2"
+          aria-hidden="true"
         >
           <motion.div
             animate={!prefersReducedMotion ? { y: [0, 8, 0] } : {}}
@@ -238,7 +283,10 @@ export default function LandingPage() {
       </section>
 
       {/* ===== POR QUE O REGHEN EXISTE ===== */}
-      <section className="relative z-10 py-32 md:py-40 px-6">
+      <section 
+        className="relative z-10 py-32 md:py-40 px-6"
+        aria-labelledby="proposito-heading"
+      >
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -250,11 +298,13 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={0}
             className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light"
+            aria-hidden="true"
           >
             Propósito
           </motion.p>
 
           <motion.h2
+            id="proposito-heading"
             variants={fadeUp}
             custom={0.1}
             className="text-foreground text-2xl md:text-3xl font-light tracking-tight mb-10"
@@ -283,7 +333,10 @@ export default function LandingPage() {
       </section>
 
       {/* ===== O QUE O REGHEN É (PILARES) ===== */}
-      <section className="relative z-10 py-32 md:py-40 px-6">
+      <section 
+        className="relative z-10 py-32 md:py-40 px-6"
+        aria-labelledby="pilares-heading"
+      >
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -295,34 +348,49 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={0}
             className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light text-center"
+            aria-hidden="true"
           >
             Pilares
           </motion.p>
 
+          <h2 id="pilares-heading" className="sr-only">Os três pilares do REGHEN</h2>
+
           <motion.div
             variants={staggerContainer}
             className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
+            role="list"
+            aria-label="Pilares do REGHEN"
           >
             {pillars.map((pillar, index) => (
-              <motion.div
+              <motion.article
                 key={pillar.title}
                 variants={fadeUp}
                 custom={0.1 + index * 0.1}
                 className="group"
+                role="listitem"
               >
                 <motion.div 
-                  className="p-8 md:p-10 rounded-2xl bg-card/30 border border-border/10 transition-all duration-700 group-hover:bg-card/50 group-hover:border-border/20 group-hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.08)] focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/20 focus-within:ring-offset-2 focus-within:ring-offset-background"
+                  className="p-8 md:p-10 rounded-2xl bg-card/30 border border-border/10 transition-all duration-700 group-hover:bg-card/50 group-hover:border-border/20 group-hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   whileHover={!prefersReducedMotion ? { 
                     y: -3, 
                     boxShadow: "0 12px 40px -12px hsl(var(--primary) / 0.12), 0 0 0 1px hsl(var(--primary) / 0.05)" 
                   } : {}}
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   tabIndex={0}
+                  role="article"
+                  aria-labelledby={`pillar-${index}-title`}
+                  onKeyDown={(e) => handleCardKeyDown(e, pillar.title)}
                 >
-                  {/* Minimal accent line */}
-                  <div className="w-8 h-px bg-primary/30 mb-8 transition-all duration-700 group-hover:w-12 group-hover:bg-primary/50" />
+                  {/* Minimal accent line - decorative */}
+                  <div 
+                    className="w-8 h-px bg-primary/30 mb-8 transition-all duration-700 group-hover:w-12 group-hover:bg-primary/50" 
+                    aria-hidden="true"
+                  />
                   
-                  <h3 className="text-foreground text-lg font-medium tracking-tight mb-4">
+                  <h3 
+                    id={`pillar-${index}-title`}
+                    className="text-foreground text-lg font-medium tracking-tight mb-4"
+                  >
                     {pillar.title}
                   </h3>
                   
@@ -330,14 +398,17 @@ export default function LandingPage() {
                     {pillar.description}
                   </p>
                 </motion.div>
-              </motion.div>
+              </motion.article>
             ))}
           </motion.div>
         </motion.div>
       </section>
 
       {/* ===== PARA QUEM FOI CRIADO ===== */}
-      <section className="relative z-10 py-32 md:py-40 px-6">
+      <section 
+        className="relative z-10 py-32 md:py-40 px-6"
+        aria-labelledby="publico-heading"
+      >
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -349,11 +420,13 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={0}
             className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light"
+            aria-hidden="true"
           >
             Público
           </motion.p>
 
           <motion.h2
+            id="publico-heading"
             variants={fadeUp}
             custom={0.1}
             className="text-foreground text-2xl md:text-3xl font-light tracking-tight mb-10"
@@ -374,7 +447,10 @@ export default function LandingPage() {
       </section>
 
       {/* ===== ECOSSISTEMA (com CTA ponte) ===== */}
-      <section className="relative z-10 py-32 md:py-40 px-6">
+      <section 
+        className="relative z-10 py-32 md:py-40 px-6"
+        aria-labelledby="ecossistema-heading"
+      >
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -386,11 +462,13 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={0}
             className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light"
+            aria-hidden="true"
           >
             Ecossistema
           </motion.p>
 
           <motion.h2
+            id="ecossistema-heading"
             variants={fadeUp}
             custom={0.1}
             className="text-foreground text-2xl md:text-3xl font-light tracking-tight mb-6"
@@ -418,16 +496,20 @@ export default function LandingPage() {
               whileHover={!prefersReducedMotion ? { scale: 1.02, y: -1 } : {}}
               whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}
               transition={{ duration: 0.4 }}
+              aria-label={isLoggedIn ? "Ir para seleção de ambiente" : "Entrar para acessar o ecossistema"}
             >
               Prosseguir
-              <ArrowRight className="w-4 h-4 transition-transform duration-300" />
+              <ArrowRight className="w-4 h-4 transition-transform duration-300" aria-hidden="true" />
             </motion.button>
           </motion.div>
         </motion.div>
       </section>
 
       {/* ===== FOOTER ===== */}
-      <footer className="relative z-10 py-16 px-6 border-t border-border/10">
+      <footer 
+        className="relative z-10 py-16 px-6 border-t border-border/10"
+        role="contentinfo"
+      >
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -446,6 +528,9 @@ export default function LandingPage() {
                 src={logoReghen}
                 alt="REGHEN"
                 className="h-8 w-auto object-contain opacity-60"
+                width={100}
+                height={32}
+                loading="lazy"
               />
               <p className="text-muted-foreground/40 text-[11px] tracking-wide font-light">
                 REGHEN · Infraestrutura clínica para medicina regenerativa
@@ -453,36 +538,37 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Links mínimos */}
-            <motion.div
+            <motion.nav
               variants={fadeUp}
               custom={0.1}
               className="flex flex-wrap items-center justify-center gap-6 md:gap-8"
+              aria-label="Links do rodapé"
             >
               <button
                 onClick={handleLogin}
-                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:text-foreground"
+                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:rounded"
               >
                 Entrar
               </button>
               <button
                 onClick={handleSignup}
-                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:text-foreground"
+                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:rounded"
               >
                 Criar conta
               </button>
               <a
                 href="#"
-                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:text-foreground"
+                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:rounded"
               >
                 Termos
               </a>
               <a
                 href="#"
-                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:text-foreground"
+                className="text-muted-foreground/50 text-xs font-light transition-all duration-300 hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:rounded"
               >
                 Privacidade
               </a>
-            </motion.div>
+            </motion.nav>
           </div>
         </motion.div>
       </footer>
