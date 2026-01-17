@@ -269,7 +269,7 @@ export default function SelectEnvironmentPage() {
             <motion.img 
               src={logoReghen} 
               alt="REGHEN" 
-              className="h-14 md:h-16 w-auto object-contain"
+              className="h-40 md:h-48 w-auto object-contain"
               style={{ filter: 'brightness(0.95)' }}
               whileHover={!prefersReducedMotion ? { scale: 1.02, filter: 'brightness(1)' } : {}}
               transition={{ duration: 0.4 }}
