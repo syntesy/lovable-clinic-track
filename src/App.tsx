@@ -83,6 +83,7 @@ import {
   MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado,
   MentorApplicationPage, MentorOnboardingPage, MentorApprovalsPage
 } from "./pages/academy";
+import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 
 const queryClient = new QueryClient();
 
@@ -570,17 +571,17 @@ const App = () => (
 
           {/* Academy Routes - New REGEN Academy */}
           <Route path="/academy" element={<Navigate to="/academy/home" replace />} />
-          <Route path="/academy/home" element={<ProtectedRoute><AcademyHome /></ProtectedRoute>} />
-          <Route path="/academy/mentorias" element={<ProtectedRoute><MentorshipsPage /></ProtectedRoute>} />
-          <Route path="/academy/mentorias/:slug" element={<ProtectedRoute><MentorshipDetailPage /></ProtectedRoute>} />
-          <Route path="/academy/mentores" element={<ProtectedRoute><MentorsPage /></ProtectedRoute>} />
-          <Route path="/academy/mentores/:slug" element={<ProtectedRoute><MentorDetailPage /></ProtectedRoute>} />
-          <Route path="/academy/minhas-mentorias" element={<ProtectedRoute><MyMentorshipsPage /></ProtectedRoute>} />
-          <Route path="/academy/minha-jornada" element={<ProtectedRoute><MyJourneyPage /></ProtectedRoute>} />
-          <Route path="/academy/ciencia-aplicada" element={<ProtectedRoute><AppliedSciencePage /></ProtectedRoute>} />
-          <Route path="/academy/modo-avancado" element={<ProtectedRoute><ModoAvancado /></ProtectedRoute>} />
-          <Route path="/academy/aprovacoes" element={<ProtectedRoute><ApprovalsPage /></ProtectedRoute>} />
-          {/* Mentor Onboarding Routes */}
+          <Route path="/academy/home" element={<ProtectedRoute><MentorOnboardingGate><AcademyHome /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentorias" element={<ProtectedRoute><MentorOnboardingGate><MentorshipsPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentorias/:slug" element={<ProtectedRoute><MentorOnboardingGate><MentorshipDetailPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentores" element={<ProtectedRoute><MentorOnboardingGate><MentorsPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentores/:slug" element={<ProtectedRoute><MentorOnboardingGate><MentorDetailPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/minhas-mentorias" element={<ProtectedRoute><MentorOnboardingGate><MyMentorshipsPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/minha-jornada" element={<ProtectedRoute><MentorOnboardingGate><MyJourneyPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/ciencia-aplicada" element={<ProtectedRoute><MentorOnboardingGate><AppliedSciencePage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/modo-avancado" element={<ProtectedRoute><MentorOnboardingGate><ModoAvancado /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/aprovacoes" element={<ProtectedRoute><MentorOnboardingGate><ApprovalsPage /></MentorOnboardingGate></ProtectedRoute>} />
+          {/* Mentor Onboarding Routes - NOT wrapped by gate */}
           <Route path="/academy/mentores/candidatar" element={<MentorApplicationPage />} />
           <Route path="/academy/mentor/onboarding" element={<ProtectedRoute><MentorOnboardingPage /></ProtectedRoute>} />
           <Route path="/academy/aprovacoes/mentores" element={<RequireAdminRole><MentorApprovalsPage /></RequireAdminRole>} />
