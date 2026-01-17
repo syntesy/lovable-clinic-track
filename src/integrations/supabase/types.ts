@@ -1869,6 +1869,7 @@ export type Database = {
           session_id: string | null
           status: string
           stripe_payment_id: string | null
+          stripe_session_id: string | null
           user_id: string
         }
         Insert: {
@@ -1880,6 +1881,7 @@ export type Database = {
           session_id?: string | null
           status?: string
           stripe_payment_id?: string | null
+          stripe_session_id?: string | null
           user_id: string
         }
         Update: {
@@ -1891,6 +1893,7 @@ export type Database = {
           session_id?: string | null
           status?: string
           stripe_payment_id?: string | null
+          stripe_session_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1963,6 +1966,8 @@ export type Database = {
           modality: string
           price_cents: number
           slug: string
+          status: string
+          stripe_price_id: string | null
           target_audience: string | null
           title: string
           topics: string[] | null
@@ -1983,6 +1988,8 @@ export type Database = {
           modality?: string
           price_cents?: number
           slug: string
+          status?: string
+          stripe_price_id?: string | null
           target_audience?: string | null
           title: string
           topics?: string[] | null
@@ -2003,6 +2010,8 @@ export type Database = {
           modality?: string
           price_cents?: number
           slug?: string
+          status?: string
+          stripe_price_id?: string | null
           target_audience?: string | null
           title?: string
           topics?: string[] | null
@@ -4830,6 +4839,10 @@ export type Database = {
         Returns: boolean
       }
       is_mentor: { Args: { _user_id: string }; Returns: boolean }
+      is_mentorship_owner: {
+        Args: { _mentor_id: string; _user_id: string }
+        Returns: boolean
+      }
       log_audit_action: {
         Args: {
           p_action: string

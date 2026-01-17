@@ -6,3 +6,4 @@ export { default as MentorDetailPage } from './MentorDetailPage';
 export { default as MyMentorshipsPage } from './MyMentorshipsPage';
 export { default as MyJourneyPage } from './MyJourneyPage';
 export { default as AppliedSciencePage } from './AppliedSciencePage';
+export { default as ModoAvancado } from './ModoAvancado';
