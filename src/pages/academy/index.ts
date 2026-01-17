@@ -1,4 +1,5 @@
 export { default as AcademyHome } from './AcademyHome';
+export { default as ApprovalsPage } from './ApprovalsPage';
 export { default as MentorshipsPage } from './MentorshipsPage';
 export { default as MentorshipDetailPage } from './MentorshipDetailPage';
 export { default as MentorsPage } from './MentorsPage';
