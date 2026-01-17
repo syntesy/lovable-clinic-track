@@ -854,6 +854,39 @@ export type Database = {
           },
         ]
       }
+      clinical_taxonomies: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       consent_forms: {
         Row: {
           file_name: string
@@ -1811,6 +1844,95 @@ export type Database = {
           },
         ]
       }
+      mentor_curation_checklists: {
+        Row: {
+          clinical_experience_verified: boolean | null
+          created_at: string | null
+          curated_at: string | null
+          curated_by: string | null
+          curator_notes: string | null
+          ethical_compliance: boolean | null
+          evidence_based_alignment: boolean | null
+          formation_compatible: boolean | null
+          id: string
+          language_adequate: boolean | null
+          mentor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          clinical_experience_verified?: boolean | null
+          created_at?: string | null
+          curated_at?: string | null
+          curated_by?: string | null
+          curator_notes?: string | null
+          ethical_compliance?: boolean | null
+          evidence_based_alignment?: boolean | null
+          formation_compatible?: boolean | null
+          id?: string
+          language_adequate?: boolean | null
+          mentor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          clinical_experience_verified?: boolean | null
+          created_at?: string | null
+          curated_at?: string | null
+          curated_by?: string | null
+          curator_notes?: string | null
+          ethical_compliance?: boolean | null
+          evidence_based_alignment?: boolean | null
+          formation_compatible?: boolean | null
+          id?: string
+          language_adequate?: boolean | null
+          mentor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_curation_checklists_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: true
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentor_taxonomies: {
+        Row: {
+          created_at: string | null
+          id: string
+          mentor_id: string
+          taxonomy_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mentor_id: string
+          taxonomy_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mentor_id?: string
+          taxonomy_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_taxonomies_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_taxonomies_taxonomy_id_fkey"
+            columns: ["taxonomy_id"]
+            isOneToOne: false
+            referencedRelation: "clinical_taxonomies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentors: {
         Row: {
           approved_at: string | null
@@ -1820,6 +1942,7 @@ export type Database = {
           created_at: string
           email: string | null
           formation: string | null
+          has_curation_seal: boolean | null
           headline: string | null
           id: string
           is_active: boolean | null
@@ -1843,6 +1966,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           formation?: string | null
+          has_curation_seal?: boolean | null
           headline?: string | null
           id?: string
           is_active?: boolean | null
@@ -1866,6 +1990,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           formation?: string | null
+          has_curation_seal?: boolean | null
           headline?: string | null
           id?: string
           is_active?: boolean | null
@@ -4882,6 +5007,8 @@ export type Database = {
         Returns: string
       }
       mark_missed_followups: { Args: never; Returns: number }
+      mentor_has_taxonomies: { Args: { mentor_id: string }; Returns: boolean }
+      mentor_has_valid_seal: { Args: { mentor_id: string }; Returns: boolean }
       normalize_evidence_tag: { Args: { tag: string }; Returns: string }
       pseudonymize_id: {
         Args: { original_id: string; salt?: string }

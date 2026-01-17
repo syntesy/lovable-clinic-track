@@ -24,6 +24,7 @@ export interface MentorProfile {
   approved_at: string | null;
   terms_accepted_at: string | null;
   onboarding_completed: boolean;
+  has_curation_seal: boolean | null;
   created_at: string;
   updated_at: string;
 }
