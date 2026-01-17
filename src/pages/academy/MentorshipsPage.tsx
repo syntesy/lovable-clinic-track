@@ -16,6 +16,7 @@ import {
   Users, 
   Calendar, 
   ArrowRight,
+  ArrowLeft,
   Search,
   Filter,
   MapPin,
@@ -64,6 +65,15 @@ const MentorshipsPage = () => {
       <section className="bg-gradient-to-br from-primary/5 via-background to-primary/10 py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/academy/home')}
+              className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar para Academy
+            </Button>
             <Badge variant="secondary" className="mb-4">
               <Users className="w-3 h-3 mr-1" />
               Mentorias
