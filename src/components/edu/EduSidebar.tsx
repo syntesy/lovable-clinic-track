@@ -21,8 +21,10 @@ const studentMenuItems = [
 
 const teacherMenuItems = [
   { title: "Dashboard", url: "/edu/teacher/dashboard", icon: LayoutDashboard },
-  { title: "Casos Clínicos", url: "/edu/teacher/cases", icon: FlaskConical },
+  { title: "Turmas", url: "/edu/teacher/cohorts", icon: Users },
+  { title: "Módulos", url: "/edu/teacher/modules", icon: BookOpen },
   { title: "Conteúdos", url: "/edu/teacher/learning-objects", icon: FileText },
+  { title: "Casos Clínicos", url: "/edu/teacher/cases", icon: FlaskConical },
   { title: "Checkpoints", url: "/edu/teacher/checkpoints", icon: ClipboardList },
   { title: "Decision Lab", url: "/edu/teacher/decision-lab", icon: FlaskConical },
   { title: "Analytics", url: "/edu/teacher/analytics", icon: BarChart3 },
