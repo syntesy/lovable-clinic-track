@@ -40,19 +40,29 @@ const MentorshipDetailPage = () => {
   const handleEnroll = async () => {
     if (!isAuthenticated) {
       toast.info("Faça login para se inscrever nesta mentoria");
-      navigate("/auth", { state: { returnTo: `/mentorias/${slug}` } });
+      navigate("/auth", { state: { returnTo: `/academy/mentorias/${slug}` } });
       return;
     }
 
     if (!mentorship) return;
 
     try {
-      await enrollMutation.mutateAsync({
+      const result = await enrollMutation.mutateAsync({
         mentorshipId: mentorship.id,
         sessionId: selectedSession || undefined,
       });
-      toast.success("Inscrição realizada com sucesso!");
-      navigate("/minhas-mentorias");
+
+      if (result.manual) {
+        // Manual enrollment - no Stripe configured
+        toast.success(result.message || "Solicitação de inscrição enviada! Aguarde aprovação.");
+        navigate("/academy/minhas-mentorias");
+      } else if (result.url) {
+        // Stripe checkout - redirect to payment
+        window.location.href = result.url;
+      } else {
+        toast.success("Inscrição realizada com sucesso!");
+        navigate("/academy/minhas-mentorias");
+      }
     } catch (error: any) {
       toast.error(error.message || "Erro ao realizar inscrição");
     }
@@ -317,10 +327,16 @@ const MentorshipDetailPage = () => {
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4 mr-2" />
-                        Inscrever-se
+                        Quero participar
                       </>
                     )}
                   </Button>
+                  
+                  <p className="text-xs text-center text-muted-foreground">
+                    {mentorship.price_cents === 0 
+                      ? "Gratuito - inscrição sujeita a confirmação"
+                      : "Pagamento via Stripe ou inscrição manual"}
+                  </p>
 
                   {!isAuthenticated && (
                     <p className="text-xs text-center text-muted-foreground">
