@@ -79,7 +79,7 @@ import {
   EduAdminMembers, EduAdminEnrollments, EduAdminSettings
 } from "./pages/edu";
 import {
-  AcademyHome, MentorshipsPage, MentorshipDetailPage, MentorsPage, MentorDetailPage,
+  AcademyHome, ApprovalsPage, MentorshipsPage, MentorshipDetailPage, MentorsPage, MentorDetailPage,
   MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado
 } from "./pages/academy";
 
@@ -578,6 +578,7 @@ const App = () => (
           <Route path="/academy/minha-jornada" element={<ProtectedRoute><MyJourneyPage /></ProtectedRoute>} />
           <Route path="/academy/ciencia-aplicada" element={<ProtectedRoute><AppliedSciencePage /></ProtectedRoute>} />
           <Route path="/academy/modo-avancado" element={<ProtectedRoute><ModoAvancado /></ProtectedRoute>} />
+          <Route path="/academy/aprovacoes" element={<ProtectedRoute><ApprovalsPage /></ProtectedRoute>} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />
