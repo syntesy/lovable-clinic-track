@@ -16,12 +16,14 @@ export function ModeSwitch() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isEducationRoute = location.pathname.startsWith('/edu');
+  // Check if user is in any education-related route (academy or edu)
+  const isEducationRoute = location.pathname.startsWith('/edu') || location.pathname.startsWith('/academy');
 
   const handleModeChange = (newMode: 'clinical' | 'education') => {
     setMode(newMode);
     if (newMode === 'education' && !isEducationRoute) {
-      navigate('/edu');
+      // Redirect to the new REGEN Academy home
+      navigate('/academy/home');
     } else if (newMode === 'clinical' && isEducationRoute) {
       navigate('/pacientes');
     }
