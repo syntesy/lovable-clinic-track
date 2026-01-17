@@ -35,42 +35,47 @@ const MyMentorshipsPage = () => {
 
   // Pending - awaiting payment or manual approval
   const pendingEnrollments = enrollments.filter(e => 
-    e.status === 'pending' || e.status === 'pending_manual'
+    e.status === 'pending_manual' || (e.status as string) === 'pending_payment' || (e.status as string) === 'pending'
   );
 
+  // Status label map - standardized copy
+  const statusLabelMap: Record<string, { label: string; variant: 'blue' | 'amber' | 'green' | 'red' | 'gray' }> = {
+    pending_manual: { label: 'Reserva solicitada', variant: 'blue' },
+    pending_payment: { label: 'Pagamento pendente', variant: 'amber' },
+    pending: { label: 'Pagamento pendente', variant: 'amber' }, // legacy fallback
+    active: { label: 'Ativa', variant: 'green' },
+    confirmed: { label: 'Ativa', variant: 'green' },
+    expired: { label: 'Expirada', variant: 'red' },
+    cancelled: { label: 'Cancelada', variant: 'gray' },
+  };
+
   const getStatusBadge = (enrollment: typeof enrollments[0]) => {
-    if (enrollment.status === 'pending_manual') {
-      return (
-        <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-blue-500/30">
-          <Clock className="w-3 h-3 mr-1" />
-          Aguardando aprovação
-        </Badge>
-      );
+    const statusInfo = statusLabelMap[enrollment.status];
+    
+    if (!statusInfo) {
+      return <Badge variant="outline">{enrollment.status}</Badge>;
     }
-    if (enrollment.status === 'pending') {
-      return (
-        <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-          <Clock className="w-3 h-3 mr-1" />
-          Pagamento pendente
-        </Badge>
-      );
-    }
-    if (enrollment.status === 'expired') {
-      return (
-        <Badge variant="secondary" className="bg-red-500/10 text-red-600 border-red-500/30">
-          Expirado
-        </Badge>
-      );
-    }
-    if (enrollment.status === 'active' || enrollment.status === 'confirmed') {
-      return (
-        <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/30">
-          <CheckCircle2 className="w-3 h-3 mr-1" />
-          Confirmado
-        </Badge>
-      );
-    }
-    return <Badge variant="outline">{enrollment.status}</Badge>;
+
+    const variantClasses: Record<string, string> = {
+      blue: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+      amber: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+      green: "bg-green-500/10 text-green-600 border-green-500/30",
+      red: "bg-red-500/10 text-red-600 border-red-500/30",
+      gray: "bg-muted text-muted-foreground border-muted",
+    };
+
+    const icon = statusInfo.variant === 'green' ? (
+      <CheckCircle2 className="w-3 h-3 mr-1" />
+    ) : statusInfo.variant === 'blue' || statusInfo.variant === 'amber' ? (
+      <Clock className="w-3 h-3 mr-1" />
+    ) : null;
+
+    return (
+      <Badge variant="secondary" className={variantClasses[statusInfo.variant]}>
+        {icon}
+        {statusInfo.label}
+      </Badge>
+    );
   };
 
   if (isLoading) {
