@@ -1,181 +1,25 @@
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  ClipboardList,
-  Brain,
-  FileText,
-  BookOpen,
-  Library,
-  Handshake,
-  Check,
-  Sparkles,
-  Crown,
-  Tag,
-  Percent,
-  ShoppingBag,
-} from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useMemo, useRef } from "react";
 import logoReghen from "@/assets/logo-reghen.png";
-import mockupScore from "@/assets/mockup-score-clinico.png";
-import mockupAvaliacao from "@/assets/mockup-avaliacao-clinica.png";
-import mockupRelatorios from "@/assets/mockup-relatorios.png";
-import mockupProtocolos from "@/assets/mockup-protocolos.png";
-import mockupDashboard from "@/assets/mockup-dashboard.png";
-
-const features = [
-  {
-    icon: ClipboardList,
-    title: "Avaliação clínica estruturada",
-    items: [
-      "Questionários organizados por caso",
-      "Registro sistematizado de informações",
-      "Histórico rastreável",
-    ],
-  },
-  {
-    icon: Brain,
-    title: "Apoio à decisão clínica",
-    items: [
-      "Scores clínicos aplicados à prática regenerativa",
-      "Avaliação de elegibilidade e preparo",
-      "Identificação de riscos e pontos de atenção",
-    ],
-  },
-  {
-    icon: FileText,
-    title: "Relatórios técnicos",
-    items: [
-      "Relatórios claros e padronizados",
-      "Versões simples ou completas em PDF",
-      "Linguagem adequada para prontuário",
-    ],
-  },
-  {
-    icon: BookOpen,
-    title: "Protocolos clínicos",
-    items: [
-      "Protocolos padronizados por procedimento",
-      "Atualizados conforme evidência e consenso",
-    ],
-  },
-  {
-    icon: Library,
-    title: "Biblioteca científica curada",
-    items: [
-      "Conteúdo selecionado e interpretado",
-      "Aplicação prática da evidência científica",
-    ],
-  },
-  {
-    icon: Handshake,
-    title: "Ecossistema de parceiros",
-    items: [
-      "Fornecedores confiáveis",
-      "Benefícios mediante uso do cupom RHEGEN",
-    ],
-  },
-];
-
-const plans = [
-  {
-    name: "Básico",
-    price: "R$ 299,00",
-    period: "/ mês",
-    badge: null,
-    items: [
-      "Avaliação clínica estruturada",
-      "Questionários clínicos base",
-      "Relatórios clínicos simples",
-      "Histórico básico de casos",
-      "Acesso à aba de parceiros",
-    ],
-    buttonText: "Assinar Básico",
-    planId: "basico",
-    highlighted: false,
-  },
-  {
-    name: "Premium",
-    price: "R$ 399,00",
-    period: "/ mês",
-    badge: "Mais indicado",
-    items: [
-      "Tudo do Básico",
-      "Scores clínicos avançados",
-      "Relatórios completos em PDF",
-      "Casos ilimitados",
-      "Biblioteca científica curada",
-      "Protocolos clínicos padronizados",
-    ],
-    buttonText: "Assinar Premium",
-    planId: "premium",
-    highlighted: true,
-  },
-  {
-    name: "PRO",
-    price: "R$ 499,00",
-    period: "/ mês",
-    badge: "Máximo nível",
-    items: [
-      "Tudo do Premium",
-      "IA de apoio à decisão clínica",
-      "Simulação de cenários e alertas de risco",
-      "Relatórios nível expert",
-      "Prioridade no suporte",
-      "Prioridade no suporte",
-    ],
-    buttonText: "Assinar PRO",
-    planId: "pro",
-    highlighted: false,
-  },
-];
-
-const faqItems = [
-  {
-    question: "O rhegen substitui o julgamento clínico?",
-    answer:
-      "Não. O rhegen é uma ferramenta de apoio à decisão clínica. Toda conduta deve ser definida pelo profissional habilitado, com base em sua avaliação e experiência.",
-  },
-  {
-    question: "Quem pode usar o rhegen?",
-    answer:
-      "Médicos e fisioterapeutas que realizam procedimentos regenerativos e buscam padronização, segurança e documentação técnica.",
-  },
-  {
-    question: "O rhegen realiza procedimentos?",
-    answer:
-      "Não. O rhegen não realiza, prescreve ou automatiza procedimentos clínicos. Ele oferece suporte técnico para decisões clínicas mais seguras.",
-  },
-  {
-    question: "Como funciona a cobrança?",
-    answer:
-      "A assinatura é mensal e recorrente. Você pode cancelar a qualquer momento, sem multas ou fidelidade.",
-  },
-  {
-    question: "Posso testar antes de assinar?",
-    answer:
-      "Sim. Oferecemos um período de teste gratuito para que você conheça as funcionalidades antes de decidir.",
-  },
-  {
-    question: "Meus dados estão seguros?",
-    answer:
-      "Sim. Utilizamos criptografia e seguimos as melhores práticas de segurança da informação. Seus dados clínicos são protegidos conforme a LGPD.",
-  },
-  {
-    question: "Como funciona o suporte?",
-    answer:
-      "Oferecemos suporte por e-mail e chat. Usuários do plano PRO têm prioridade no atendimento.",
-  },
-];
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const currentLogo = logoReghen;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Check for reduced motion preference
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  // Scroll-based parallax for subtle depth
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
 
   const handleLogin = () => {
     navigate("/auth");
@@ -185,603 +29,397 @@ export default function LandingPage() {
     navigate("/auth?mode=signup");
   };
 
-  const handlePlanSelect = (planId: string) => {
-    navigate(`/auth?mode=signup&plan=${planId}`);
+  // Animation variants - refined easing matching SelectEnvironmentPage
+  const fadeUp = {
+    hidden: { 
+      opacity: 0, 
+      y: prefersReducedMotion ? 0 : 30 
+    },
+    visible: (delay: number = 0) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: prefersReducedMotion ? 0.1 : 0.9,
+        delay: prefersReducedMotion ? 0 : delay,
+        ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+      },
+    }),
   };
 
-  const scrollToPlans = () => {
-    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: prefersReducedMotion ? 0 : 0.15,
+        delayChildren: prefersReducedMotion ? 0 : 0.1,
+      },
+    },
   };
+
+  const pillars = [
+    {
+      title: "Decisão estruturada",
+      description: "Protocolos, critérios e apoio racional para decisões clínicas seguras.",
+    },
+    {
+      title: "Execução responsável",
+      description: "Padronização técnica e alinhamento com boas práticas clínicas.",
+    },
+    {
+      title: "Base científica",
+      description: "Integração com literatura, critérios de indicação e racional científico.",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <img src={currentLogo} alt="rhegen" className="h-8 md:h-10" />
-          <div className="flex items-center gap-2 md:gap-3">
-            <Button variant="ghost" size="sm" onClick={handleLogin}>
-              Entrar
-            </Button>
-            <Button size="sm" onClick={handleSignup}>
-              Criar conta
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-16 md:py-24 lg:py-32">
-        <div className="container mx-auto max-w-6xl px-4 text-center">
-          <img
-            src={currentLogo}
-            alt="rhegen"
-            className="mx-auto mb-6 h-16 md:h-20 lg:h-24"
-          />
-          <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            rhegen
-          </h1>
-          <h2 className="mb-6 text-lg text-muted-foreground md:text-xl lg:text-2xl">
-            Ferramenta de apoio à decisão clínica em procedimentos regenerativos
-          </h2>
-          <p className="mx-auto mb-8 max-w-3xl text-base leading-relaxed text-foreground md:text-lg">
-            O rhegen é uma ferramenta de apoio à decisão clínica, desenvolvida
-            para profissionais habilitados, com foco em prática segura e baseada
-            em evidência.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <Button size="lg" onClick={handleSignup} className="w-full sm:w-auto">
-              Criar conta
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleLogin}
-              className="w-full sm:w-auto"
-            >
-              Entrar
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Por que existe Section */}
-      <section className="border-y border-border/40 bg-secondary/50 py-16 md:py-20">
-        <div className="container mx-auto max-w-3xl px-4">
-          <h2 className="mb-6 text-center text-2xl font-semibold md:text-3xl">
-            Por que o rhegen existe
-          </h2>
-          <p className="text-center text-base leading-relaxed text-muted-foreground md:text-lg">
-            A prática clínica com procedimentos regenerativos exige critérios bem
-            definidos, padronização de condutas, documentação técnica adequada e
-            alinhamento com evidência científica.
-          </p>
-          <p className="mt-4 text-center text-base leading-relaxed text-muted-foreground md:text-lg">
-            O rhegen foi criado para apoiar a tomada de decisão clínica,
-            oferecendo estrutura, organização e suporte técnico, sem substituir o
-            julgamento profissional.
-          </p>
-        </div>
-      </section>
-
-      {/* SEÇÃO VISUAL - FUNCIONALIDADES EM USO */}
+    <div ref={containerRef} className="min-h-screen bg-background relative overflow-hidden">
+      {/* Sophisticated layered background - matching SelectEnvironmentPage */}
+      <motion.div 
+        className="fixed inset-0 bg-gradient-to-b from-background via-background to-background"
+        style={{ y: backgroundY }}
+      />
       
-      {/* 1) Score Clínico - Destaque Principal */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-secondary/30">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
-            <div className="order-2 lg:order-1">
-              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                Scores clínicos para apoio à decisão
-              </h2>
-              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-                O rhegen utiliza scores clínicos estruturados para apoiar a avaliação, 
-                o preparo do paciente e a tomada de decisão, sempre como suporte técnico 
-                e nunca como substituição do julgamento profissional.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Score visual com indicador de elegibilidade</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Avaliação por domínios clínicos</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Identificação de bloqueios e alertas</span>
-                </li>
-              </ul>
-            </div>
-            <div className="order-1 lg:order-2">
-              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
-                <img 
-                  src={mockupScore} 
-                  alt="Score clínico rhegen" 
-                  className="w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-                  <p className="text-xs text-muted-foreground text-center">
-                    Exemplo ilustrativo de score clínico no rhegen
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Subtle radial gradients for depth */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.03),transparent)]" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_60%_40%_at_100%_100%,hsl(var(--accent)/0.04),transparent)]" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_50%_50%_at_0%_80%,hsl(var(--primary)/0.02),transparent)]" />
+      
+      {/* Ultra-subtle grid pattern */}
+      <div 
+        className="fixed inset-0 opacity-[0.012]"
+        style={{
+          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
+          backgroundSize: '80px 80px'
+        }}
+      />
+
+      {/* Noise texture overlay */}
+      <div 
+        className="fixed inset-0 opacity-[0.02] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
+        }}
+      />
+
+      {/* ===== HERO SECTION ===== */}
+      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6">
+        {/* Logo - discreto no topo */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={0}
+          className="mb-16"
+        >
+          <motion.img
+            src={logoReghen}
+            alt="REGHEN"
+            className="h-16 md:h-20 w-auto object-contain"
+            style={{ filter: "brightness(0.95)" }}
+            whileHover={!prefersReducedMotion ? { scale: 1.02, filter: "brightness(1)" } : {}}
+            transition={{ duration: 0.4 }}
+          />
+        </motion.div>
+
+        {/* Headline principal */}
+        <motion.h1
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={0.1}
+          className="text-foreground text-3xl md:text-[2.75rem] lg:text-5xl font-light tracking-tight text-center max-w-4xl leading-[1.15] mb-6"
+        >
+          Infraestrutura clínica para decisões regenerativas responsáveis.
+        </motion.h1>
+
+        {/* Subheadline */}
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={0.2}
+          className="text-muted-foreground/70 text-base md:text-lg text-center max-w-2xl font-light mb-8"
+        >
+          Apoio estruturado à decisão clínica em procedimentos regenerativos.
+        </motion.p>
+
+        {/* Texto de apoio */}
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={0.3}
+          className="text-muted-foreground/50 text-sm md:text-[15px] text-center max-w-xl font-light leading-relaxed mb-12"
+        >
+          Desenvolvido para profissionais habilitados, com foco em prática segura,
+          padronização de condutas e alinhamento rigoroso com evidência científica.
+        </motion.p>
+
+        {/* CTAs */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={0.4}
+          className="flex flex-col sm:flex-row items-center gap-4"
+        >
+          <motion.button
+            onClick={handleSignup}
+            className="px-8 py-3.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-300 hover:bg-primary/90"
+            whileHover={!prefersReducedMotion ? { scale: 1.02 } : {}}
+            whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}
+          >
+            Criar conta
+          </motion.button>
+          <motion.button
+            onClick={handleLogin}
+            className="px-8 py-3.5 rounded-xl text-sm font-medium bg-transparent text-foreground/80 border border-border/40 transition-all duration-300 hover:border-border/60 hover:text-foreground"
+            whileHover={!prefersReducedMotion ? { scale: 1.02 } : {}}
+            whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}
+          >
+            Entrar
+          </motion.button>
+        </motion.div>
+
+        {/* Scroll indicator - ultra discreto */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={!prefersReducedMotion ? { y: [0, 8, 0] } : {}}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="w-px h-12 bg-gradient-to-b from-transparent via-muted-foreground/20 to-transparent"
+          />
+        </motion.div>
       </section>
 
-      {/* 2) Avaliação Clínica e Questionário */}
-      <section className="py-16 md:py-24 bg-secondary/50">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
-            <div className="order-1">
-              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
-                <img 
-                  src={mockupAvaliacao} 
-                  alt="Avaliação clínica estruturada" 
-                  className="w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-                  <p className="text-xs text-muted-foreground text-center">
-                    Exemplo ilustrativo de questionário clínico
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="order-2">
-              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                Avaliação clínica estruturada
-              </h2>
-              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-                Questionários organizados por caso, com registro sistematizado das 
-                informações clínicas e histórico rastreável.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Fluxo passo a passo intuitivo</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Campos estruturados por especialidade</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Histórico completo de avaliações</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+      {/* ===== POR QUE O REGHEN EXISTE ===== */}
+      <section className="relative z-10 py-32 md:py-40 px-6">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <motion.p
+            variants={fadeUp}
+            custom={0}
+            className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light"
+          >
+            Propósito
+          </motion.p>
+
+          <motion.h2
+            variants={fadeUp}
+            custom={0.1}
+            className="text-foreground text-2xl md:text-3xl font-light tracking-tight mb-10"
+          >
+            Por que o REGHEN existe
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp}
+            custom={0.2}
+            className="text-muted-foreground/70 text-base md:text-[17px] leading-[1.8] font-light mb-6"
+          >
+            A prática clínica regenerativa exige critérios bem definidos,
+            documentação técnica consistente e decisões sustentadas por evidência.
+          </motion.p>
+
+          <motion.p
+            variants={fadeUp}
+            custom={0.3}
+            className="text-muted-foreground/60 text-base md:text-[17px] leading-[1.8] font-light"
+          >
+            O REGHEN existe para oferecer estrutura —
+            não atalhos, não promessas, não improviso.
+          </motion.p>
+        </motion.div>
       </section>
 
-      {/* 3) Relatórios Clínicos */}
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
-            <div className="order-2 lg:order-1">
-              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                Relatórios técnicos e documentação
-              </h2>
-              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-                Relatórios clínicos claros e padronizados, com versões simples ou 
-                completas em PDF, adequados para prontuário e registro clínico.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Exportação em PDF profissional</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Cabeçalho institucional personalizável</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Linguagem adequada para prontuário</span>
-                </li>
-              </ul>
-            </div>
-            <div className="order-1 lg:order-2">
-              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
-                <img 
-                  src={mockupRelatorios} 
-                  alt="Relatórios clínicos" 
-                  className="w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-                  <p className="text-xs text-muted-foreground text-center">
-                    Exemplo ilustrativo de relatório clínico
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ===== O QUE O REGHEN É ===== */}
+      <section className="relative z-10 py-32 md:py-40 px-6">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="max-w-5xl mx-auto"
+        >
+          <motion.p
+            variants={fadeUp}
+            custom={0}
+            className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light text-center"
+          >
+            Pilares
+          </motion.p>
 
-      {/* 4) Protocolos Clínicos */}
-      <section className="py-16 md:py-24 bg-secondary/50">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 md:gap-12 lg:grid-cols-2 items-center">
-            <div className="order-1">
-              <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl">
-                <img 
-                  src={mockupProtocolos} 
-                  alt="Protocolos clínicos padronizados" 
-                  className="w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-                  <p className="text-xs text-muted-foreground text-center">
-                    Exemplo ilustrativo de biblioteca de protocolos
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="order-2">
-              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                Protocolos clínicos padronizados
-              </h2>
-              <p className="mb-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-                Protocolos organizados por procedimento e contexto clínico, 
-                com base em evidência e consenso.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Biblioteca categorizada por tipo de terapia</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Busca e filtros avançados</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
-                  <span>Atualização conforme evidência científica</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5) Visão Geral do App - Dashboard */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-secondary/30 to-background">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="text-center mb-10 md:mb-12">
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Tudo em um único ambiente clínico
-            </h2>
-            <p className="mx-auto max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
-              O rhegen centraliza avaliação, decisão, documentação e acompanhamento 
-              em um único sistema integrado e profissional.
-            </p>
-          </div>
-          <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl mx-auto max-w-5xl">
-            <img 
-              src={mockupDashboard} 
-              alt="Dashboard rhegen" 
-              className="w-full h-auto"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-              <p className="text-xs text-muted-foreground text-center">
-                Exemplo ilustrativo do painel principal do rhegen
-              </p>
-            </div>
-          </div>
-          <div className="mt-10 text-center">
-            <Button size="lg" onClick={handleSignup}>
-              Comece agora gratuitamente
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Funcionalidades Section - Lista compacta */}
-      <section className="py-16 md:py-20 border-t border-border/40">
-        <div className="container mx-auto max-w-6xl px-4">
-          <h2 className="mb-10 text-center text-2xl font-semibold md:mb-12 md:text-3xl">
-            Todas as funcionalidades
-          </h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="border-border/40">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                      <feature.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {feature.items.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-2 text-sm text-muted-foreground"
-                      >
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="mt-10 text-center md:mt-12">
-            <Button variant="outline" size="lg" onClick={scrollToPlans}>
-              Ver planos
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Para quem é Section */}
-      <section className="border-y border-border/40 bg-secondary/50 py-16 md:py-20">
-        <div className="container mx-auto max-w-3xl px-4 text-center">
-          <h2 className="mb-6 text-2xl font-semibold md:text-3xl">
-            Para quem é o rhegen
-          </h2>
-          <p className="mb-6 text-base text-foreground md:text-lg">
-            Médicos e Fisioterapeutas que:
-          </p>
-          <div className="mb-8 space-y-3 text-left">
-            <p className="flex items-center justify-center gap-2 text-base md:text-lg">
-              <Check className="h-5 w-5 flex-shrink-0 text-primary" />
-              <span>realizam procedimentos regenerativos</span>
-            </p>
-            <p className="flex items-center justify-center gap-2 text-base md:text-lg">
-              <Check className="h-5 w-5 flex-shrink-0 text-primary" />
-              <span>buscam padronização, segurança e documentação técnica</span>
-            </p>
-            <p className="flex items-center justify-center gap-2 text-base md:text-lg">
-              <Check className="h-5 w-5 flex-shrink-0 text-primary" />
-              <span>valorizam evidência científica e prática responsável</span>
-            </p>
-          </div>
-          <p className="text-sm text-muted-foreground md:text-base">
-            O rhegen não executa procedimentos nem define condutas. Ele oferece
-            suporte técnico para decisões clínicas mais seguras.
-          </p>
-        </div>
-      </section>
-
-      {/* Parcerias com Fornecedores */}
-      <section className="py-16 md:py-20 bg-gradient-to-b from-background to-primary/5">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="text-center mb-10 md:mb-12">
-            <div className="inline-flex items-center justify-center gap-2 mb-4 px-4 py-2 rounded-full bg-primary/10">
-              <Percent className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-primary">Benefício exclusivo</span>
-            </div>
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Parcerias com fornecedores
-            </h2>
-            <p className="mx-auto max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
-              Usuários do rhegen têm acesso a <strong className="text-foreground">descontos exclusivos</strong> na 
-              compra de insumos e materiais para procedimentos regenerativos em nossa rede de parceiros.
-            </p>
-          </div>
-
-          {/* Categorias de parceiros */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-10">
-            {[
-              { icon: Tag, title: "Ortobiológicos / PRP", desc: "Kits, tubos e materiais para coleta e processamento" },
-              { icon: ShoppingBag, title: "Agulhas e materiais invasivos", desc: "Agulhas, cânulas e acessórios para procedimentos guiados" },
-              { icon: Tag, title: "Ultrassom e acessórios", desc: "Gel, capas e consumíveis para ultrassonografia" },
-              { icon: ShoppingBag, title: "Descartáveis e assepsia", desc: "Luvas, campos e materiais de proteção" },
-              { icon: Tag, title: "Equipamentos", desc: "Equipamentos para reabilitação e fisioterapia" },
-              { icon: ShoppingBag, title: "Suplementação", desc: "Suplementos e produtos para recovery clínico" },
-            ].map((item, index) => (
-              <div 
-                key={index}
-                className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-md transition-all"
+          <motion.div
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10"
+          >
+            {pillars.map((pillar, index) => (
+              <motion.div
+                key={pillar.title}
+                variants={fadeUp}
+                custom={0.1 + index * 0.1}
+                className="group"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                  <item.icon className="h-5 w-5 text-primary" />
+                <div className="p-8 md:p-10 rounded-2xl bg-card/30 border border-border/10 transition-all duration-500 hover:bg-card/50 hover:border-border/20">
+                  {/* Minimal accent line */}
+                  <div className="w-8 h-px bg-primary/30 mb-8 transition-all duration-500 group-hover:w-12 group-hover:bg-primary/50" />
+                  
+                  <h3 className="text-foreground text-lg font-medium tracking-tight mb-4">
+                    {pillar.title}
+                  </h3>
+                  
+                  <p className="text-muted-foreground/60 text-sm leading-[1.7] font-light">
+                    {pillar.description}
+                  </p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
-
-          {/* Cupom destaque */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 p-6 md:p-8">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-            
-            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="text-center md:text-left">
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  Como funciona?
-                </h3>
-                <p className="text-muted-foreground max-w-xl">
-                  Ao acessar nossa aba de parceiros dentro do app, utilize o cupom exclusivo 
-                  <span className="font-bold text-primary"> RHEGEN </span> 
-                  para garantir descontos e condições especiais em sua compra.
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-xl tracking-wider shadow-lg">
-                  RHEGEN
-                </div>
-                <span className="text-xs text-muted-foreground">Seu cupom de desconto</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Benefícios */}
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="text-center p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3">
-                <Percent className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="font-semibold text-foreground mb-1">Descontos exclusivos</h4>
-              <p className="text-sm text-muted-foreground">Preços especiais para assinantes</p>
-            </div>
-            <div className="text-center p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3">
-                <Handshake className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="font-semibold text-foreground mb-1">Fornecedores confiáveis</h4>
-              <p className="text-sm text-muted-foreground">Parceiros selecionados com critério</p>
-            </div>
-            <div className="text-center p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3">
-                <ShoppingBag className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="font-semibold text-foreground mb-1">Compra direta</h4>
-              <p className="text-sm text-muted-foreground">Acesse o site do parceiro pelo app</p>
-            </div>
-          </div>
-
-          <div className="mt-10 text-center">
-            <Button size="lg" onClick={handleSignup}>
-              Criar conta e acessar parceiros
-            </Button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* Planos Section */}
-      <section id="plans" className="py-16 md:py-20">
-        <div className="container mx-auto max-w-6xl px-4">
-          <h2 className="mb-10 text-center text-2xl font-semibold md:mb-12 md:text-3xl">
-            Planos e valores
-          </h2>
-          <div className="grid gap-6 md:grid-cols-3 lg:gap-8">
-            {plans.map((plan, index) => (
-              <Card
-                key={index}
-                className={`relative flex flex-col ${
-                  plan.highlighted
-                    ? "border-primary shadow-lg ring-2 ring-primary/20"
-                    : "border-border/40"
-                }`}
+      {/* ===== PARA QUEM FOI CRIADO ===== */}
+      <section className="relative z-10 py-32 md:py-40 px-6">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <motion.p
+            variants={fadeUp}
+            custom={0}
+            className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light"
+          >
+            Público
+          </motion.p>
+
+          <motion.h2
+            variants={fadeUp}
+            custom={0.1}
+            className="text-foreground text-2xl md:text-3xl font-light tracking-tight mb-10"
+          >
+            Para quem o REGHEN foi criado
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp}
+            custom={0.2}
+            className="text-muted-foreground/70 text-base md:text-[17px] leading-[1.8] font-light"
+          >
+            O REGHEN é destinado exclusivamente a profissionais habilitados
+            que atuam ou desejam atuar com medicina regenerativa de forma ética,
+            responsável e baseada em evidência.
+          </motion.p>
+        </motion.div>
+      </section>
+
+      {/* ===== ECOSSISTEMA ===== */}
+      <section className="relative z-10 py-32 md:py-40 px-6">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <motion.p
+            variants={fadeUp}
+            custom={0}
+            className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light"
+          >
+            Ecossistema
+          </motion.p>
+
+          <motion.h2
+            variants={fadeUp}
+            custom={0.1}
+            className="text-foreground text-2xl md:text-3xl font-light tracking-tight mb-6"
+          >
+            Um único ecossistema. Experiências claramente definidas.
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp}
+            custom={0.2}
+            className="text-muted-foreground/60 text-base md:text-[17px] leading-[1.8] font-light"
+          >
+            O REGHEN integra prática clínica, conhecimento aplicado
+            e acompanhamento estruturado em uma infraestrutura coesa.
+          </motion.p>
+        </motion.div>
+      </section>
+
+      {/* ===== FOOTER ===== */}
+      <footer className="relative z-10 py-16 px-6 border-t border-border/10">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          className="max-w-5xl mx-auto"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            {/* Logo e texto institucional */}
+            <motion.div
+              variants={fadeUp}
+              custom={0}
+              className="flex flex-col items-center md:items-start gap-4"
+            >
+              <img
+                src={logoReghen}
+                alt="REGHEN"
+                className="h-8 w-auto object-contain opacity-60"
+              />
+              <p className="text-muted-foreground/40 text-[11px] tracking-wide font-light">
+                REGHEN · Infraestrutura clínica para medicina regenerativa
+              </p>
+            </motion.div>
+
+            {/* Links mínimos */}
+            <motion.div
+              variants={fadeUp}
+              custom={0.1}
+              className="flex items-center gap-8"
+            >
+              <button
+                onClick={handleLogin}
+                className="text-muted-foreground/50 text-xs font-light transition-colors hover:text-foreground/70"
               >
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
-                        plan.highlighted
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-foreground"
-                      }`}
-                    >
-                      {plan.highlighted ? (
-                        <Sparkles className="h-3 w-3" />
-                      ) : (
-                        <Crown className="h-3 w-3" />
-                      )}
-                      {plan.badge}
-                    </span>
-                  </div>
-                )}
-                <CardHeader className="pb-4 pt-8">
-                  <CardTitle className="text-xl">{plan.name}</CardTitle>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-1 flex-col">
-                  <ul className="flex-1 space-y-3">
-                    {plan.items.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-2 text-sm text-muted-foreground"
-                      >
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className="mt-6 w-full"
-                    variant={plan.highlighted ? "default" : "outline"}
-                    onClick={() => handlePlanSelect(plan.planId)}
-                  >
-                    {plan.buttonText}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                Entrar
+              </button>
+              <button
+                onClick={handleSignup}
+                className="text-muted-foreground/50 text-xs font-light transition-colors hover:text-foreground/70"
+              >
+                Criar conta
+              </button>
+              <a
+                href="#"
+                className="text-muted-foreground/50 text-xs font-light transition-colors hover:text-foreground/70"
+              >
+                Termos
+              </a>
+              <a
+                href="#"
+                className="text-muted-foreground/50 text-xs font-light transition-colors hover:text-foreground/70"
+              >
+                Privacidade
+              </a>
+            </motion.div>
           </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="border-y border-border/40 bg-secondary/50 py-16 md:py-20">
-        <div className="container mx-auto max-w-3xl px-4">
-          <h2 className="mb-10 text-center text-2xl font-semibold md:mb-12 md:text-3xl">
-            Perguntas frequentes
-          </h2>
-          <Accordion type="single" collapsible className="w-full">
-            {faqItems.map((item, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left text-base">
-                  {item.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  {item.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </section>
-
-      {/* CTA Final */}
-      <section className="py-16 md:py-20">
-        <div className="container mx-auto max-w-3xl px-4 text-center">
-          <p className="mb-8 text-xl font-medium md:text-2xl">
-            Eleve sua prática clínica com mais segurança e respaldo técnico.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <Button size="lg" onClick={handleSignup} className="w-full sm:w-auto">
-              Criar conta
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleLogin}
-              className="w-full sm:w-auto"
-            >
-              Entrar
-            </Button>
-          </div>
-          <div className="mt-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/patient/login')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Área do Paciente →
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer Legal */}
-      <footer className="border-t border-border/40 bg-secondary/30 py-8">
-        <div className="container mx-auto max-w-4xl px-4">
-          <p className="text-center text-xs text-muted-foreground md:text-sm">
-            O rhegen é uma ferramenta de apoio à decisão clínica, desenvolvida
-            para profissionais habilitados. Não substitui julgamento profissional
-            nem automatiza condutas terapêuticas.
-          </p>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} rhegen. Todos os direitos reservados.
-          </p>
-        </div>
+        </motion.div>
       </footer>
     </div>
   );
