@@ -8,3 +8,7 @@ export { default as MyMentorshipsPage } from './MyMentorshipsPage';
 export { default as MyJourneyPage } from './MyJourneyPage';
 export { default as AppliedSciencePage } from './AppliedSciencePage';
 export { default as ModoAvancado } from './ModoAvancado';
+// Mentor Onboarding
+export { default as MentorApplicationPage } from './MentorApplicationPage';
+export { default as MentorOnboardingPage } from './MentorOnboardingPage';
+export { default as MentorApprovalsPage } from './MentorApprovalsPage';

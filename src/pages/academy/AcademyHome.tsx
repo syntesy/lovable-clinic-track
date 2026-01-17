@@ -323,7 +323,7 @@ const AcademyHome = () => {
             <Button 
               size="lg" 
               variant="secondary"
-              onClick={() => navigate("/mentorias")}
+              onClick={() => navigate("/academy/mentorias")}
             >
               Começar Agora
             </Button>
@@ -331,9 +331,17 @@ const AcademyHome = () => {
               size="lg" 
               variant="outline"
               className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
-              onClick={() => navigate("/mentores")}
+              onClick={() => navigate("/academy/mentores")}
             >
               Conhecer Mentores
+            </Button>
+            <Button 
+              size="lg" 
+              variant="ghost"
+              className="border-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={() => navigate("/academy/mentores/candidatar")}
+            >
+              Se tornar Mentor
             </Button>
           </div>
         </div>
