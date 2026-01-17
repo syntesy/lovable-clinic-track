@@ -78,6 +78,10 @@ import {
   EduDirectorConsole,
   EduAdminMembers, EduAdminEnrollments, EduAdminSettings
 } from "./pages/edu";
+import {
+  AcademyHome, MentorshipsPage, MentorshipDetailPage, MentorsPage, MentorDetailPage,
+  MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado
+} from "./pages/academy";
 
 const queryClient = new QueryClient();
 
@@ -562,6 +566,18 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* Academy Routes - New REGEN Academy */}
+          <Route path="/academy" element={<Navigate to="/academy/home" replace />} />
+          <Route path="/academy/home" element={<ProtectedRoute><AcademyHome /></ProtectedRoute>} />
+          <Route path="/academy/mentorias" element={<ProtectedRoute><MentorshipsPage /></ProtectedRoute>} />
+          <Route path="/academy/mentorias/:slug" element={<ProtectedRoute><MentorshipDetailPage /></ProtectedRoute>} />
+          <Route path="/academy/mentores" element={<ProtectedRoute><MentorsPage /></ProtectedRoute>} />
+          <Route path="/academy/mentores/:slug" element={<ProtectedRoute><MentorDetailPage /></ProtectedRoute>} />
+          <Route path="/academy/minhas-mentorias" element={<ProtectedRoute><MyMentorshipsPage /></ProtectedRoute>} />
+          <Route path="/academy/minha-jornada" element={<ProtectedRoute><MyJourneyPage /></ProtectedRoute>} />
+          <Route path="/academy/ciencia-aplicada" element={<ProtectedRoute><AppliedSciencePage /></ProtectedRoute>} />
+          <Route path="/academy/modo-avancado" element={<ProtectedRoute><ModoAvancado /></ProtectedRoute>} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />

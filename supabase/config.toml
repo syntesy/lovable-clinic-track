@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.export-registry-research]
 verify_jwt = false
+
+[functions.create-mentorship-checkout]
+verify_jwt = false
+
+[functions.stripe-mentorship-webhook]
+verify_jwt = false
