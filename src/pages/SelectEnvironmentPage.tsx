@@ -73,7 +73,7 @@ export default function SelectEnvironmentPage() {
       id: "clinical",
       title: "REGHEN",
       subtitle: "Clínico",
-      description: "Infraestrutura clínica avançada para decisão, execução e acompanhamento.",
+      description: "Triagem estruturada, suporte à decisão terapêutica, acompanhamento longitudinal e segurança científica em uma única plataforma.",
       microcopy: "Uso profissional regulado",
       icon: Stethoscope,
       route: "/pacientes",
