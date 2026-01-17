@@ -1574,6 +1574,95 @@ export type Database = {
         }
         Relationships: []
       }
+      edu_learning_objects: {
+        Row: {
+          content_url: string | null
+          created_at: string
+          description: string | null
+          file_path: string | null
+          id: string
+          institution_id: string
+          module_id: string | null
+          object_type: string
+          sort_order: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          institution_id: string
+          module_id?: string | null
+          object_type?: string
+          sort_order?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          institution_id?: string
+          module_id?: string | null
+          object_type?: string
+          sort_order?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edu_learning_objects_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "edu_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edu_modules: {
+        Row: {
+          cohort_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          institution_id: string
+          sort_order: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cohort_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          institution_id: string
+          sort_order?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cohort_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          institution_id?: string
+          sort_order?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       epi_protocols: {
         Row: {
           application_time: number | null
