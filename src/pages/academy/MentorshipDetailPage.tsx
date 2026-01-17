@@ -326,8 +326,8 @@ const MentorshipDetailPage = () => {
                       </>
                     ) : (
                       <>
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Quero participar
+                        <Users className="w-4 h-4 mr-2" />
+                        Solicitar vaga
                       </>
                     )}
                   </Button>
@@ -335,7 +335,7 @@ const MentorshipDetailPage = () => {
                   <p className="text-xs text-center text-muted-foreground">
                     {mentorship.price_cents === 0 
                       ? "Gratuito - inscrição sujeita a confirmação"
-                      : "Pagamento via Stripe ou inscrição manual"}
+                      : "Inscrição sujeita a aprovação"}
                   </p>
 
                   {!isAuthenticated && (
