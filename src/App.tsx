@@ -80,7 +80,8 @@ import {
 } from "./pages/edu";
 import {
   AcademyHome, ApprovalsPage, MentorshipsPage, MentorshipDetailPage, MentorsPage, MentorDetailPage,
-  MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado
+  MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado,
+  MentorApplicationPage, MentorOnboardingPage, MentorApprovalsPage
 } from "./pages/academy";
 
 const queryClient = new QueryClient();
@@ -579,6 +580,10 @@ const App = () => (
           <Route path="/academy/ciencia-aplicada" element={<ProtectedRoute><AppliedSciencePage /></ProtectedRoute>} />
           <Route path="/academy/modo-avancado" element={<ProtectedRoute><ModoAvancado /></ProtectedRoute>} />
           <Route path="/academy/aprovacoes" element={<ProtectedRoute><ApprovalsPage /></ProtectedRoute>} />
+          {/* Mentor Onboarding Routes */}
+          <Route path="/academy/mentores/candidatar" element={<MentorApplicationPage />} />
+          <Route path="/academy/mentor/onboarding" element={<ProtectedRoute><MentorOnboardingPage /></ProtectedRoute>} />
+          <Route path="/academy/aprovacoes/mentores" element={<RequireAdminRole><MentorApprovalsPage /></RequireAdminRole>} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />
