@@ -289,7 +289,7 @@ export default function SelectEnvironmentPage() {
             variants={headerVariants}
             className="text-foreground text-3xl md:text-[2.5rem] font-light tracking-tight mb-5 text-center leading-tight"
           >
-            Onde deseja atuar agora?
+            Infraestrutura clínica para medicina regenerativa
           </motion.h1>
 
           {/* Subtítulo - curto e preciso */}
