@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Users, 
   CheckCircle2, 
@@ -14,7 +16,9 @@ import {
   Calendar,
   AlertTriangle,
   ShieldCheck,
-  Pause
+  Pause,
+  ChevronDown,
+  FileSearch
 } from "lucide-react";
 import { 
   usePendingMentorApplications,
@@ -23,6 +27,9 @@ import {
   useSuspendMentor,
 } from "@/hooks/useMentorOnboarding";
 import { useCanAccessApprovals } from "@/hooks/useApprovals";
+import { CurationChecklistAdmin } from "@/components/academy/CurationChecklistAdmin";
+import { MentorVerifiedBadge } from "@/components/academy/MentorVerifiedBadge";
+import { useMentorCurationChecklist } from "@/hooks/useClinicalTaxonomies";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -208,6 +215,25 @@ const MentorApprovalsPage = () => {
                         </a>
                       </div>
                     )}
+
+                    {/* Curadoria Científica (Admin) */}
+                    <Collapsible className="mb-4">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2 w-full justify-between">
+                          <span className="flex items-center gap-2">
+                            <FileSearch className="w-4 h-4" />
+                            Curadoria Científica
+                          </span>
+                          <ChevronDown className="w-4 h-4" />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-4">
+                        <CurationChecklistAdmin 
+                          mentorId={app.id} 
+                          mentorName={app.name}
+                        />
+                      </CollapsibleContent>
+                    </Collapsible>
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">

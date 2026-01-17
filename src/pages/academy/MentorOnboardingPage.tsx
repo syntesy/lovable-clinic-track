@@ -19,7 +19,8 @@ import {
   Clock,
   AlertCircle,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Layers
 } from "lucide-react";
 import { 
   useMyMentorProfile, 
@@ -29,6 +30,9 @@ import {
   mentorStatusLabels,
   type MentorStatus
 } from "@/hooks/useMentorOnboarding";
+import { useMentorTaxonomies, useMentorHasTaxonomies } from "@/hooks/useClinicalTaxonomies";
+import { TaxonomySelector } from "@/components/academy/TaxonomySelector";
+import { MentorVerifiedBadge } from "@/components/academy/MentorVerifiedBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -44,11 +48,11 @@ const MentorOnboardingPage = () => {
   const { checklist, isLoading: loadingChecklist } = useOnboardingChecklist();
   const updateProfileMutation = useUpdateMentorProfile();
   const acceptTermsMutation = useAcceptMentorTerms();
+  const { hasTaxonomies, isLoading: loadingTaxonomies } = useMentorHasTaxonomies(profile?.id);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  
-  const [editMode, setEditMode] = useState<'profile' | 'bio' | 'areas' | null>(null);
+  const [editMode, setEditMode] = useState<'profile' | 'bio' | 'areas' | 'taxonomies' | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     specialty: "",
@@ -174,8 +178,12 @@ const MentorOnboardingPage = () => {
               <Sparkles className="w-3 h-3 mr-1" />
               Onboarding do Mentor
             </Badge>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 flex items-center gap-3">
               Bem-vindo, {profile.name?.split(' ')[0]}!
+              <MentorVerifiedBadge 
+                hasValidSeal={profile.has_curation_seal === true} 
+                size="lg"
+              />
             </h1>
             <p className="text-lg text-muted-foreground">
               Complete seu perfil para começar a criar mentorias no REGEN Academy.
@@ -323,7 +331,45 @@ const MentorOnboardingPage = () => {
                   </div>
                 </div>
 
-                {/* Item 3: Areas */}
+                {/* Item 3: Taxonomias Clínicas Oficiais (NOVO) */}
+                <div className="flex items-start gap-4 p-4 rounded-lg border">
+                  <div className="mt-0.5">
+                    {hasTaxonomies ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Layers className="w-4 h-4" />
+                        Áreas de Atuação Clínica (Taxonomia Oficial)
+                      </h4>
+                      {editMode !== 'taxonomies' && (
+                        <Button variant="ghost" size="sm" onClick={() => setEditMode('taxonomies')}>
+                          {hasTaxonomies ? 'Editar' : 'Selecionar'}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Selecione suas áreas de atuação na taxonomia oficial do REGEN Academy
+                    </p>
+                    
+                    {editMode === 'taxonomies' && profile?.id && (
+                      <div className="mt-4">
+                        <TaxonomySelector 
+                          mentorId={profile.id} 
+                          onSave={() => setEditMode(null)}
+                          minSelection={1}
+                          maxSelection={5}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Item 4: Areas (legado - opcional) */}
                 <div className="flex items-start gap-4 p-4 rounded-lg border">
                   <div className="mt-0.5">
                     {checklist?.hasClinicalAreas ? (
@@ -334,7 +380,7 @@ const MentorOnboardingPage = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Definir áreas de atuação</h4>
+                      <h4 className="font-medium">Áreas de expertise adicionais (opcional)</h4>
                       {editMode !== 'areas' && (
                         <Button variant="ghost" size="sm" onClick={() => setEditMode('areas')}>
                           Editar
@@ -342,7 +388,7 @@ const MentorOnboardingPage = () => {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Selecione suas áreas de expertise
+                      Complementar: selecione áreas de expertise específicas
                     </p>
                     
                     {editMode === 'areas' && (
