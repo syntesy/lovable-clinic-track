@@ -5,3 +5,5 @@ export { default as EduTeacherLearningObjectForm } from './EduTeacherLearningObj
 export { default as EduTeacherCheckpoints } from './EduTeacherCheckpoints';
 export { default as EduTeacherDecisionLab } from './EduTeacherDecisionLab';
 export { default as EduTeacherAnalytics } from './EduTeacherAnalytics';
+export { default as EduTeacherModules } from './EduTeacherModules';
+export { default as EduTeacherCohorts } from './EduTeacherCohorts';
