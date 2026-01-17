@@ -11,6 +11,9 @@ const ProntuarioRedirect = () => {
   return <Navigate to={`/patients/${id}/records`} replace />;
 };
 
+// Import select environment page
+import SelectEnvironmentPage from "./pages/SelectEnvironmentPage";
+
 // Import new clinical records pages
 import ClinicalRecordsList from "./pages/ClinicalRecordsList";
 import ClinicalRecordEditor from "./pages/ClinicalRecordEditor";
@@ -97,6 +100,7 @@ const App = () => (
         <ModeProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/select-environment" element={<ProtectedRoute><SelectEnvironmentPage /></ProtectedRoute>} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/" element={<LandingPage />} />
             

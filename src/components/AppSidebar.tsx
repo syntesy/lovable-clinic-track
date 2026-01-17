@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList, ArrowLeftRight } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -41,6 +42,7 @@ const adminMenuItems = [
 
 export function AppSidebar() {
   const { state, isMobile } = useSidebar();
+  const navigate = useNavigate();
   const isCollapsed = state === "collapsed" && !isMobile;
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -157,6 +159,24 @@ export function AppSidebar() {
             </SidebarGroup>
           </>
         )}
+
+        {/* Environment Switcher - Elegant and discrete */}
+        <div className="mt-auto pt-6">
+          {!isCollapsed && <div className="mx-2 mb-4 h-px bg-sidebar-border/50" />}
+          <button
+            onClick={() => navigate('/select-environment')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-muted-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 transition-colors ${
+              isCollapsed ? 'justify-center' : ''
+            }`}
+          >
+            <ArrowLeftRight className="h-4 w-4 flex-shrink-0" />
+            {!isCollapsed && (
+              <span className="text-[11px] tracking-wide font-normal">
+                Trocar ambiente
+              </span>
+            )}
+          </button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );
