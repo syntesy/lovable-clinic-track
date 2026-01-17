@@ -7,7 +7,7 @@ import {
   ArrowRight,
   Lock
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logoReghen from "@/assets/logo-reghen.png";
 import {
@@ -28,6 +28,7 @@ interface EnvironmentCard {
   variant: "primary" | "secondary" | "tertiary";
   enabled: boolean;
   disabledMessage?: string;
+  cta: string;
 }
 
 export default function SelectEnvironmentPage() {
@@ -36,9 +37,14 @@ export default function SelectEnvironmentPage() {
   const [clinicalEnabled, setClinicalEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Check for reduced motion preference
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
+
   useEffect(() => {
     checkPermissions();
-    saveEnvironmentPreference();
   }, []);
 
   const checkPermissions = async () => {
@@ -48,9 +54,6 @@ export default function SelectEnvironmentPage() {
         navigate("/auth");
         return;
       }
-      
-      // Check if user has clinical access (for now, all authenticated users have access)
-      // This can be enhanced later with proper role checking
       setClinicalEnabled(true);
     } catch (error) {
       console.error("Error checking permissions:", error);
@@ -59,17 +62,9 @@ export default function SelectEnvironmentPage() {
     }
   };
 
-  const saveEnvironmentPreference = () => {
-    // Clear any previous preference when arriving at this page
-    localStorage.removeItem("regenapp_last_environment");
-  };
-
   const handleEnvironmentSelect = (env: EnvironmentCard) => {
     if (!env.enabled) return;
-    
-    // Save preference for future sessions
     localStorage.setItem("regenapp_last_environment", env.id);
-    
     navigate(env.route);
   };
 
@@ -78,13 +73,14 @@ export default function SelectEnvironmentPage() {
       id: "clinical",
       title: "REGHEN",
       subtitle: "Clínico",
-      description: "Infraestrutura clínica avançada para tomada de decisão, execução e acompanhamento.",
+      description: "Infraestrutura clínica avançada para decisão, execução e acompanhamento.",
       microcopy: "Uso profissional regulado",
       icon: Stethoscope,
       route: "/pacientes",
       variant: "primary",
       enabled: clinicalEnabled,
-      disabledMessage: "Este ambiente não está habilitado para sua conta."
+      disabledMessage: "Este ambiente não está habilitado para sua conta.",
+      cta: "Acessar ambiente clínico"
     },
     {
       id: "academy",
@@ -95,7 +91,8 @@ export default function SelectEnvironmentPage() {
       icon: GraduationCap,
       route: "/academy/home",
       variant: "secondary",
-      enabled: true
+      enabled: true,
+      cta: "Entrar no Academy"
     },
     {
       id: "patient",
@@ -105,75 +102,19 @@ export default function SelectEnvironmentPage() {
       icon: Heart,
       route: "/patient/login",
       variant: "tertiary",
-      enabled: true
+      enabled: true,
+      cta: "Entrar como paciente"
     }
   ];
 
-  const getCardStyles = (variant: string, enabled: boolean, isHovered: boolean) => {
-    const baseStyles = "relative overflow-hidden rounded-2xl border backdrop-blur-sm transition-all duration-500 ease-out cursor-pointer";
-    
-    if (!enabled) {
-      return `${baseStyles} bg-card/30 border-border/20 opacity-60 cursor-not-allowed`;
-    }
-
-    const hoverElevation = isHovered ? "shadow-2xl -translate-y-1" : "shadow-lg";
-    
-    switch (variant) {
-      case "primary":
-        return `${baseStyles} ${hoverElevation} bg-gradient-to-br from-card via-card to-primary/5 border-primary/20 ${isHovered ? "border-primary/40" : ""}`;
-      case "secondary":
-        return `${baseStyles} ${hoverElevation} bg-gradient-to-br from-card via-card to-accent/10 border-accent-foreground/10 ${isHovered ? "border-accent-foreground/20" : ""}`;
-      case "tertiary":
-        return `${baseStyles} ${hoverElevation} bg-gradient-to-br from-card via-card to-muted/20 border-border/30 ${isHovered ? "border-border/50" : ""}`;
-      default:
-        return baseStyles;
-    }
-  };
-
-  const getIconGlow = (variant: string, isHovered: boolean) => {
-    if (!isHovered) return "";
-    
-    switch (variant) {
-      case "primary":
-        return "drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]";
-      case "secondary":
-        return "drop-shadow-[0_0_8px_hsl(var(--accent-foreground)/0.3)]";
-      case "tertiary":
-        return "drop-shadow-[0_0_8px_hsl(var(--muted-foreground)/0.3)]";
-      default:
-        return "";
-    }
-  };
-
-  const getButtonStyles = (variant: string, enabled: boolean) => {
-    if (!enabled) {
-      return "bg-muted/50 text-muted-foreground cursor-not-allowed";
-    }
-    
-    switch (variant) {
-      case "primary":
-        return "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20";
-      case "secondary":
-        return "bg-accent text-accent-foreground hover:bg-accent/80 border border-accent-foreground/20";
-      case "tertiary":
-        return "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border";
-      default:
-        return "";
-    }
-  };
-
-  // Check for reduced motion preference
-  const prefersReducedMotion = typeof window !== 'undefined' 
-    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
-    : false;
-
+  // Animation variants with refined easing
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: prefersReducedMotion ? 0 : 0.15,
-        delayChildren: prefersReducedMotion ? 0 : 0.2
+        staggerChildren: prefersReducedMotion ? 0 : 0.12,
+        delayChildren: prefersReducedMotion ? 0 : 0.3
       }
     }
   };
@@ -181,27 +122,92 @@ export default function SelectEnvironmentPage() {
   const cardVariants = {
     hidden: { 
       opacity: 0, 
-      y: prefersReducedMotion ? 0 : 30 
+      y: prefersReducedMotion ? 0 : 40,
+      scale: 0.98
     },
     visible: { 
       opacity: 1, 
       y: 0,
+      scale: 1,
       transition: {
-        duration: prefersReducedMotion ? 0.1 : 0.6,
-        ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number]
+        duration: prefersReducedMotion ? 0.1 : 0.7,
+        ease: [0.22, 1, 0.36, 1] as [number, number, number, number]
       }
     }
   };
 
   const headerVariants = {
-    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : -20 },
+    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : -30 },
     visible: { 
       opacity: 1, 
       y: 0,
       transition: {
-        duration: prefersReducedMotion ? 0.1 : 0.8,
-        ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number]
+        duration: prefersReducedMotion ? 0.1 : 0.9,
+        ease: [0.22, 1, 0.36, 1] as [number, number, number, number]
       }
+    }
+  };
+
+  const getCardClasses = (variant: string, enabled: boolean, isHovered: boolean) => {
+    const base = "relative overflow-hidden rounded-2xl border transition-all duration-700 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+    
+    if (!enabled) {
+      return `${base} bg-card/20 border-border/10 opacity-50 cursor-not-allowed`;
+    }
+
+    const hoverStyles = isHovered 
+      ? "shadow-[0_25px_50px_-12px_rgba(0,0,0,0.35)] -translate-y-[3px]" 
+      : "shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)]";
+    
+    switch (variant) {
+      case "primary":
+        return `${base} ${hoverStyles} cursor-pointer bg-gradient-to-br from-card via-card/95 to-primary/[0.08] ${
+          isHovered ? "border-primary/30" : "border-primary/15"
+        }`;
+      case "secondary":
+        return `${base} ${hoverStyles} cursor-pointer bg-gradient-to-br from-card via-card/95 to-accent/[0.15] ${
+          isHovered ? "border-accent-foreground/25" : "border-accent-foreground/10"
+        }`;
+      case "tertiary":
+        return `${base} ${hoverStyles} cursor-pointer bg-gradient-to-br from-card via-card/95 to-muted/[0.15] ${
+          isHovered ? "border-border/50" : "border-border/25"
+        }`;
+      default:
+        return base;
+    }
+  };
+
+  const getIconStyles = (variant: string, isHovered: boolean) => {
+    const baseGlow = isHovered ? "transition-all duration-500" : "transition-all duration-500";
+    
+    switch (variant) {
+      case "primary":
+        return `text-primary ${baseGlow} ${isHovered ? "drop-shadow-[0_0_12px_hsl(var(--primary)/0.4)]" : ""}`;
+      case "secondary":
+        return `text-accent-foreground ${baseGlow} ${isHovered ? "drop-shadow-[0_0_12px_hsl(var(--accent-foreground)/0.25)]" : ""}`;
+      case "tertiary":
+        return `text-muted-foreground ${baseGlow} ${isHovered ? "drop-shadow-[0_0_12px_hsl(var(--muted-foreground)/0.25)]" : ""}`;
+      default:
+        return "";
+    }
+  };
+
+  const getButtonClasses = (variant: string, enabled: boolean) => {
+    const base = "w-full py-3.5 px-6 rounded-xl text-sm font-medium flex items-center justify-center gap-2.5 transition-all duration-300";
+    
+    if (!enabled) {
+      return `${base} bg-muted/30 text-muted-foreground/50 cursor-not-allowed`;
+    }
+    
+    switch (variant) {
+      case "primary":
+        return `${base} bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25`;
+      case "secondary":
+        return `${base} bg-accent/80 text-accent-foreground hover:bg-accent border border-accent-foreground/15`;
+      case "tertiary":
+        return `${base} bg-secondary/80 text-secondary-foreground hover:bg-secondary border border-border/40`;
+      default:
+        return base;
     }
   };
 
@@ -209,79 +215,97 @@ export default function SelectEnvironmentPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"
-        />
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col items-center gap-4"
+        >
+          <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-muted-foreground/50 text-xs tracking-widest uppercase">Preparando</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={300}>
       <div className="min-h-screen bg-background relative overflow-hidden">
-        {/* Sophisticated background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/[0.02]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/[0.03] via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/[0.03] via-transparent to-transparent" />
+        {/* Sophisticated layered background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background" />
         
-        {/* Subtle grid pattern */}
+        {/* Subtle radial gradients for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.03),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_100%_100%,hsl(var(--accent)/0.04),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_0%_80%,hsl(var(--primary)/0.02),transparent)]" />
+        
+        {/* Ultra-subtle grid pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.015]"
+          className="absolute inset-0 opacity-[0.012]"
           style={{
             backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px'
+            backgroundSize: '80px 80px'
+          }}
+        />
+
+        {/* Noise texture overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.02] pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
           }}
         />
 
         <motion.div 
-          className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12"
+          className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-16"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Logo */}
+          {/* Logo with refined animation */}
           <motion.div 
             variants={headerVariants}
-            className="mb-12"
+            className="mb-14"
           >
-            <img 
+            <motion.img 
               src={logoReghen} 
               alt="REGHEN" 
-              className="h-16 md:h-20 w-auto object-contain opacity-90"
+              className="h-14 md:h-16 w-auto object-contain"
+              style={{ filter: 'brightness(0.95)' }}
+              whileHover={!prefersReducedMotion ? { scale: 1.02, filter: 'brightness(1)' } : {}}
+              transition={{ duration: 0.4 }}
             />
           </motion.div>
 
-          {/* Microtexto superior */}
+          {/* Microtexto superior - extremamente discreto */}
           <motion.p 
             variants={headerVariants}
-            className="text-muted-foreground/60 text-xs tracking-[0.3em] uppercase mb-6"
+            className="text-muted-foreground/40 text-[10px] tracking-[0.35em] uppercase mb-8 font-light"
           >
             Ecossistema integrado · Experiências distintas
           </motion.p>
 
-          {/* Título principal */}
+          {/* Título principal - forte mas elegante */}
           <motion.h1 
             variants={headerVariants}
-            className="text-foreground text-3xl md:text-4xl font-light tracking-tight mb-4 text-center"
+            className="text-foreground text-3xl md:text-[2.5rem] font-light tracking-tight mb-5 text-center leading-tight"
           >
             Onde deseja atuar agora?
           </motion.h1>
 
-          {/* Subtítulo */}
+          {/* Subtítulo - curto e preciso */}
           <motion.p 
             variants={headerVariants}
-            className="text-muted-foreground text-sm md:text-base mb-16 text-center max-w-md"
+            className="text-muted-foreground/70 text-sm md:text-[15px] mb-20 text-center max-w-lg font-light"
           >
             Cada ambiente do REGHEN foi desenhado para um propósito específico.
           </motion.p>
 
           {/* Cards de escolha */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full max-w-5xl"
+            className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-7 w-full max-w-5xl"
             variants={containerVariants}
           >
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {environments.map((env) => {
                 const isHovered = hoveredCard === env.id;
                 const Icon = env.icon;
@@ -290,59 +314,73 @@ export default function SelectEnvironmentPage() {
                   <motion.div
                     key={env.id}
                     variants={cardVariants}
-                    className={getCardStyles(env.variant, env.enabled, isHovered)}
+                    className={getCardClasses(env.variant, env.enabled, isHovered)}
                     onMouseEnter={() => env.enabled && setHoveredCard(env.id)}
                     onMouseLeave={() => setHoveredCard(null)}
+                    onFocus={() => env.enabled && setHoveredCard(env.id)}
+                    onBlur={() => setHoveredCard(null)}
                     onClick={() => handleEnvironmentSelect(env)}
-                    whileHover={env.enabled && !prefersReducedMotion ? { scale: 1.01 } : {}}
+                    tabIndex={env.enabled ? 0 : -1}
+                    role="button"
+                    aria-label={`${env.title} ${env.subtitle}`}
+                    aria-disabled={!env.enabled}
                     whileTap={env.enabled && !prefersReducedMotion ? { scale: 0.985 } : {}}
                   >
-                    {/* Gradient overlay on hover */}
+                    {/* Hover gradient overlay - very subtle */}
                     <motion.div 
-                      className="absolute inset-0 bg-gradient-to-t from-primary/[0.03] to-transparent opacity-0"
+                      className="absolute inset-0 bg-gradient-to-t from-primary/[0.02] via-transparent to-transparent"
+                      initial={{ opacity: 0 }}
                       animate={{ opacity: isHovered ? 1 : 0 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ duration: 0.5 }}
                     />
 
-                    <div className="relative z-10 p-8 md:p-10 flex flex-col h-full min-h-[320px]">
-                      {/* Icon */}
-                      <div className="mb-8">
+                    {/* Subtle border glow on hover */}
+                    <motion.div 
+                      className="absolute inset-0 rounded-2xl"
+                      initial={{ opacity: 0 }}
+                      animate={{ 
+                        opacity: isHovered ? 1 : 0,
+                        boxShadow: env.variant === 'primary' 
+                          ? 'inset 0 0 0 1px hsl(var(--primary)/0.15)' 
+                          : env.variant === 'secondary'
+                            ? 'inset 0 0 0 1px hsl(var(--accent-foreground)/0.1)'
+                            : 'inset 0 0 0 1px hsl(var(--border)/0.3)'
+                      }}
+                      transition={{ duration: 0.4 }}
+                    />
+
+                    <div className="relative z-10 p-9 md:p-10 flex flex-col h-full min-h-[340px]">
+                      {/* Icon with elegant animation */}
+                      <div className="mb-9">
                         <motion.div
                           animate={{
-                            scale: isHovered ? 1.05 : 1
+                            scale: isHovered && !prefersReducedMotion ? 1.08 : 1,
+                            y: isHovered && !prefersReducedMotion ? -2 : 0
                           }}
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         >
-                          <Icon 
-                            className={`w-10 h-10 transition-all duration-300 ${
-                              env.variant === "primary" 
-                                ? "text-primary" 
-                                : env.variant === "secondary"
-                                  ? "text-accent-foreground"
-                                  : "text-muted-foreground"
-                            } ${getIconGlow(env.variant, isHovered)}`}
-                          />
+                          <Icon className={`w-9 h-9 ${getIconStyles(env.variant, isHovered)}`} />
                         </motion.div>
                       </div>
 
-                      {/* Title */}
-                      <div className="mb-4">
-                        <span className="text-muted-foreground text-xs tracking-[0.2em] uppercase block mb-1">
+                      {/* Title block */}
+                      <div className="mb-5">
+                        <span className="text-muted-foreground/50 text-[11px] tracking-[0.25em] uppercase block mb-1.5 font-light">
                           {env.title}
                         </span>
-                        <h2 className="text-foreground text-2xl font-semibold tracking-tight">
+                        <h2 className="text-foreground text-[1.65rem] font-medium tracking-tight">
                           {env.subtitle}
                         </h2>
                       </div>
 
                       {/* Description */}
-                      <p className="text-muted-foreground text-sm leading-relaxed mb-6 flex-grow">
+                      <p className="text-muted-foreground/80 text-[13px] leading-[1.7] mb-5 flex-grow font-light">
                         {env.description}
                       </p>
 
                       {/* Microcopy */}
                       {env.microcopy && (
-                        <p className="text-muted-foreground/60 text-xs mb-6">
+                        <p className="text-muted-foreground/40 text-[11px] mb-7 tracking-wide font-light">
                           {env.microcopy}
                         </p>
                       )}
@@ -351,21 +389,26 @@ export default function SelectEnvironmentPage() {
                       <div className="mt-auto">
                         {env.enabled ? (
                           <motion.button
-                            className={`w-full py-3 px-6 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all duration-300 ${getButtonStyles(env.variant, env.enabled)}`}
-                            whileHover={!prefersReducedMotion ? { gap: "12px" } : {}}
+                            className={getButtonClasses(env.variant, env.enabled)}
+                            whileHover={!prefersReducedMotion ? { gap: "14px" } : {}}
+                            transition={{ duration: 0.3 }}
                           >
-                            {env.variant === "primary" ? "Acessar ambiente clínico" : 
-                             env.variant === "secondary" ? "Entrar no Academy" : 
-                             "Entrar como paciente"}
-                            <ArrowRight className="w-4 h-4" />
+                            {env.cta}
+                            <motion.span
+                              animate={{ x: isHovered && !prefersReducedMotion ? 3 : 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                            </motion.span>
                           </motion.button>
                         ) : (
                           <button
-                            className={`w-full py-3 px-6 rounded-xl text-sm font-medium flex items-center justify-center gap-2 ${getButtonStyles(env.variant, env.enabled)}`}
+                            className={getButtonClasses(env.variant, env.enabled)}
                             disabled
+                            aria-disabled="true"
                           >
-                            <Lock className="w-4 h-4" />
-                            Bloqueado
+                            <Lock className="w-4 h-4" strokeWidth={2} />
+                            <span>Indisponível</span>
                           </button>
                         )}
                       </div>
@@ -373,18 +416,19 @@ export default function SelectEnvironmentPage() {
                   </motion.div>
                 );
 
-                // Wrap disabled cards with tooltip
-                if (!env.enabled) {
+                // Wrap disabled cards with elegant tooltip
+                if (!env.enabled && env.disabledMessage) {
                   return (
                     <Tooltip key={env.id}>
                       <TooltipTrigger asChild>
                         {cardContent}
                       </TooltipTrigger>
                       <TooltipContent 
-                        side="top" 
-                        className="bg-popover border-border text-popover-foreground"
+                        side="top"
+                        sideOffset={8}
+                        className="bg-popover/95 backdrop-blur-sm border-border/50 text-popover-foreground text-xs px-4 py-2.5 rounded-lg shadow-xl"
                       >
-                        <p>{env.disabledMessage}</p>
+                        <p className="font-light">{env.disabledMessage}</p>
                       </TooltipContent>
                     </Tooltip>
                   );
@@ -398,7 +442,7 @@ export default function SelectEnvironmentPage() {
           {/* Footer subtle text */}
           <motion.p 
             variants={headerVariants}
-            className="mt-16 text-muted-foreground/40 text-xs tracking-wide"
+            className="mt-20 text-muted-foreground/30 text-[11px] tracking-[0.15em] font-light"
           >
             Você pode alternar entre ambientes a qualquer momento
           </motion.p>
