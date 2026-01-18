@@ -377,29 +377,34 @@ const DetalhePaciente = () => {
 
                 {/* Overview Tab - READ-ONLY consolidated view */}
                 <TabsContent value="overview" className="mt-8">
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {/* Diagnóstico Clínico - READ-ONLY */}
-                    <Card className="bg-card border-border">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                    <Card className="bg-card border-border sm:col-span-2 lg:col-span-2">
+                      <CardHeader className="pb-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             Diagnóstico Clínico
                           </CardTitle>
                           {latestClinicalRecord && (
-                            <Badge variant="outline" className="text-xs font-normal">
-                              Último prontuário: {format(new Date(latestClinicalRecord.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                            <Badge variant="outline" className="text-[10px] font-normal w-fit">
+                              Prontuário: {format(new Date(latestClinicalRecord.created_at), "dd/MM/yyyy", { locale: ptBR })}
                             </Badge>
                           )}
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-0 space-y-3">
+                      <CardContent className="pt-2 space-y-4">
                         {isLoadingLatestRecord ? (
                           <Skeleton className="h-7 w-3/4" />
                         ) : !latestClinicalRecord ? (
-                          <p className="text-muted-foreground text-lg">Sem prontuários</p>
+                          <div className="flex items-center gap-3 py-2">
+                            <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center">
+                              <FileText className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <p className="text-muted-foreground">Sem prontuários registrados</p>
+                          </div>
                         ) : (
-                          <>
-                            <p className="text-foreground text-lg">
+                          <div className="space-y-3">
+                            <p className="text-foreground text-lg font-medium leading-relaxed">
                               {latestClinicalRecord.clinical_diagnosis?.trim() 
                                 ? latestClinicalRecord.clinical_diagnosis 
                                 : latestClinicalRecord.chief_complaint?.trim()
@@ -409,83 +414,107 @@ const DetalhePaciente = () => {
                             {latestClinicalRecord.status === "draft" && 
                               !latestClinicalRecord.clinical_diagnosis?.trim() && 
                               !latestClinicalRecord.chief_complaint?.trim() && (
-                              <p className="text-xs text-muted-foreground italic">Rascunho em andamento</p>
+                              <Badge variant="secondary" className="text-xs">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Rascunho em andamento
+                              </Badge>
                             )}
-                          </>
+                          </div>
                         )}
                         {latestClinicalRecord && (
                           <Button
-                            variant="link"
+                            variant="ghost"
                             size="sm"
-                            className="h-auto p-0 text-xs text-muted-foreground hover:text-primary"
+                            className="h-8 px-3 text-xs text-muted-foreground hover:text-primary gap-1.5 -ml-3"
                             onClick={() => navigate(`/patients/${selectedPatientId}/records`)}
                           >
-                            <ExternalLink className="w-3 h-3 mr-1" />
+                            <ExternalLink className="w-3.5 h-3.5" />
                             Ver histórico de prontuários
                           </Button>
                         )}
                       </CardContent>
                     </Card>
                     
-                    {/* Procedimentos Realizados - READ-ONLY */}
-                    <Card className="bg-card border-border">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                          Procedimentos Realizados
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        {procedures && procedures.length > 0 ? (
-                          <div className="space-y-2">
-                            <p className="text-3xl font-bold text-foreground mb-3">{procedures.length}</p>
-                            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                              {procedures.slice(0, 8).map(proc => (
-                                <Badge key={proc.id} variant="secondary" className="text-xs">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  {proc.procedure_name}
-                                </Badge>
-                              ))}
-                              {procedures.length > 8 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{procedures.length - 8} mais
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-muted-foreground text-sm">Nenhum procedimento registrado</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                    
                     {/* EVA Inicial - READ-ONLY */}
                     <Card className="bg-card border-border">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           EVA Inicial
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="pt-0">
-                        <p className="text-4xl font-bold text-foreground">
-                          {(() => {
-                            const latestScreening = screenings?.[0];
-                            if (latestScreening?.questionnaire_responses) {
-                              const responses = latestScreening.questionnaire_responses as Record<string, unknown>;
-                              const canonical = responses?.regen_canonical as Record<string, unknown> | undefined;
-                              const complaint = canonical?.complaint as Record<string, unknown> | undefined;
-                              const painNrs = complaint?.pain_nrs;
-                              if (painNrs != null && (typeof painNrs === 'number' || typeof painNrs === 'string')) {
-                                return String(painNrs);
-                              }
-                              const answers = responses?.answers as Record<string, unknown> | undefined;
-                              const dorEscala = answers?.dor_escala;
-                              if (dorEscala != null && (typeof dorEscala === 'number' || typeof dorEscala === 'string')) {
-                                return String(dorEscala);
-                              }
-                            }
-                            return patient?.initial_vas != null ? String(patient.initial_vas) : "—";
-                          })()}
-                        </p>
+                      <CardContent className="pt-2">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <span className="text-3xl font-bold text-primary">
+                              {(() => {
+                                const latestScreening = screenings?.[0];
+                                if (latestScreening?.questionnaire_responses) {
+                                  const responses = latestScreening.questionnaire_responses as Record<string, unknown>;
+                                  const canonical = responses?.regen_canonical as Record<string, unknown> | undefined;
+                                  const complaint = canonical?.complaint as Record<string, unknown> | undefined;
+                                  const painNrs = complaint?.pain_nrs;
+                                  if (painNrs != null && (typeof painNrs === 'number' || typeof painNrs === 'string')) {
+                                    return String(painNrs);
+                                  }
+                                  const answers = responses?.answers as Record<string, unknown> | undefined;
+                                  const dorEscala = answers?.dor_escala;
+                                  if (dorEscala != null && (typeof dorEscala === 'number' || typeof dorEscala === 'string')) {
+                                    return String(dorEscala);
+                                  }
+                                }
+                                return patient?.initial_vas != null ? String(patient.initial_vas) : "—";
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm text-muted-foreground">Escala de dor</p>
+                            <p className="text-xs text-muted-foreground/70">0-10 pontos</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    {/* Procedimentos Realizados - READ-ONLY */}
+                    <Card className="bg-card border-border sm:col-span-2 lg:col-span-3">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Procedimentos Realizados
+                          </CardTitle>
+                          {procedures && procedures.length > 0 && (
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-0">
+                              {procedures.length} {procedures.length === 1 ? 'procedimento' : 'procedimentos'}
+                            </Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-2">
+                        {procedures && procedures.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {procedures.slice(0, 10).map(proc => (
+                              <Badge 
+                                key={proc.id} 
+                                variant="secondary" 
+                                className="text-xs py-1.5 px-3 gap-1.5"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5 text-clinical-safe" />
+                                {proc.procedure_name}
+                              </Badge>
+                            ))}
+                            {procedures.length > 10 && (
+                              <Badge variant="outline" className="text-xs py-1.5 px-3">
+                                +{procedures.length - 10} mais
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 py-2">
+                            <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center">
+                              <Activity className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <p className="text-muted-foreground text-sm">Nenhum procedimento registrado</p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
