@@ -354,23 +354,41 @@ const DetalhePaciente = () => {
             {/* Tabs Navigation - ONLY historical/read-only tabs */}
             <div className="pt-2">
               <Tabs defaultValue="overview" className="space-y-8">
-                <TabsList className="bg-card border border-border p-1.5 h-auto w-full flex-wrap justify-start">
-                  <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                <TabsList className="bg-card border border-border rounded-xl p-3 sm:p-4 h-auto w-full grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                  <TabsTrigger 
+                    value="overview" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 rounded-lg px-4 py-2.5 sm:py-3 text-sm font-medium transition-all duration-200"
+                  >
                     Visão Geral
                   </TabsTrigger>
-                  <TabsTrigger value="triagem" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                  <TabsTrigger 
+                    value="triagem" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 rounded-lg px-4 py-2.5 sm:py-3 text-sm font-medium transition-all duration-200"
+                  >
                     Histórico Triagens
                   </TabsTrigger>
-                  <TabsTrigger value="historico" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                  <TabsTrigger 
+                    value="historico" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 rounded-lg px-4 py-2.5 sm:py-3 text-sm font-medium transition-all duration-200"
+                  >
                     Atendimentos
                   </TabsTrigger>
-                  <TabsTrigger value="exames" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                  <TabsTrigger 
+                    value="exames" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 rounded-lg px-4 py-2.5 sm:py-3 text-sm font-medium transition-all duration-200"
+                  >
                     Exames
                   </TabsTrigger>
-                  <TabsTrigger value="relatorios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                  <TabsTrigger 
+                    value="relatorios" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 rounded-lg px-4 py-2.5 sm:py-3 text-sm font-medium transition-all duration-200"
+                  >
                     Relatórios
                   </TabsTrigger>
-                  <TabsTrigger value="prescricoes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
+                  <TabsTrigger 
+                    value="prescricoes" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 rounded-lg px-4 py-2.5 sm:py-3 text-sm font-medium transition-all duration-200"
+                  >
                     Prescrições
                   </TabsTrigger>
                 </TabsList>
