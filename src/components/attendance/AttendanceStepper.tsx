@@ -84,7 +84,7 @@ export function AttendanceStepper({
                   <button
                     onClick={() => handleStepChange(stepId)}
                     className={cn(
-                      "flex flex-col items-center gap-1 px-3 py-2 rounded-lg whitespace-nowrap transition-colors min-w-[72px]",
+                      "flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap transition-colors min-w-[72px]",
                       isActive 
                         ? "bg-primary text-primary-foreground" 
                         : isCompleted || isPast
@@ -92,15 +92,14 @@ export function AttendanceStepper({
                           : "bg-muted/50 text-muted-foreground"
                     )}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center">
                       {isCompleted ? (
                         <Check className="w-4 h-4" />
                       ) : (
                         <Icon className="w-4 h-4" />
                       )}
-                      <span className="text-xs font-semibold">{index + 1}</span>
                     </div>
-                    <span className="text-[10px] leading-tight text-center max-w-[60px] truncate">
+                    <span className="text-[10px] leading-tight text-center max-w-[60px] truncate font-medium">
                       {config.label.split(' ')[0]}
                     </span>
                   </button>
