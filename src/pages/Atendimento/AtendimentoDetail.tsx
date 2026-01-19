@@ -47,6 +47,7 @@ import { AddProcedureModal } from "@/components/AddProcedureModal";
 import { PrescriptionFormModal } from "@/components/patient/PrescriptionFormModal";
 import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
 import { PatientProceduresList } from "@/components/patient/PatientProceduresList";
+import { ClinicalStandardCard } from "@/components/clinical-standard";
 
 const AtendimentoDetail = () => {
   const { attendanceId } = useParams<{ attendanceId: string }>();
@@ -502,6 +503,14 @@ const AtendimentoDetail = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Clinical Standard Engine */}
+            {attendanceId && (
+              <ClinicalStandardCard 
+                attendanceId={attendanceId} 
+                isClosed={isClosed} 
+              />
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>

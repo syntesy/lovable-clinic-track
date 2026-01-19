@@ -127,6 +127,7 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           created_at: string
+          has_standardized_procedure: boolean | null
           id: string
           involves_orthobiologics: boolean
           last_report_duration_ms: number | null
@@ -141,6 +142,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          has_standardized_procedure?: boolean | null
           id?: string
           involves_orthobiologics?: boolean
           last_report_duration_ms?: number | null
@@ -155,6 +157,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          has_standardized_procedure?: boolean | null
           id?: string
           involves_orthobiologics?: boolean
           last_report_duration_ms?: number | null
@@ -886,6 +889,41 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      co_interventions_core: {
+        Row: {
+          created_at: string
+          epi_associated: boolean
+          exercise_therapy: boolean
+          id: string
+          procedure_standard_record_id: string
+          shockwave_therapy: string
+        }
+        Insert: {
+          created_at?: string
+          epi_associated?: boolean
+          exercise_therapy?: boolean
+          id?: string
+          procedure_standard_record_id: string
+          shockwave_therapy?: string
+        }
+        Update: {
+          created_at?: string
+          epi_associated?: boolean
+          exercise_therapy?: boolean
+          id?: string
+          procedure_standard_record_id?: string
+          shockwave_therapy?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "co_interventions_core_procedure_standard_record_id_fkey"
+            columns: ["procedure_standard_record_id"]
+            isOneToOne: true
+            referencedRelation: "procedure_standard_records"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consent_forms: {
         Row: {
@@ -2948,6 +2986,53 @@ export type Database = {
           },
         ]
       }
+      procedure_standard_records: {
+        Row: {
+          anatomic_region: string
+          attendance_id: string
+          created_at: string
+          id: string
+          pathology: string
+          procedure_type: string
+          severity_classification: string
+          specific_location: string | null
+          symptom_duration: string | null
+          updated_at: string
+        }
+        Insert: {
+          anatomic_region: string
+          attendance_id: string
+          created_at?: string
+          id?: string
+          pathology: string
+          procedure_type?: string
+          severity_classification: string
+          specific_location?: string | null
+          symptom_duration?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anatomic_region?: string
+          attendance_id?: string
+          created_at?: string
+          id?: string
+          pathology?: string
+          procedure_type?: string
+          severity_classification?: string
+          specific_location?: string | null
+          symptom_duration?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_standard_records_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: true
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prp_lab_results: {
         Row: {
           attached_files: Json | null
@@ -2996,6 +3081,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "registry_case_summary_v1_1"
             referencedColumns: ["screening_id"]
+          },
+        ]
+      }
+      prp_protocol_core: {
+        Row: {
+          activation_method: string | null
+          created_at: string
+          hyaluronic_acid_type: string | null
+          id: string
+          imaging_guidance: string
+          procedure_standard_record_id: string
+          prp_activation: string
+          prp_type: string
+          prp_with_hyaluronic_acid: boolean
+          recent_nsaid_use: string
+          sessions_count: string
+          sessions_interval: string
+          volume_per_session_range: string
+        }
+        Insert: {
+          activation_method?: string | null
+          created_at?: string
+          hyaluronic_acid_type?: string | null
+          id?: string
+          imaging_guidance: string
+          procedure_standard_record_id: string
+          prp_activation: string
+          prp_type: string
+          prp_with_hyaluronic_acid?: boolean
+          recent_nsaid_use: string
+          sessions_count: string
+          sessions_interval: string
+          volume_per_session_range: string
+        }
+        Update: {
+          activation_method?: string | null
+          created_at?: string
+          hyaluronic_acid_type?: string | null
+          id?: string
+          imaging_guidance?: string
+          procedure_standard_record_id?: string
+          prp_activation?: string
+          prp_type?: string
+          prp_with_hyaluronic_acid?: boolean
+          recent_nsaid_use?: string
+          sessions_count?: string
+          sessions_interval?: string
+          volume_per_session_range?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prp_protocol_core_procedure_standard_record_id_fkey"
+            columns: ["procedure_standard_record_id"]
+            isOneToOne: true
+            referencedRelation: "procedure_standard_records"
+            referencedColumns: ["id"]
           },
         ]
       }
