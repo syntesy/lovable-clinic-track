@@ -1,7 +1,7 @@
 /**
  * Collective Dashboard - Anonymous Aggregated Clinical Patterns & Outcomes
  * 
- * Phase 3+4 of CSE: Shows aggregated data without exposing individual cases
+ * Phase 3+4+5 of CSE: Shows aggregated data without exposing individual cases
  */
 
 import { useState } from 'react';
@@ -10,9 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Info, Users, TrendingUp, Shield, FlaskConical, Activity, HeartPulse, Target } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Info, Users, TrendingUp, Shield, FlaskConical, Activity, HeartPulse, Target, TrendingDown, Minus } from 'lucide-react';
 import { useCollectiveInsights, DashboardFilters, getMostFrequent } from '@/hooks/useCollectiveInsights';
-import { useCollectiveOutcomes, OutcomeTimepoint } from '@/hooks/useCollectiveOutcomes';
+import { useCollectiveOutcomes, OutcomeTimepoint, ResponseThreshold, ClusterOutcomeAggregation, TrendInfo } from '@/hooks/useCollectiveOutcomes';
 import { humanReadableClusterKey } from '@/lib/cluster-signature-generator';
 import {
   PATHOLOGY_OPTIONS,
@@ -69,6 +71,23 @@ function getLabel(value: string): string {
   return LABEL_MAP[value] || value;
 }
 
+function TrendBadge({ trend }: { trend: TrendInfo }) {
+  const colorClasses: Record<string, string> = {
+    neutral: 'bg-muted text-muted-foreground',
+    warning: 'bg-clinical-warning/20 text-clinical-warning',
+    success: 'bg-clinical-safe/20 text-clinical-safe',
+  };
+
+  const Icon = trend.color === 'success' ? TrendingUp : trend.color === 'warning' ? Minus : TrendingDown;
+
+  return (
+    <Badge variant="outline" className={`${colorClasses[trend.color]} gap-1`}>
+      <Icon className="h-3 w-3" />
+      {trend.label}
+    </Badge>
+  );
+}
+
 export default function CollectiveDashboard() {
   const [filters, setFilters] = useState<DashboardFilters>({
     procedure_type: 'PRP',
@@ -76,6 +95,7 @@ export default function CollectiveDashboard() {
     prp_with_ha: 'all',
   });
   const [selectedTimepoint, setSelectedTimepoint] = useState<OutcomeTimepoint>('m3');
+  const [responseThreshold, setResponseThreshold] = useState<ResponseThreshold>(30);
 
   const { data: protocolData, isLoading: protocolLoading } = useCollectiveInsights(filters);
   const { data: outcomeData, isLoading: outcomeLoading } = useCollectiveOutcomes(filters, selectedTimepoint);
@@ -136,6 +156,8 @@ export default function CollectiveDashboard() {
             onFilterChange={updateFilter}
             selectedTimepoint={selectedTimepoint}
             onTimepointChange={setSelectedTimepoint}
+            responseThreshold={responseThreshold}
+            onResponseThresholdChange={setResponseThreshold}
           />
         </TabsContent>
       </Tabs>
@@ -453,6 +475,8 @@ interface ResultadosTabProps {
   onFilterChange: (key: keyof DashboardFilters, value: any) => void;
   selectedTimepoint: OutcomeTimepoint;
   onTimepointChange: (t: OutcomeTimepoint) => void;
+  responseThreshold: ResponseThreshold;
+  onResponseThresholdChange: (t: ResponseThreshold) => void;
 }
 
 function ResultadosTab({ 
@@ -463,6 +487,8 @@ function ResultadosTab({
   onFilterChange,
   selectedTimepoint,
   onTimepointChange,
+  responseThreshold,
+  onResponseThresholdChange,
 }: ResultadosTabProps) {
   if (isLoading) {
     return <LoadingState />;
@@ -537,7 +563,7 @@ function ResultadosTab({
               </Select>
             </div>
 
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <label className="text-sm font-medium">Timepoint de Referência</label>
               <Select
                 value={selectedTimepoint}
@@ -553,6 +579,32 @@ function ResultadosTab({
                   <SelectItem value="m12">12 meses</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Limiar de Resposta</Label>
+              <div className="flex items-center gap-3 h-10">
+                <button
+                  onClick={() => onResponseThresholdChange(30)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    responseThreshold === 30 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  ≥30%
+                </button>
+                <button
+                  onClick={() => onResponseThresholdChange(50)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    responseThreshold === 50 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  ≥50%
+                </button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -638,21 +690,25 @@ function ResultadosTab({
                   <tr className="border-b">
                     <th className="text-left py-2 px-2">Cluster</th>
                     <th className="text-center py-2 px-2">N Total</th>
-                    <th className="text-center py-2 px-2">N Outcomes</th>
                     <th className="text-center py-2 px-2">
                       Δ Dor ({TIMEPOINT_LABELS[selectedTimepoint]})
                     </th>
                     <th className="text-center py-2 px-2">
-                      Resp. ≥30% ({TIMEPOINT_LABELS[selectedTimepoint]})
+                      Resp. ≥{responseThreshold}% ({TIMEPOINT_LABELS[selectedTimepoint]})
                     </th>
                     <th className="text-center py-2 px-2">Δ Função (3m)</th>
+                    <th className="text-center py-2 px-2">Tendência</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {clusters.map((cluster: any, idx: number) => {
+                  {clusters.map((cluster: ClusterOutcomeAggregation, idx: number) => {
                     // Get metrics for selected timepoint
-                    const deltaPain = cluster[`mean_delta_pain_${selectedTimepoint}`];
-                    const responseRate = cluster[`response_rate_pain_30_${selectedTimepoint}`];
+                    const deltaPain = cluster[`mean_delta_pain_${selectedTimepoint}` as keyof ClusterOutcomeAggregation] as number | null;
+                    const nPain = cluster[`n_outcomes_used_pain_${selectedTimepoint}` as keyof ClusterOutcomeAggregation] as number;
+                    const responseRate = responseThreshold === 30
+                      ? cluster[`response_rate_pain_30_${selectedTimepoint}` as keyof ClusterOutcomeAggregation] as number | null
+                      : cluster[`response_rate_pain_50_${selectedTimepoint}` as keyof ClusterOutcomeAggregation] as number | null;
+                    const trend = cluster[`trend_${selectedTimepoint}` as keyof ClusterOutcomeAggregation] as TrendInfo;
                     
                     return (
                       <tr key={idx} className="border-b hover:bg-muted/50">
@@ -663,31 +719,28 @@ function ResultadosTab({
                           <Badge variant="outline">{cluster.case_count}</Badge>
                         </td>
                         <td className="text-center py-2 px-2">
-                          {cluster.n_with_outcomes >= 5 ? (
-                            <Badge>{cluster.n_with_outcomes}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">
-                              {cluster.n_with_outcomes} (insuf.)
-                            </span>
-                          )}
-                        </td>
-                        <td className="text-center py-2 px-2">
                           {deltaPain !== null ? (
                             <span className={deltaPain > 0 ? 'text-clinical-safe font-medium' : 'text-muted-foreground'}>
                               {deltaPain > 0 ? '-' : '+'}{Math.abs(deltaPain)} pts
+                              <span className="text-xs text-muted-foreground ml-1">(n={nPain})</span>
                             </span>
                           ) : (
-                            <span className="text-muted-foreground text-xs">Dados insuf.</span>
+                            <span className="text-muted-foreground text-xs">
+                              Dados insuf.{nPain > 0 ? ` (n=${nPain})` : ''}
+                            </span>
                           )}
                         </td>
                         <td className="text-center py-2 px-2">
                           {responseRate !== null ? (
-                            <Badge 
-                              variant={responseRate >= 50 ? 'default' : 'secondary'}
-                              className={responseRate >= 50 ? 'bg-clinical-safe' : ''}
-                            >
-                              {responseRate}%
-                            </Badge>
+                            <span>
+                              <Badge 
+                                variant={responseRate >= 50 ? 'default' : 'secondary'}
+                                className={responseRate >= 50 ? 'bg-clinical-safe' : ''}
+                              >
+                                {responseRate}%
+                              </Badge>
+                              <span className="text-xs text-muted-foreground ml-1">(n={nPain})</span>
+                            </span>
                           ) : (
                             <span className="text-muted-foreground text-xs">Dados insuf.</span>
                           )}
@@ -695,11 +748,15 @@ function ResultadosTab({
                         <td className="text-center py-2 px-2">
                           {cluster.mean_delta_function_m3 !== null ? (
                             <span className={cluster.mean_delta_function_m3 > 0 ? 'text-clinical-safe' : 'text-muted-foreground'}>
-                              {cluster.mean_delta_function_m3 > 0 ? '-' : '+'}{Math.abs(cluster.mean_delta_function_m3)}
+                              {cluster.mean_delta_function_m3 > 0 ? '+' : ''}{cluster.mean_delta_function_m3}
+                              <span className="text-xs text-muted-foreground ml-1">(n={cluster.n_outcomes_used_function_m3})</span>
                             </span>
                           ) : (
                             <span className="text-muted-foreground text-xs">—</span>
                           )}
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          <TrendBadge trend={trend} />
                         </td>
                       </tr>
                     );
