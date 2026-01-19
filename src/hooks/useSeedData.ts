@@ -1,3 +1,5 @@
+import type { Json } from '@/integrations/supabase/types';
+
 /**
  * Seed Data Generator Hook - QA+ Phase
  * 
@@ -657,7 +659,7 @@ export function useSeedData() {
             performanceLevel: p.performanceLevel,
             profile: p.profile,
           })),
-        },
+        } as unknown as Json,
       });
       
       if (errors.length === 0) {
