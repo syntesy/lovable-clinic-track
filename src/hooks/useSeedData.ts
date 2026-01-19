@@ -151,6 +151,12 @@ export interface SeedConfig {
   includeM12?: boolean;
 }
 
+export interface SeedMetadata {
+  lastGeneration: string | null;
+  totalSyntheticPatients: number;
+  totalSyntheticAttendances: number;
+}
+
 export function useSeedData() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<SeedProgress>({
@@ -159,6 +165,45 @@ export function useSeedData() {
     phase: '',
     errors: [],
   });
+  const [metadata, setMetadata] = useState<SeedMetadata>({
+    lastGeneration: null,
+    totalSyntheticPatients: 0,
+    totalSyntheticAttendances: 0,
+  });
+
+  // Fetch current synthetic data stats
+  const fetchMetadata = useCallback(async () => {
+    try {
+      // Count synthetic patients
+      const { count: patientCount } = await supabase
+        .from('patients')
+        .select('*', { count: 'exact', head: true })
+        .ilike('full_name', '%Paciente Sintético QA%');
+
+      // Count synthetic attendances
+      const { count: attendanceCount } = await supabase
+        .from('attendance_sessions')
+        .select('*', { count: 'exact', head: true })
+        .ilike('title', '%Sintético QA%');
+
+      // Get last generation from audit log
+      const { data: lastGen } = await supabase
+        .from('audit_logs')
+        .select('created_at')
+        .eq('action', 'seed_data_generated')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setMetadata({
+        lastGeneration: lastGen?.created_at || null,
+        totalSyntheticPatients: patientCount || 0,
+        totalSyntheticAttendances: attendanceCount || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching seed metadata:', error);
+    }
+  }, []);
 
   const generateSeedData = useCallback(async (config: SeedConfig = {}) => {
     const {
@@ -457,11 +502,24 @@ export function useSeedData() {
 
       setProgress(p => ({ ...p, phase: 'Concluído!', errors }));
       
+      // Log generation to audit_logs
+      await supabase.from('audit_logs').insert({
+        action: 'seed_data_generated',
+        additional_info: {
+          total_cases: totalCases,
+          errors_count: errors.length,
+          config: { includeM1, includeM6, includeM12 },
+        },
+      });
+      
       if (errors.length === 0) {
         toast.success(`${totalCases} casos sintéticos gerados com sucesso!`);
       } else {
         toast.warning(`Geração concluída com ${errors.length} erros`);
       }
+
+      // Refresh metadata
+      await fetchMetadata();
 
       return { 
         success: errors.length === 0, 
@@ -476,7 +534,7 @@ export function useSeedData() {
     } finally {
       setIsGenerating(false);
     }
-  }, []);
+  }, [fetchMetadata]);
 
   const clearSyntheticData = useCallback(async () => {
     setIsGenerating(true);
@@ -489,7 +547,17 @@ export function useSeedData() {
 
       if (error) throw error;
       
+      // Log clear action
+      await supabase.from('audit_logs').insert({
+        action: 'seed_data_cleared',
+        additional_info: { timestamp: new Date().toISOString() },
+      });
+      
       toast.success('Dados sintéticos removidos com sucesso!');
+      
+      // Refresh metadata
+      await fetchMetadata();
+      
       return { success: true };
     } catch (error: any) {
       console.error('Clear synthetic data error:', error);
@@ -498,12 +566,14 @@ export function useSeedData() {
     } finally {
       setIsGenerating(false);
     }
-  }, []);
+  }, [fetchMetadata]);
 
   return {
     generateSeedData,
     clearSyntheticData,
+    fetchMetadata,
     isGenerating,
     progress,
+    metadata,
   };
 }

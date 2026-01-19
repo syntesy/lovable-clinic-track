@@ -10,7 +10,7 @@
  * ONLY for dev/staging environments.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -29,18 +29,27 @@ import {
   Beaker,
   BarChart3,
   Shield,
-  Users
+  Users,
+  Clock,
+  RefreshCw
 } from "lucide-react";
 import { useSeedData, type SeedConfig } from "@/hooks/useSeedData";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function AdminSeedQA() {
-  const { generateSeedData, clearSyntheticData, isGenerating, progress } = useSeedData();
+  const { generateSeedData, clearSyntheticData, fetchMetadata, isGenerating, progress, metadata } = useSeedData();
   
   const [config, setConfig] = useState<SeedConfig>({
     includeM1: true,
     includeM6: false,
     includeM12: false,
   });
+
+  // Fetch metadata on mount
+  useEffect(() => {
+    fetchMetadata();
+  }, [fetchMetadata]);
 
   const handleGenerate = async () => {
     await generateSeedData(config);
@@ -84,6 +93,60 @@ export default function AdminSeedQA() {
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Current Status Card */}
+      <Card className={metadata.totalSyntheticPatients > 0 ? "border-primary/50" : ""}>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-primary" />
+              Status Atual
+            </span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={fetchMetadata}
+              disabled={isGenerating}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Última geração</p>
+                <p className="font-medium text-sm">
+                  {metadata.lastGeneration 
+                    ? format(new Date(metadata.lastGeneration), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                    : "Nunca gerado"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Pacientes sintéticos</p>
+                <p className="font-medium text-sm">
+                  {metadata.totalSyntheticPatients} 
+                  {metadata.totalSyntheticPatients > 0 && (
+                    <Badge variant="secondary" className="ml-2">Ativo</Badge>
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Atendimentos sintéticos</p>
+                <p className="font-medium text-sm">{metadata.totalSyntheticAttendances}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Info Card */}
       <Card>
