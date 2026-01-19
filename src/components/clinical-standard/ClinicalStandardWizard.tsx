@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Check, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock, Loader2 } from "lucide-react";
 import { 
   ClinicalStandardFormData,
   defaultFormData,
@@ -12,7 +12,7 @@ import {
   isStep4Complete,
   isStep5Complete,
 } from "@/types/clinical-standard";
-import { useSaveClinicalStandard } from "@/hooks/useClinicalStandard";
+import { useSaveClinicalStandard, useFullProcedureRecord, convertRecordToFormData } from "@/hooks/useClinicalStandard";
 import { Step1ClinicalContext } from "./steps/Step1ClinicalContext";
 import { Step2Severity } from "./steps/Step2Severity";
 import { Step3PRPProtocol } from "./steps/Step3PRPProtocol";
@@ -40,8 +40,31 @@ export function ClinicalStandardWizard({
 }: ClinicalStandardWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<ClinicalStandardFormData>(defaultFormData);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const saveMutation = useSaveClinicalStandard();
+  const { data: fullRecord, isLoading: isLoadingRecord } = useFullProcedureRecord(attendanceId);
+
+  // Pre-fill form data when editing an existing record
+  useEffect(() => {
+    if (open && !isInitialized) {
+      if (fullRecord) {
+        // Edit mode: pre-fill with existing data
+        const prefillData = convertRecordToFormData(fullRecord);
+        setFormData(prefillData);
+      } else {
+        // Create mode: use default data
+        setFormData(defaultFormData);
+      }
+      setCurrentStep(0);
+      setIsInitialized(true);
+    }
+    
+    // Reset initialization flag when dialog closes
+    if (!open) {
+      setIsInitialized(false);
+    }
+  }, [open, fullRecord, isInitialized]);
 
   const updateFormData = <K extends keyof ClinicalStandardFormData>(
     section: K,
@@ -86,11 +109,15 @@ export function ClinicalStandardWizard({
     await saveMutation.mutateAsync({
       attendanceId,
       formData,
+      existingRecordId: fullRecord?.record.id, // Pass existing ID for UPDATE
     });
     onOpenChange(false);
     setCurrentStep(0);
     setFormData(defaultFormData);
+    setIsInitialized(false);
   };
+
+  const isEditMode = !!fullRecord;
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
@@ -137,12 +164,26 @@ export function ClinicalStandardWizard({
     }
   };
 
+  // Show loading state while fetching existing record
+  if (isLoadingRecord && !isInitialized) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Carregando dados do protocolo...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
-            Clinical Standard Engine — PRP
+            Clinical Standard Engine — PRP {isEditMode && "(Edição)"}
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2 text-muted-foreground">
             <Clock className="w-4 h-4" />
@@ -224,7 +265,7 @@ export function ClinicalStandardWizard({
               ) : (
                 <>
                   <Check className="w-4 h-4 mr-2" />
-                  Salvar Protocolo Padronizado
+                  {isEditMode ? "Atualizar Protocolo" : "Salvar Protocolo Padronizado"}
                 </>
               )}
             </Button>

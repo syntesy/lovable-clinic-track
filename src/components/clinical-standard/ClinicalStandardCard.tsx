@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Database, CheckCircle, FileText, AlertCircle } from "lucide-react";
+import { Database, CheckCircle, FileText, Edit, AlertCircle } from "lucide-react";
 import { ClinicalStandardWizard } from "./ClinicalStandardWizard";
 import { useProcedureStandardRecord } from "@/hooks/useClinicalStandard";
 import { PATHOLOGY_OPTIONS, ANATOMIC_REGION_OPTIONS } from "@/types/clinical-standard";
@@ -94,6 +94,18 @@ export function ClinicalStandardCard({ attendanceId, isClosed }: ClinicalStandar
                   <> • Avaliado em {new Date(existingRecord.last_evaluated_at).toLocaleDateString("pt-BR")}</>
                 )}
               </p>
+
+              {/* Edit button */}
+              {!isClosed && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsWizardOpen(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar Protocolo Padronizado
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
