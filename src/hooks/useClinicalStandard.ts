@@ -240,6 +240,8 @@ async function runEvaluation(recordId: string): Promise<void> {
       clinical_standard_status: result.status,
       clinical_standard_notes: result.notes,
       is_comparable: result.isComparable,
+      cluster_key: result.clusterKey,
+      protocol_signature: result.protocolSignature,
       last_evaluated_at: new Date().toISOString(),
     })
     .eq("id", recordId);

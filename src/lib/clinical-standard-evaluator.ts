@@ -5,12 +5,16 @@
  * NO AI, fully reproducible.
  */
 
+import { generateClusterKey, generateProtocolSignature } from './cluster-signature-generator';
+
 export type ClinicalStandardStatus = 'eligible' | 'eligible_with_penalty' | 'not_eligible';
 
 export interface EvaluationResult {
   status: ClinicalStandardStatus;
   notes: string[];
   isComparable: boolean;
+  clusterKey: string | null;
+  protocolSignature: string | null;
 }
 
 interface ProcedureStandardRecord {
@@ -65,6 +69,8 @@ export function evaluateClinicalStandard(input: EvaluationInput): EvaluationResu
       status: 'not_eligible',
       notes: [`Campos obrigatórios incompletos: ${missingFields.join(', ')}`],
       isComparable: false,
+      clusterKey: null,
+      protocolSignature: null,
     };
   }
 
@@ -117,7 +123,36 @@ export function evaluateClinicalStandard(input: EvaluationInput): EvaluationResu
     status = 'eligible';
   }
 
-  return { status, notes, isComparable };
+  // ===========================================
+  // Generate cluster_key and protocol_signature
+  // ===========================================
+  let clusterKey: string | null = null;
+  let protocolSignature: string | null = null;
+
+  if (isComparable) {
+    clusterKey = generateClusterKey({
+      procedure_type: input.record.procedure_type,
+      anatomic_region: input.record.anatomic_region,
+      pathology: input.record.pathology,
+      severity_classification: input.record.severity_classification,
+      specific_location: input.record.specific_location,
+      prp_with_hyaluronic_acid: input.prpProtocol.prp_with_hyaluronic_acid,
+    });
+
+    protocolSignature = generateProtocolSignature({
+      sessions_count: input.prpProtocol.sessions_count,
+      sessions_interval: input.prpProtocol.sessions_interval,
+      volume_per_session_range: input.prpProtocol.volume_per_session_range,
+      imaging_guidance: input.prpProtocol.imaging_guidance,
+      prp_type: input.prpProtocol.prp_type,
+      prp_activation: input.prpProtocol.prp_activation,
+      recent_nsaid_use: input.prpProtocol.recent_nsaid_use,
+      shockwave_therapy: input.coInterventions.shockwave_therapy,
+      epi_associated: input.coInterventions.epi_associated,
+    });
+  }
+
+  return { status, notes, isComparable, clusterKey, protocolSignature };
 }
 
 /**
