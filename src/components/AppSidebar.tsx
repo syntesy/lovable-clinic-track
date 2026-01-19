@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList, ArrowLeftRight, BarChart3, Target } from "lucide-react";
+import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList, ArrowLeftRight, BarChart3, Target, Beaker } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -40,6 +40,7 @@ const adminMenuItems = [
   { title: "Revisão de Curadorias", url: "/admin/curadoria", icon: Settings },
   { title: "Clinical Registry", url: "/admin/registry", icon: FlaskConical },
   { title: "Governança", url: "/admin/registry/governance", icon: Scale },
+  { title: "QA Seed Data", url: "/admin/qa/seed", icon: Beaker },
 ];
 
 export function AppSidebar() {
