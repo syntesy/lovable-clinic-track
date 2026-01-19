@@ -1,7 +1,7 @@
 /**
- * Collective Dashboard - Anonymous Aggregated Clinical Patterns
+ * Collective Dashboard - Anonymous Aggregated Clinical Patterns & Outcomes
  * 
- * Phase 3 of CSE: Shows aggregated data without exposing individual cases
+ * Phase 3+4 of CSE: Shows aggregated data without exposing individual cases
  */
 
 import { useState } from 'react';
@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Info, Users, TrendingUp, Shield, FlaskConical } from 'lucide-react';
+import { Info, Users, TrendingUp, Shield, FlaskConical, Activity, HeartPulse, Target } from 'lucide-react';
 import { useCollectiveInsights, DashboardFilters, getMostFrequent } from '@/hooks/useCollectiveInsights';
+import { useCollectiveOutcomes, OutcomeTimepoint } from '@/hooks/useCollectiveOutcomes';
 import { humanReadableClusterKey } from '@/lib/cluster-signature-generator';
 import {
   PATHOLOGY_OPTIONS,
@@ -56,6 +57,14 @@ const LABEL_MAP: Record<string, string> = {
   'coluna_lombar': 'C. Lombar',
 };
 
+const TIMEPOINT_LABELS: Record<OutcomeTimepoint, string> = {
+  baseline: 'Baseline',
+  m1: '1 mês',
+  m3: '3 meses',
+  m6: '6 meses',
+  m12: '12 meses',
+};
+
 function getLabel(value: string): string {
   return LABEL_MAP[value] || value;
 }
@@ -66,8 +75,10 @@ export default function CollectiveDashboard() {
     status: 'both',
     prp_with_ha: 'all',
   });
+  const [selectedTimepoint, setSelectedTimepoint] = useState<OutcomeTimepoint>('m3');
 
-  const { data, isLoading, error } = useCollectiveInsights(filters);
+  const { data: protocolData, isLoading: protocolLoading } = useCollectiveInsights(filters);
+  const { data: outcomeData, isLoading: outcomeLoading } = useCollectiveOutcomes(filters, selectedTimepoint);
 
   const updateFilter = (key: keyof DashboardFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -96,19 +107,35 @@ export default function CollectiveDashboard() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="prp">PRP (v1)</TabsTrigger>
+          <TabsTrigger value="prp">Protocolos PRP</TabsTrigger>
+          <TabsTrigger value="resultados" className="flex items-center gap-1">
+            <Activity className="h-4 w-4" />
+            Resultados
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <OverviewTab data={data} isLoading={isLoading} />
+          <OverviewTab data={protocolData} isLoading={protocolLoading} />
         </TabsContent>
 
         <TabsContent value="prp" className="space-y-4">
           <PRPTab 
-            data={data} 
-            isLoading={isLoading} 
+            data={protocolData} 
+            isLoading={protocolLoading} 
             filters={filters}
             onFilterChange={updateFilter}
+          />
+        </TabsContent>
+
+        <TabsContent value="resultados" className="space-y-4">
+          <ResultadosTab 
+            protocolData={protocolData}
+            outcomeData={outcomeData} 
+            isLoading={outcomeLoading} 
+            filters={filters}
+            onFilterChange={updateFilter}
+            selectedTimepoint={selectedTimepoint}
+            onTimepointChange={setSelectedTimepoint}
           />
         </TabsContent>
       </Tabs>
@@ -361,7 +388,7 @@ function PRPTab({ data, isLoading, filters, onFilterChange }: PRPTabProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {clusters.map((cluster, idx) => (
+                  {clusters.map((cluster: any, idx: number) => (
                     <tr key={idx} className="border-b hover:bg-muted/50">
                       <td className="py-2 px-2 font-medium">
                         {humanReadableClusterKey(cluster.cluster_key)}
@@ -381,7 +408,7 @@ function PRPTab({ data, isLoading, filters, onFilterChange }: PRPTabProps) {
                       <td className="text-left py-2 px-2 text-xs">
                         {cluster.top_penalty_reasons.length > 0 ? (
                           <div className="space-y-0.5">
-                            {cluster.top_penalty_reasons.slice(0, 2).map((r, i) => (
+                            {cluster.top_penalty_reasons.slice(0, 2).map((r: any, i: number) => (
                               <div key={i} className="text-muted-foreground">
                                 {r.reason} <span className="text-clinical-warning">{r.pct}%</span>
                               </div>
@@ -408,6 +435,275 @@ function PRPTab({ data, isLoading, filters, onFilterChange }: PRPTabProps) {
                       <td className="text-center py-2 px-2">{cluster.pct_epi}%</td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+interface ResultadosTabProps {
+  protocolData: any;
+  outcomeData: any;
+  isLoading: boolean;
+  filters: DashboardFilters;
+  onFilterChange: (key: keyof DashboardFilters, value: any) => void;
+  selectedTimepoint: OutcomeTimepoint;
+  onTimepointChange: (t: OutcomeTimepoint) => void;
+}
+
+function ResultadosTab({ 
+  protocolData,
+  outcomeData, 
+  isLoading, 
+  filters, 
+  onFilterChange,
+  selectedTimepoint,
+  onTimepointChange,
+}: ResultadosTabProps) {
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  const overview = outcomeData?.overview;
+  const clusters = outcomeData?.clusters || [];
+  const totalRecords = protocolData?.totalRecords || 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Filtros de Resultados</CardTitle>
+          <CardDescription>
+            Visualize métricas de dor e função por cluster clínico
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Patologia</label>
+              <Select
+                value={filters.pathology || 'all'}
+                onValueChange={(v) => onFilterChange('pathology', v === 'all' ? undefined : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {PATHOLOGY_OPTIONS.filter(o => o.value !== 'outra').map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Região</label>
+              <Select
+                value={filters.anatomic_region || 'all'}
+                onValueChange={(v) => onFilterChange('anatomic_region', v === 'all' ? undefined : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {ANATOMIC_REGION_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select
+                value={filters.status || 'both'}
+                onValueChange={(v) => onFilterChange('status', v as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="both">Todos elegíveis</SelectItem>
+                  <SelectItem value="eligible">🟢 Apenas elegíveis</SelectItem>
+                  <SelectItem value="eligible_with_penalty">🟡 Com penalidade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium">Timepoint de Referência</label>
+              <Select
+                value={selectedTimepoint}
+                onValueChange={(v) => onTimepointChange(v as OutcomeTimepoint)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="m1">1 mês</SelectItem>
+                  <SelectItem value="m3">3 meses (padrão)</SelectItem>
+                  <SelectItem value="m6">6 meses</SelectItem>
+                  <SelectItem value="m12">12 meses</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Outcome Overview Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Total Protocolos</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{totalRecords}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <HeartPulse className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Com Baseline</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{overview?.n_with_baseline || 0}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Follow-up 1m</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{overview?.n_with_followup_m1 || 0}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              <span className="text-sm text-muted-foreground">Follow-up 3m</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{overview?.n_with_followup_m3 || 0}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Follow-up 6m+</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">
+              {(overview?.n_with_followup_m6 || 0) + (overview?.n_with_followup_m12 || 0)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Outcomes by Cluster Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Resultados por Cluster
+          </CardTitle>
+          <CardDescription>
+            Métricas de dor e resposta clínica agregadas (mín. 5 casos com outcomes por cluster)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {clusters.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Info className="h-8 w-8 mx-auto mb-2" />
+              <p>Nenhum cluster com outcomes suficientes.</p>
+              <p className="text-sm">Aguarde mais registros de baseline + follow-up para visualizar resultados.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-2">Cluster</th>
+                    <th className="text-center py-2 px-2">N Total</th>
+                    <th className="text-center py-2 px-2">N Outcomes</th>
+                    <th className="text-center py-2 px-2">
+                      Δ Dor ({TIMEPOINT_LABELS[selectedTimepoint]})
+                    </th>
+                    <th className="text-center py-2 px-2">
+                      Resp. ≥30% ({TIMEPOINT_LABELS[selectedTimepoint]})
+                    </th>
+                    <th className="text-center py-2 px-2">Δ Função (3m)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clusters.map((cluster: any, idx: number) => {
+                    // Get metrics for selected timepoint
+                    const deltaPain = cluster[`mean_delta_pain_${selectedTimepoint}`];
+                    const responseRate = cluster[`response_rate_pain_30_${selectedTimepoint}`];
+                    
+                    return (
+                      <tr key={idx} className="border-b hover:bg-muted/50">
+                        <td className="py-2 px-2 font-medium">
+                          {humanReadableClusterKey(cluster.cluster_key)}
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          <Badge variant="outline">{cluster.case_count}</Badge>
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          {cluster.n_with_outcomes >= 5 ? (
+                            <Badge>{cluster.n_with_outcomes}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">
+                              {cluster.n_with_outcomes} (insuf.)
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          {deltaPain !== null ? (
+                            <span className={deltaPain > 0 ? 'text-clinical-safe font-medium' : 'text-muted-foreground'}>
+                              {deltaPain > 0 ? '-' : '+'}{Math.abs(deltaPain)} pts
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Dados insuf.</span>
+                          )}
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          {responseRate !== null ? (
+                            <Badge 
+                              variant={responseRate >= 50 ? 'default' : 'secondary'}
+                              className={responseRate >= 50 ? 'bg-clinical-safe' : ''}
+                            >
+                              {responseRate}%
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Dados insuf.</span>
+                          )}
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          {cluster.mean_delta_function_m3 !== null ? (
+                            <span className={cluster.mean_delta_function_m3 > 0 ? 'text-clinical-safe' : 'text-muted-foreground'}>
+                              {cluster.mean_delta_function_m3 > 0 ? '-' : '+'}{Math.abs(cluster.mean_delta_function_m3)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
