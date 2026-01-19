@@ -17,6 +17,8 @@ interface ProcedureStandardRecord {
   clinical_standard_status: ClinicalStandardStatus;
   clinical_standard_notes: string[];
   is_comparable: boolean;
+  cluster_key: string | null;
+  protocol_signature: string | null;
   last_evaluated_at: string | null;
   created_at: string;
   updated_at: string;
