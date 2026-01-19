@@ -349,12 +349,13 @@ function PRPTab({ data, isLoading, filters, onFilterChange }: PRPTabProps) {
                   <tr className="border-b">
                     <th className="text-left py-2 px-2">Cluster</th>
                     <th className="text-center py-2 px-2">N</th>
+                    <th className="text-center py-2 px-2">🟡 %</th>
+                    <th className="text-center py-2 px-2">Motivos Penalidade</th>
                     <th className="text-center py-2 px-2">Sessões</th>
                     <th className="text-center py-2 px-2">Intervalo</th>
                     <th className="text-center py-2 px-2">Volume</th>
                     <th className="text-center py-2 px-2">Guia</th>
                     <th className="text-center py-2 px-2">% HA</th>
-                    <th className="text-center py-2 px-2">% AINE</th>
                     <th className="text-center py-2 px-2">% Choque</th>
                     <th className="text-center py-2 px-2">% EPI</th>
                   </tr>
@@ -369,6 +370,28 @@ function PRPTab({ data, isLoading, filters, onFilterChange }: PRPTabProps) {
                         <Badge>{cluster.case_count}</Badge>
                       </td>
                       <td className="text-center py-2 px-2">
+                        {cluster.pct_penalty > 0 ? (
+                          <Badge variant="secondary" className="bg-clinical-warning/20 text-clinical-warning">
+                            {cluster.pct_penalty}%
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">0%</span>
+                        )}
+                      </td>
+                      <td className="text-left py-2 px-2 text-xs">
+                        {cluster.top_penalty_reasons.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {cluster.top_penalty_reasons.slice(0, 2).map((r, i) => (
+                              <div key={i} className="text-muted-foreground">
+                                {r.reason} <span className="text-clinical-warning">{r.pct}%</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="text-center py-2 px-2">
                         {getLabel(getMostFrequent(cluster.sessions_distribution))}
                       </td>
                       <td className="text-center py-2 px-2">
@@ -381,7 +404,6 @@ function PRPTab({ data, isLoading, filters, onFilterChange }: PRPTabProps) {
                         {getLabel(getMostFrequent(cluster.guidance_distribution))}
                       </td>
                       <td className="text-center py-2 px-2">{cluster.pct_with_ha}%</td>
-                      <td className="text-center py-2 px-2">{cluster.pct_recent_nsaid}%</td>
                       <td className="text-center py-2 px-2">{cluster.pct_shockwave}%</td>
                       <td className="text-center py-2 px-2">{cluster.pct_epi}%</td>
                     </tr>

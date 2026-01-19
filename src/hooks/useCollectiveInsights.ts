@@ -20,6 +20,9 @@ export interface DashboardFilters {
 export interface ClusterAggregation {
   cluster_key: string;
   case_count: number;
+  penalty_count: number;
+  pct_penalty: number;
+  top_penalty_reasons: { reason: string; count: number; pct: number }[];
   sessions_distribution: Record<string, number>;
   interval_distribution: Record<string, number>;
   volume_distribution: Record<string, number>;
@@ -190,10 +193,32 @@ function calculateClusterAggregations(records: any[]): ClusterAggregation[] {
     let nsaidCount = 0;
     let shockwaveCount = 0;
     let epiCount = 0;
+    let penaltyCount = 0;
+    const penaltyReasons: Record<string, number> = {};
 
     for (const record of clusterRecords) {
       const prp = record.prp_protocol_core;
       const coInt = record.co_interventions_core;
+
+      // Track penalty status
+      if (record.clinical_standard_status === 'eligible_with_penalty') {
+        penaltyCount++;
+        
+        // Derive penalty reasons from data (same logic as evaluator)
+        if (prp?.prp_type === 'desconhecido') {
+          const key = 'PRP tipo não informado';
+          penaltyReasons[key] = (penaltyReasons[key] || 0) + 1;
+        }
+        if (prp?.recent_nsaid_use && prp.recent_nsaid_use !== 'nao') {
+          const key = 'AINE recente';
+          penaltyReasons[key] = (penaltyReasons[key] || 0) + 1;
+        }
+        const isSpine = ['coluna_cervical', 'coluna_lombar'].includes(record.anatomic_region);
+        if (isSpine && prp?.imaging_guidance === 'sem_guia') {
+          const key = 'Coluna sem guia imagem';
+          penaltyReasons[key] = (penaltyReasons[key] || 0) + 1;
+        }
+      }
 
       if (prp) {
         // Sessions count
@@ -228,9 +253,22 @@ function calculateClusterAggregations(records: any[]): ClusterAggregation[] {
       }
     }
 
+    // Build top penalty reasons array (sorted by count)
+    const topPenaltyReasons = Object.entries(penaltyReasons)
+      .map(([reason, reasonCount]) => ({
+        reason,
+        count: reasonCount,
+        pct: Math.round((reasonCount / count) * 100),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3); // Top 3 reasons
+
     aggregations.push({
       cluster_key: clusterKey,
       case_count: count,
+      penalty_count: penaltyCount,
+      pct_penalty: Math.round((penaltyCount / count) * 100),
+      top_penalty_reasons: topPenaltyReasons,
       sessions_distribution: sessionsDistribution,
       interval_distribution: intervalDistribution,
       volume_distribution: volumeDistribution,
