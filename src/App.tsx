@@ -90,6 +90,7 @@ import {
   MentorApplicationPage, MentorOnboardingPage, MentorApprovalsPage
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
+import { QAModeBanner } from "./components/QAModeBanner";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,7 @@ const App = () => (
       <PatientAuthProvider>
         <Toaster />
         <Sonner />
+        <QAModeBanner />
         <BrowserRouter>
         <ModeProvider>
           <Routes>

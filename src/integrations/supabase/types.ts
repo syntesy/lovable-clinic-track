@@ -130,6 +130,7 @@ export type Database = {
           has_standardized_procedure: boolean | null
           id: string
           involves_orthobiologics: boolean
+          is_synthetic: boolean | null
           last_report_duration_ms: number | null
           last_report_generated_at: string | null
           last_report_record_id: string | null
@@ -145,6 +146,7 @@ export type Database = {
           has_standardized_procedure?: boolean | null
           id?: string
           involves_orthobiologics?: boolean
+          is_synthetic?: boolean | null
           last_report_duration_ms?: number | null
           last_report_generated_at?: string | null
           last_report_record_id?: string | null
@@ -160,6 +162,7 @@ export type Database = {
           has_standardized_procedure?: boolean | null
           id?: string
           involves_orthobiologics?: boolean
+          is_synthetic?: boolean | null
           last_report_duration_ms?: number | null
           last_report_generated_at?: string | null
           last_report_record_id?: string | null
@@ -896,6 +899,7 @@ export type Database = {
           epi_associated: boolean
           exercise_therapy: boolean
           id: string
+          is_synthetic: boolean | null
           procedure_standard_record_id: string
           shockwave_therapy: string
         }
@@ -904,6 +908,7 @@ export type Database = {
           epi_associated?: boolean
           exercise_therapy?: boolean
           id?: string
+          is_synthetic?: boolean | null
           procedure_standard_record_id: string
           shockwave_therapy?: string
         }
@@ -912,6 +917,7 @@ export type Database = {
           epi_associated?: boolean
           exercise_therapy?: boolean
           id?: string
+          is_synthetic?: boolean | null
           procedure_standard_record_id?: string
           shockwave_therapy?: string
         }
@@ -2779,6 +2785,7 @@ export type Database = {
           function_scale_type: string | null
           function_score: number | null
           id: string
+          is_synthetic: boolean | null
           pain_score: number | null
           procedure_standard_record_id: string | null
           submitted_at: string
@@ -2790,6 +2797,7 @@ export type Database = {
           function_scale_type?: string | null
           function_score?: number | null
           id?: string
+          is_synthetic?: boolean | null
           pain_score?: number | null
           procedure_standard_record_id?: string | null
           submitted_at?: string
@@ -2801,6 +2809,7 @@ export type Database = {
           function_scale_type?: string | null
           function_score?: number | null
           id?: string
+          is_synthetic?: boolean | null
           pain_score?: number | null
           procedure_standard_record_id?: string | null
           submitted_at?: string
@@ -2845,6 +2854,7 @@ export type Database = {
           initial_images_description: string | null
           initial_mobility: number | null
           initial_vas: number | null
+          is_synthetic: boolean | null
           pain_type_neuropathic: boolean | null
           pain_type_nociceptive: boolean | null
           pain_type_nociplastic: boolean | null
@@ -2883,6 +2893,7 @@ export type Database = {
           initial_images_description?: string | null
           initial_mobility?: number | null
           initial_vas?: number | null
+          is_synthetic?: boolean | null
           pain_type_neuropathic?: boolean | null
           pain_type_nociceptive?: boolean | null
           pain_type_nociplastic?: boolean | null
@@ -2921,6 +2932,7 @@ export type Database = {
           initial_images_description?: string | null
           initial_mobility?: number | null
           initial_vas?: number | null
+          is_synthetic?: boolean | null
           pain_type_neuropathic?: boolean | null
           pain_type_nociceptive?: boolean | null
           pain_type_nociplastic?: boolean | null
@@ -3047,6 +3059,7 @@ export type Database = {
           created_at: string
           id: string
           is_comparable: boolean
+          is_synthetic: boolean | null
           last_evaluated_at: string | null
           pathology: string
           procedure_type: string
@@ -3065,6 +3078,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_comparable?: boolean
+          is_synthetic?: boolean | null
           last_evaluated_at?: string | null
           pathology: string
           procedure_type?: string
@@ -3083,6 +3097,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_comparable?: boolean
+          is_synthetic?: boolean | null
           last_evaluated_at?: string | null
           pathology?: string
           procedure_type?: string
@@ -3160,6 +3175,7 @@ export type Database = {
           hyaluronic_acid_type: string | null
           id: string
           imaging_guidance: string
+          is_synthetic: boolean | null
           procedure_standard_record_id: string
           prp_activation: string
           prp_type: string
@@ -3175,6 +3191,7 @@ export type Database = {
           hyaluronic_acid_type?: string | null
           id?: string
           imaging_guidance: string
+          is_synthetic?: boolean | null
           procedure_standard_record_id: string
           prp_activation: string
           prp_type: string
@@ -3190,6 +3207,7 @@ export type Database = {
           hyaluronic_acid_type?: string | null
           id?: string
           imaging_guidance?: string
+          is_synthetic?: boolean | null
           procedure_standard_record_id?: string
           prp_activation?: string
           prp_type?: string

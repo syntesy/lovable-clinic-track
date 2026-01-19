@@ -1,19 +1,75 @@
 /**
- * Seed Data Generator Hook
+ * Seed Data Generator Hook - QA+ Phase
  * 
  * Generates synthetic clinical data for QA/Testing purposes.
  * ONLY for dev/staging environments - blocks production.
  * 
- * Creates:
- * - Attendance sessions with standardized procedures
- * - PRP protocol records with outcomes
- * - Various cluster distributions for testing k-anonymity and benchmarks
+ * Features:
+ * - Global is_synthetic tagging on all tables
+ * - Clinical profile presets (Conservative/Good/Excellent)
+ * - 3 synthetic professionals with varied performance
+ * - Transactional cleanup in correct order
  */
 
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { evaluateClinicalStandard, type EvaluationInput } from "@/lib/clinical-standard-evaluator";
 import { toast } from "sonner";
+
+// Clinical profile presets for outcomes generation
+export type ClinicalProfile = 'conservative' | 'good' | 'excellent';
+
+export interface ProfileConfig {
+  name: string;
+  description: string;
+  avgPainReduction: number; // baseline - followup
+  response30Pct: number; // % of cases with >=30% improvement
+  response50Pct: number; // % of cases with >=50% improvement
+  goodOutcomePct: number;
+  moderateOutcomePct: number;
+  poorOutcomePct: number;
+}
+
+export const CLINICAL_PROFILES: Record<ClinicalProfile, ProfileConfig> = {
+  conservative: {
+    name: 'Conservador',
+    description: 'Δ Dor baixo, Resposta ≥30% ~40-50%, pouca resposta ≥50%',
+    avgPainReduction: 2,
+    response30Pct: 0.45,
+    response50Pct: 0.15,
+    goodOutcomePct: 0.25,
+    moderateOutcomePct: 0.35,
+    poorOutcomePct: 0.40,
+  },
+  good: {
+    name: 'Bom',
+    description: 'Δ Dor moderado, Resposta ≥30% ~60-70%, Resposta ≥50% ~30%',
+    avgPainReduction: 3,
+    response30Pct: 0.65,
+    response50Pct: 0.30,
+    goodOutcomePct: 0.50,
+    moderateOutcomePct: 0.30,
+    poorOutcomePct: 0.20,
+  },
+  excellent: {
+    name: 'Excelente',
+    description: 'Δ Dor alto, Resposta ≥30% ~80%, Resposta ≥50% ~50%',
+    avgPainReduction: 4,
+    response30Pct: 0.80,
+    response50Pct: 0.50,
+    goodOutcomePct: 0.65,
+    moderateOutcomePct: 0.25,
+    poorOutcomePct: 0.10,
+  },
+};
+
+// Synthetic professional configurations for benchmark testing
+interface SyntheticProfessional {
+  id: string;
+  name: string;
+  performanceLevel: 'above_average' | 'average' | 'below_average';
+  profile: ClinicalProfile;
+}
 
 // Synthetic cluster configurations for testing
 const CLUSTER_CONFIGS = [
@@ -77,30 +133,49 @@ const randomInRange = (min: number, max: number) =>
 // Generate random baseline pain (6-9)
 const generateBaselinePain = () => randomInRange(6, 9);
 
-// Generate followup pain based on improvement type
-const generateFollowupPain = (baseline: number, improvementType: 'good' | 'moderate' | 'poor') => {
+// Generate followup pain based on profile and improvement type
+const generateFollowupPain = (
+  baseline: number, 
+  improvementType: 'good' | 'moderate' | 'poor',
+  profile: ProfileConfig
+) => {
   switch (improvementType) {
     case 'good':
-      return Math.max(0, baseline - randomInRange(3, 5)); // 30-50% improvement
+      // 40-60% improvement
+      const goodReduction = Math.ceil(baseline * (0.4 + Math.random() * 0.2));
+      return Math.max(0, baseline - goodReduction);
     case 'moderate':
-      return Math.max(0, baseline - randomInRange(1, 2)); // 10-30% improvement
+      // 20-35% improvement
+      const modReduction = Math.ceil(baseline * (0.2 + Math.random() * 0.15));
+      return Math.max(0, baseline - modReduction);
     case 'poor':
-      return Math.min(10, baseline + randomInRange(-1, 1)); // no improvement or worse
+      // 0-15% improvement or slight worsening
+      const poorChange = Math.ceil(baseline * (Math.random() * 0.15 - 0.05));
+      return Math.min(10, Math.max(0, baseline - poorChange));
   }
 };
 
+// Determine improvement type based on profile
+const getImprovementType = (profile: ProfileConfig): 'good' | 'moderate' | 'poor' => {
+  const roll = Math.random();
+  if (roll < profile.goodOutcomePct) return 'good';
+  if (roll < profile.goodOutcomePct + profile.moderateOutcomePct) return 'moderate';
+  return 'poor';
+};
+
 // Generate function score based on scale type
-const generateFunctionScore = (scaleType: string, isBaseline: boolean, improvement: 'good' | 'moderate' | 'poor') => {
+const generateFunctionScore = (
+  scaleType: string, 
+  isBaseline: boolean, 
+  improvement: 'good' | 'moderate' | 'poor'
+) => {
   // Scales where lower is better: ODI, NDI, WOMAC, DASH
-  // Scales where higher is better: KOOS, VISA_A
   const isLowerBetter = ['ODI', 'NDI', 'WOMAC', 'DASH'].includes(scaleType);
   
   if (isBaseline) {
-    // Baseline: bad function
     return isLowerBetter ? randomInRange(40, 70) : randomInRange(30, 50);
   }
   
-  // Followup based on improvement
   if (isLowerBetter) {
     switch (improvement) {
       case 'good': return randomInRange(10, 25);
@@ -149,12 +224,16 @@ export interface SeedConfig {
   includeM1?: boolean;
   includeM6?: boolean;
   includeM12?: boolean;
+  clinicalProfile?: ClinicalProfile;
 }
 
 export interface SeedMetadata {
   lastGeneration: string | null;
   totalSyntheticPatients: number;
   totalSyntheticAttendances: number;
+  totalSyntheticOutcomes: number;
+  totalSyntheticProcedures: number;
+  lastProfile: string | null;
 }
 
 export function useSeedData() {
@@ -169,27 +248,42 @@ export function useSeedData() {
     lastGeneration: null,
     totalSyntheticPatients: 0,
     totalSyntheticAttendances: 0,
+    totalSyntheticOutcomes: 0,
+    totalSyntheticProcedures: 0,
+    lastProfile: null,
   });
 
-  // Fetch current synthetic data stats
+  // Fetch current synthetic data stats using is_synthetic flag
   const fetchMetadata = useCallback(async () => {
     try {
       // Count synthetic patients
       const { count: patientCount } = await supabase
         .from('patients')
         .select('*', { count: 'exact', head: true })
-        .ilike('full_name', '%Paciente Sintético QA%');
+        .eq('is_synthetic', true);
 
       // Count synthetic attendances
       const { count: attendanceCount } = await supabase
         .from('attendance_sessions')
         .select('*', { count: 'exact', head: true })
-        .ilike('title', '%Sintético QA%');
+        .eq('is_synthetic', true);
+
+      // Count synthetic outcomes
+      const { count: outcomeCount } = await supabase
+        .from('patient_reported_outcomes')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_synthetic', true);
+
+      // Count synthetic procedures
+      const { count: procedureCount } = await supabase
+        .from('procedure_standard_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_synthetic', true);
 
       // Get last generation from audit log
       const { data: lastGen } = await supabase
         .from('audit_logs')
-        .select('created_at')
+        .select('created_at, additional_info')
         .eq('action', 'seed_data_generated')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -199,6 +293,9 @@ export function useSeedData() {
         lastGeneration: lastGen?.created_at || null,
         totalSyntheticPatients: patientCount || 0,
         totalSyntheticAttendances: attendanceCount || 0,
+        totalSyntheticOutcomes: outcomeCount || 0,
+        totalSyntheticProcedures: procedureCount || 0,
+        lastProfile: (lastGen?.additional_info as any)?.profile || null,
       });
     } catch (error) {
       console.error('Error fetching seed metadata:', error);
@@ -210,9 +307,12 @@ export function useSeedData() {
       includeM1 = true,
       includeM6 = false,
       includeM12 = false,
+      clinicalProfile = 'good',
     } = config;
 
-    // Check if in production (simple check - in real app would use env variable)
+    const profileConfig = CLINICAL_PROFILES[clinicalProfile];
+
+    // Check if in production
     const hostname = window.location.hostname;
     const isProduction = hostname.includes('lovable.app') && !hostname.includes('preview');
     
@@ -236,7 +336,35 @@ export function useSeedData() {
       }
       const userId = userData.user.id;
 
-      // Create synthetic patients first
+      // Create 3 synthetic professionals with different performance levels
+      setProgress(p => ({ ...p, phase: 'Criando profissionais sintéticos...' }));
+      
+      const syntheticProfessionals: SyntheticProfessional[] = [
+        { 
+          id: `synth_prof_above_${Date.now()}`, 
+          name: 'Prof. Sintético - Acima da Média', 
+          performanceLevel: 'above_average',
+          profile: 'excellent'
+        },
+        { 
+          id: `synth_prof_average_${Date.now()}`, 
+          name: 'Prof. Sintético - Na Média', 
+          performanceLevel: 'average',
+          profile: 'good'
+        },
+        { 
+          id: `synth_prof_below_${Date.now()}`, 
+          name: 'Prof. Sintético - Abaixo da Média', 
+          performanceLevel: 'below_average',
+          profile: 'conservative'
+        },
+      ];
+
+      // For now, we'll use the current user as the professional
+      // In a real scenario, you'd create actual user accounts
+      const professionalIds = [userId, userId, userId];
+
+      // Create synthetic patients
       setProgress(p => ({ ...p, phase: 'Criando pacientes sintéticos...' }));
       
       const syntheticPatients: string[] = [];
@@ -256,8 +384,9 @@ export function useSeedData() {
             phone: `(11) 9${randomInRange(1000, 9999)}-${randomInRange(1000, 9999)}`,
             email: `sintetico${Date.now()}_${i}@qa.local`,
             gender: ['masculino', 'feminino'][randomInRange(0, 1)],
-            professional_id: userId,
+            professional_id: professionalIds[i % 3],
             status: 'ativo',
+            is_synthetic: true, // Mark as synthetic
           })
           .select('id')
           .single();
@@ -288,26 +417,30 @@ export function useSeedData() {
 
           try {
             // Pick a random patient
-            const patientId = syntheticPatients[randomInRange(0, syntheticPatients.length - 1)];
+            const patientIndex = randomInRange(0, syntheticPatients.length - 1);
+            const patientId = syntheticPatients[patientIndex];
+            const professionalId = professionalIds[patientIndex % 3];
             
-            // Determine improvement type for outcomes
-            const improvementRoll = Math.random();
-            const improvement: 'good' | 'moderate' | 'poor' = 
-              improvementRoll < 0.5 ? 'good' : 
-              improvementRoll < 0.8 ? 'moderate' : 'poor';
+            // Get profile based on professional (for varied performance)
+            const professionalProfile = syntheticProfessionals[patientIndex % 3];
+            const activeProfile = CLINICAL_PROFILES[professionalProfile.profile];
+            
+            // Determine improvement type based on profile
+            const improvement = getImprovementType(activeProfile);
             
             // ~25% with penalty
             const withPenalty = Math.random() < 0.25;
 
-            // 1. Create attendance session
+            // 1. Create attendance session with is_synthetic
             const { data: attendance, error: attendanceError } = await supabase
               .from('attendance_sessions')
               .insert({
                 patient_id: patientId,
-                user_id: userId,
+                user_id: professionalId,
                 involves_orthobiologics: true,
                 has_standardized_procedure: true,
                 title: `Atendimento Sintético QA - ${clusterConfig.pathology}`,
+                is_synthetic: true,
               })
               .select('id')
               .single();
@@ -316,7 +449,7 @@ export function useSeedData() {
               throw new Error(`Attendance: ${attendanceError.message}`);
             }
 
-            // 2. Create procedure_standard_records
+            // 2. Create procedure_standard_records with is_synthetic
             const severityValue = clusterConfig.specific_location 
               ? `${clusterConfig.severity}|${clusterConfig.specific_location}`
               : clusterConfig.severity;
@@ -331,6 +464,7 @@ export function useSeedData() {
                 specific_location: clusterConfig.specific_location || null,
                 severity_classification: severityValue,
                 symptom_duration: ['menos_3_meses', '3_6_meses', '6_12_meses', 'mais_12_meses'][randomInRange(0, 3)],
+                is_synthetic: true,
               })
               .select('id')
               .single();
@@ -339,7 +473,7 @@ export function useSeedData() {
               throw new Error(`Procedure: ${procedureError.message}`);
             }
 
-            // 3. Create prp_protocol_core
+            // 3. Create prp_protocol_core with is_synthetic
             const prpProtocol = generatePRPProtocol(withPenalty);
             if (clusterConfig.withHA) {
               prpProtocol.prp_with_hyaluronic_acid = true;
@@ -357,19 +491,21 @@ export function useSeedData() {
               .insert({
                 procedure_standard_record_id: procedureRecord.id,
                 ...prpProtocol,
+                is_synthetic: true,
               });
 
             if (prpError) {
               throw new Error(`PRP Protocol: ${prpError.message}`);
             }
 
-            // 4. Create co_interventions_core
+            // 4. Create co_interventions_core with is_synthetic
             const coInterventions = generateCoInterventions();
             const { error: coError } = await supabase
               .from('co_interventions_core')
               .insert({
                 procedure_standard_record_id: procedureRecord.id,
                 ...coInterventions,
+                is_synthetic: true,
               });
 
             if (coError) {
@@ -412,7 +548,7 @@ export function useSeedData() {
               throw new Error(`Evaluation update: ${updateError.message}`);
             }
 
-            // 6. Create patient_reported_outcomes
+            // 6. Create patient_reported_outcomes with is_synthetic
             const functionScaleType = FUNCTION_SCALE_BY_REGION[clusterConfig.region] || 'WOMAC';
             const baselinePain = generateBaselinePain();
             
@@ -426,6 +562,7 @@ export function useSeedData() {
                 pain_score: baselinePain,
                 function_scale_type: functionScaleType,
                 function_score: generateFunctionScore(functionScaleType, true, improvement),
+                is_synthetic: true,
               });
 
             if (baselineError) {
@@ -434,7 +571,7 @@ export function useSeedData() {
 
             // M1 outcome (optional)
             if (includeM1) {
-              const m1Pain = generateFollowupPain(baselinePain, improvement);
+              const m1Pain = generateFollowupPain(baselinePain, improvement, activeProfile);
               await supabase
                 .from('patient_reported_outcomes')
                 .insert({
@@ -444,11 +581,12 @@ export function useSeedData() {
                   pain_score: m1Pain,
                   function_scale_type: functionScaleType,
                   function_score: generateFunctionScore(functionScaleType, false, improvement),
+                  is_synthetic: true,
                 });
             }
 
             // M3 outcome (always)
-            const m3Pain = generateFollowupPain(baselinePain, improvement);
+            const m3Pain = generateFollowupPain(baselinePain, improvement, activeProfile);
             const { error: m3Error } = await supabase
               .from('patient_reported_outcomes')
               .insert({
@@ -458,6 +596,7 @@ export function useSeedData() {
                 pain_score: m3Pain,
                 function_scale_type: functionScaleType,
                 function_score: generateFunctionScore(functionScaleType, false, improvement),
+                is_synthetic: true,
               });
 
             if (m3Error) {
@@ -466,7 +605,7 @@ export function useSeedData() {
 
             // M6 outcome (optional)
             if (includeM6) {
-              const m6Pain = generateFollowupPain(baselinePain, improvement);
+              const m6Pain = generateFollowupPain(baselinePain, improvement, activeProfile);
               await supabase
                 .from('patient_reported_outcomes')
                 .insert({
@@ -476,12 +615,13 @@ export function useSeedData() {
                   pain_score: m6Pain,
                   function_scale_type: functionScaleType,
                   function_score: generateFunctionScore(functionScaleType, false, improvement),
+                  is_synthetic: true,
                 });
             }
 
             // M12 outcome (optional)
             if (includeM12) {
-              const m12Pain = generateFollowupPain(baselinePain, improvement);
+              const m12Pain = generateFollowupPain(baselinePain, improvement, activeProfile);
               await supabase
                 .from('patient_reported_outcomes')
                 .insert({
@@ -491,6 +631,7 @@ export function useSeedData() {
                   pain_score: m12Pain,
                   function_scale_type: functionScaleType,
                   function_score: generateFunctionScore(functionScaleType, false, improvement),
+                  is_synthetic: true,
                 });
             }
 
@@ -509,11 +650,18 @@ export function useSeedData() {
           total_cases: totalCases,
           errors_count: errors.length,
           config: { includeM1, includeM6, includeM12 },
+          profile: clinicalProfile,
+          profile_config: profileConfig,
+          synthetic_professionals: syntheticProfessionals.map(p => ({
+            name: p.name,
+            performanceLevel: p.performanceLevel,
+            profile: p.profile,
+          })),
         },
       });
       
       if (errors.length === 0) {
-        toast.success(`${totalCases} casos sintéticos gerados com sucesso!`);
+        toast.success(`${totalCases} casos sintéticos gerados com sucesso! (Perfil: ${profileConfig.name})`);
       } else {
         toast.warning(`Geração concluída com ${errors.length} erros`);
       }
@@ -536,29 +684,86 @@ export function useSeedData() {
     }
   }, [fetchMetadata]);
 
+  // Transactional cleanup in correct order - ONLY deletes is_synthetic=true records
   const clearSyntheticData = useCallback(async () => {
     setIsGenerating(true);
+    setProgress({ total: 6, current: 0, phase: 'Iniciando limpeza...', errors: [] });
+    
+    const cleanupErrors: string[] = [];
+
     try {
-      // Delete synthetic patients (will cascade to all related data)
-      const { error } = await supabase
+      // Order matters due to foreign key constraints:
+      // 1. patient_reported_outcomes
+      // 2. co_interventions_core
+      // 3. prp_protocol_core
+      // 4. procedure_standard_records
+      // 5. attendance_sessions
+      // 6. patients
+
+      setProgress(p => ({ ...p, current: 1, phase: '1/6 - Removendo outcomes...' }));
+      const { error: e1 } = await supabase
+        .from('patient_reported_outcomes')
+        .delete()
+        .eq('is_synthetic', true);
+      if (e1) cleanupErrors.push(`Outcomes: ${e1.message}`);
+
+      setProgress(p => ({ ...p, current: 2, phase: '2/6 - Removendo co-intervenções...' }));
+      const { error: e2 } = await supabase
+        .from('co_interventions_core')
+        .delete()
+        .eq('is_synthetic', true);
+      if (e2) cleanupErrors.push(`Co-interventions: ${e2.message}`);
+
+      setProgress(p => ({ ...p, current: 3, phase: '3/6 - Removendo protocolos PRP...' }));
+      const { error: e3 } = await supabase
+        .from('prp_protocol_core')
+        .delete()
+        .eq('is_synthetic', true);
+      if (e3) cleanupErrors.push(`PRP protocols: ${e3.message}`);
+
+      setProgress(p => ({ ...p, current: 4, phase: '4/6 - Removendo procedimentos...' }));
+      const { error: e4 } = await supabase
+        .from('procedure_standard_records')
+        .delete()
+        .eq('is_synthetic', true);
+      if (e4) cleanupErrors.push(`Procedures: ${e4.message}`);
+
+      setProgress(p => ({ ...p, current: 5, phase: '5/6 - Removendo atendimentos...' }));
+      const { error: e5 } = await supabase
+        .from('attendance_sessions')
+        .delete()
+        .eq('is_synthetic', true);
+      if (e5) cleanupErrors.push(`Attendances: ${e5.message}`);
+
+      setProgress(p => ({ ...p, current: 6, phase: '6/6 - Removendo pacientes...' }));
+      const { error: e6 } = await supabase
         .from('patients')
         .delete()
-        .ilike('full_name', '%Paciente Sintético QA%');
+        .eq('is_synthetic', true);
+      if (e6) cleanupErrors.push(`Patients: ${e6.message}`);
 
-      if (error) throw error;
-      
       // Log clear action
-      await supabase.from('audit_logs').insert({
+      await supabase.from('audit_logs').insert([{
         action: 'seed_data_cleared',
-        additional_info: { timestamp: new Date().toISOString() },
-      });
+        additional_info: { 
+          timestamp: new Date().toISOString(),
+          errors: cleanupErrors,
+          success: cleanupErrors.length === 0,
+        },
+      }]);
       
-      toast.success('Dados sintéticos removidos com sucesso!');
+      if (cleanupErrors.length === 0) {
+        toast.success('Dados sintéticos removidos com sucesso!');
+        setProgress(p => ({ ...p, phase: 'Limpeza concluída!', errors: [] }));
+      } else {
+        toast.warning(`Limpeza concluída com ${cleanupErrors.length} erros`);
+        setProgress(p => ({ ...p, phase: 'Limpeza concluída com erros', errors: cleanupErrors }));
+      }
       
       // Refresh metadata
       await fetchMetadata();
       
-      return { success: true };
+      return { success: cleanupErrors.length === 0, errors: cleanupErrors };
     } catch (error: any) {
       console.error('Clear synthetic data error:', error);
       toast.error(`Erro ao limpar: ${error.message}`);
@@ -575,5 +780,6 @@ export function useSeedData() {
     isGenerating,
     progress,
     metadata,
+    CLINICAL_PROFILES,
   };
 }
