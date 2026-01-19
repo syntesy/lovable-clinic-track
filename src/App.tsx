@@ -66,7 +66,7 @@ import { CareerDashboard } from "./pages/Career";
 import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
 import DailyDashboard from "./pages/DailyDashboard";
 import { AtendimentosList, AtendimentoDetail, NovoAtendimento } from "./pages/Atendimento";
-import { CollectiveDashboard } from "./pages/Insights";
+import { CollectiveDashboard, PerformanceDashboard } from "./pages/Insights";
 // Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -410,6 +410,17 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <CollectiveDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Performance Dashboard - Private Benchmark */}
+          <Route
+            path="/insights/performance"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <PerformanceDashboard />
                 </Layout>
               </ProtectedRoute>
             }
