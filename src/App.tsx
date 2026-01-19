@@ -66,6 +66,7 @@ import { CareerDashboard } from "./pages/Career";
 import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
 import DailyDashboard from "./pages/DailyDashboard";
 import { AtendimentosList, AtendimentoDetail, NovoAtendimento } from "./pages/Atendimento";
+import { CollectiveDashboard } from "./pages/Insights";
 // Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -398,6 +399,17 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <DiligenceCaseDetail />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Insights - Collective Dashboard */}
+          <Route
+            path="/insights"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CollectiveDashboard />
                 </Layout>
               </ProtectedRoute>
             }

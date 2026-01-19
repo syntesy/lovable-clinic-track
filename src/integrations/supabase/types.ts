@@ -2992,12 +2992,14 @@ export type Database = {
           attendance_id: string
           clinical_standard_notes: string[] | null
           clinical_standard_status: string
+          cluster_key: string | null
           created_at: string
           id: string
           is_comparable: boolean
           last_evaluated_at: string | null
           pathology: string
           procedure_type: string
+          protocol_signature: string | null
           severity_classification: string
           specific_location: string | null
           symptom_duration: string | null
@@ -3008,12 +3010,14 @@ export type Database = {
           attendance_id: string
           clinical_standard_notes?: string[] | null
           clinical_standard_status?: string
+          cluster_key?: string | null
           created_at?: string
           id?: string
           is_comparable?: boolean
           last_evaluated_at?: string | null
           pathology: string
           procedure_type?: string
+          protocol_signature?: string | null
           severity_classification: string
           specific_location?: string | null
           symptom_duration?: string | null
@@ -3024,12 +3028,14 @@ export type Database = {
           attendance_id?: string
           clinical_standard_notes?: string[] | null
           clinical_standard_status?: string
+          cluster_key?: string | null
           created_at?: string
           id?: string
           is_comparable?: boolean
           last_evaluated_at?: string | null
           pathology?: string
           procedure_type?: string
+          protocol_signature?: string | null
           severity_classification?: string
           specific_location?: string | null
           symptom_duration?: string | null
