@@ -2990,8 +2990,12 @@ export type Database = {
         Row: {
           anatomic_region: string
           attendance_id: string
+          clinical_standard_notes: string[] | null
+          clinical_standard_status: string
           created_at: string
           id: string
+          is_comparable: boolean
+          last_evaluated_at: string | null
           pathology: string
           procedure_type: string
           severity_classification: string
@@ -3002,8 +3006,12 @@ export type Database = {
         Insert: {
           anatomic_region: string
           attendance_id: string
+          clinical_standard_notes?: string[] | null
+          clinical_standard_status?: string
           created_at?: string
           id?: string
+          is_comparable?: boolean
+          last_evaluated_at?: string | null
           pathology: string
           procedure_type?: string
           severity_classification: string
@@ -3014,8 +3022,12 @@ export type Database = {
         Update: {
           anatomic_region?: string
           attendance_id?: string
+          clinical_standard_notes?: string[] | null
+          clinical_standard_status?: string
           created_at?: string
           id?: string
+          is_comparable?: boolean
+          last_evaluated_at?: string | null
           pathology?: string
           procedure_type?: string
           severity_classification?: string
