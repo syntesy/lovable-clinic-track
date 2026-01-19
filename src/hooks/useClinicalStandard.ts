@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { ClinicalStandardFormData } from "@/types/clinical-standard";
+import { defaultFormData } from "@/types/clinical-standard";
 import { evaluateClinicalStandard, type EvaluationInput, type ClinicalStandardStatus } from "@/lib/clinical-standard-evaluator";
 
 interface ProcedureStandardRecord {
@@ -113,6 +114,50 @@ export function useFullProcedureRecord(attendanceId: string | null) {
 }
 
 /**
+ * Convert database records to form data for prefilling the wizard
+ */
+export function convertRecordToFormData(fullRecord: FullProcedureRecord): ClinicalStandardFormData {
+  const { record, prpProtocol, coInterventions } = fullRecord;
+  
+  // Parse severity_classification which may contain hernia_compression after |
+  const severityParts = record.severity_classification?.split('|') || ['', ''];
+  const severityClassification = severityParts[0] || '';
+  const herniaCompression = severityParts[1] || '';
+
+  return {
+    clinical_context: {
+      pathology: record.pathology || '',
+      anatomic_region: record.anatomic_region || '',
+      specific_location: record.specific_location || '',
+      symptom_duration: record.symptom_duration || '',
+    },
+    severity: {
+      severity_classification: severityClassification,
+      hernia_compression: herniaCompression,
+    },
+    prp_protocol: {
+      sessions_count: prpProtocol?.sessions_count || '',
+      sessions_interval: prpProtocol?.sessions_interval || '',
+      volume_per_session_range: prpProtocol?.volume_per_session_range || '',
+      prp_type: prpProtocol?.prp_type || '',
+      prp_activation: prpProtocol?.prp_activation || '',
+      activation_method: prpProtocol?.activation_method || '',
+      imaging_guidance: prpProtocol?.imaging_guidance || '',
+    },
+    associations: {
+      prp_with_hyaluronic_acid: prpProtocol?.prp_with_hyaluronic_acid || false,
+      hyaluronic_acid_type: prpProtocol?.hyaluronic_acid_type || '',
+      recent_nsaid_use: prpProtocol?.recent_nsaid_use || '',
+    },
+    co_interventions: {
+      exercise_therapy: coInterventions?.exercise_therapy || false,
+      shockwave_therapy: coInterventions?.shockwave_therapy || 'none',
+      epi_associated: coInterventions?.epi_associated || false,
+    },
+  };
+}
+
+/**
  * Evaluate and update the clinical standard status
  */
 async function runEvaluation(recordId: string): Promise<void> {
@@ -209,74 +254,149 @@ export function useSaveClinicalStandard() {
     mutationFn: async ({
       attendanceId,
       formData,
+      existingRecordId,
     }: {
       attendanceId: string;
       formData: ClinicalStandardFormData;
+      existingRecordId?: string; // If provided, UPDATE; otherwise INSERT
     }) => {
       // Apply coherence rules before saving
       const cleanedData = applyCoherenceRules(formData);
+      
+      const severityValue = cleanedData.severity.severity_classification + 
+        (cleanedData.severity.hernia_compression ? `|${cleanedData.severity.hernia_compression}` : '');
 
-      // 1. Create procedure_standard_records
-      const { data: recordData, error: recordError } = await supabase
-        .from("procedure_standard_records")
-        .insert({
-          attendance_id: attendanceId,
-          procedure_type: "PRP",
-          pathology: cleanedData.clinical_context.pathology,
-          anatomic_region: cleanedData.clinical_context.anatomic_region,
-          specific_location: cleanedData.clinical_context.specific_location || null,
-          severity_classification: cleanedData.severity.severity_classification + 
-            (cleanedData.severity.hernia_compression ? `|${cleanedData.severity.hernia_compression}` : ''),
-          symptom_duration: cleanedData.clinical_context.symptom_duration || null,
-        })
-        .select()
-        .single();
+      let recordId: string;
 
-      if (recordError) throw recordError;
+      if (existingRecordId) {
+        // ========== UPDATE MODE ==========
+        
+        // 1. Update procedure_standard_records
+        const { error: recordError } = await supabase
+          .from("procedure_standard_records")
+          .update({
+            pathology: cleanedData.clinical_context.pathology,
+            anatomic_region: cleanedData.clinical_context.anatomic_region,
+            specific_location: cleanedData.clinical_context.specific_location || null,
+            severity_classification: severityValue,
+            symptom_duration: cleanedData.clinical_context.symptom_duration || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existingRecordId);
 
-      // 2. Create prp_protocol_core
-      const { error: prpError } = await supabase
-        .from("prp_protocol_core")
-        .insert({
-          procedure_standard_record_id: recordData.id,
-          sessions_count: cleanedData.prp_protocol.sessions_count,
-          sessions_interval: cleanedData.prp_protocol.sessions_interval || null,
-          volume_per_session_range: cleanedData.prp_protocol.volume_per_session_range,
-          prp_type: cleanedData.prp_protocol.prp_type,
-          prp_activation: cleanedData.prp_protocol.prp_activation,
-          activation_method: cleanedData.prp_protocol.activation_method || null,
-          imaging_guidance: cleanedData.prp_protocol.imaging_guidance,
-          prp_with_hyaluronic_acid: cleanedData.associations.prp_with_hyaluronic_acid,
-          hyaluronic_acid_type: cleanedData.associations.hyaluronic_acid_type || null,
-          recent_nsaid_use: cleanedData.associations.recent_nsaid_use,
-        });
+        if (recordError) throw recordError;
+        recordId = existingRecordId;
 
-      if (prpError) throw prpError;
+        // 2. Upsert prp_protocol_core (delete + insert for simplicity)
+        const { error: prpDeleteError } = await supabase
+          .from("prp_protocol_core")
+          .delete()
+          .eq("procedure_standard_record_id", existingRecordId);
+        
+        if (prpDeleteError) throw prpDeleteError;
 
-      // 3. Create co_interventions_core
-      const { error: coError } = await supabase
-        .from("co_interventions_core")
-        .insert({
-          procedure_standard_record_id: recordData.id,
-          exercise_therapy: cleanedData.co_interventions.exercise_therapy,
-          shockwave_therapy: cleanedData.co_interventions.shockwave_therapy,
-          epi_associated: cleanedData.co_interventions.epi_associated,
-        });
+        const { error: prpInsertError } = await supabase
+          .from("prp_protocol_core")
+          .insert({
+            procedure_standard_record_id: existingRecordId,
+            sessions_count: cleanedData.prp_protocol.sessions_count,
+            sessions_interval: cleanedData.prp_protocol.sessions_interval || null,
+            volume_per_session_range: cleanedData.prp_protocol.volume_per_session_range,
+            prp_type: cleanedData.prp_protocol.prp_type,
+            prp_activation: cleanedData.prp_protocol.prp_activation,
+            activation_method: cleanedData.prp_protocol.activation_method || null,
+            imaging_guidance: cleanedData.prp_protocol.imaging_guidance,
+            prp_with_hyaluronic_acid: cleanedData.associations.prp_with_hyaluronic_acid,
+            hyaluronic_acid_type: cleanedData.associations.hyaluronic_acid_type || null,
+            recent_nsaid_use: cleanedData.associations.recent_nsaid_use,
+          });
 
-      if (coError) throw coError;
+        if (prpInsertError) throw prpInsertError;
 
-      // 4. Update attendance flag
-      const { error: attendanceError } = await supabase
-        .from("attendance_sessions")
-        .update({ has_standardized_procedure: true })
-        .eq("id", attendanceId);
+        // 3. Upsert co_interventions_core (delete + insert)
+        const { error: coDeleteError } = await supabase
+          .from("co_interventions_core")
+          .delete()
+          .eq("procedure_standard_record_id", existingRecordId);
+        
+        if (coDeleteError) throw coDeleteError;
 
-      if (attendanceError) throw attendanceError;
+        const { error: coInsertError } = await supabase
+          .from("co_interventions_core")
+          .insert({
+            procedure_standard_record_id: existingRecordId,
+            exercise_therapy: cleanedData.co_interventions.exercise_therapy,
+            shockwave_therapy: cleanedData.co_interventions.shockwave_therapy,
+            epi_associated: cleanedData.co_interventions.epi_associated,
+          });
 
-      // 5. Run evaluation
-      await runEvaluation(recordData.id);
+        if (coInsertError) throw coInsertError;
 
-      return recordData;
+      } else {
+        // ========== INSERT MODE ==========
+        
+        // 1. Create procedure_standard_records
+        const { data: recordData, error: recordError } = await supabase
+          .from("procedure_standard_records")
+          .insert({
+            attendance_id: attendanceId,
+            procedure_type: "PRP",
+            pathology: cleanedData.clinical_context.pathology,
+            anatomic_region: cleanedData.clinical_context.anatomic_region,
+            specific_location: cleanedData.clinical_context.specific_location || null,
+            severity_classification: severityValue,
+            symptom_duration: cleanedData.clinical_context.symptom_duration || null,
+          })
+          .select()
+          .single();
+
+        if (recordError) throw recordError;
+        recordId = recordData.id;
+
+        // 2. Create prp_protocol_core
+        const { error: prpError } = await supabase
+          .from("prp_protocol_core")
+          .insert({
+            procedure_standard_record_id: recordData.id,
+            sessions_count: cleanedData.prp_protocol.sessions_count,
+            sessions_interval: cleanedData.prp_protocol.sessions_interval || null,
+            volume_per_session_range: cleanedData.prp_protocol.volume_per_session_range,
+            prp_type: cleanedData.prp_protocol.prp_type,
+            prp_activation: cleanedData.prp_protocol.prp_activation,
+            activation_method: cleanedData.prp_protocol.activation_method || null,
+            imaging_guidance: cleanedData.prp_protocol.imaging_guidance,
+            prp_with_hyaluronic_acid: cleanedData.associations.prp_with_hyaluronic_acid,
+            hyaluronic_acid_type: cleanedData.associations.hyaluronic_acid_type || null,
+            recent_nsaid_use: cleanedData.associations.recent_nsaid_use,
+          });
+
+        if (prpError) throw prpError;
+
+        // 3. Create co_interventions_core
+        const { error: coError } = await supabase
+          .from("co_interventions_core")
+          .insert({
+            procedure_standard_record_id: recordData.id,
+            exercise_therapy: cleanedData.co_interventions.exercise_therapy,
+            shockwave_therapy: cleanedData.co_interventions.shockwave_therapy,
+            epi_associated: cleanedData.co_interventions.epi_associated,
+          });
+
+        if (coError) throw coError;
+
+        // 4. Update attendance flag
+        const { error: attendanceError } = await supabase
+          .from("attendance_sessions")
+          .update({ has_standardized_procedure: true })
+          .eq("id", attendanceId);
+
+        if (attendanceError) throw attendanceError;
+      }
+
+      // 5. Run evaluation (both INSERT and UPDATE)
+      await runEvaluation(recordId);
+
+      return { id: recordId };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -288,7 +408,11 @@ export function useSaveClinicalStandard() {
       queryClient.invalidateQueries({
         queryKey: ["attendance", variables.attendanceId],
       });
-      toast.success("Protocolo padronizado salvo com sucesso!");
+      toast.success(
+        variables.existingRecordId 
+          ? "Protocolo padronizado atualizado com sucesso!" 
+          : "Protocolo padronizado salvo com sucesso!"
+      );
     },
     onError: (error: any) => {
       console.error("Error saving clinical standard:", error);
