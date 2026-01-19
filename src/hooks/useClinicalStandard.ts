@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import type { ClinicalStandardFormData } from "@/types/clinical-standard";
 import { defaultFormData } from "@/types/clinical-standard";
 import { evaluateClinicalStandard, type EvaluationInput, type ClinicalStandardStatus } from "@/lib/clinical-standard-evaluator";
-
+import { backfillOutcomesForProcedure } from "./usePatientOutcomes";
 interface ProcedureStandardRecord {
   id: string;
   attendance_id: string;
@@ -393,9 +393,12 @@ export function useSaveClinicalStandard() {
           .eq("id", attendanceId);
 
         if (attendanceError) throw attendanceError;
+        
+        // 6. Backfill any existing outcomes from this attendance
+        await backfillOutcomesForProcedure(attendanceId, recordId);
       }
 
-      // 5. Run evaluation (both INSERT and UPDATE)
+      // 7. Run evaluation (both INSERT and UPDATE)
       await runEvaluation(recordId);
 
       return { id: recordId };

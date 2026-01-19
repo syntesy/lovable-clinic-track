@@ -2772,6 +2772,57 @@ export type Database = {
           },
         ]
       }
+      patient_reported_outcomes: {
+        Row: {
+          attendance_id: string
+          created_at: string
+          function_scale_type: string | null
+          function_score: number | null
+          id: string
+          pain_score: number | null
+          procedure_standard_record_id: string | null
+          submitted_at: string
+          timepoint: string
+        }
+        Insert: {
+          attendance_id: string
+          created_at?: string
+          function_scale_type?: string | null
+          function_score?: number | null
+          id?: string
+          pain_score?: number | null
+          procedure_standard_record_id?: string | null
+          submitted_at?: string
+          timepoint: string
+        }
+        Update: {
+          attendance_id?: string
+          created_at?: string
+          function_scale_type?: string | null
+          function_score?: number | null
+          id?: string
+          pain_score?: number | null
+          procedure_standard_record_id?: string | null
+          submitted_at?: string
+          timepoint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_reported_outcomes_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_reported_outcomes_procedure_standard_record_id_fkey"
+            columns: ["procedure_standard_record_id"]
+            isOneToOne: false
+            referencedRelation: "procedure_standard_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null
@@ -5289,7 +5340,16 @@ export type Database = {
         | "rejeitada"
         | "arquivada"
       evidence_level: "ia" | "ib" | "iia" | "iib" | "iii" | "iv" | "v"
+      function_scale_type:
+        | "WOMAC"
+        | "KOOS"
+        | "ODI"
+        | "NDI"
+        | "DASH"
+        | "VISA_A"
+        | "OUTRA"
       mentor_status: "pending_review" | "approved" | "rejected" | "suspended"
+      outcome_timepoint: "baseline" | "m1" | "m3" | "m6" | "m12"
       study_design:
         | "rct"
         | "cohort"
@@ -5453,7 +5513,17 @@ export const Constants = {
         "arquivada",
       ],
       evidence_level: ["ia", "ib", "iia", "iib", "iii", "iv", "v"],
+      function_scale_type: [
+        "WOMAC",
+        "KOOS",
+        "ODI",
+        "NDI",
+        "DASH",
+        "VISA_A",
+        "OUTRA",
+      ],
       mentor_status: ["pending_review", "approved", "rejected", "suspended"],
+      outcome_timepoint: ["baseline", "m1", "m3", "m6", "m12"],
       study_design: [
         "rct",
         "cohort",
