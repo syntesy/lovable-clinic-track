@@ -1,11 +1,11 @@
 /**
- * Admin QA Seed Data Page
+ * Admin QA Seed Data Page - QA+ Phase
  * 
  * Generates synthetic clinical data for testing:
  * - k-anonymity (n>=5)
  * - Benchmark seals (n>=10)
  * - Cluster distributions
- * - Outcomes and deltas
+ * - Clinical profile presets
  * 
  * ONLY for dev/staging environments.
  */
@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   Database, 
   Play, 
@@ -31,19 +32,31 @@ import {
   Shield,
   Users,
   Clock,
-  RefreshCw
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  FileText
 } from "lucide-react";
-import { useSeedData, type SeedConfig } from "@/hooks/useSeedData";
+import { useSeedData, type SeedConfig, type ClinicalProfile, CLINICAL_PROFILES } from "@/hooks/useSeedData";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function AdminSeedQA() {
-  const { generateSeedData, clearSyntheticData, fetchMetadata, isGenerating, progress, metadata } = useSeedData();
+  const { 
+    generateSeedData, 
+    clearSyntheticData, 
+    fetchMetadata, 
+    isGenerating, 
+    progress, 
+    metadata 
+  } = useSeedData();
   
   const [config, setConfig] = useState<SeedConfig>({
     includeM1: true,
     includeM6: false,
     includeM12: false,
+    clinicalProfile: 'good',
   });
 
   // Fetch metadata on mount
@@ -69,13 +82,15 @@ export default function AdminSeedQA() {
   const hostname = window.location.hostname;
   const isProduction = hostname.includes('lovable.app') && !hostname.includes('preview');
 
+  const hasSyntheticData = metadata.totalSyntheticPatients > 0 || metadata.totalSyntheticAttendances > 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
           <Beaker className="h-6 w-6 text-primary" />
-          Gerador de Dados Sintéticos (QA)
+          Gerador de Dados Sintéticos (QA+)
         </h1>
         <p className="text-muted-foreground mt-1">
           Crie dados fictícios para testar dashboards, k-anonimato e selos de performance
@@ -95,12 +110,17 @@ export default function AdminSeedQA() {
       )}
 
       {/* Current Status Card */}
-      <Card className={metadata.totalSyntheticPatients > 0 ? "border-primary/50" : ""}>
+      <Card className={hasSyntheticData ? "border-primary/50 bg-primary/5" : ""}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Database className="h-5 w-5 text-primary" />
               Status Atual
+              {hasSyntheticData && (
+                <Badge variant="secondary" className="bg-primary/20 text-primary">
+                  QA Ativo
+                </Badge>
+              )}
             </span>
             <Button 
               variant="ghost" 
@@ -113,7 +133,7 @@ export default function AdminSeedQA() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -128,27 +148,152 @@ export default function AdminSeedQA() {
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <Users className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Pacientes sintéticos</p>
-                <p className="font-medium text-sm">
-                  {metadata.totalSyntheticPatients} 
-                  {metadata.totalSyntheticPatients > 0 && (
-                    <Badge variant="secondary" className="ml-2">Ativo</Badge>
-                  )}
-                </p>
+                <p className="text-xs text-muted-foreground">Pacientes</p>
+                <p className="font-medium text-sm">{metadata.totalSyntheticPatients}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Atendimentos sintéticos</p>
+                <p className="text-xs text-muted-foreground">Atendimentos</p>
                 <p className="font-medium text-sm">{metadata.totalSyntheticAttendances}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Procedimentos</p>
+                <p className="font-medium text-sm">{metadata.totalSyntheticProcedures}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Outcomes</p>
+                <p className="font-medium text-sm">{metadata.totalSyntheticOutcomes}</p>
+              </div>
+            </div>
+          </div>
+          
+          {metadata.lastProfile && (
+            <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+              <p className="text-xs text-muted-foreground">Último perfil utilizado</p>
+              <p className="font-medium text-sm">
+                {CLINICAL_PROFILES[metadata.lastProfile as ClinicalProfile]?.name || metadata.lastProfile}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Clinical Profile Selector */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Perfil de Dados Sintéticos
+          </CardTitle>
+          <CardDescription>
+            Selecione o perfil clínico para influenciar os outcomes gerados
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup 
+            value={config.clinicalProfile} 
+            onValueChange={(value: ClinicalProfile) => setConfig(c => ({ ...c, clinicalProfile: value }))}
+            className="space-y-4"
+          >
+            {(Object.keys(CLINICAL_PROFILES) as ClinicalProfile[]).map((profile) => {
+              const profileConfig = CLINICAL_PROFILES[profile];
+              const icon = profile === 'conservative' ? TrendingDown : 
+                           profile === 'good' ? Minus : TrendingUp;
+              const IconComponent = icon;
+              
+              return (
+                <div 
+                  key={profile}
+                  className={`flex items-start space-x-3 p-4 rounded-lg border transition-colors ${
+                    config.clinicalProfile === profile 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:bg-muted/50'
+                  }`}
+                >
+                  <RadioGroupItem value={profile} id={profile} className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor={profile} className="flex items-center gap-2 cursor-pointer">
+                      <IconComponent className={`h-4 w-4 ${
+                        profile === 'conservative' ? 'text-orange-500' :
+                        profile === 'good' ? 'text-blue-500' : 'text-green-500'
+                      }`} />
+                      <span className="font-medium">{profileConfig.name}</span>
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {profileConfig.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        Δ Dor ~{profileConfig.avgPainReduction} pts
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Resp ≥30%: ~{Math.round(profileConfig.response30Pct * 100)}%
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Resp ≥50%: ~{Math.round(profileConfig.response50Pct * 100)}%
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </RadioGroup>
+        </CardContent>
+      </Card>
+
+      {/* Professional Distribution Info */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="h-5 w-5 text-purple-500" />
+            Distribuição por Profissional
+          </CardTitle>
+          <CardDescription>
+            3 perfis de profissionais sintéticos para testar selos 🟢🟡🔴
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-green-500 mt-0.5" />
+              <div>
+                <p className="font-medium text-sm text-green-700 dark:text-green-400">Acima da Média</p>
+                <p className="text-xs text-muted-foreground">
+                  Perfil Excelente → Selo 🟢
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <Minus className="h-5 w-5 text-yellow-500 mt-0.5" />
+              <div>
+                <p className="font-medium text-sm text-yellow-700 dark:text-yellow-400">Na Média</p>
+                <p className="text-xs text-muted-foreground">
+                  Perfil Bom → Selo 🟡
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+              <TrendingDown className="h-5 w-5 text-orange-500 mt-0.5" />
+              <div>
+                <p className="font-medium text-sm text-orange-700 dark:text-orange-400">Abaixo da Média</p>
+                <p className="text-xs text-muted-foreground">
+                  Perfil Conservador → Selo 🔴
+                </p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Info Card */}
+      {/* Cluster Info Card */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -204,21 +349,21 @@ export default function AdminSeedQA() {
             </div>
             <div>
               <p className="text-muted-foreground">Marcador</p>
-              <p className="font-semibold text-lg">"Sintético QA"</p>
+              <p className="font-semibold text-lg">is_synthetic=true</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Configuration */}
+      {/* Timepoint Configuration */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Database className="h-5 w-5" />
-            Configuração
+            Timepoints Adicionais
           </CardTitle>
           <CardDescription>
-            Selecione os timepoints adicionais para gerar outcomes
+            Selecione os timepoints extras para gerar outcomes
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -295,7 +440,7 @@ export default function AdminSeedQA() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg text-destructive flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              Erros durante a geração ({progress.errors.length})
+              Erros durante a operação ({progress.errors.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -333,14 +478,14 @@ export default function AdminSeedQA() {
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Gerar 200 Casos Sintéticos
+                  Gerar 200 Casos ({CLINICAL_PROFILES[config.clinicalProfile || 'good'].name})
                 </>
               )}
             </Button>
             
             <Button 
               onClick={handleClear}
-              disabled={isGenerating || isProduction}
+              disabled={isGenerating || isProduction || !hasSyntheticData}
               variant="destructive"
               size="lg"
             >
@@ -348,6 +493,12 @@ export default function AdminSeedQA() {
               Limpar Dados Sintéticos
             </Button>
           </div>
+          
+          {hasSyntheticData && (
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              ⚠️ A limpeza remove apenas registros com is_synthetic=true. Dados reais permanecem intactos.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -379,22 +530,24 @@ export default function AdminSeedQA() {
                 <li>• Selos aparecem apenas para n≥10</li>
                 <li>• Selo 🟢 para acima da média</li>
                 <li>• Selo 🟡 para dentro da média</li>
-                <li>• Selo 🔴 para abaixo da média</li>
+                <li>• Selo 🔴 com "Oportunidade de otimização"</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="font-medium">Penalidades</p>
+              <p className="font-medium">Perfis de Profissionais</p>
               <ul className="space-y-1 text-muted-foreground pl-4">
-                <li>• ~25% com status "eligible_with_penalty"</li>
-                <li>• Motivos: PRP desconhecido ou AINE recente</li>
+                <li>• 3 profissionais com desempenhos diferentes</li>
+                <li>• Validar selos diferentes por profissional</li>
+                <li>• Benchmark funcional com n≥10</li>
               </ul>
             </div>
             <div className="space-y-2">
               <p className="font-medium">Segurança</p>
               <ul className="space-y-1 text-muted-foreground pl-4">
-                <li>• Dados marcados como "Sintético QA"</li>
-                <li>• Sem dados reais de pacientes</li>
+                <li>• Dados marcados como is_synthetic=true</li>
+                <li>• Cleanup remove apenas sintéticos</li>
                 <li>• Bloqueado em produção</li>
+                <li>• Banner QA aparece quando ativo</li>
               </ul>
             </div>
           </div>
