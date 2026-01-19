@@ -57,6 +57,7 @@ import RegistryGovernance from "./pages/admin/RegistryGovernance";
 import AdminResearchExport from "./pages/admin/AdminResearchExport";
 import AdminScoreFluxoDoc from "./pages/admin/AdminScoreFluxoDoc";
 import AdminScoreQA from "./pages/admin/AdminScoreQA";
+import AdminSeedQA from "./pages/admin/AdminSeedQA";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import FollowupPanel from "./pages/FollowupPanel";
@@ -532,6 +533,16 @@ const App = () => (
               <RequireAdminRole>
                 <Layout>
                   <AdminScoreQA />
+                </Layout>
+              </RequireAdminRole>
+            }
+          />
+          <Route
+            path="/admin/qa/seed"
+            element={
+              <RequireAdminRole>
+                <Layout>
+                  <AdminSeedQA />
                 </Layout>
               </RequireAdminRole>
             }
