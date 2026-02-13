@@ -893,6 +893,36 @@ export type Database = {
         }
         Relationships: []
       }
+      clinics: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          owner_user_id: string
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_user_id: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_user_id?: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       co_interventions_core: {
         Row: {
           created_at: string
@@ -1881,6 +1911,56 @@ export type Database = {
             columns: ["dimension_id"]
             isOneToOne: false
             referencedRelation: "evidence_dimensions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      governance_audit_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["governance_action"]
+          changed_fields: Json | null
+          clinic_id: string
+          entity_id: string
+          entity_type: string
+          id: string
+          justification: string | null
+          new_snapshot: Json | null
+          performed_at: string
+          performed_by_user_id: string
+          previous_snapshot: Json | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["governance_action"]
+          changed_fields?: Json | null
+          clinic_id: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          justification?: string | null
+          new_snapshot?: Json | null
+          performed_at?: string
+          performed_by_user_id: string
+          previous_snapshot?: Json | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["governance_action"]
+          changed_fields?: Json | null
+          clinic_id?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          justification?: string | null
+          new_snapshot?: Json | null
+          performed_at?: string
+          performed_by_user_id?: string
+          previous_snapshot?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "governance_audit_logs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
             referencedColumns: ["id"]
           },
         ]
@@ -3051,8 +3131,11 @@ export type Database = {
       }
       procedure_standard_records: {
         Row: {
+          adverse_event_record: Json | null
+          adverse_event_status: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region: string
           attendance_id: string
+          clinic_id: string | null
           clinical_standard_notes: string[] | null
           clinical_standard_status: string
           cluster_key: string | null
@@ -3061,17 +3144,29 @@ export type Database = {
           is_comparable: boolean
           is_synthetic: boolean | null
           last_evaluated_at: string | null
+          material_traceability: Json | null
           pathology: string
           procedure_type: string
+          protocol_id: string | null
           protocol_signature: string | null
+          protocol_version_id: string | null
+          safety_checklist: Json | null
+          safety_checklist_status: Database["public"]["Enums"]["safety_checklist_status"]
+          scientific_badge_status: Database["public"]["Enums"]["scientific_badge_status"]
+          scientific_mode_enabled: boolean
+          scientific_validated_at: string | null
+          scientific_validated_by_user_id: string | null
           severity_classification: string
           specific_location: string | null
           symptom_duration: string | null
           updated_at: string
         }
         Insert: {
+          adverse_event_record?: Json | null
+          adverse_event_status?: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region: string
           attendance_id: string
+          clinic_id?: string | null
           clinical_standard_notes?: string[] | null
           clinical_standard_status?: string
           cluster_key?: string | null
@@ -3080,17 +3175,29 @@ export type Database = {
           is_comparable?: boolean
           is_synthetic?: boolean | null
           last_evaluated_at?: string | null
+          material_traceability?: Json | null
           pathology: string
           procedure_type?: string
+          protocol_id?: string | null
           protocol_signature?: string | null
+          protocol_version_id?: string | null
+          safety_checklist?: Json | null
+          safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
+          scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]
+          scientific_mode_enabled?: boolean
+          scientific_validated_at?: string | null
+          scientific_validated_by_user_id?: string | null
           severity_classification: string
           specific_location?: string | null
           symptom_duration?: string | null
           updated_at?: string
         }
         Update: {
+          adverse_event_record?: Json | null
+          adverse_event_status?: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region?: string
           attendance_id?: string
+          clinic_id?: string | null
           clinical_standard_notes?: string[] | null
           clinical_standard_status?: string
           cluster_key?: string | null
@@ -3099,9 +3206,18 @@ export type Database = {
           is_comparable?: boolean
           is_synthetic?: boolean | null
           last_evaluated_at?: string | null
+          material_traceability?: Json | null
           pathology?: string
           procedure_type?: string
+          protocol_id?: string | null
           protocol_signature?: string | null
+          protocol_version_id?: string | null
+          safety_checklist?: Json | null
+          safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
+          scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]
+          scientific_mode_enabled?: boolean
+          scientific_validated_at?: string | null
+          scientific_validated_by_user_id?: string | null
           severity_classification?: string
           specific_location?: string | null
           symptom_duration?: string | null
@@ -3113,6 +3229,166 @@ export type Database = {
             columns: ["attendance_id"]
             isOneToOne: true
             referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_standard_records_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_standard_records_protocol_id_fkey"
+            columns: ["protocol_id"]
+            isOneToOne: false
+            referencedRelation: "protocols"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_standard_records_protocol_version_id_fkey"
+            columns: ["protocol_version_id"]
+            isOneToOne: false
+            referencedRelation: "protocol_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      protocol_versions: {
+        Row: {
+          change_summary: string
+          clinic_id: string
+          created_at: string
+          created_by_user_id: string
+          id: string
+          protocol_id: string
+          snapshot: Json
+          version_label: string
+        }
+        Insert: {
+          change_summary: string
+          clinic_id: string
+          created_at?: string
+          created_by_user_id: string
+          id?: string
+          protocol_id: string
+          snapshot: Json
+          version_label: string
+        }
+        Update: {
+          change_summary?: string
+          clinic_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          id?: string
+          protocol_id?: string
+          snapshot?: Json
+          version_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protocol_versions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protocol_versions_protocol_id_fkey"
+            columns: ["protocol_id"]
+            isOneToOne: false
+            referencedRelation: "protocols"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      protocols: {
+        Row: {
+          area: string | null
+          checklist_template: Json | null
+          clinic_id: string
+          created_at: string
+          created_by_user_id: string
+          evidence_level: string | null
+          evidence_notes: string | null
+          evidence_refs: Json | null
+          exclusion_criteria: Json | null
+          id: string
+          inclusion_criteria: Json | null
+          indication_summary: string | null
+          is_active: boolean
+          protocol_type: Database["public"]["Enums"]["protocol_type"]
+          required_exams: Json | null
+          source_protocol_id: string | null
+          source_protocol_version_id: string | null
+          technique_summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          checklist_template?: Json | null
+          clinic_id: string
+          created_at?: string
+          created_by_user_id: string
+          evidence_level?: string | null
+          evidence_notes?: string | null
+          evidence_refs?: Json | null
+          exclusion_criteria?: Json | null
+          id?: string
+          inclusion_criteria?: Json | null
+          indication_summary?: string | null
+          is_active?: boolean
+          protocol_type?: Database["public"]["Enums"]["protocol_type"]
+          required_exams?: Json | null
+          source_protocol_id?: string | null
+          source_protocol_version_id?: string | null
+          technique_summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          checklist_template?: Json | null
+          clinic_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          evidence_level?: string | null
+          evidence_notes?: string | null
+          evidence_refs?: Json | null
+          exclusion_criteria?: Json | null
+          id?: string
+          inclusion_criteria?: Json | null
+          indication_summary?: string | null
+          is_active?: boolean
+          protocol_type?: Database["public"]["Enums"]["protocol_type"]
+          required_exams?: Json | null
+          source_protocol_id?: string | null
+          source_protocol_version_id?: string | null
+          technique_summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protocols_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protocols_source_protocol_id_fkey"
+            columns: ["source_protocol_id"]
+            isOneToOne: false
+            referencedRelation: "protocols"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protocols_source_version_fk"
+            columns: ["source_protocol_version_id"]
+            isOneToOne: false
+            referencedRelation: "protocol_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -5334,7 +5610,15 @@ export type Database = {
       user_owns_patient: { Args: { p_patient_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "professional" | "viewer" | "patient" | "research"
+      adverse_event_status: "NONE" | "REPORTED"
+      app_role:
+        | "admin"
+        | "professional"
+        | "viewer"
+        | "patient"
+        | "research"
+        | "nurse_tech"
+        | "secretary"
       applicability:
         | "alta"
         | "moderada"
@@ -5366,8 +5650,20 @@ export type Database = {
         | "DASH"
         | "VISA_A"
         | "OUTRA"
+      governance_action:
+        | "CREATE"
+        | "UPDATE"
+        | "VALIDATE"
+        | "DUPLICATE"
+        | "LOCK"
+        | "UNLOCK"
+        | "ACTIVATE"
+        | "DEACTIVATE"
       mentor_status: "pending_review" | "approved" | "rejected" | "suspended"
       outcome_timepoint: "baseline" | "m1" | "m3" | "m6" | "m12"
+      protocol_type: "REGEN_BASE" | "DERIVED" | "INSTITUTIONAL"
+      safety_checklist_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+      scientific_badge_status: "NONE" | "DRAFT" | "VALIDATED"
       study_design:
         | "rct"
         | "cohort"
@@ -5504,7 +5800,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "professional", "viewer", "patient", "research"],
+      adverse_event_status: ["NONE", "REPORTED"],
+      app_role: [
+        "admin",
+        "professional",
+        "viewer",
+        "patient",
+        "research",
+        "nurse_tech",
+        "secretary",
+      ],
       applicability: [
         "alta",
         "moderada",
@@ -5540,8 +5845,21 @@ export const Constants = {
         "VISA_A",
         "OUTRA",
       ],
+      governance_action: [
+        "CREATE",
+        "UPDATE",
+        "VALIDATE",
+        "DUPLICATE",
+        "LOCK",
+        "UNLOCK",
+        "ACTIVATE",
+        "DEACTIVATE",
+      ],
       mentor_status: ["pending_review", "approved", "rejected", "suspended"],
       outcome_timepoint: ["baseline", "m1", "m3", "m6", "m12"],
+      protocol_type: ["REGEN_BASE", "DERIVED", "INSTITUTIONAL"],
+      safety_checklist_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
+      scientific_badge_status: ["NONE", "DRAFT", "VALIDATED"],
       study_design: [
         "rct",
         "cohort",
