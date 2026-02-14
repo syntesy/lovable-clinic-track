@@ -56,8 +56,7 @@ export default function LandingHero() {
             initial="hidden" animate="visible" variants={fadeUp} custom={0.2}
             className="text-muted-foreground text-base md:text-lg leading-relaxed mb-8 max-w-xl"
           >
-            Padronize procedimentos, organize desfechos e fortaleça a rastreabilidade
-            da sua prática com governança e isolamento por clínica.
+            Padronize condutas, acompanhe desfechos e organize sua prática em Medicina Regenerativa com estrutura, clareza e segurança.
           </motion.p>
 
           <motion.ul
