@@ -185,6 +185,7 @@ export type Database = {
         Row: {
           action: string
           additional_info: Json | null
+          clinic_id: string | null
           created_at: string
           id: string
           ip_address: string | null
@@ -200,6 +201,7 @@ export type Database = {
         Insert: {
           action: string
           additional_info?: Json | null
+          clinic_id?: string | null
           created_at?: string
           id?: string
           ip_address?: string | null
@@ -215,6 +217,7 @@ export type Database = {
         Update: {
           action?: string
           additional_info?: Json | null
+          clinic_id?: string | null
           created_at?: string
           id?: string
           ip_address?: string | null
@@ -5587,6 +5590,7 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
+      current_user_clinic_id: { Args: never; Returns: string }
       generate_case_uid: { Args: { p_case_id: string }; Returns: string }
       generate_clinician_uid: {
         Args: { p_clinician_id: string }
