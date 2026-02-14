@@ -1,11 +1,16 @@
 /**
- * ResultsAnalyticsDashboard — Etapa 8: KPIs + Gráficos + filtros.
+ * ResultsAnalyticsDashboard — Etapa 9: KPIs + Gráficos + Tabela paginada.
  */
 
 import { useMemo, useState } from "react";
 import { useResultsAnalytics, type ResultsKpis } from "@/hooks/useResultsAnalytics";
 import { useClinicProfessionals } from "@/hooks/useClinicProfessionals";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +20,8 @@ import {
 } from "@/components/ui/select";
 import {
   AlertTriangle, Users, TrendingUp, CalendarCheck,
-  Clock, ClipboardCheck, Link2, BarChart3,
+  Clock, ClipboardCheck, Link2, BarChart3, ExternalLink,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import {
   PATHOLOGY_OPTIONS, ANATOMIC_REGION_OPTIONS,
@@ -114,8 +120,8 @@ export default function ResultsAnalyticsDashboard() {
   const [onlyScientific, setOnlyScientific] = useState(false);
   const [onlyValidated, setOnlyValidated] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(25);
-  const [sort] = useState<"latest" | "delta" | "baseline">("latest");
+  const [pageSize, setPageSize] = useState(25);
+  const [sort, setSort] = useState<"latest" | "delta" | "baseline">("latest");
 
   const { data: professionals } = useClinicProfessionals();
 
@@ -454,6 +460,153 @@ export default function ResultsAnalyticsDashboard() {
           </Card>
         </div>
       )}
+
+      {/* ── Cases Table ── */}
+      <Card>
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <CardTitle className="text-sm font-semibold text-foreground">
+            Casos
+          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Ordenar por</Label>
+              <Select value={sort} onValueChange={(v) => { setSort(v as typeof sort); setPage(1); }}>
+                <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="latest">Mais recente</SelectItem>
+                  <SelectItem value="delta">Maior melhora</SelectItem>
+                  <SelectItem value="baseline">Baseline mais alto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Por página</Label>
+              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
+                <SelectTrigger className="h-8 w-[70px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Paciente</TableHead>
+                  <TableHead className="text-xs">Procedimento</TableHead>
+                  <TableHead className="text-xs">Patologia</TableHead>
+                  <TableHead className="text-xs">Protocolo</TableHead>
+                  <TableHead className="text-xs text-right">Baseline</TableHead>
+                  <TableHead className="text-xs text-right">Último</TableHead>
+                  <TableHead className="text-xs text-right">Δ</TableHead>
+                  <TableHead className="text-xs">Classificação</TableHead>
+                  <TableHead className="text-xs w-[60px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading && !data ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 9 }).map((_, j) => (
+                        <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : !data?.cases?.items?.length ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                      Nenhum caso encontrado com os filtros selecionados.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.cases.items.map((c) => {
+                    const hasDelta = c.classification !== "NO_DATA" && c.delta_value != null;
+                    return (
+                      <TableRow key={c.psr_id}>
+                        <TableCell className="text-sm font-medium">{c.patient_display || "—"}</TableCell>
+                        <TableCell className="text-sm">{c.procedure_type || "—"}</TableCell>
+                        <TableCell className="text-sm">{c.pathology || "—"}</TableCell>
+                        <TableCell className="text-sm max-w-[160px] truncate">{c.protocol_title || "—"}</TableCell>
+                        <TableCell className="text-sm text-right tabular-nums">
+                          {c.baseline_value != null ? c.baseline_value : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-right tabular-nums">
+                          {c.latest_value != null ? c.latest_value : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-right tabular-nums">
+                          {hasDelta
+                            ? `${c.delta_value! > 0 ? "+" : ""}${c.delta_value!.toFixed(1)} (${c.delta_pct != null ? `${c.delta_pct > 0 ? "+" : ""}${Math.round(c.delta_pct)}%` : ""})`
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              c.classification === "RESPONDER" ? "default"
+                              : c.classification === "WORSENING" ? "destructive"
+                              : "secondary"
+                            }
+                            className="text-[10px]"
+                          >
+                            {RESPONSE_LABELS[c.classification] || c.classification}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              if (c.patient_id) {
+                                window.open(`/pacientes/${c.patient_id}`, "_blank");
+                              }
+                            }}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination controls */}
+          {data?.cases && data.cases.total > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t text-xs text-muted-foreground">
+              <span>
+                Mostrando {((data.cases.page - 1) * data.cases.page_size) + 1}–{Math.min(data.cases.page * data.cases.page_size, data.cases.total)} de {data.cases.total}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={page * pageSize >= data.cases.total}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ── Debug (bottom) ── */}
       <details className="text-xs">
