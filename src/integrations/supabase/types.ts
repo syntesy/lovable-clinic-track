@@ -3149,6 +3149,9 @@ export type Database = {
           is_synthetic: boolean | null
           last_evaluated_at: string | null
           material_traceability: Json | null
+          method_deviation: boolean
+          method_deviation_reason: string | null
+          method_run: Json | null
           pathology: string
           performed_by_user_id: string
           procedure_type: string
@@ -3184,6 +3187,9 @@ export type Database = {
           is_synthetic?: boolean | null
           last_evaluated_at?: string | null
           material_traceability?: Json | null
+          method_deviation?: boolean
+          method_deviation_reason?: string | null
+          method_run?: Json | null
           pathology: string
           performed_by_user_id?: string
           procedure_type?: string
@@ -3219,6 +3225,9 @@ export type Database = {
           is_synthetic?: boolean | null
           last_evaluated_at?: string | null
           material_traceability?: Json | null
+          method_deviation?: boolean
+          method_deviation_reason?: string | null
+          method_run?: Json | null
           pathology?: string
           performed_by_user_id?: string
           procedure_type?: string
@@ -3353,6 +3362,7 @@ export type Database = {
           inclusion_criteria: Json | null
           indication_summary: string | null
           is_active: boolean
+          method_template: Json | null
           protocol_type: Database["public"]["Enums"]["protocol_type"]
           required_exams: Json | null
           source_protocol_id: string | null
@@ -3375,6 +3385,7 @@ export type Database = {
           inclusion_criteria?: Json | null
           indication_summary?: string | null
           is_active?: boolean
+          method_template?: Json | null
           protocol_type?: Database["public"]["Enums"]["protocol_type"]
           required_exams?: Json | null
           source_protocol_id?: string | null
@@ -3397,6 +3408,7 @@ export type Database = {
           inclusion_criteria?: Json | null
           indication_summary?: string | null
           is_active?: boolean
+          method_template?: Json | null
           protocol_type?: Database["public"]["Enums"]["protocol_type"]
           required_exams?: Json | null
           source_protocol_id?: string | null
