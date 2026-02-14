@@ -458,8 +458,8 @@ export function useSeedData() {
 
             const { data: procedureRecord, error: procedureError } = await supabase
               .from('procedure_standard_records')
-              .insert({
-                attendance_id: attendance.id,
+              .insert([{
+                // attendance_id is set by trigger, don't include here
                 procedure_type: 'PRP',
                 pathology: clusterConfig.pathology,
                 anatomic_region: clusterConfig.region,
@@ -467,7 +467,7 @@ export function useSeedData() {
                 severity_classification: severityValue,
                 symptom_duration: ['menos_3_meses', '3_6_meses', '6_12_meses', 'mais_12_meses'][randomInRange(0, 3)],
                 is_synthetic: true,
-              })
+              }] as any)
               .select('id')
               .single();
 

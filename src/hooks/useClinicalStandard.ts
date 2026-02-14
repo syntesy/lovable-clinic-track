@@ -342,15 +342,14 @@ export function useSaveClinicalStandard() {
         // 1. Create procedure_standard_records
         const { data: recordData, error: recordError } = await supabase
           .from("procedure_standard_records")
-          .insert({
-            attendance_id: attendanceId,
+          .insert([{
             procedure_type: "PRP",
             pathology: cleanedData.clinical_context.pathology,
             anatomic_region: cleanedData.clinical_context.anatomic_region,
             specific_location: cleanedData.clinical_context.specific_location || null,
             severity_classification: severityValue,
             symptom_duration: cleanedData.clinical_context.symptom_duration || null,
-          })
+          }] as any)
           .select()
           .single();
 

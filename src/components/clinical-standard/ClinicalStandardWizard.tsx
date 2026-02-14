@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Check, Clock, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   ClinicalStandardFormData,
   defaultFormData,

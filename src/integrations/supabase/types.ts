@@ -3135,7 +3135,7 @@ export type Database = {
           adverse_event_status: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region: string
           attendance_id: string
-          clinic_id: string | null
+          clinic_id: string
           clinical_standard_notes: string[] | null
           clinical_standard_status: string
           cluster_key: string | null
@@ -3166,7 +3166,7 @@ export type Database = {
           adverse_event_status?: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region: string
           attendance_id: string
-          clinic_id?: string | null
+          clinic_id: string
           clinical_standard_notes?: string[] | null
           clinical_standard_status?: string
           cluster_key?: string | null
@@ -3197,7 +3197,7 @@ export type Database = {
           adverse_event_status?: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region?: string
           attendance_id?: string
-          clinic_id?: string | null
+          clinic_id?: string
           clinical_standard_notes?: string[] | null
           clinical_standard_status?: string
           cluster_key?: string | null
@@ -3224,6 +3224,27 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_psr_clinic"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_psr_protocol"
+            columns: ["protocol_id"]
+            isOneToOne: false
+            referencedRelation: "protocols"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_psr_protocol_version"
+            columns: ["protocol_version_id"]
+            isOneToOne: false
+            referencedRelation: "protocol_versions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "procedure_standard_records_attendance_id_fkey"
             columns: ["attendance_id"]
