@@ -1,5 +1,7 @@
 /**
- * ResultsAnalyticsDashboard — Etapa 9: KPIs + Gráficos + Tabela paginada.
+ * ResultsAnalyticsDashboard — Etapa 10: KPIs + Gráficos + Tabela paginada + RBAC.
+ * RBAC: SECRETARY bloqueado via RequireGovernanceAccess no router.
+ *       NURSE_TECH: read-only (view); PROFESSIONAL/ADMIN: acesso total.
  */
 
 import { useMemo, useState } from "react";
@@ -18,6 +20,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertTriangle, Users, TrendingUp, CalendarCheck,
   Clock, ClipboardCheck, Link2, BarChart3, ExternalLink,
@@ -556,18 +561,23 @@ export default function ResultsAnalyticsDashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => {
-                              if (c.patient_id) {
-                                window.open(`/pacientes/${c.patient_id}`, "_blank");
-                              }
-                            }}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  if (c.patient_id) {
+                                    window.open(`/pacientes/${c.patient_id}`, "_blank");
+                                  }
+                                }}
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Abrir paciente</TooltipContent>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     );
@@ -608,25 +618,29 @@ export default function ResultsAnalyticsDashboard() {
         </CardContent>
       </Card>
 
-      {/* ── Debug (bottom) ── */}
-      <details className="text-xs">
-        <summary className="cursor-pointer text-muted-foreground font-medium">
-          🔍 Parâmetros atuais da RPC (debug)
-        </summary>
-        <pre className="mt-2 rounded-md border bg-muted/50 p-3 overflow-auto whitespace-pre-wrap">
-          {JSON.stringify(debugParams, null, 2)}
-        </pre>
-      </details>
+      {/* ── Debug (DEV only) ── */}
+      {import.meta.env.DEV && (
+        <>
+          <details className="text-xs">
+            <summary className="cursor-pointer text-muted-foreground font-medium">
+              🔍 Parâmetros atuais da RPC (debug)
+            </summary>
+            <pre className="mt-2 rounded-md border bg-muted/50 p-3 overflow-auto whitespace-pre-wrap">
+              {JSON.stringify(debugParams, null, 2)}
+            </pre>
+          </details>
 
-      {data && (
-        <details className="text-xs">
-          <summary className="cursor-pointer text-muted-foreground font-medium">
-            📦 JSON bruto (debug)
-          </summary>
-          <pre className="mt-2 rounded-md border bg-muted p-4 overflow-auto max-h-[50vh] whitespace-pre-wrap">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        </details>
+          {data && (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground font-medium">
+                📦 JSON bruto (debug)
+              </summary>
+              <pre className="mt-2 rounded-md border bg-muted p-4 overflow-auto max-h-[50vh] whitespace-pre-wrap">
+                {JSON.stringify(data, null, 2)}
+              </pre>
+            </details>
+          )}
+        </>
       )}
     </div>
   );

@@ -432,7 +432,7 @@ const App = () => (
             }
           />
           {/* Análise de Resultados */}
-          <Route path="/analise-resultados" element={<ProtectedRoute><Layout><AnaliseResultados /></Layout></ProtectedRoute>} />
+          <Route path="/analise-resultados" element={<ProtectedRoute><RequireGovernanceAccess><Layout><AnaliseResultados /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           {/* Governance Routes */}
           <Route path="/governanca/protocolos" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolsList /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           <Route path="/governanca/protocolos/:protocolId" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolDetail /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
