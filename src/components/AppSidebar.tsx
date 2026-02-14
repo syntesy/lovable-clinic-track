@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList, ArrowLeftRight, BarChart3, Target, Beaker } from "lucide-react";
+import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList, ArrowLeftRight, BarChart3, Target, Beaker, ScrollText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -27,6 +27,7 @@ const menuItems = [
   { title: "Career Engine", url: "/career", icon: TrendingUp },
   { title: "Diligência & Compliance", url: "/diligence", icon: Shield },
   { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
+  { title: "Protocolos (Governança)", url: "/governanca/protocolos", icon: ScrollText },
   { title: "Parceiros", url: "/partners", icon: Handshake },
   { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
   { title: "AGENTE rhegen", url: "/agente-mac", icon: Bot, isAgent: true },
