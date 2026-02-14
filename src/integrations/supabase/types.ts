@@ -5595,6 +5595,17 @@ export type Database = {
         Returns: string
       }
       generate_snapshot_code: { Args: never; Returns: string }
+      get_conformity_metrics: {
+        Args: {
+          p_area?: string
+          p_clinic_id: string
+          p_end: string
+          p_only_completed?: boolean
+          p_protocol_type?: string
+          p_start: string
+        }
+        Returns: Json
+      }
       get_mentor_by_user_id: { Args: { _user_id: string }; Returns: string }
       get_next_snapshot_version: {
         Args: { p_dimension_id: string; p_time_window: string }

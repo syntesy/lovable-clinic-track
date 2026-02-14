@@ -91,7 +91,7 @@ import {
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
-import { ProtocolsList, ProtocolDetail, ProtocolEdit } from "./pages/governance";
+import { ProtocolsList, ProtocolDetail, ProtocolEdit, ConformidadeDashboard } from "./pages/governance";
 import { RequireGovernanceAccess } from "./components/governance/RequireGovernanceAccess";
 
 const queryClient = new QueryClient();
@@ -434,6 +434,7 @@ const App = () => (
           <Route path="/governanca/protocolos" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolsList /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           <Route path="/governanca/protocolos/:protocolId" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolDetail /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           <Route path="/governanca/protocolos/:protocolId/editar" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolEdit /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
+          <Route path="/governanca/conformidade" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ConformidadeDashboard /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
 
           {/* Admin Routes - Protected by RequireAdminRole */}
           <Route
