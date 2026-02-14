@@ -5683,6 +5683,26 @@ export type Database = {
         Args: { p_dimension_id: string; p_time_window: string }
         Returns: number
       }
+      get_results_analytics: {
+        Args: {
+          p_anatomic_region?: string
+          p_clinic_id: string
+          p_end: string
+          p_only_completed?: boolean
+          p_only_scientific?: boolean
+          p_page?: number
+          p_page_size?: number
+          p_pathology?: string
+          p_procedure_type?: string
+          p_protocol_id?: string
+          p_protocol_type?: string
+          p_responsible_professional_id?: string
+          p_scientific_status?: string
+          p_sort?: string
+          p_start: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
