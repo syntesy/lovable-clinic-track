@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import {
   ClipboardCheck, ShieldCheck, CheckCircle2, AlertTriangle,
   FileText, BarChart3, Activity, ExternalLink, CalendarIcon, RefreshCw,
-  Filter
+  Filter, Dna
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -170,12 +170,13 @@ export default function ConformidadeDashboard() {
           ))}
         </div>
       ) : kpis ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <KPICard icon={FileText} title="Total Procedimentos" value={kpis.total} />
           <KPICard icon={ShieldCheck} title="Com Protocolo" value={pct(kpis.withProtocol, kpis.total)} subtitle={`${kpis.withProtocol}/${kpis.total}`} />
           <KPICard icon={CheckCircle2} title="Checklist Completo" value={pct(kpis.checklistCompleted, kpis.total)} subtitle={`${kpis.checklistCompleted}/${kpis.total}`} color="text-green-500" />
           <KPICard icon={ClipboardCheck} title="Finalizados" value={pct(kpis.finalized, kpis.total)} subtitle={`${kpis.finalized}/${kpis.total}`} color="text-blue-500" />
           <KPICard icon={AlertTriangle} title="Eventos Adversos" value={kpis.adverseEvents} subtitle={pct(kpis.adverseEvents, kpis.total)} color={kpis.adverseEvents > 0 ? "text-amber-500" : undefined} />
+          <KPICard icon={Dna} title="Casos Científicos" value={(kpis.scientificDraftCount || 0) + (kpis.scientificValidatedCount || 0)} subtitle={`${kpis.scientificDraftCount || 0} rascunho · ${kpis.scientificValidatedCount || 0} validados`} color="text-emerald-500" />
         </div>
       ) : null}
 

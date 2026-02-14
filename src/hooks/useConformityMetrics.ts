@@ -16,6 +16,8 @@ export interface ConformityKPIs {
   checklistCompleted: number;
   finalized: number;
   adverseEvents: number;
+  scientificDraftCount: number;
+  scientificValidatedCount: number;
   protocolDistribution: { type: string; count: number }[];
 }
 

@@ -278,6 +278,7 @@ export function useSaveClinicalStandard() {
       materialTraceability,
       adverseEventRecord,
       adverseEventStatus,
+      scientificEditJustification,
     }: {
       attendanceId: string;
       formData: ClinicalStandardFormData;
@@ -287,6 +288,7 @@ export function useSaveClinicalStandard() {
       materialTraceability?: MaterialTraceabilityData;
       adverseEventRecord?: AdverseEventData | null;
       adverseEventStatus?: "NONE" | "REPORTED";
+      scientificEditJustification?: string;
     }) => {
       // Apply coherence rules before saving
       const cleanedData = applyCoherenceRules(formData);
@@ -316,8 +318,9 @@ export function useSaveClinicalStandard() {
             material_traceability: materialTraceability as any,
             adverse_event_record: adverseEventRecord as any,
             adverse_event_status: (adverseEventStatus || 'NONE') as any,
+            scientific_edit_justification: scientificEditJustification || null,
             updated_at: new Date().toISOString(),
-          })
+          } as any)
           .eq("id", existingRecordId);
 
         if (recordError) throw recordError;
@@ -463,7 +466,9 @@ export function useSaveClinicalStandard() {
     onError: (error: any) => {
       console.error("Error saving clinical standard:", error);
       const msg = error?.message || "";
-      if (msg.includes("inactive protocol")) {
+      if (msg.includes("scientific_justification_required")) {
+        toast.error("Registro científico validado: justificativa obrigatória para alterações.");
+      } else if (msg.includes("inactive protocol")) {
         toast.error("Este protocolo foi desativado e não pode ser utilizado.");
       } else if (msg.includes("no versions")) {
         toast.error("O protocolo selecionado não possui versão registrada.");

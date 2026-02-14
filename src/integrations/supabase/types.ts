@@ -3153,6 +3153,7 @@ export type Database = {
           safety_checklist: Json | null
           safety_checklist_status: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status: Database["public"]["Enums"]["scientific_badge_status"]
+          scientific_edit_justification: string | null
           scientific_mode_enabled: boolean
           scientific_validated_at: string | null
           scientific_validated_by_user_id: string | null
@@ -3184,6 +3185,7 @@ export type Database = {
           safety_checklist?: Json | null
           safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]
+          scientific_edit_justification?: string | null
           scientific_mode_enabled?: boolean
           scientific_validated_at?: string | null
           scientific_validated_by_user_id?: string | null
@@ -3215,6 +3217,7 @@ export type Database = {
           safety_checklist?: Json | null
           safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]
+          scientific_edit_justification?: string | null
           scientific_mode_enabled?: boolean
           scientific_validated_at?: string | null
           scientific_validated_by_user_id?: string | null

@@ -23,6 +23,7 @@ import { Step3PRPProtocol } from "./steps/Step3PRPProtocol";
 import { Step4Associations } from "./steps/Step4Associations";
 import { Step5CoInterventions } from "./steps/Step5CoInterventions";
 import { StepSafetyChecklist } from "./steps/StepSafetyChecklist";
+import { ScientificModePanel, JustificationModal } from "./ScientificModePanel";
 
 const STEPS = [
   { title: "Protocolo", description: "Selecione o protocolo clínico" },
@@ -55,6 +56,12 @@ export function ClinicalStandardWizard({
   const [material, setMaterial] = useState<MaterialTraceabilityData>(defaultMaterial);
   const [adverseEvent, setAdverseEvent] = useState<AdverseEventData | null>(null);
   const [adverseEventStatus, setAdverseEventStatus] = useState<"NONE" | "REPORTED">("NONE");
+
+  // Scientific mode state
+  const [scientificModeEnabled, setScientificModeEnabled] = useState(false);
+  const [scientificBadgeStatus, setScientificBadgeStatus] = useState("NONE");
+  const [showJustificationModal, setShowJustificationModal] = useState(false);
+  const [pendingJustificationSave, setPendingJustificationSave] = useState(false);
   
   const saveMutation = useSaveClinicalStandard();
   const { data: fullRecord, isLoading: isLoadingRecord } = useFullProcedureRecord(attendanceId);
@@ -82,6 +89,9 @@ export function ClinicalStandardWizard({
           setAdverseEvent(null);
           setAdverseEventStatus(rec.adverse_event_status === "REPORTED" ? "REPORTED" : "NONE");
         }
+        // Scientific mode
+        setScientificModeEnabled(!!rec.scientific_mode_enabled);
+        setScientificBadgeStatus(rec.scientific_badge_status || "NONE");
         // In edit mode, skip Step 0 (protocol already set)
         setCurrentStep(1);
       } else {
@@ -147,7 +157,13 @@ export function ClinicalStandardWizard({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (justification?: string) => {
+    // If record is VALIDATED and we're editing, require justification
+    if (fullRecord && scientificBadgeStatus === "VALIDATED" && !justification) {
+      setShowJustificationModal(true);
+      return;
+    }
+
     await saveMutation.mutateAsync({
       attendanceId,
       formData,
@@ -157,6 +173,7 @@ export function ClinicalStandardWizard({
       materialTraceability: material,
       adverseEventRecord: adverseEvent,
       adverseEventStatus,
+      scientificEditJustification: justification || undefined,
     });
     onOpenChange(false);
     setCurrentStep(0);
@@ -166,7 +183,34 @@ export function ClinicalStandardWizard({
     setMaterial(defaultMaterial);
     setAdverseEvent(null);
     setAdverseEventStatus("NONE");
+    setScientificModeEnabled(false);
+    setScientificBadgeStatus("NONE");
     setIsInitialized(false);
+  };
+
+  const handleJustificationConfirm = async (justification: string) => {
+    setPendingJustificationSave(true);
+    try {
+      await handleSave(justification);
+      setShowJustificationModal(false);
+    } finally {
+      setPendingJustificationSave(false);
+    }
+  };
+
+  const handleScientificStatusChange = () => {
+    // Re-fetch the record to get updated status
+    // queryClient will handle via invalidation in the edge function response
+    if (fullRecord) {
+      const rec = fullRecord.record as any;
+      // Optimistic: toggle state
+      if (!scientificModeEnabled) {
+        setScientificModeEnabled(true);
+        setScientificBadgeStatus("DRAFT");
+      } else if (scientificBadgeStatus === "DRAFT") {
+        setScientificBadgeStatus("VALIDATED");
+      }
+    }
   };
 
   const isEditMode = !!fullRecord;
@@ -252,13 +296,26 @@ export function ClinicalStandardWizard({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">
-            Clinical Standard Engine — PRP {isEditMode && "(Edição)"}
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-2">
+            <DialogTitle className="text-xl">
+              Clinical Standard Engine — PRP {isEditMode && "(Edição)"}
+            </DialogTitle>
+          </div>
           <DialogDescription className="flex items-center gap-2 text-muted-foreground">
             <Clock className="w-4 h-4" />
             Tempo estimado: ≈ 3 minutos
           </DialogDescription>
+          {/* Scientific Mode Panel */}
+          {isEditMode && (
+            <div className="pt-2">
+              <ScientificModePanel
+                psrId={fullRecord?.record.id}
+                scientificModeEnabled={scientificModeEnabled}
+                scientificBadgeStatus={scientificBadgeStatus}
+                onStatusChange={handleScientificStatusChange}
+              />
+            </div>
+          )}
         </DialogHeader>
 
         {/* Progress */}
@@ -327,7 +384,7 @@ export function ClinicalStandardWizard({
             </Button>
           ) : (
             <Button
-              onClick={handleSave}
+              onClick={() => handleSave()}
               disabled={!canProceed() || saveMutation.isPending}
             >
               {saveMutation.isPending ? (
@@ -341,6 +398,14 @@ export function ClinicalStandardWizard({
             </Button>
           )}
         </div>
+
+        {/* Justification modal for validated scientific records */}
+        <JustificationModal
+          open={showJustificationModal}
+          onOpenChange={setShowJustificationModal}
+          onConfirm={handleJustificationConfirm}
+          loading={pendingJustificationSave}
+        />
       </DialogContent>
     </Dialog>
   );
