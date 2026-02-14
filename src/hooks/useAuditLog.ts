@@ -11,6 +11,15 @@ export interface AuditLogParams {
   additionalInfo?: Json;
 }
 
+// Helper: obter clinic_id do usuário (mesma lógica de useProtocols)
+async function getClinicId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  
+  const { data } = await supabase.rpc('current_user_clinic_id');
+  return data as string | null;
+}
+
 export function useAuditLog() {
   const logAction = useCallback(async (params: AuditLogParams): Promise<boolean> => {
     try {
@@ -18,6 +27,13 @@ export function useAuditLog() {
       
       if (!user) {
         console.warn("Tentativa de log sem usuário autenticado");
+        return false;
+      }
+
+      // Obter clinic_id (obrigatório para isolamento multi-tenant)
+      const clinicId = await getClinicId();
+      if (!clinicId) {
+        console.warn("Não foi possível determinar clinic_id para auditoria");
         return false;
       }
 
@@ -31,6 +47,7 @@ export function useAuditLog() {
           record_id: params.recordId || null,
           old_data: params.oldData || null,
           new_data: params.newData || null,
+          clinic_id: clinicId,
           ip_address: null,
           user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
           additional_info: params.additionalInfo || null,
