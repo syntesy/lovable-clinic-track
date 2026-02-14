@@ -3147,9 +3147,9 @@ export type Database = {
           material_traceability: Json | null
           pathology: string
           procedure_type: string
-          protocol_id: string | null
+          protocol_id: string
           protocol_signature: string | null
-          protocol_version_id: string | null
+          protocol_version_id: string
           safety_checklist: Json | null
           safety_checklist_status: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status: Database["public"]["Enums"]["scientific_badge_status"]
@@ -3178,9 +3178,9 @@ export type Database = {
           material_traceability?: Json | null
           pathology: string
           procedure_type?: string
-          protocol_id?: string | null
+          protocol_id: string
           protocol_signature?: string | null
-          protocol_version_id?: string | null
+          protocol_version_id: string
           safety_checklist?: Json | null
           safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]
@@ -3209,9 +3209,9 @@ export type Database = {
           material_traceability?: Json | null
           pathology?: string
           procedure_type?: string
-          protocol_id?: string | null
+          protocol_id?: string
           protocol_signature?: string | null
-          protocol_version_id?: string | null
+          protocol_version_id?: string
           safety_checklist?: Json | null
           safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]

@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Check, Clock, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { 
   ClinicalStandardFormData,
   defaultFormData,
@@ -14,6 +13,7 @@ import {
   isStep5Complete,
 } from "@/types/clinical-standard";
 import { useSaveClinicalStandard, useFullProcedureRecord, convertRecordToFormData } from "@/hooks/useClinicalStandard";
+import { Step0ProtocolSelection } from "./steps/Step0ProtocolSelection";
 import { Step1ClinicalContext } from "./steps/Step1ClinicalContext";
 import { Step2Severity } from "./steps/Step2Severity";
 import { Step3PRPProtocol } from "./steps/Step3PRPProtocol";
@@ -21,6 +21,7 @@ import { Step4Associations } from "./steps/Step4Associations";
 import { Step5CoInterventions } from "./steps/Step5CoInterventions";
 
 const STEPS = [
+  { title: "Protocolo", description: "Selecione o protocolo clínico" },
   { title: "Contexto Clínico", description: "Patologia e região anatômica" },
   { title: "Classificação", description: "Gravidade da condição" },
   { title: "Protocolo PRP", description: "Parâmetros do procedimento" },
@@ -41,6 +42,7 @@ export function ClinicalStandardWizard({
 }: ClinicalStandardWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<ClinicalStandardFormData>(defaultFormData);
+  const [selectedProtocolId, setSelectedProtocolId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
   
   const saveMutation = useSaveClinicalStandard();
@@ -53,15 +55,18 @@ export function ClinicalStandardWizard({
         // Edit mode: pre-fill with existing data
         const prefillData = convertRecordToFormData(fullRecord);
         setFormData(prefillData);
+        setSelectedProtocolId(fullRecord.record.protocol_id || "");
+        // In edit mode, skip Step 0 (protocol already set)
+        setCurrentStep(1);
       } else {
-        // Create mode: use default data
+        // Create mode: start at Step 0
         setFormData(defaultFormData);
+        setSelectedProtocolId("");
+        setCurrentStep(0);
       }
-      setCurrentStep(0);
       setIsInitialized(true);
     }
     
-    // Reset initialization flag when dialog closes
     if (!open) {
       setIsInitialized(false);
     }
@@ -80,14 +85,16 @@ export function ClinicalStandardWizard({
   const canProceed = (): boolean => {
     switch (currentStep) {
       case 0:
-        return isStep1Complete(formData.clinical_context);
+        return !!selectedProtocolId;
       case 1:
-        return isStep2Complete(formData.severity, formData.clinical_context.pathology);
+        return isStep1Complete(formData.clinical_context);
       case 2:
-        return isStep3Complete(formData.prp_protocol);
+        return isStep2Complete(formData.severity, formData.clinical_context.pathology);
       case 3:
-        return isStep4Complete(formData.associations);
+        return isStep3Complete(formData.prp_protocol);
       case 4:
+        return isStep4Complete(formData.associations);
+      case 5:
         return isStep5Complete(formData.co_interventions);
       default:
         return false;
@@ -102,6 +109,8 @@ export function ClinicalStandardWizard({
 
   const handleBack = () => {
     if (currentStep > 0) {
+      // In edit mode, don't go back to Step 0
+      if (currentStep === 1 && fullRecord) return;
       setCurrentStep(prev => prev - 1);
     }
   };
@@ -110,28 +119,36 @@ export function ClinicalStandardWizard({
     await saveMutation.mutateAsync({
       attendanceId,
       formData,
-      existingRecordId: fullRecord?.record.id, // Pass existing ID for UPDATE
+      protocolId: selectedProtocolId,
+      existingRecordId: fullRecord?.record.id,
     });
     onOpenChange(false);
     setCurrentStep(0);
     setFormData(defaultFormData);
+    setSelectedProtocolId("");
     setIsInitialized(false);
   };
 
   const isEditMode = !!fullRecord;
-
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   const renderStep = () => {
     switch (currentStep) {
       case 0:
         return (
+          <Step0ProtocolSelection
+            selectedProtocolId={selectedProtocolId}
+            onChange={setSelectedProtocolId}
+          />
+        );
+      case 1:
+        return (
           <Step1ClinicalContext
             data={formData.clinical_context}
             onChange={(data) => updateFormData('clinical_context', data)}
           />
         );
-      case 1:
+      case 2:
         return (
           <Step2Severity
             data={formData.severity}
@@ -139,21 +156,21 @@ export function ClinicalStandardWizard({
             onChange={(data) => updateFormData('severity', data)}
           />
         );
-      case 2:
+      case 3:
         return (
           <Step3PRPProtocol
             data={formData.prp_protocol}
             onChange={(data) => updateFormData('prp_protocol', data)}
           />
         );
-      case 3:
+      case 4:
         return (
           <Step4Associations
             data={formData.associations}
             onChange={(data) => updateFormData('associations', data)}
           />
         );
-      case 4:
+      case 5:
         return (
           <Step5CoInterventions
             data={formData.co_interventions}
@@ -165,7 +182,6 @@ export function ClinicalStandardWizard({
     }
   };
 
-  // Show loading state while fetching existing record
   if (isLoadingRecord && !isInitialized) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -242,7 +258,7 @@ export function ClinicalStandardWizard({
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={currentStep === 0}
+            disabled={currentStep === 0 || (currentStep === 1 && isEditMode)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
