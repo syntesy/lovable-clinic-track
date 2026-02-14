@@ -2863,40 +2863,58 @@ export type Database = {
       }
       patient_reported_outcomes: {
         Row: {
+          adverse_event: boolean
+          adverse_event_description: string | null
           attendance_id: string
+          clinic_id: string | null
           created_at: string
           function_scale_type: string | null
           function_score: number | null
+          global_change: string | null
           id: string
           is_synthetic: boolean | null
           pain_score: number | null
+          patient_id: string | null
           procedure_standard_record_id: string | null
           submitted_at: string
           timepoint: string
+          updated_at: string
         }
         Insert: {
+          adverse_event?: boolean
+          adverse_event_description?: string | null
           attendance_id: string
+          clinic_id?: string | null
           created_at?: string
           function_scale_type?: string | null
           function_score?: number | null
+          global_change?: string | null
           id?: string
           is_synthetic?: boolean | null
           pain_score?: number | null
+          patient_id?: string | null
           procedure_standard_record_id?: string | null
           submitted_at?: string
           timepoint: string
+          updated_at?: string
         }
         Update: {
+          adverse_event?: boolean
+          adverse_event_description?: string | null
           attendance_id?: string
+          clinic_id?: string | null
           created_at?: string
           function_scale_type?: string | null
           function_score?: number | null
+          global_change?: string | null
           id?: string
           is_synthetic?: boolean | null
           pain_score?: number | null
+          patient_id?: string | null
           procedure_standard_record_id?: string | null
           submitted_at?: string
           timepoint?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -2904,6 +2922,20 @@ export type Database = {
             columns: ["attendance_id"]
             isOneToOne: false
             referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_reported_outcomes_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_reported_outcomes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
           {
