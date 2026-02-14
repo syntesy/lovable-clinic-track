@@ -66,6 +66,7 @@ import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "
 import { CareerDashboard } from "./pages/Career";
 import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
 import DailyDashboard from "./pages/DailyDashboard";
+import AnaliseResultados from "./pages/AnaliseResultados";
 import { AtendimentosList, AtendimentoDetail, NovoAtendimento } from "./pages/Atendimento";
 import { CollectiveDashboard, PerformanceDashboard } from "./pages/Insights";
 // Patient Portal Pages - Single Function (Followup only)
@@ -430,6 +431,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          {/* Análise de Resultados */}
+          <Route path="/analise-resultados" element={<ProtectedRoute><Layout><AnaliseResultados /></Layout></ProtectedRoute>} />
           {/* Governance Routes */}
           <Route path="/governanca/protocolos" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolsList /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           <Route path="/governanca/protocolos/:protocolId" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolDetail /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
