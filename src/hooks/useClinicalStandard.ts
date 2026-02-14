@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { ClinicalStandardFormData } from "@/types/clinical-standard";
+import type { ClinicalStandardFormData, SafetyChecklistData, MaterialTraceabilityData, AdverseEventData } from "@/types/clinical-standard";
 import { defaultFormData } from "@/types/clinical-standard";
 import { evaluateClinicalStandard, type EvaluationInput, type ClinicalStandardStatus } from "@/lib/clinical-standard-evaluator";
 import { backfillOutcomesForProcedure } from "./usePatientOutcomes";
@@ -253,6 +253,18 @@ async function runEvaluation(recordId: string): Promise<void> {
   if (updateError) throw updateError;
 }
 
+/**
+ * Compute checklist status from items
+ */
+function computeChecklistStatus(checklist?: SafetyChecklistData): string {
+  if (!checklist || !checklist.items || checklist.items.length === 0) return "NOT_STARTED";
+  const anyChecked = checklist.items.some(i => i.checked);
+  const allRequiredChecked = checklist.items.filter(i => i.required).every(i => i.checked);
+  if (!anyChecked) return "NOT_STARTED";
+  if (allRequiredChecked) return "COMPLETED";
+  return "IN_PROGRESS";
+}
+
 export function useSaveClinicalStandard() {
   const queryClient = useQueryClient();
 
@@ -262,11 +274,19 @@ export function useSaveClinicalStandard() {
       formData,
       protocolId,
       existingRecordId,
+      safetyChecklist,
+      materialTraceability,
+      adverseEventRecord,
+      adverseEventStatus,
     }: {
       attendanceId: string;
       formData: ClinicalStandardFormData;
       protocolId: string;
-      existingRecordId?: string; // If provided, UPDATE; otherwise INSERT
+      existingRecordId?: string;
+      safetyChecklist?: SafetyChecklistData;
+      materialTraceability?: MaterialTraceabilityData;
+      adverseEventRecord?: AdverseEventData | null;
+      adverseEventStatus?: "NONE" | "REPORTED";
     }) => {
       // Apply coherence rules before saving
       const cleanedData = applyCoherenceRules(formData);
@@ -279,6 +299,9 @@ export function useSaveClinicalStandard() {
       if (existingRecordId) {
         // ========== UPDATE MODE ==========
         
+        // Compute checklist status
+        const checklistStatus = computeChecklistStatus(safetyChecklist);
+
         // 1. Update procedure_standard_records
         const { error: recordError } = await supabase
           .from("procedure_standard_records")
@@ -288,6 +311,11 @@ export function useSaveClinicalStandard() {
             specific_location: cleanedData.clinical_context.specific_location || null,
             severity_classification: severityValue,
             symptom_duration: cleanedData.clinical_context.symptom_duration || null,
+            safety_checklist: safetyChecklist as any,
+            safety_checklist_status: checklistStatus as any,
+            material_traceability: materialTraceability as any,
+            adverse_event_record: adverseEventRecord as any,
+            adverse_event_status: (adverseEventStatus || 'NONE') as any,
             updated_at: new Date().toISOString(),
           })
           .eq("id", existingRecordId);
@@ -344,6 +372,8 @@ export function useSaveClinicalStandard() {
         // ========== INSERT MODE ==========
         
         // 1. Create procedure_standard_records
+        // Note: safety_checklist is auto-populated by trigger if null
+        // We pass material/adverse data explicitly
         const { data: recordData, error: recordError } = await supabase
           .from("procedure_standard_records")
           .insert([{
@@ -354,6 +384,10 @@ export function useSaveClinicalStandard() {
             severity_classification: severityValue,
             symptom_duration: cleanedData.clinical_context.symptom_duration || null,
             protocol_id: protocolId,
+            material_traceability: materialTraceability || null,
+            adverse_event_record: adverseEventRecord || null,
+            adverse_event_status: adverseEventStatus || 'NONE',
+            // safety_checklist and safety_checklist_status auto-set by trigger
             // protocol_version_id is auto-set by trigger
           }] as any)
           .select()

@@ -6,12 +6,15 @@ import { ArrowLeft, ArrowRight, Check, Clock, Loader2 } from "lucide-react";
 import { 
   ClinicalStandardFormData,
   defaultFormData,
+  defaultMaterial,
+  defaultChecklist,
   isStep1Complete,
   isStep2Complete,
   isStep3Complete,
   isStep4Complete,
   isStep5Complete,
 } from "@/types/clinical-standard";
+import type { SafetyChecklistData, MaterialTraceabilityData, AdverseEventData } from "@/types/clinical-standard";
 import { useSaveClinicalStandard, useFullProcedureRecord, convertRecordToFormData } from "@/hooks/useClinicalStandard";
 import { Step0ProtocolSelection } from "./steps/Step0ProtocolSelection";
 import { Step1ClinicalContext } from "./steps/Step1ClinicalContext";
@@ -19,6 +22,7 @@ import { Step2Severity } from "./steps/Step2Severity";
 import { Step3PRPProtocol } from "./steps/Step3PRPProtocol";
 import { Step4Associations } from "./steps/Step4Associations";
 import { Step5CoInterventions } from "./steps/Step5CoInterventions";
+import { StepSafetyChecklist } from "./steps/StepSafetyChecklist";
 
 const STEPS = [
   { title: "Protocolo", description: "Selecione o protocolo clínico" },
@@ -27,6 +31,7 @@ const STEPS = [
   { title: "Protocolo PRP", description: "Parâmetros do procedimento" },
   { title: "Associações", description: "Ácido hialurônico e AINEs" },
   { title: "Cointervenções", description: "Terapias associadas" },
+  { title: "Segurança", description: "Checklist, material e intercorrências" },
 ];
 
 interface ClinicalStandardWizardProps {
@@ -44,6 +49,12 @@ export function ClinicalStandardWizard({
   const [formData, setFormData] = useState<ClinicalStandardFormData>(defaultFormData);
   const [selectedProtocolId, setSelectedProtocolId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Safety/operational state
+  const [checklist, setChecklist] = useState<SafetyChecklistData>(defaultChecklist);
+  const [material, setMaterial] = useState<MaterialTraceabilityData>(defaultMaterial);
+  const [adverseEvent, setAdverseEvent] = useState<AdverseEventData | null>(null);
+  const [adverseEventStatus, setAdverseEventStatus] = useState<"NONE" | "REPORTED">("NONE");
   
   const saveMutation = useSaveClinicalStandard();
   const { data: fullRecord, isLoading: isLoadingRecord } = useFullProcedureRecord(attendanceId);
@@ -56,12 +67,31 @@ export function ClinicalStandardWizard({
         const prefillData = convertRecordToFormData(fullRecord);
         setFormData(prefillData);
         setSelectedProtocolId(fullRecord.record.protocol_id || "");
+        // Pre-fill operational data from record
+        const rec = fullRecord.record as any;
+        if (rec.safety_checklist) {
+          setChecklist(rec.safety_checklist as SafetyChecklistData);
+        }
+        if (rec.material_traceability) {
+          setMaterial(rec.material_traceability as MaterialTraceabilityData);
+        }
+        if (rec.adverse_event_record) {
+          setAdverseEvent(rec.adverse_event_record as AdverseEventData);
+          setAdverseEventStatus("REPORTED");
+        } else {
+          setAdverseEvent(null);
+          setAdverseEventStatus(rec.adverse_event_status === "REPORTED" ? "REPORTED" : "NONE");
+        }
         // In edit mode, skip Step 0 (protocol already set)
         setCurrentStep(1);
       } else {
         // Create mode: start at Step 0
         setFormData(defaultFormData);
         setSelectedProtocolId("");
+        setChecklist(defaultChecklist);
+        setMaterial(defaultMaterial);
+        setAdverseEvent(null);
+        setAdverseEventStatus("NONE");
         setCurrentStep(0);
       }
       setIsInitialized(true);
@@ -96,6 +126,8 @@ export function ClinicalStandardWizard({
         return isStep4Complete(formData.associations);
       case 5:
         return isStep5Complete(formData.co_interventions);
+      case 6:
+        return true; // Safety step is always navigable (checklist not required to proceed/save as draft)
       default:
         return false;
     }
@@ -121,11 +153,19 @@ export function ClinicalStandardWizard({
       formData,
       protocolId: selectedProtocolId,
       existingRecordId: fullRecord?.record.id,
+      safetyChecklist: checklist,
+      materialTraceability: material,
+      adverseEventRecord: adverseEvent,
+      adverseEventStatus,
     });
     onOpenChange(false);
     setCurrentStep(0);
     setFormData(defaultFormData);
     setSelectedProtocolId("");
+    setChecklist(defaultChecklist);
+    setMaterial(defaultMaterial);
+    setAdverseEvent(null);
+    setAdverseEventStatus("NONE");
     setIsInitialized(false);
   };
 
@@ -177,6 +217,19 @@ export function ClinicalStandardWizard({
             onChange={(data) => updateFormData('co_interventions', data)}
           />
         );
+      case 6:
+        return (
+          <StepSafetyChecklist
+            checklist={checklist}
+            material={material}
+            adverseEvent={adverseEvent}
+            adverseEventStatus={adverseEventStatus}
+            onChecklistChange={setChecklist}
+            onMaterialChange={setMaterial}
+            onAdverseEventChange={setAdverseEvent}
+            onAdverseEventStatusChange={setAdverseEventStatus}
+          />
+        );
       default:
         return null;
     }
@@ -204,7 +257,7 @@ export function ClinicalStandardWizard({
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2 text-muted-foreground">
             <Clock className="w-4 h-4" />
-            Tempo estimado: ≈ 2 minutos
+            Tempo estimado: ≈ 3 minutos
           </DialogDescription>
         </DialogHeader>
 

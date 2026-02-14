@@ -169,6 +169,40 @@ export interface CoInterventionsData {
   epi_associated: boolean;
 }
 
+// =============================================================================
+// SAFETY CHECKLIST TYPES
+// =============================================================================
+
+export interface SafetyChecklistItem {
+  key: string;
+  label: string;
+  required: boolean;
+  checked: boolean;
+  note: string;
+}
+
+export interface SafetyChecklistData {
+  items: SafetyChecklistItem[];
+  completed_at: string | null;
+}
+
+export interface MaterialTraceabilityData {
+  manufacturer: string;
+  kit_system: string;
+  lot: string;
+  expiry_date: string;
+  notes: string;
+}
+
+export interface AdverseEventData {
+  type: string;
+  severity: "LEVE" | "MODERADO" | "GRAVE";
+  management: string;
+  outcome: string;
+  event_date: string;
+  resolution_date: string | null;
+}
+
 export interface ClinicalStandardFormData {
   clinical_context: ClinicalContextData;
   severity: SeverityData;
@@ -207,6 +241,19 @@ export const defaultFormData: ClinicalStandardFormData = {
     shockwave_therapy: 'none',
     epi_associated: false,
   },
+};
+
+export const defaultMaterial: MaterialTraceabilityData = {
+  manufacturer: '',
+  kit_system: '',
+  lot: '',
+  expiry_date: '',
+  notes: '',
+};
+
+export const defaultChecklist: SafetyChecklistData = {
+  items: [],
+  completed_at: null,
 };
 
 // =============================================================================
