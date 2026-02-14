@@ -280,6 +280,9 @@ export function useSaveClinicalStandard() {
       adverseEventRecord,
       adverseEventStatus,
       scientificEditJustification,
+      methodRun,
+      methodDeviation,
+      methodDeviationReason,
     }: {
       attendanceId: string;
       formData: ClinicalStandardFormData;
@@ -291,6 +294,9 @@ export function useSaveClinicalStandard() {
       adverseEventRecord?: AdverseEventData | null;
       adverseEventStatus?: "NONE" | "REPORTED";
       scientificEditJustification?: string;
+      methodRun?: Record<string, any>;
+      methodDeviation?: boolean;
+      methodDeviationReason?: string;
     }) => {
       // Apply coherence rules before saving
       const cleanedData = applyCoherenceRules(formData);
@@ -321,6 +327,9 @@ export function useSaveClinicalStandard() {
             adverse_event_record: adverseEventRecord as any,
             adverse_event_status: (adverseEventStatus || 'NONE') as any,
             scientific_edit_justification: scientificEditJustification || null,
+            method_run: methodRun || null,
+            method_deviation: methodDeviation ?? false,
+            method_deviation_reason: methodDeviation ? (methodDeviationReason || null) : null,
             updated_at: new Date().toISOString(),
           } as any)
           .eq("id", existingRecordId);
@@ -393,6 +402,9 @@ export function useSaveClinicalStandard() {
             material_traceability: materialTraceability || null,
             adverse_event_record: adverseEventRecord || null,
             adverse_event_status: adverseEventStatus || 'NONE',
+            method_run: methodRun || null,
+            method_deviation: methodDeviation ?? false,
+            method_deviation_reason: methodDeviation ? (methodDeviationReason || null) : null,
             // safety_checklist and safety_checklist_status auto-set by trigger
             // protocol_version_id is auto-set by trigger
           }] as any)
@@ -479,6 +491,10 @@ export function useSaveClinicalStandard() {
         toast.error("O protocolo selecionado não possui versão registrada.");
       } else if (msg.includes("safety checklist")) {
         toast.error("Não é possível finalizar sem checklist de segurança completo.");
+      } else if (msg.includes("System type") || msg.includes("OPEN/CLOSED/MIXED")) {
+        toast.error("Para procedimentos com coleta/preparo, selecione OPEN, CLOSED ou MIXED.");
+      } else if (msg.includes("Deviation reason")) {
+        toast.error("Informe o motivo do desvio para salvar.");
       } else {
         toast.error("Erro ao salvar protocolo padronizado.");
       }
