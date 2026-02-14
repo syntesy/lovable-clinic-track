@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { getMissingRequiredFields, type MissingField } from "@/lib/clinical-standard/methodRequiredFields";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -366,7 +367,15 @@ export function StepSafetyChecklist({
   const [adverseExpanded, setAdverseExpanded] = useState(false);
   const [materialError, setMaterialError] = useState("");
 
-  const status = computeChecklistStatus(checklist.items);
+  const missingMethodFields = useMemo(
+    () => getMissingRequiredFields(methodRun as Record<string, any> | null),
+    [methodRun],
+  );
+  const hasMethodPending = missingMethodFields.length > 0;
+
+  // Status considers both checklist items AND method required_fields
+  const rawStatus = computeChecklistStatus(checklist.items);
+  const status = rawStatus === "COMPLETED" && hasMethodPending ? "IN_PROGRESS" : rawStatus;
   const pendingRequired = checklist.items.filter(i => i.required && !i.checked);
 
   const handleToggleItem = (key: string, checked: boolean) => {
@@ -381,12 +390,13 @@ export function StepSafetyChecklist({
       item.key === key ? { ...item, checked } : item
     );
     
-    const newStatus = computeChecklistStatus(updatedItems);
-    const allRequiredDone = newStatus === "COMPLETED";
+    const newRawStatus = computeChecklistStatus(updatedItems);
+    // Block COMPLETED if method required_fields are still missing
+    const effectiveComplete = newRawStatus === "COMPLETED" && !hasMethodPending;
 
     onChecklistChange({
       items: updatedItems,
-      completed_at: allRequiredDone ? new Date().toISOString() : null,
+      completed_at: effectiveComplete ? new Date().toISOString() : null,
     });
   };
 
@@ -436,6 +446,18 @@ export function StepSafetyChecklist({
         </div>
         {statusBadge()}
       </div>
+
+      {/* Method required_fields warning */}
+      {hasMethodPending && (
+        <Alert className="border-border bg-muted/50">
+          <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          <AlertDescription className="text-sm text-muted-foreground">
+            <span className="font-medium">Campos obrigatórios do método pendentes ({missingMethodFields.length}):</span>{" "}
+            {missingMethodFields.slice(0, 3).map(f => f.label).join(", ")}
+            {missingMethodFields.length > 3 && ` +${missingMethodFields.length - 3}`}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Checklist Items */}
       <div className="space-y-2">
