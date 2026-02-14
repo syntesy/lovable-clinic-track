@@ -1,12 +1,11 @@
 /**
- * ResultsAnalyticsDashboard — Etapa 7: KPI cards + filtros completos.
+ * ResultsAnalyticsDashboard — Etapa 8: KPIs + Gráficos + filtros.
  */
 
 import { useMemo, useState } from "react";
 import { useResultsAnalytics, type ResultsKpis } from "@/hooks/useResultsAnalytics";
 import { useClinicProfessionals } from "@/hooks/useClinicProfessionals";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -15,12 +14,17 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, AlertTriangle, Users, TrendingUp, CalendarCheck,
-  Clock, ClipboardCheck, Link2,
+  AlertTriangle, Users, TrendingUp, CalendarCheck,
+  Clock, ClipboardCheck, Link2, BarChart3,
 } from "lucide-react";
 import {
   PATHOLOGY_OPTIONS, ANATOMIC_REGION_OPTIONS,
 } from "@/types/clinical-standard";
+import {
+  PieChart, Pie, Cell, Tooltip as ReTooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, ResponsiveContainer,
+} from "recharts";
 
 // ─── Period helpers ───────────────────────────────────────────────
 function monthsAgo(m: number): string {
@@ -66,6 +70,34 @@ const KPI_DEFS: KpiDef[] = [
   { key: "checklist_completed_pct", label: "Checklist completo", unit: "%", icon: ClipboardCheck, format: fmtPct },
   { key: "traceability_complete_pct", label: "Rastreabilidade", unit: "%", icon: Link2, format: fmtPct },
 ];
+
+// ─── Chart colors (using HSL from design tokens) ─────────────────
+const RESPONSE_COLORS: Record<string, string> = {
+  RESPONDER: "hsl(var(--primary))",
+  NON_RESPONDER: "hsl(var(--muted-foreground))",
+  WORSENING: "hsl(var(--destructive))",
+  NO_DATA: "hsl(var(--border))",
+};
+const RESPONSE_LABELS: Record<string, string> = {
+  RESPONDER: "Respondedor",
+  NON_RESPONDER: "Não respondedor",
+  WORSENING: "Piora",
+  NO_DATA: "Sem dados",
+};
+const SEVERITY_COLORS = [
+  "hsl(var(--primary))",
+  "hsl(var(--accent-foreground))",
+  "hsl(var(--destructive))",
+];
+
+function ChartEmpty() {
+  return (
+    <div className="flex flex-col items-center justify-center h-[260px] text-muted-foreground gap-2">
+      <BarChart3 className="h-8 w-8 opacity-40" />
+      <span className="text-sm">Sem dados suficientes para exibir este gráfico.</span>
+    </div>
+  );
+}
 
 // ─── Component ────────────────────────────────────────────────────
 export default function ResultsAnalyticsDashboard() {
@@ -282,6 +314,146 @@ export default function ResultsAnalyticsDashboard() {
           );
         })}
       </div>
+
+      {/* ── Charts Section ── */}
+      {!error && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* A) Donut — Distribuição de Resposta */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-foreground">
+                  Distribuição de resposta
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const dist = data?.charts?.response_distribution;
+                  const entries = dist
+                    ? Object.entries(dist).filter(([, v]) => v > 0)
+                    : [];
+                  if (noData || entries.length === 0) return <ChartEmpty />;
+                  const pieData = entries.map(([key, value]) => ({
+                    name: RESPONSE_LABELS[key] || key,
+                    value,
+                    fill: RESPONSE_COLORS[key] || "hsl(var(--muted))",
+                  }));
+                  return (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {pieData.map((entry, i) => (
+                            <Cell key={i} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ReTooltip
+                          formatter={(value: number) => [`${value}`, "Casos"]}
+                          contentStyle={{ fontSize: 12 }}
+                        />
+                        <Legend
+                          iconType="circle"
+                          iconSize={8}
+                          wrapperStyle={{ fontSize: 12 }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* B) Bar — Gravidade no Baseline */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-foreground">
+                  Gravidade no baseline
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const dist = data?.charts?.severity_distribution;
+                  const entries = dist
+                    ? Object.entries(dist).filter(([, v]) => v > 0)
+                    : [];
+                  if (noData || entries.length === 0) return <ChartEmpty />;
+                  const barData = entries.map(([key, value]) => ({
+                    name: key.charAt(0).toUpperCase() + key.slice(1),
+                    casos: value,
+                  }));
+                  return (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={barData} barSize={36}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                        <ReTooltip
+                          formatter={(value: number) => [`${value}`, "Casos"]}
+                          contentStyle={{ fontSize: 12 }}
+                        />
+                        <Bar dataKey="casos" radius={[4, 4, 0, 0]}>
+                          {barData.map((_, i) => (
+                            <Cell key={i} fill={SEVERITY_COLORS[i % SEVERITY_COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* C) Line — Evolução Temporal (full width) */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold text-foreground">
+                Evolução ao longo do tempo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const series = data?.charts?.outcomes_over_time;
+                if (noData || !series || series.length === 0) return <ChartEmpty />;
+                return (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={series}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis
+                        domain={[0, 100]}
+                        tick={{ fontSize: 11 }}
+                        stroke="hsl(var(--muted-foreground))"
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <ReTooltip
+                        formatter={(value: number) => [`${Math.round(value)}%`, "Respondedor"]}
+                        contentStyle={{ fontSize: 12 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="responder_pct"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        dot={{ r: 3, fill: "hsl(var(--primary))" }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* ── Debug (bottom) ── */}
       <details className="text-xs">
