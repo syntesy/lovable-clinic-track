@@ -7,21 +7,74 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   ShieldCheck, AlertTriangle, Package, CalendarDays, 
-  ChevronDown, ChevronUp, AlertCircle, CheckCircle2 
+  ChevronDown, ChevronUp, AlertCircle, CheckCircle2,
+  FlaskConical, Wrench
 } from "lucide-react";
 import type { SafetyChecklistData, MaterialTraceabilityData, AdverseEventData } from "@/types/clinical-standard";
+
+// ── Method types ──
+export interface MethodRunData {
+  meta?: {
+    procedure_category?: string;
+    requires_collection_or_prep?: boolean;
+  };
+  system?: {
+    system_type?: string;
+    sterility_standard?: string;
+  };
+  device_kit?: {
+    brand?: string;
+    model?: string;
+    type?: string;
+  };
+  consumables?: Array<{
+    label: string;
+    value?: string;
+    value_hint?: string;
+    required?: boolean;
+  }>;
+  technical_parameters?: Array<{
+    label: string;
+    value?: string;
+    unit?: string;
+    value_hint?: string;
+  }>;
+  technique?: {
+    guidance?: string;
+    approach?: string;
+  };
+  required_fields?: string[];
+  confirmed_from_template?: boolean;
+  filled_at?: string;
+  filled_by_user_id?: string;
+  [key: string]: any;
+}
 
 interface StepSafetyChecklistProps {
   checklist: SafetyChecklistData;
   material: MaterialTraceabilityData;
   adverseEvent: AdverseEventData | null;
   adverseEventStatus: "NONE" | "REPORTED";
+  methodRun: MethodRunData | null;
+  methodDeviation: boolean;
+  methodDeviationReason: string;
   onChecklistChange: (checklist: SafetyChecklistData) => void;
   onMaterialChange: (material: MaterialTraceabilityData) => void;
   onAdverseEventChange: (event: AdverseEventData | null) => void;
   onAdverseEventStatusChange: (status: "NONE" | "REPORTED") => void;
+  onMethodRunChange: (methodRun: MethodRunData) => void;
+  onMethodDeviationChange: (deviation: boolean) => void;
+  onMethodDeviationReasonChange: (reason: string) => void;
 }
 
 function isMinimalMaterialFilled(m: MaterialTraceabilityData): boolean {
@@ -36,17 +89,280 @@ function computeChecklistStatus(items: SafetyChecklistData["items"]): "NOT_START
   return "IN_PROGRESS";
 }
 
+// ── Method & Materials Section ──
+function MethodMaterialsSection({
+  methodRun,
+  methodDeviation,
+  methodDeviationReason,
+  onMethodRunChange,
+  onMethodDeviationChange,
+  onMethodDeviationReasonChange,
+}: {
+  methodRun: MethodRunData | null;
+  methodDeviation: boolean;
+  methodDeviationReason: string;
+  onMethodRunChange: (m: MethodRunData) => void;
+  onMethodDeviationChange: (d: boolean) => void;
+  onMethodDeviationReasonChange: (r: string) => void;
+}) {
+  const data: MethodRunData = methodRun || {};
+  const requiresCollPrep = data.meta?.requires_collection_or_prep === true;
+  const systemType = data.system?.system_type || "";
+  const sterility = data.system?.sterility_standard || "";
+  const consumables = data.consumables || [];
+  const techParams = data.technical_parameters || [];
+  const guidance = data.technique?.guidance || "";
+  const approach = data.technique?.approach || "";
+  const deviceKit = data.device_kit || {};
+
+  const update = (patch: Partial<MethodRunData>) => {
+    onMethodRunChange({ ...data, ...patch });
+  };
+
+  const updateSystem = (patch: Record<string, string>) => {
+    update({ system: { ...data.system, ...patch } });
+  };
+
+  const updateDeviceKit = (patch: Record<string, string>) => {
+    update({ device_kit: { ...deviceKit, ...patch } });
+  };
+
+  const updateTechnique = (patch: Record<string, string>) => {
+    update({ technique: { ...data.technique, ...patch } });
+  };
+
+  const updateConsumable = (index: number, value: string) => {
+    const updated = [...consumables];
+    updated[index] = { ...updated[index], value };
+    update({ consumables: updated });
+  };
+
+  const updateTechParam = (index: number, value: string) => {
+    const updated = [...techParams];
+    updated[index] = { ...updated[index], value };
+    update({ technical_parameters: updated });
+  };
+
+  const systemTypeOptions = requiresCollPrep
+    ? [
+        { value: "OPEN", label: "Aberto (Open)" },
+        { value: "CLOSED", label: "Fechado (Closed)" },
+        { value: "MIXED", label: "Misto (Mixed)" },
+      ]
+    : [
+        { value: "OPEN", label: "Aberto (Open)" },
+        { value: "CLOSED", label: "Fechado (Closed)" },
+        { value: "MIXED", label: "Misto (Mixed)" },
+        { value: "NA", label: "N/A" },
+      ];
+
+  return (
+    <div className="space-y-4">
+      {/* System Type */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Sistema</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">
+              Tipo de sistema {requiresCollPrep && <span className="text-destructive">*</span>}
+            </Label>
+            <Select
+              value={systemType}
+              onValueChange={(v) => updateSystem({ system_type: v })}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {systemTypeOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {requiresCollPrep && (
+              <p className="text-[10px] text-muted-foreground">Obrigatório para procedimentos com coleta/preparo</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Padrão de esterilidade</Label>
+            <Select
+              value={sterility}
+              onValueChange={(v) => updateSystem({ sterility_standard: v })}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Opcional" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FIELD_STERILE">Campo Estéril</SelectItem>
+                <SelectItem value="CLOSED_CIRCUIT">Circuito Fechado</SelectItem>
+                <SelectItem value="HOOD">Capela</SelectItem>
+                <SelectItem value="OTHER">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Device Kit */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Marca do kit</Label>
+            <Input
+              placeholder="Ex: Arthrex"
+              value={deviceKit.brand || ""}
+              onChange={(e) => updateDeviceKit({ brand: e.target.value })}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Modelo</Label>
+            <Input
+              placeholder="Ex: ACP"
+              value={deviceKit.model || ""}
+              onChange={(e) => updateDeviceKit({ model: e.target.value })}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Tipo</Label>
+            <Input
+              placeholder="Ex: Double Syringe"
+              value={deviceKit.type || ""}
+              onChange={(e) => updateDeviceKit({ type: e.target.value })}
+              className="h-8 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Consumables */}
+      {consumables.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Consumíveis</h4>
+          <div className="grid grid-cols-2 gap-3">
+            {consumables.map((item, idx) => (
+              <div key={idx} className="space-y-1">
+                <Label className="text-xs">
+                  {item.label}
+                  {item.required && <span className="text-muted-foreground text-[10px] ml-1">(obrigatório)</span>}
+                </Label>
+                <Input
+                  placeholder={item.value_hint || ""}
+                  value={item.value || ""}
+                  onChange={(e) => updateConsumable(idx, e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Technical Parameters */}
+      {techParams.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Parâmetros Técnicos</h4>
+          <div className="grid grid-cols-2 gap-3">
+            {techParams.map((param, idx) => (
+              <div key={idx} className="space-y-1">
+                <Label className="text-xs">
+                  {param.label} {param.unit && <span className="text-muted-foreground">({param.unit})</span>}
+                </Label>
+                <Input
+                  placeholder={param.value_hint || ""}
+                  value={param.value || ""}
+                  onChange={(e) => updateTechParam(idx, e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Technique */}
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Técnica</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Guia</Label>
+            <Select
+              value={guidance}
+              onValueChange={(v) => updateTechnique({ guidance: v })}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="US">Ultrassom</SelectItem>
+                <SelectItem value="FLUORO">Fluoroscopia</SelectItem>
+                <SelectItem value="LANDMARK">Landmark</SelectItem>
+                <SelectItem value="NONE">Nenhum</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Abordagem</Label>
+            <Input
+              placeholder="Ex: Posterolateral"
+              value={approach}
+              onChange={(e) => updateTechnique({ approach: e.target.value })}
+              className="h-8 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      <Separator className="my-2" />
+
+      {/* Deviation Toggle */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-sm font-medium">Houve desvio do método do protocolo?</Label>
+            <p className="text-[11px] text-muted-foreground">Marque se a execução diferiu do template institucional</p>
+          </div>
+          <Switch
+            checked={methodDeviation}
+            onCheckedChange={onMethodDeviationChange}
+          />
+        </div>
+
+        {methodDeviation && (
+          <div className="space-y-1">
+            <Label className="text-xs">
+              Motivo do desvio <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              placeholder="Descreva o motivo clínico do desvio do método padronizado..."
+              value={methodDeviationReason}
+              onChange={(e) => onMethodDeviationReasonChange(e.target.value)}
+              className="text-sm min-h-[60px]"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function StepSafetyChecklist({
   checklist,
   material,
   adverseEvent,
   adverseEventStatus,
+  methodRun,
+  methodDeviation,
+  methodDeviationReason,
   onChecklistChange,
   onMaterialChange,
   onAdverseEventChange,
   onAdverseEventStatusChange,
+  onMethodRunChange,
+  onMethodDeviationChange,
+  onMethodDeviationReasonChange,
 }: StepSafetyChecklistProps) {
   const [materialExpanded, setMaterialExpanded] = useState(true);
+  const [methodExpanded, setMethodExpanded] = useState(true);
   const [adverseExpanded, setAdverseExpanded] = useState(false);
   const [materialError, setMaterialError] = useState("");
 
@@ -54,7 +370,6 @@ export function StepSafetyChecklist({
   const pendingRequired = checklist.items.filter(i => i.required && !i.checked);
 
   const handleToggleItem = (key: string, checked: boolean) => {
-    // Special rule: material_logged requires material fields
     if (key === "material_logged" && checked && !isMinimalMaterialFilled(material)) {
       setMaterialError("Preencha os dados mínimos de material (fabricante, sistema/kit, lote e validade) antes de marcar este item.");
       setMaterialExpanded(true);
@@ -227,6 +542,39 @@ export function StepSafetyChecklist({
                 className="h-8 text-sm"
               />
             </div>
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Method & Materials */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setMethodExpanded(!methodExpanded)}
+          className="flex items-center justify-between w-full text-left"
+        >
+          <div className="flex items-center gap-2">
+            <FlaskConical className="w-5 h-5 text-primary" />
+            <div>
+              <Label className="text-base font-semibold cursor-pointer">Método & Materiais</Label>
+              <p className="text-[11px] text-muted-foreground leading-tight">Registre como a técnica foi realizada e com quais materiais</p>
+            </div>
+          </div>
+          {methodExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {methodExpanded && (
+          <div className="mt-3">
+            <MethodMaterialsSection
+              methodRun={methodRun}
+              methodDeviation={methodDeviation}
+              methodDeviationReason={methodDeviationReason}
+              onMethodRunChange={onMethodRunChange}
+              onMethodDeviationChange={onMethodDeviationChange}
+              onMethodDeviationReasonChange={onMethodDeviationReasonChange}
+            />
           </div>
         )}
       </div>

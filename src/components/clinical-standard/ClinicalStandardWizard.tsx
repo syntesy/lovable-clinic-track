@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import type { MethodRunData } from "./steps/StepSafetyChecklist";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Check, Clock, Loader2 } from "lucide-react";
@@ -58,6 +59,10 @@ export function ClinicalStandardWizard({
   const [adverseEvent, setAdverseEvent] = useState<AdverseEventData | null>(null);
   const [adverseEventStatus, setAdverseEventStatus] = useState<"NONE" | "REPORTED">("NONE");
 
+  // Method tracking state
+  const [methodRun, setMethodRun] = useState<MethodRunData | null>(null);
+  const [methodDeviation, setMethodDeviation] = useState(false);
+  const [methodDeviationReason, setMethodDeviationReason] = useState("");
   // Scientific mode state
   const [scientificModeEnabled, setScientificModeEnabled] = useState(false);
   const [scientificBadgeStatus, setScientificBadgeStatus] = useState("NONE");
@@ -91,6 +96,10 @@ export function ClinicalStandardWizard({
           setAdverseEvent(null);
           setAdverseEventStatus(rec.adverse_event_status === "REPORTED" ? "REPORTED" : "NONE");
         }
+        // Method tracking
+        setMethodRun(rec.method_run || null);
+        setMethodDeviation(!!rec.method_deviation);
+        setMethodDeviationReason(rec.method_deviation_reason || "");
         // Scientific mode
         setScientificModeEnabled(!!rec.scientific_mode_enabled);
         setScientificBadgeStatus(rec.scientific_badge_status || "NONE");
@@ -104,6 +113,9 @@ export function ClinicalStandardWizard({
         setMaterial(defaultMaterial);
         setAdverseEvent(null);
         setAdverseEventStatus("NONE");
+        setMethodRun(null);
+        setMethodDeviation(false);
+        setMethodDeviationReason("");
         setCurrentStep(0);
       }
       setIsInitialized(true);
@@ -177,6 +189,9 @@ export function ClinicalStandardWizard({
       adverseEventRecord: adverseEvent,
       adverseEventStatus,
       scientificEditJustification: justification || undefined,
+      methodRun: methodRun || undefined,
+      methodDeviation,
+      methodDeviationReason: methodDeviation ? methodDeviationReason : "",
     });
     onOpenChange(false);
     setCurrentStep(0);
@@ -187,6 +202,9 @@ export function ClinicalStandardWizard({
     setMaterial(defaultMaterial);
     setAdverseEvent(null);
     setAdverseEventStatus("NONE");
+    setMethodRun(null);
+    setMethodDeviation(false);
+    setMethodDeviationReason("");
     setScientificModeEnabled(false);
     setScientificBadgeStatus("NONE");
     setIsInitialized(false);
@@ -274,10 +292,16 @@ export function ClinicalStandardWizard({
             material={material}
             adverseEvent={adverseEvent}
             adverseEventStatus={adverseEventStatus}
+            methodRun={methodRun}
+            methodDeviation={methodDeviation}
+            methodDeviationReason={methodDeviationReason}
             onChecklistChange={setChecklist}
             onMaterialChange={setMaterial}
             onAdverseEventChange={setAdverseEvent}
             onAdverseEventStatusChange={setAdverseEventStatus}
+            onMethodRunChange={setMethodRun}
+            onMethodDeviationChange={setMethodDeviation}
+            onMethodDeviationReasonChange={setMethodDeviationReason}
           />
         );
       default:
