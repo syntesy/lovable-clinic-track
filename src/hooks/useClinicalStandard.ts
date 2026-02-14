@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getMissingRequiredFields } from "@/lib/clinical-standard/methodRequiredFields";
 import type { ClinicalStandardFormData, SafetyChecklistData, MaterialTraceabilityData, AdverseEventData } from "@/types/clinical-standard";
 import { defaultFormData } from "@/types/clinical-standard";
 import { evaluateClinicalStandard, type EvaluationInput, type ClinicalStandardStatus } from "@/lib/clinical-standard-evaluator";
@@ -256,12 +257,17 @@ async function runEvaluation(recordId: string): Promise<void> {
 /**
  * Compute checklist status from items
  */
-function computeChecklistStatus(checklist?: SafetyChecklistData): string {
+function computeChecklistStatus(checklist?: SafetyChecklistData, methodRun?: Record<string, any> | null): string {
   if (!checklist || !checklist.items || checklist.items.length === 0) return "NOT_STARTED";
   const anyChecked = checklist.items.some(i => i.checked);
   const allRequiredChecked = checklist.items.filter(i => i.required).every(i => i.checked);
   if (!anyChecked) return "NOT_STARTED";
-  if (allRequiredChecked) return "COMPLETED";
+  if (allRequiredChecked) {
+    // Block COMPLETED if method required_fields are still missing
+    const missing = getMissingRequiredFields(methodRun);
+    if (missing.length > 0) return "IN_PROGRESS";
+    return "COMPLETED";
+  }
   return "IN_PROGRESS";
 }
 
@@ -310,7 +316,7 @@ export function useSaveClinicalStandard() {
         // ========== UPDATE MODE ==========
         
         // Compute checklist status
-        const checklistStatus = computeChecklistStatus(safetyChecklist);
+        const checklistStatus = computeChecklistStatus(safetyChecklist, methodRun as Record<string, any> | null);
 
         // 1. Update procedure_standard_records
         const { error: recordError } = await supabase
