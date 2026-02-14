@@ -49,7 +49,7 @@ export default function LandingHero() {
             initial="hidden" animate="visible" variants={fadeUp} custom={0.1}
             className="text-foreground text-3xl md:text-4xl lg:text-[2.75rem] font-semibold tracking-tight leading-[1.15] mb-6"
           >
-            Infraestrutura clínica para decisões regenerativas responsáveis.
+            Infraestrutura clínica para Medicina Regenerativa responsável.
           </motion.h1>
 
           <motion.p
