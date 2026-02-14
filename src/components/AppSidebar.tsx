@@ -28,6 +28,7 @@ const menuItems = [
   { title: "Diligência & Compliance", url: "/diligence", icon: Shield },
   { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
   { title: "Protocolos (Governança)", url: "/governanca/protocolos", icon: ScrollText },
+  { title: "Conformidade", url: "/governanca/conformidade", icon: ShieldCheck },
   { title: "Parceiros", url: "/partners", icon: Handshake },
   { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
   { title: "AGENTE rhegen", url: "/agente-mac", icon: Bot, isAgent: true },
