@@ -5553,6 +5553,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      create_protocol_version_atomic: {
+        Args: {
+          p_change_summary: string
+          p_clinic_id: string
+          p_protocol_id: string
+          p_snapshot: Json
+          p_user_id: string
+        }
+        Returns: Record<string, unknown>
+      }
       generate_case_uid: { Args: { p_case_id: string }; Returns: string }
       generate_clinician_uid: {
         Args: { p_clinician_id: string }
