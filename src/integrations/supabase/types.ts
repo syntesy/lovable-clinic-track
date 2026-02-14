@@ -5622,6 +5622,18 @@ export type Database = {
         }
         Returns: Json
       }
+      get_conformity_metrics_by_professional: {
+        Args: {
+          p_area?: string
+          p_clinic_id: string
+          p_end: string
+          p_only_completed?: boolean
+          p_professional_id: string
+          p_protocol_type?: string
+          p_start: string
+        }
+        Returns: Json
+      }
       get_mentor_by_user_id: { Args: { _user_id: string }; Returns: string }
       get_next_snapshot_version: {
         Args: { p_dimension_id: string; p_time_window: string }
