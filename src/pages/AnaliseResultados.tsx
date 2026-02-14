@@ -1,31 +1,28 @@
 /**
- * ResultsAnalyticsDashboard — Etapa 6: Filtros completos + debug de params.
- * Exibe JSON bruto da RPC com filtros integrados ao hook.
+ * ResultsAnalyticsDashboard — Etapa 7: KPI cards + filtros completos.
  */
 
 import { useMemo, useState } from "react";
-import { useResultsAnalytics } from "@/hooks/useResultsAnalytics";
+import { useResultsAnalytics, type ResultsKpis } from "@/hooks/useResultsAnalytics";
 import { useClinicProfessionals } from "@/hooks/useClinicProfessionals";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, AlertTriangle } from "lucide-react";
 import {
-  PATHOLOGY_OPTIONS,
-  ANATOMIC_REGION_OPTIONS,
+  Loader2, AlertTriangle, Users, TrendingUp, CalendarCheck,
+  Clock, ClipboardCheck, Link2,
+} from "lucide-react";
+import {
+  PATHOLOGY_OPTIONS, ANATOMIC_REGION_OPTIONS,
 } from "@/types/clinical-standard";
 
 // ─── Period helpers ───────────────────────────────────────────────
-
 function monthsAgo(m: number): string {
   const d = new Date();
   d.setMonth(d.getMonth() - m);
@@ -49,36 +46,47 @@ const PROCEDURE_TYPES = [
   { value: "OZONIOTERAPIA", label: "Ozonioterapia" },
 ];
 
-// ─── Component ────────────────────────────────────────────────────
+// ─── KPI card definition ─────────────────────────────────────────
+interface KpiDef {
+  key: keyof ResultsKpis;
+  label: string;
+  unit?: string;
+  icon: React.ElementType;
+  format: (v: number | undefined | null) => string;
+}
 
+const fmt0 = (v: number | undefined | null) => v == null ? "—" : Math.round(v).toString();
+const fmtPct = (v: number | undefined | null) => v == null ? "—" : `${Math.round(v)}`;
+
+const KPI_DEFS: KpiDef[] = [
+  { key: "total_cases", label: "Total de casos", icon: Users, format: fmt0 },
+  { key: "response_rate_pct", label: "Respondedor", unit: "%", icon: TrendingUp, format: fmtPct },
+  { key: "followup_coverage_pct", label: "Follow-up", unit: "%", icon: CalendarCheck, format: fmtPct },
+  { key: "avg_time_to_followup_days", label: "Tempo médio follow-up", unit: "dias", icon: Clock, format: fmt0 },
+  { key: "checklist_completed_pct", label: "Checklist completo", unit: "%", icon: ClipboardCheck, format: fmtPct },
+  { key: "traceability_complete_pct", label: "Rastreabilidade", unit: "%", icon: Link2, format: fmtPct },
+];
+
+// ─── Component ────────────────────────────────────────────────────
 export default function ResultsAnalyticsDashboard() {
-  // Period
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>("12m");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
-
-  // Filters
   const [procedureType, setProcedureType] = useState<string | null>(null);
   const [pathology, setPathology] = useState<string | null>(null);
   const [anatomicRegion, setAnatomicRegion] = useState<string | null>(null);
   const [protocolId, setProtocolId] = useState<string | null>(null);
   const [protocolType, setProtocolType] = useState<string | null>(null);
   const [responsibleProfessionalId, setResponsibleProfessionalId] = useState<string | null>(null);
-
-  // Toggles
   const [onlyCompleted, setOnlyCompleted] = useState(true);
   const [onlyScientific, setOnlyScientific] = useState(false);
   const [onlyValidated, setOnlyValidated] = useState(false);
-
-  // Pagination (kept in state for later)
   const [page, setPage] = useState(1);
   const [pageSize] = useState(25);
   const [sort] = useState<"latest" | "delta" | "baseline">("latest");
 
-  // Professionals list
   const { data: professionals } = useClinicProfessionals();
 
-  // Computed period
   const { start, end } = useMemo(() => {
     if (periodPreset === "custom") {
       return {
@@ -90,47 +98,28 @@ export default function ResultsAnalyticsDashboard() {
     return { start: monthsAgo(months), end: nowISO };
   }, [periodPreset, customStart, customEnd]);
 
-  // Reset page on any filter change
   const resetPage = () => setPage(1);
 
-  // Build hook params
   const hookParams = useMemo(
     () => ({
-      start,
-      end,
-      procedureType,
-      pathology,
-      anatomicRegion,
-      protocolId: protocolId || null,
-      protocolType,
-      responsibleProfessionalId,
-      onlyCompleted,
-      onlyScientific,
-      scientificStatus: onlyValidated ? "validated" : null,
-      page,
-      pageSize,
-      sort,
-    }),
-    [
       start, end, procedureType, pathology, anatomicRegion,
-      protocolId, protocolType, responsibleProfessionalId,
-      onlyCompleted, onlyScientific, onlyValidated,
+      protocolId: protocolId || null, protocolType,
+      responsibleProfessionalId, onlyCompleted, onlyScientific,
+      scientificStatus: onlyValidated ? "validated" : null,
       page, pageSize, sort,
-    ]
+    }),
+    [start, end, procedureType, pathology, anatomicRegion,
+      protocolId, protocolType, responsibleProfessionalId,
+      onlyCompleted, onlyScientific, onlyValidated, page, pageSize, sort]
   );
 
-  const { data, loading, error, refetch } = useResultsAnalytics(hookParams, {
+  const { data, loading, error } = useResultsAnalytics(hookParams, {
     enabled: !!start && !!end,
   });
 
-  const noData =
-    data && ((data.kpis as any)?.no_data === true || data.cases.total === 0);
+  const noData = data && ((data.kpis as any)?.no_data === true || data.kpis.total_cases === 0);
 
-  // Debug params (omit clinic_id since it's resolved internally)
-  const debugParams = useMemo(() => {
-    const { ...rest } = hookParams;
-    return rest;
-  }, [hookParams]);
+  const debugParams = useMemo(() => ({ ...hookParams }), [hookParams]);
 
   return (
     <div className="space-y-6">
@@ -148,17 +137,10 @@ export default function ResultsAnalyticsDashboard() {
       {/* ── Filters Card ── */}
       <Card>
         <CardContent className="pt-6 space-y-4">
-          {/* Row 1: Period */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <Label>Período</Label>
-              <Select
-                value={periodPreset}
-                onValueChange={(v) => {
-                  setPeriodPreset(v as PeriodPreset);
-                  resetPage();
-                }}
-              >
+              <Select value={periodPreset} onValueChange={(v) => { setPeriodPreset(v as PeriodPreset); resetPage(); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PERIOD_PRESETS.map((p) => (
@@ -167,120 +149,74 @@ export default function ResultsAnalyticsDashboard() {
                 </SelectContent>
               </Select>
             </div>
-
             {periodPreset === "custom" && (
               <>
                 <div className="space-y-1.5">
                   <Label>Início</Label>
-                  <Input
-                    type="date"
-                    value={customStart}
-                    onChange={(e) => { setCustomStart(e.target.value); resetPage(); }}
-                  />
+                  <Input type="date" value={customStart} onChange={(e) => { setCustomStart(e.target.value); resetPage(); }} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Fim</Label>
-                  <Input
-                    type="date"
-                    value={customEnd}
-                    onChange={(e) => { setCustomEnd(e.target.value); resetPage(); }}
-                  />
+                  <Input type="date" value={customEnd} onChange={(e) => { setCustomEnd(e.target.value); resetPage(); }} />
                 </div>
               </>
             )}
           </div>
 
-          {/* Row 2: Main filters */}
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <Label>Procedimento</Label>
-              <Select
-                value={procedureType ?? "__all__"}
-                onValueChange={(v) => { setProcedureType(v === "__all__" ? null : v); resetPage(); }}
-              >
+              <Select value={procedureType ?? "__all__"} onValueChange={(v) => { setProcedureType(v === "__all__" ? null : v); resetPage(); }}>
                 <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Todos</SelectItem>
-                  {PROCEDURE_TYPES.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
+                  {PROCEDURE_TYPES.map((p) => (<SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-1.5">
               <Label>Patologia</Label>
-              <Select
-                value={pathology ?? "__all__"}
-                onValueChange={(v) => { setPathology(v === "__all__" ? null : v); resetPage(); }}
-              >
+              <Select value={pathology ?? "__all__"} onValueChange={(v) => { setPathology(v === "__all__" ? null : v); resetPage(); }}>
                 <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Todas</SelectItem>
-                  {PATHOLOGY_OPTIONS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
+                  {PATHOLOGY_OPTIONS.map((p) => (<SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-1.5">
               <Label>Região anatômica</Label>
-              <Select
-                value={anatomicRegion ?? "__all__"}
-                onValueChange={(v) => { setAnatomicRegion(v === "__all__" ? null : v); resetPage(); }}
-              >
+              <Select value={anatomicRegion ?? "__all__"} onValueChange={(v) => { setAnatomicRegion(v === "__all__" ? null : v); resetPage(); }}>
                 <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Todas</SelectItem>
-                  {ANATOMIC_REGION_OPTIONS.map((r) => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                  ))}
+                  {ANATOMIC_REGION_OPTIONS.map((r) => (<SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-1.5">
               <Label>Profissional responsável</Label>
-              <Select
-                value={responsibleProfessionalId ?? "__all__"}
-                onValueChange={(v) => { setResponsibleProfessionalId(v === "__all__" ? null : v); resetPage(); }}
-              >
+              <Select value={responsibleProfessionalId ?? "__all__"} onValueChange={(v) => { setResponsibleProfessionalId(v === "__all__" ? null : v); resetPage(); }}>
                 <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Todos</SelectItem>
-                  {professionals?.map((p) => (
-                    <SelectItem key={p.user_id} value={p.user_id}>
-                      {p.email || p.user_id.slice(0, 8)}
-                    </SelectItem>
-                  ))}
+                  {professionals?.map((p) => (<SelectItem key={p.user_id} value={p.user_id}>{p.email || p.user_id.slice(0, 8)}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Row 3: Protocol filters */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label>ID do Protocolo</Label>
-              <Input
-                placeholder="UUID do protocolo (opcional)"
-                value={protocolId ?? ""}
-                onChange={(e) => { setProtocolId(e.target.value || null); resetPage(); }}
-              />
+              <Input placeholder="UUID do protocolo (opcional)" value={protocolId ?? ""} onChange={(e) => { setProtocolId(e.target.value || null); resetPage(); }} />
             </div>
-
             <div className="space-y-1.5">
               <Label>Tipo de protocolo</Label>
-              <Input
-                placeholder="Ex: REGEN_BASE, CUSTOM..."
-                value={protocolType ?? ""}
-                onChange={(e) => { setProtocolType(e.target.value || null); resetPage(); }}
-              />
+              <Input placeholder="Ex: REGEN_BASE, CUSTOM..." value={protocolType ?? ""} onChange={(e) => { setProtocolType(e.target.value || null); resetPage(); }} />
             </div>
           </div>
 
-          {/* Row 4: Toggles */}
           <div className="flex flex-wrap gap-6 pt-2">
             <div className="flex items-center gap-2">
               <Switch checked={onlyCompleted} onCheckedChange={(v) => { setOnlyCompleted(v); resetPage(); }} />
@@ -298,7 +234,56 @@ export default function ResultsAnalyticsDashboard() {
         </CardContent>
       </Card>
 
-      {/* ── Debug: params enviados ── */}
+      {/* ── No-data banner ── */}
+      {noData && (
+        <div className="flex items-center gap-2 rounded-md border border-muted bg-muted/40 p-3 text-sm text-muted-foreground">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          Sem dados suficientes para o período e filtros selecionados.
+        </div>
+      )}
+
+      {/* ── Error ── */}
+      {error && (
+        <p className="text-destructive font-medium">Erro: {error}</p>
+      )}
+
+      {/* ── KPI Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {KPI_DEFS.map((kpi) => {
+          const Icon = kpi.icon;
+          const raw = data?.kpis?.[kpi.key] as number | undefined | null;
+          const isEmpty = noData || (!loading && data == null);
+
+          return (
+            <Card key={kpi.key} className={isEmpty ? "opacity-50" : ""}>
+              <CardContent className="pt-5 pb-4 flex items-start gap-3">
+                <div className="rounded-md bg-primary/10 p-2">
+                  <Icon className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground truncate">
+                    {kpi.label}
+                  </p>
+                  {loading && !data ? (
+                    <Skeleton className="h-7 w-16 mt-1" />
+                  ) : (
+                    <p className="text-2xl font-bold tracking-tight text-foreground mt-0.5">
+                      {isEmpty ? "—" : kpi.format(raw)}
+                      {!isEmpty && kpi.unit && (
+                        <span className="text-sm font-normal text-muted-foreground ml-0.5">
+                          {kpi.unit}
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* ── Debug (bottom) ── */}
       <details className="text-xs">
         <summary className="cursor-pointer text-muted-foreground font-medium">
           🔍 Parâmetros atuais da RPC (debug)
@@ -308,28 +293,15 @@ export default function ResultsAnalyticsDashboard() {
         </pre>
       </details>
 
-      {/* ── States ── */}
-      {loading && !data && (
-        <p className="text-muted-foreground flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
-        </p>
-      )}
-
-      {error && (
-        <p className="text-destructive font-medium">Erro: {error}</p>
-      )}
-
-      {noData && (
-        <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          Sem dados suficientes para o período/filtros selecionados.
-        </div>
-      )}
-
       {data && (
-        <pre className="rounded-md border bg-muted p-4 text-xs overflow-auto max-h-[60vh] whitespace-pre-wrap">
-          {JSON.stringify(data, null, 2)}
-        </pre>
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted-foreground font-medium">
+            📦 JSON bruto (debug)
+          </summary>
+          <pre className="mt-2 rounded-md border bg-muted p-4 overflow-auto max-h-[50vh] whitespace-pre-wrap">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        </details>
       )}
     </div>
   );
