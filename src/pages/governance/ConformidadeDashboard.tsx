@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import {
   ClipboardCheck, ShieldCheck, CheckCircle2, AlertTriangle,
   FileText, BarChart3, Activity, ExternalLink, CalendarIcon, RefreshCw,
-  Filter, Dna
+  Filter, Dna, Users
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,11 @@ import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useConformityMetrics, type ConformityFilters } from "@/hooks/useConformityMetrics";
+import { ProfessionalConformityView } from "@/components/governance/ProfessionalConformityView";
 import { DateRange } from "react-day-picker";
 
 function pct(num: number, den: number): string {
@@ -43,7 +45,7 @@ export default function ConformidadeDashboard() {
   const [protocolType, setProtocolType] = useState<string>("all");
   const [onlyCompleted, setOnlyCompleted] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
-
+  const [activeTab, setActiveTab] = useState("clinical");
   const filters: ConformityFilters = useMemo(() => ({
     start: startOfDay(dateRange.from || subDays(now, 30)),
     end: endOfDay(dateRange.to || now),
@@ -162,223 +164,248 @@ export default function ConformidadeDashboard() {
         </CardContent>
       </Card>
 
-      {/* KPI Cards */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-5"><Skeleton className="h-16 w-full" /></CardContent></Card>
-          ))}
-        </div>
-      ) : kpis ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <KPICard icon={FileText} title="Total Procedimentos" value={kpis.total} />
-          <KPICard icon={ShieldCheck} title="Com Protocolo" value={pct(kpis.withProtocol, kpis.total)} subtitle={`${kpis.withProtocol}/${kpis.total}`} />
-          <KPICard icon={CheckCircle2} title="Checklist Completo" value={pct(kpis.checklistCompleted, kpis.total)} subtitle={`${kpis.checklistCompleted}/${kpis.total}`} color="text-green-500" />
-          <KPICard icon={ClipboardCheck} title="Finalizados" value={pct(kpis.finalized, kpis.total)} subtitle={`${kpis.finalized}/${kpis.total}`} color="text-blue-500" />
-          <KPICard icon={AlertTriangle} title="Eventos Adversos" value={kpis.adverseEvents} subtitle={pct(kpis.adverseEvents, kpis.total)} color={kpis.adverseEvents > 0 ? "text-amber-500" : undefined} />
-          <KPICard icon={Dna} title="Casos Científicos" value={(kpis.scientificDraftCount || 0) + (kpis.scientificValidatedCount || 0)} subtitle={`${kpis.scientificDraftCount || 0} rascunho · ${kpis.scientificValidatedCount || 0} validados`} color="text-emerald-500" />
-        </div>
-      ) : null}
+      {/* Tabs: Clinical vs Professional */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="clinical" className="gap-2">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Visão Clínica
+          </TabsTrigger>
+          <TabsTrigger value="professional" className="gap-2">
+            <Users className="h-3.5 w-3.5" />
+            Visão Profissional
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Protocol Distribution */}
-      {kpis && kpis.protocolDistribution.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              Distribuição por Tipo de Protocolo
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex gap-3 flex-wrap">
-            {kpis.protocolDistribution.map(d => (
-              <Badge key={d.type} variant="outline" className="text-sm py-1 px-3">
-                {d.type === "REGEN_BASE" ? "Base REGHEN" : d.type === "DERIVED" ? "Derivado" : d.type === "INSTITUTIONAL" ? "Institucional" : d.type}
-                : <span className="font-bold ml-1">{d.count}</span>
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Top Protocols */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
-            Protocolos Mais Usados (Top 10)
-            {selectedProtocolId && (
-              <Button variant="ghost" size="sm" className="ml-auto text-xs" onClick={() => setSelectedProtocolId(null)}>
-                Limpar filtro
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+        <TabsContent value="clinical" className="space-y-6 mt-0">
+          {/* KPI Cards */}
           {isLoading ? (
-            <div className="p-6"><Skeleton className="h-32 w-full" /></div>
-          ) : topProtocols.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
-              Nenhum procedimento no período
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Card key={i}><CardContent className="p-5"><Skeleton className="h-16 w-full" /></CardContent></Card>
+              ))}
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-xs">Protocolo</TableHead>
-                  <TableHead className="text-xs">Tipo</TableHead>
-                  <TableHead className="text-xs text-right">Procedimentos</TableHead>
-                  <TableHead className="text-xs text-right">% Checklist OK</TableHead>
-                  <TableHead className="text-xs w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {topProtocols.map(tp => (
-                  <TableRow
-                    key={tp.protocol_id}
-                    className={cn(
-                      "border-border cursor-pointer hover:bg-muted/50",
-                      selectedProtocolId === tp.protocol_id && "bg-muted"
-                    )}
-                    onClick={() => setSelectedProtocolId(tp.protocol_id === selectedProtocolId ? null : tp.protocol_id)}
-                  >
-                    <TableCell className="text-sm font-medium py-3">{tp.title}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {tp.protocol_type === "REGEN_BASE" ? "Base" : tp.protocol_type === "DERIVED" ? "Derivado" : "Institucional"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">{tp.total_procedures}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={cn(
-                        "font-medium",
-                        tp.total_procedures > 0 && tp.checklist_completed_count === tp.total_procedures
-                          ? "text-green-500"
-                          : "text-amber-500"
-                      )}>
-                        {pct(tp.checklist_completed_count, tp.total_procedures)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/governanca/protocolos/${tp.protocol_id}`);
-                        }}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+          ) : kpis ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <KPICard icon={FileText} title="Total Procedimentos" value={kpis.total} />
+              <KPICard icon={ShieldCheck} title="Com Protocolo" value={pct(kpis.withProtocol, kpis.total)} subtitle={`${kpis.withProtocol}/${kpis.total}`} />
+              <KPICard icon={CheckCircle2} title="Checklist Completo" value={pct(kpis.checklistCompleted, kpis.total)} subtitle={`${kpis.checklistCompleted}/${kpis.total}`} color="text-green-500" />
+              <KPICard icon={ClipboardCheck} title="Finalizados" value={pct(kpis.finalized, kpis.total)} subtitle={`${kpis.finalized}/${kpis.total}`} color="text-blue-500" />
+              <KPICard icon={AlertTriangle} title="Eventos Adversos" value={kpis.adverseEvents} subtitle={pct(kpis.adverseEvents, kpis.total)} color={kpis.adverseEvents > 0 ? "text-amber-500" : undefined} />
+              <KPICard icon={Dna} title="Casos Científicos" value={(kpis.scientificDraftCount || 0) + (kpis.scientificValidatedCount || 0)} subtitle={`${kpis.scientificDraftCount || 0} rascunho · ${kpis.scientificValidatedCount || 0} validados`} color="text-emerald-500" />
+            </div>
+          ) : null}
+
+          {/* Protocol Distribution */}
+          {kpis && kpis.protocolDistribution.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  Distribuição por Tipo de Protocolo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex gap-3 flex-wrap">
+                {kpis.protocolDistribution.map(d => (
+                  <Badge key={d.type} variant="outline" className="text-sm py-1 px-3">
+                    {d.type === "REGEN_BASE" ? "Base REGHEN" : d.type === "DERIVED" ? "Derivado" : d.type === "INSTITUTIONAL" ? "Institucional" : d.type}
+                    : <span className="font-bold ml-1">{d.count}</span>
+                  </Badge>
                 ))}
-              </TableBody>
-            </Table>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Drill-down: filtered pending by selected protocol */}
-      {filteredPending && filteredPending.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Filter className="h-4 w-4 text-primary" />
-              Procedimentos do protocolo selecionado com pendências
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <PendingTable items={filteredPending} navigate={navigate} />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Pending Compliance */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            Pendências de Conformidade
-            {pending.length > 0 && (
-              <Badge variant="secondary" className="ml-2 text-xs">{pending.length}</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6"><Skeleton className="h-32 w-full" /></div>
-          ) : pending.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
-              Nenhuma pendência no período 🎉
-            </div>
-          ) : (
-            <PendingTable items={pending} navigate={navigate} />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Adverse Events */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-            Eventos Adversos
-            {adverseEvents.length > 0 && (
-              <Badge variant="destructive" className="ml-2 text-xs">{adverseEvents.length}</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6"><Skeleton className="h-32 w-full" /></div>
-          ) : adverseEvents.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
-              Nenhum evento adverso reportado no período
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-xs">Data</TableHead>
-                  <TableHead className="text-xs">Paciente</TableHead>
-                  <TableHead className="text-xs">Protocolo</TableHead>
-                  <TableHead className="text-xs">Severidade</TableHead>
-                  <TableHead className="text-xs">Tipo</TableHead>
-                  <TableHead className="text-xs w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {adverseEvents.map(ae => (
-                  <TableRow key={ae.id} className="border-border">
-                    <TableCell className="text-sm py-3">
-                      {format(new Date(ae.created_at), "dd/MM/yy", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell className="text-sm">{ae.patient_name || "—"}</TableCell>
-                    <TableCell className="text-sm">{ae.protocol_title}</TableCell>
-                    <TableCell>
-                      <SeverityBadge severity={ae.adverse_event_record?.severity} />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {ae.adverse_event_record?.type || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => navigate(`/atendimentos/${ae.attendance_id}`)}
+          {/* Top Protocols */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Protocolos Mais Usados (Top 10)
+                {selectedProtocolId && (
+                  <Button variant="ghost" size="sm" className="ml-auto text-xs" onClick={() => setSelectedProtocolId(null)}>
+                    Limpar filtro
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-6"><Skeleton className="h-32 w-full" /></div>
+              ) : topProtocols.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                  Nenhum procedimento no período
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-xs">Protocolo</TableHead>
+                      <TableHead className="text-xs">Tipo</TableHead>
+                      <TableHead className="text-xs text-right">Procedimentos</TableHead>
+                      <TableHead className="text-xs text-right">% Checklist OK</TableHead>
+                      <TableHead className="text-xs w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {topProtocols.map(tp => (
+                      <TableRow
+                        key={tp.protocol_id}
+                        className={cn(
+                          "border-border cursor-pointer hover:bg-muted/50",
+                          selectedProtocolId === tp.protocol_id && "bg-muted"
+                        )}
+                        onClick={() => setSelectedProtocolId(tp.protocol_id === selectedProtocolId ? null : tp.protocol_id)}
                       >
-                        Abrir
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        <TableCell className="text-sm font-medium py-3">{tp.title}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {tp.protocol_type === "REGEN_BASE" ? "Base" : tp.protocol_type === "DERIVED" ? "Derivado" : "Institucional"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">{tp.total_procedures}</TableCell>
+                        <TableCell className="text-right">
+                          <span className={cn(
+                            "font-medium",
+                            tp.total_procedures > 0 && tp.checklist_completed_count === tp.total_procedures
+                              ? "text-green-500"
+                              : "text-amber-500"
+                          )}>
+                            {pct(tp.checklist_completed_count, tp.total_procedures)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/governanca/protocolos/${tp.protocol_id}`);
+                            }}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Drill-down: filtered pending by selected protocol */}
+          {filteredPending && filteredPending.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-primary" />
+                  Procedimentos do protocolo selecionado com pendências
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <PendingTable items={filteredPending} navigate={navigate} />
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Pending Compliance */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                Pendências de Conformidade
+                {pending.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">{pending.length}</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-6"><Skeleton className="h-32 w-full" /></div>
+              ) : pending.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                  Nenhuma pendência no período 🎉
+                </div>
+              ) : (
+                <PendingTable items={pending} navigate={navigate} />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Adverse Events */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                Eventos Adversos
+                {adverseEvents.length > 0 && (
+                  <Badge variant="destructive" className="ml-2 text-xs">{adverseEvents.length}</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-6"><Skeleton className="h-32 w-full" /></div>
+              ) : adverseEvents.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                  Nenhum evento adverso reportado no período
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-xs">Data</TableHead>
+                      <TableHead className="text-xs">Paciente</TableHead>
+                      <TableHead className="text-xs">Protocolo</TableHead>
+                      <TableHead className="text-xs">Severidade</TableHead>
+                      <TableHead className="text-xs">Tipo</TableHead>
+                      <TableHead className="text-xs w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {adverseEvents.map(ae => (
+                      <TableRow key={ae.id} className="border-border">
+                        <TableCell className="text-sm py-3">
+                          {format(new Date(ae.created_at), "dd/MM/yy", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-sm">{ae.patient_name || "—"}</TableCell>
+                        <TableCell className="text-sm">{ae.protocol_title}</TableCell>
+                        <TableCell>
+                          <SeverityBadge severity={ae.adverse_event_record?.severity} />
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {ae.adverse_event_record?.type || "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => navigate(`/atendimentos/${ae.attendance_id}`)}
+                          >
+                            Abrir
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="professional" className="mt-0">
+          <ProfessionalConformityView
+            dateRange={dateRange}
+            area={area}
+            protocolType={protocolType}
+            onlyCompleted={onlyCompleted}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
