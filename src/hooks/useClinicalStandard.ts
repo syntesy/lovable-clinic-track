@@ -273,6 +273,7 @@ export function useSaveClinicalStandard() {
       attendanceId,
       formData,
       protocolId,
+      responsibleProfessionalId,
       existingRecordId,
       safetyChecklist,
       materialTraceability,
@@ -283,6 +284,7 @@ export function useSaveClinicalStandard() {
       attendanceId: string;
       formData: ClinicalStandardFormData;
       protocolId: string;
+      responsibleProfessionalId?: string;
       existingRecordId?: string;
       safetyChecklist?: SafetyChecklistData;
       materialTraceability?: MaterialTraceabilityData;
@@ -387,6 +389,7 @@ export function useSaveClinicalStandard() {
             severity_classification: severityValue,
             symptom_duration: cleanedData.clinical_context.symptom_duration || null,
             protocol_id: protocolId,
+            responsible_professional_user_id: responsibleProfessionalId,
             material_traceability: materialTraceability || null,
             adverse_event_record: adverseEventRecord || null,
             adverse_event_status: adverseEventStatus || 'NONE',
@@ -468,6 +471,8 @@ export function useSaveClinicalStandard() {
       const msg = error?.message || "";
       if (msg.includes("scientific_justification_required")) {
         toast.error("Registro científico validado: justificativa obrigatória para alterações.");
+      } else if (msg.includes("Invalid responsible professional")) {
+        toast.error("Profissional responsável inválido. Deve ter role PROFESSIONAL ou ADMIN.");
       } else if (msg.includes("inactive protocol")) {
         toast.error("Este protocolo foi desativado e não pode ser utilizado.");
       } else if (msg.includes("no versions")) {

@@ -3137,6 +3137,7 @@ export type Database = {
           adverse_event_record: Json | null
           adverse_event_status: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region: string
+          assisted_by_user_id: string | null
           attendance_id: string
           clinic_id: string
           clinical_standard_notes: string[] | null
@@ -3149,10 +3150,12 @@ export type Database = {
           last_evaluated_at: string | null
           material_traceability: Json | null
           pathology: string
+          performed_by_user_id: string
           procedure_type: string
           protocol_id: string
           protocol_signature: string | null
           protocol_version_id: string
+          responsible_professional_user_id: string
           safety_checklist: Json | null
           safety_checklist_status: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status: Database["public"]["Enums"]["scientific_badge_status"]
@@ -3169,6 +3172,7 @@ export type Database = {
           adverse_event_record?: Json | null
           adverse_event_status?: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region: string
+          assisted_by_user_id?: string | null
           attendance_id: string
           clinic_id: string
           clinical_standard_notes?: string[] | null
@@ -3181,10 +3185,12 @@ export type Database = {
           last_evaluated_at?: string | null
           material_traceability?: Json | null
           pathology: string
+          performed_by_user_id?: string
           procedure_type?: string
           protocol_id: string
           protocol_signature?: string | null
           protocol_version_id: string
+          responsible_professional_user_id: string
           safety_checklist?: Json | null
           safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]
@@ -3201,6 +3207,7 @@ export type Database = {
           adverse_event_record?: Json | null
           adverse_event_status?: Database["public"]["Enums"]["adverse_event_status"]
           anatomic_region?: string
+          assisted_by_user_id?: string | null
           attendance_id?: string
           clinic_id?: string
           clinical_standard_notes?: string[] | null
@@ -3213,10 +3220,12 @@ export type Database = {
           last_evaluated_at?: string | null
           material_traceability?: Json | null
           pathology?: string
+          performed_by_user_id?: string
           procedure_type?: string
           protocol_id?: string
           protocol_signature?: string | null
           protocol_version_id?: string
+          responsible_professional_user_id?: string
           safety_checklist?: Json | null
           safety_checklist_status?: Database["public"]["Enums"]["safety_checklist_status"]
           scientific_badge_status?: Database["public"]["Enums"]["scientific_badge_status"]

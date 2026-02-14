@@ -49,6 +49,7 @@ export function ClinicalStandardWizard({
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<ClinicalStandardFormData>(defaultFormData);
   const [selectedProtocolId, setSelectedProtocolId] = useState<string>("");
+  const [responsibleProfessionalId, setResponsibleProfessionalId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Safety/operational state
@@ -74,6 +75,7 @@ export function ClinicalStandardWizard({
         const prefillData = convertRecordToFormData(fullRecord);
         setFormData(prefillData);
         setSelectedProtocolId(fullRecord.record.protocol_id || "");
+        setResponsibleProfessionalId((fullRecord.record as any).responsible_professional_user_id || "");
         // Pre-fill operational data from record
         const rec = fullRecord.record as any;
         if (rec.safety_checklist) {
@@ -125,7 +127,7 @@ export function ClinicalStandardWizard({
   const canProceed = (): boolean => {
     switch (currentStep) {
       case 0:
-        return !!selectedProtocolId;
+        return !!selectedProtocolId && !!responsibleProfessionalId;
       case 1:
         return isStep1Complete(formData.clinical_context);
       case 2:
@@ -168,6 +170,7 @@ export function ClinicalStandardWizard({
       attendanceId,
       formData,
       protocolId: selectedProtocolId,
+      responsibleProfessionalId,
       existingRecordId: fullRecord?.record.id,
       safetyChecklist: checklist,
       materialTraceability: material,
@@ -179,6 +182,7 @@ export function ClinicalStandardWizard({
     setCurrentStep(0);
     setFormData(defaultFormData);
     setSelectedProtocolId("");
+    setResponsibleProfessionalId("");
     setChecklist(defaultChecklist);
     setMaterial(defaultMaterial);
     setAdverseEvent(null);
@@ -220,9 +224,11 @@ export function ClinicalStandardWizard({
     switch (currentStep) {
       case 0:
         return (
-          <Step0ProtocolSelection
+         <Step0ProtocolSelection
             selectedProtocolId={selectedProtocolId}
             onChange={setSelectedProtocolId}
+            responsibleProfessionalId={responsibleProfessionalId}
+            onResponsibleChange={setResponsibleProfessionalId}
           />
         );
       case 1:

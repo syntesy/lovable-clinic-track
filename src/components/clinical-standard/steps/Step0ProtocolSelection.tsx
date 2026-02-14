@@ -2,21 +2,43 @@ import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
+import { AlertCircle, Loader2, ShieldCheck, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProtocolsList } from "@/hooks/useProtocols";
+import { useClinicProfessionals, useCurrentUserRole } from "@/hooks/useClinicProfessionals";
 
 interface Step0Props {
   selectedProtocolId: string;
   onChange: (protocolId: string) => void;
+  responsibleProfessionalId: string;
+  onResponsibleChange: (userId: string) => void;
 }
 
-export function Step0ProtocolSelection({ selectedProtocolId, onChange }: Step0Props) {
+export function Step0ProtocolSelection({ 
+  selectedProtocolId, 
+  onChange,
+  responsibleProfessionalId,
+  onResponsibleChange,
+}: Step0Props) {
   // Fetch all active protocols (all types)
   const { data: baseProtocols, isLoading: loadingBase } = useProtocolsList("REGEN_BASE", { isActive: true });
   const { data: derivedProtocols, isLoading: loadingDerived } = useProtocolsList("DERIVED", { isActive: true });
   const { data: institutionalProtocols, isLoading: loadingInst } = useProtocolsList("INSTITUTIONAL", { isActive: true });
 
-  const isLoading = loadingBase || loadingDerived || loadingInst;
+  // Fetch professionals and current user
+  const { data: professionals, isLoading: loadingProfessionals } = useClinicProfessionals();
+  const { data: currentUser } = useCurrentUserRole();
+
+  const isLoading = loadingBase || loadingDerived || loadingInst || loadingProfessionals;
+
+  // Auto-select current user as responsible if they are professional/admin
+  useEffect(() => {
+    if (currentUser && !responsibleProfessionalId) {
+      if (currentUser.role === "professional" || currentUser.role === "admin") {
+        onResponsibleChange(currentUser.userId);
+      }
+    }
+  }, [currentUser, responsibleProfessionalId, onResponsibleChange]);
 
   const allProtocols = [
     ...(baseProtocols || []),
@@ -62,8 +84,52 @@ export function Step0ProtocolSelection({ selectedProtocolId, onChange }: Step0Pr
     }
   };
 
+  const isProfessionalOrAdmin = currentUser?.role === "professional" || currentUser?.role === "admin";
+
+  const getProfessionalLabel = (prof: { user_id: string; role: string; email: string }) => {
+    if (prof.email) return `${prof.email} (${prof.role})`;
+    // Truncate UUID for display
+    const shortId = prof.user_id.substring(0, 8);
+    const isCurrentUser = prof.user_id === currentUser?.userId;
+    const suffix = isCurrentUser ? " (você)" : "";
+    if (currentUser?.email && isCurrentUser) return `${currentUser.email}${suffix}`;
+    return `Profissional ${shortId}...${suffix}`;
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Responsible Professional Selector */}
+      <div className="space-y-2">
+        <Label className="text-base font-semibold flex items-center gap-2">
+          <User className="w-4 h-4" />
+          Profissional responsável *
+        </Label>
+        <p className="text-sm text-muted-foreground">
+          {isProfessionalOrAdmin
+            ? "Você será definido como responsável. Pode alterar se necessário."
+            : "Selecione o profissional responsável pelo procedimento."}
+        </p>
+        <Select
+          value={responsibleProfessionalId}
+          onValueChange={onResponsibleChange}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o profissional responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            {(professionals || []).map((prof) => (
+              <SelectItem key={prof.user_id} value={prof.user_id}>
+                {getProfessionalLabel(prof)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {!responsibleProfessionalId && (
+          <p className="text-xs text-destructive">Selecione o profissional responsável para continuar.</p>
+        )}
+      </div>
+
+      {/* Protocol Selection */}
       <div className="space-y-1">
         <Label className="text-base font-semibold">Selecione o protocolo clínico *</Label>
         <p className="text-sm text-muted-foreground">
@@ -74,7 +140,7 @@ export function Step0ProtocolSelection({ selectedProtocolId, onChange }: Step0Pr
       <RadioGroup
         value={selectedProtocolId}
         onValueChange={onChange}
-        className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-1"
+        className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-1"
       >
         {allProtocols.map((protocol) => (
           <div
