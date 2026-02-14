@@ -261,7 +261,7 @@ export function useDuplicateProtocol() {
 
       if (createErr) throw createErr;
 
-      // NOTE: version 1.0 is created automatically by the trigger
+      // NOTE: version 1.0 é criada automaticamente pelo trigger ao inserir o protocolo
 
       // 4. Create audit log
       await supabase.from("governance_audit_logs").insert({
@@ -326,31 +326,22 @@ export function useUpdateProtocol() {
 
       if (updateErr) throw updateErr;
 
-      // 3. Calculate next version label
-      const { data: existingVersions } = await supabase
-        .from("protocol_versions")
-        .select("version_label")
-        .eq("protocol_id", protocolId)
-        .order("created_at", { ascending: false })
-        .limit(1);
+      // 3. Create new version via atomic RPC (version_label calculado atomicamente no backend)
+      const snapshotData = {
+        ...updated,
+        updated_at: new Date().toISOString(),
+      };
 
-      const lastLabel = existingVersions?.[0]?.version_label || "1.0";
-      const parts = lastLabel.split(".");
-      const major = parseInt(parts[0]) || 1;
-      const minor = (parseInt(parts[1]) || 0) + 1;
-      const nextLabel = `${major}.${minor}`;
-
-      // 4. Create new version
-      const { error: versionErr } = await supabase
-        .from("protocol_versions")
-        .insert({
-          clinic_id: clinicId,
-          protocol_id: protocolId,
-          version_label: nextLabel,
-          change_summary: changeSummary,
-          snapshot: updated,
-          created_by_user_id: user.id,
-        });
+      const { data: newVersion, error: versionErr } = await supabase.rpc(
+        "create_protocol_version_atomic",
+        {
+          p_protocol_id: protocolId,
+          p_clinic_id: clinicId,
+          p_change_summary: changeSummary,
+          p_snapshot: snapshotData,
+          p_user_id: user.id,
+        }
+      );
 
       if (versionErr) throw versionErr;
 
