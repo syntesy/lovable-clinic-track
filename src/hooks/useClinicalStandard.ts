@@ -20,6 +20,8 @@ interface ProcedureStandardRecord {
   cluster_key: string | null;
   protocol_signature: string | null;
   last_evaluated_at: string | null;
+  protocol_id: string;
+  protocol_version_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -258,10 +260,12 @@ export function useSaveClinicalStandard() {
     mutationFn: async ({
       attendanceId,
       formData,
+      protocolId,
       existingRecordId,
     }: {
       attendanceId: string;
       formData: ClinicalStandardFormData;
+      protocolId: string;
       existingRecordId?: string; // If provided, UPDATE; otherwise INSERT
     }) => {
       // Apply coherence rules before saving
@@ -349,6 +353,8 @@ export function useSaveClinicalStandard() {
             specific_location: cleanedData.clinical_context.specific_location || null,
             severity_classification: severityValue,
             symptom_duration: cleanedData.clinical_context.symptom_duration || null,
+            protocol_id: protocolId,
+            // protocol_version_id is auto-set by trigger
           }] as any)
           .select()
           .single();
@@ -422,7 +428,16 @@ export function useSaveClinicalStandard() {
     },
     onError: (error: any) => {
       console.error("Error saving clinical standard:", error);
-      toast.error("Erro ao salvar protocolo padronizado.");
+      const msg = error?.message || "";
+      if (msg.includes("inactive protocol")) {
+        toast.error("Este protocolo foi desativado e não pode ser utilizado.");
+      } else if (msg.includes("no versions")) {
+        toast.error("O protocolo selecionado não possui versão registrada.");
+      } else if (msg.includes("safety checklist")) {
+        toast.error("Não é possível finalizar sem checklist de segurança completo.");
+      } else {
+        toast.error("Erro ao salvar protocolo padronizado.");
+      }
     },
   });
 }
