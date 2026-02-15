@@ -74,7 +74,7 @@ export default function LandingPreview() {
       background: "linear-gradient(180deg, hsl(220 30% 14%) 0%, hsl(220 28% 16%) 30%, hsl(218 25% 18%) 60%, hsl(215 22% 15%) 100%)"
     }}>
       {/* Nucleus background — fixed canvas with particles */}
-      <NucleusBackground nucleusX={nucleusPos.x} nucleusY={nucleusPos.y} />
+      <NucleusBackground nucleusX={nucleusPos.x} nucleusY={nucleusPos.y} scrollProgress={scrollProgress} />
 
       {/* Subtle grain overlay */}
       <div className="fixed inset-0 opacity-[0.025] z-[1]" style={{

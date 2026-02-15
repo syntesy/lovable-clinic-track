@@ -3,6 +3,7 @@ import { useRef, useEffect } from "react";
 interface Props {
   nucleusX: number; // 0-1 proportion of screen
   nucleusY: number; // 0-1 proportion of screen
+  scrollProgress?: number; // 0-1 overall scroll
 }
 
 interface Particle {
@@ -14,16 +15,16 @@ interface Particle {
   alpha: number;
   baseAlpha: number;
   orbitR: number;
+  baseOrbitR: number;
   orbitSpeed: number;
   orbitPhase: number;
-  // Trail positions
   trail: { x: number; y: number }[];
   isSpark: boolean;
 }
 
 const PARTICLE_COUNT_DESKTOP = 900;
 const PARTICLE_COUNT_MOBILE = 400;
-const NUCLEUS_RADIUS_RATIO = 0.38; // ratio of min(w,h) — fills ~half screen
+const NUCLEUS_RADIUS_RATIO = 0.38;
 
 function createParticles(count: number, w: number, h: number): Particle[] {
   const particles: Particle[] = [];
@@ -44,6 +45,7 @@ function createParticles(count: number, w: number, h: number): Particle[] {
       alpha: 0,
       baseAlpha: isSpark ? 0.6 + Math.random() * 0.4 : 0.15 + Math.random() * 0.45,
       orbitR,
+      baseOrbitR: orbitR,
       orbitSpeed: (0.08 + Math.random() * 0.2) * (Math.random() > 0.5 ? 1 : -1),
       orbitPhase: angle,
       trail: [],
@@ -53,17 +55,30 @@ function createParticles(count: number, w: number, h: number): Particle[] {
   return particles;
 }
 
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t;
+// Per-section behavior profiles
+function getSectionBehavior(sp: number) {
+  // Section 0: Hero — slow breathing, calm
+  if (sp < 0.15) return { breathSpeed: 0.3, breathAmp: 0.03, driftAmpX: 0.008, driftAmpY: 0.012, driftFreqX: 0.15, driftFreqY: 0.1, orbitMul: 1.0, dustSpeed: 0.02, glowPulse: 0.08 };
+  // Section 1: Como funciona — faster drift, expanding
+  if (sp < 0.35) return { breathSpeed: 0.5, breathAmp: 0.05, driftAmpX: 0.015, driftAmpY: 0.008, driftFreqX: 0.25, driftFreqY: 0.18, orbitMul: 1.15, dustSpeed: 0.04, glowPulse: 0.12 };
+  // Section 2: Métricas — tight, pulsing energy
+  if (sp < 0.55) return { breathSpeed: 0.8, breathAmp: 0.04, driftAmpX: 0.006, driftAmpY: 0.006, driftFreqX: 0.35, driftFreqY: 0.4, orbitMul: 0.85, dustSpeed: 0.06, glowPulse: 0.18 };
+  // Section 3: SCORE — slow lateral sway
+  if (sp < 0.8) return { breathSpeed: 0.4, breathAmp: 0.06, driftAmpX: 0.02, driftAmpY: 0.005, driftFreqX: 0.12, driftFreqY: 0.08, orbitMul: 1.1, dustSpeed: 0.03, glowPulse: 0.10 };
+  // Section 4: CTA — gentle, inviting
+  return { breathSpeed: 0.25, breathAmp: 0.035, driftAmpX: 0.01, driftAmpY: 0.01, driftFreqX: 0.1, driftFreqY: 0.12, orbitMul: 1.0, dustSpeed: 0.025, glowPulse: 0.06 };
 }
 
-export default function NucleusBackground({ nucleusX, nucleusY }: Props) {
+export default function NucleusBackground({ nucleusX, nucleusY, scrollProgress = 0 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const currentCenter = useRef({ x: 0.5, y: 0.78 });
   const rafRef = useRef(0);
   const timeRef = useRef(0);
   const initializedRef = useRef(false);
+  // Store latest props in refs for the animation loop
+  const propsRef = useRef({ nucleusX, nucleusY, scrollProgress });
+  propsRef.current = { nucleusX, nucleusY, scrollProgress };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -86,7 +101,7 @@ export default function NucleusBackground({ nucleusX, nucleusY }: Props) {
       if (!initializedRef.current) {
         const count = isMobile ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
         particlesRef.current = createParticles(count, w, h);
-        currentCenter.current = { x: nucleusX, y: nucleusY };
+        currentCenter.current = { x: propsRef.current.nucleusX, y: propsRef.current.nucleusY };
         initializedRef.current = true;
       }
     };
@@ -108,77 +123,95 @@ export default function NucleusBackground({ nucleusX, nucleusY }: Props) {
       timeRef.current += dt;
       const time = timeRef.current;
 
+      const { nucleusX: nx, nucleusY: ny, scrollProgress: sp } = propsRef.current;
+      const behavior = getSectionBehavior(sp);
+
       const w = window.innerWidth;
       const h = window.innerHeight;
 
-      // Smooth follow
-      currentCenter.current.x += (nucleusX - currentCenter.current.x) * 0.06;
-      currentCenter.current.y += (nucleusY - currentCenter.current.y) * 0.06;
+      // Organic drift — unique sine waves that vary by section
+      const driftX = Math.sin(time * behavior.driftFreqX) * behavior.driftAmpX
+                    + Math.sin(time * behavior.driftFreqX * 1.7 + 2.1) * behavior.driftAmpX * 0.4;
+      const driftY = Math.cos(time * behavior.driftFreqY + 0.5) * behavior.driftAmpY
+                    + Math.cos(time * behavior.driftFreqY * 2.3 + 1.3) * behavior.driftAmpY * 0.3;
+
+      const targetX = nx + driftX;
+      const targetY = ny + driftY;
+
+      // Framerate-independent smooth follow (exponential decay)
+      const followFactor = 1 - Math.pow(0.04, dt); // ~0.04^dt gives smooth ~96% retention per second
+      currentCenter.current.x += (targetX - currentCenter.current.x) * followFactor;
+      currentCenter.current.y += (targetY - currentCenter.current.y) * followFactor;
 
       const cx = currentCenter.current.x * w;
       const cy = currentCenter.current.y * h;
       const nR = Math.min(w, h) * NUCLEUS_RADIUS_RATIO;
 
+      // Breathing scale per section
+      const breathScale = 1 + Math.sin(time * behavior.breathSpeed) * behavior.breathAmp;
+      const effectiveR = nR * breathScale;
+
       ctx.clearRect(0, 0, w, h);
 
-      // === NUCLEUS CORE — multiple radial gradients ===
+      // === NUCLEUS CORE ===
 
-      // Outer glow — very soft, large
-      const outerGlow = ctx.createRadialGradient(cx, cy, nR * 0.3, cx, cy, nR * 3.5);
-      outerGlow.addColorStop(0, "rgba(180, 60, 80, 0.08)");
+      // Outer glow — pulsing per section
+      const glowAlpha = 0.08 + Math.sin(time * behavior.breathSpeed * 0.7) * behavior.glowPulse;
+      const outerGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.3, cx, cy, effectiveR * 3.5);
+      outerGlow.addColorStop(0, `rgba(180, 60, 80, ${glowAlpha})`);
       outerGlow.addColorStop(0.3, "rgba(120, 200, 230, 0.04)");
       outerGlow.addColorStop(0.6, "rgba(100, 180, 220, 0.02)");
       outerGlow.addColorStop(1, "transparent");
       ctx.beginPath();
-      ctx.arc(cx, cy, nR * 3.5, 0, Math.PI * 2);
+      ctx.arc(cx, cy, effectiveR * 3.5, 0, Math.PI * 2);
       ctx.fillStyle = outerGlow;
       ctx.fill();
 
-      // Mid glow — warm
-      const midGlow = ctx.createRadialGradient(cx, cy, nR * 0.1, cx, cy, nR * 1.8);
+      // Mid glow
+      const midGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.1, cx, cy, effectiveR * 1.8);
       midGlow.addColorStop(0, "rgba(200, 50, 70, 0.18)");
       midGlow.addColorStop(0.4, "rgba(180, 50, 80, 0.10)");
       midGlow.addColorStop(0.7, "rgba(120, 200, 230, 0.06)");
       midGlow.addColorStop(1, "transparent");
       ctx.beginPath();
-      ctx.arc(cx, cy, nR * 1.8, 0, Math.PI * 2);
+      ctx.arc(cx, cy, effectiveR * 1.8, 0, Math.PI * 2);
       ctx.fillStyle = midGlow;
       ctx.fill();
 
-      // Inner core — dense, bright
-      const coreGrad = ctx.createRadialGradient(cx - nR * 0.1, cy - nR * 0.1, 0, cx, cy, nR);
+      // Inner core
+      const coreGrad = ctx.createRadialGradient(cx - effectiveR * 0.1, cy - effectiveR * 0.1, 0, cx, cy, effectiveR);
       coreGrad.addColorStop(0, "rgba(220, 60, 70, 0.50)");
       coreGrad.addColorStop(0.3, "rgba(190, 45, 65, 0.35)");
       coreGrad.addColorStop(0.6, "rgba(150, 40, 60, 0.18)");
       coreGrad.addColorStop(0.85, "rgba(120, 200, 230, 0.08)");
       coreGrad.addColorStop(1, "transparent");
       ctx.beginPath();
-      ctx.arc(cx, cy, nR, 0, Math.PI * 2);
+      ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
       ctx.fillStyle = coreGrad;
       ctx.fill();
 
-      // Bright edge highlight — top-left arc
+      // Highlight — rotates slightly per section
       ctx.save();
       ctx.globalAlpha = 0.25;
-      const highlightGrad = ctx.createRadialGradient(
-        cx - nR * 0.4, cy - nR * 0.4, 0,
-        cx - nR * 0.3, cy - nR * 0.3, nR * 0.6
-      );
+      const hlAngle = -0.8 + sp * 0.6; // highlight shifts as you scroll
+      const hlX = cx + Math.cos(hlAngle) * effectiveR * 0.4;
+      const hlY = cy + Math.sin(hlAngle) * effectiveR * 0.4;
+      const highlightGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, effectiveR * 0.6);
       highlightGrad.addColorStop(0, "rgba(200, 240, 255, 0.5)");
       highlightGrad.addColorStop(0.5, "rgba(150, 220, 240, 0.15)");
       highlightGrad.addColorStop(1, "transparent");
       ctx.beginPath();
-      ctx.arc(cx - nR * 0.3, cy - nR * 0.35, nR * 0.5, 0, Math.PI * 2);
+      ctx.arc(hlX, hlY, effectiveR * 0.5, 0, Math.PI * 2);
       ctx.fillStyle = highlightGrad;
       ctx.fill();
       ctx.restore();
 
-      // Inner "dust" — small points inside the core
+      // Inner dust — speed varies by section
       ctx.save();
       ctx.globalAlpha = 0.4;
       for (let i = 0; i < 30; i++) {
-        const angle = (i / 30) * Math.PI * 2 + time * 0.02 + i * 0.7;
-        const dist = nR * (0.15 + Math.sin(time * 0.3 + i * 1.2) * 0.25);
+        const angle = (i / 30) * Math.PI * 2 + time * behavior.dustSpeed + i * 0.7;
+        const dist = effectiveR * (0.15 + Math.sin(time * 0.3 + i * 1.2) * 0.25);
         const dx = cx + Math.cos(angle) * dist;
         const dy = cy + Math.sin(angle) * dist;
         const dustR = 0.8 + Math.sin(time + i) * 0.4;
@@ -191,25 +224,26 @@ export default function NucleusBackground({ nucleusX, nucleusY }: Props) {
 
       // === PARTICLES ===
       const particles = particlesRef.current;
+      const orbitMul = behavior.orbitMul;
+
       particles.forEach((p) => {
-        // Update orbit
+        // Adjust orbit radius by section behavior
+        p.orbitR += (p.baseOrbitR * orbitMul - p.orbitR) * 0.01;
+
         p.orbitPhase += p.orbitSpeed * dt;
-        const targetX = cx + Math.cos(p.orbitPhase) * p.orbitR;
-        const targetY = cy + Math.sin(p.orbitPhase) * p.orbitR;
+        const targetPX = cx + Math.cos(p.orbitPhase) * p.orbitR;
+        const targetPY = cy + Math.sin(p.orbitPhase) * p.orbitR;
 
-        p.x += (targetX - p.x) * 0.02 + p.vx;
-        p.y += (targetY - p.y) * 0.02 + p.vy;
+        p.x += (targetPX - p.x) * 0.02 + p.vx;
+        p.y += (targetPY - p.y) * 0.02 + p.vy;
 
-        // Gentle dispersion
         p.vx += (Math.random() - 0.5) * 0.01;
         p.vy += (Math.random() - 0.5) * 0.01;
         p.vx *= 0.995;
         p.vy *= 0.995;
 
-        // Flicker
         p.alpha = p.baseAlpha * (0.6 + Math.sin(time * 1.5 + p.orbitPhase * 3) * 0.4);
 
-        // Trail
         p.trail.unshift({ x: p.x, y: p.y });
         if (p.trail.length > 3) p.trail.pop();
 
@@ -231,11 +265,10 @@ export default function NucleusBackground({ nucleusX, nucleusY }: Props) {
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         if (p.isSpark) {
           ctx.fillStyle = `rgba(220, 245, 255, ${p.alpha})`;
-          // Spark glow
           ctx.shadowColor = "rgba(180, 230, 255, 0.5)";
           ctx.shadowBlur = 6;
         } else {
-          const distFromCenter = Math.hypot(p.x - cx, p.y - cy) / nR;
+          const distFromCenter = Math.hypot(p.x - cx, p.y - cy) / effectiveR;
           if (distFromCenter < 1.2) {
             ctx.fillStyle = `rgba(220, 100, 120, ${p.alpha})`;
           } else {
@@ -257,7 +290,7 @@ export default function NucleusBackground({ nucleusX, nucleusY }: Props) {
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [nucleusX, nucleusY]);
+  }, []); // stable effect — reads props via ref
 
   return (
     <canvas
