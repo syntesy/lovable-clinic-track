@@ -22,8 +22,8 @@ interface Particle {
   isSpark: boolean;
 }
 
-const PARTICLE_COUNT_DESKTOP = 900;
-const PARTICLE_COUNT_MOBILE = 400;
+const PARTICLE_COUNT_DESKTOP = 2400;
+const PARTICLE_COUNT_MOBILE = 800;
 const NUCLEUS_RADIUS_RATIO = 0.38;
 
 function createParticles(count: number, w: number, h: number): Particle[] {
@@ -33,20 +33,24 @@ function createParticles(count: number, w: number, h: number): Particle[] {
   const nR = Math.min(w, h) * NUCLEUS_RADIUS_RATIO;
 
   for (let i = 0; i < count; i++) {
-    const isSpark = Math.random() < 0.04;
-    const orbitR = nR * (0.3 + Math.random() * 2.5);
+    const isSpark = Math.random() < 0.08;
+    // 85% of particles inside the sphere, 15% outside
+    const inside = Math.random() < 0.85;
+    const orbitR = inside
+      ? nR * (0.05 + Math.random() * 0.85) // inside sphere
+      : nR * (1.0 + Math.random() * 1.2);  // outside halo
     const angle = Math.random() * Math.PI * 2;
     particles.push({
       x: cx + Math.cos(angle) * orbitR,
       y: cy + Math.sin(angle) * orbitR,
-      vx: (Math.random() - 0.5) * 0.15,
-      vy: (Math.random() - 0.5) * 0.15,
-      radius: isSpark ? 1.5 + Math.random() * 2 : 0.4 + Math.random() * 1.2,
+      vx: (Math.random() - 0.5) * 0.1,
+      vy: (Math.random() - 0.5) * 0.1,
+      radius: isSpark ? 1.2 + Math.random() * 2.5 : 0.3 + Math.random() * 1.0,
       alpha: 0,
-      baseAlpha: isSpark ? 0.6 + Math.random() * 0.4 : 0.15 + Math.random() * 0.45,
+      baseAlpha: isSpark ? 0.7 + Math.random() * 0.3 : 0.2 + Math.random() * 0.5,
       orbitR,
       baseOrbitR: orbitR,
-      orbitSpeed: (0.08 + Math.random() * 0.2) * (Math.random() > 0.5 ? 1 : -1),
+      orbitSpeed: (0.05 + Math.random() * 0.15) * (Math.random() > 0.5 ? 1 : -1),
       orbitPhase: angle,
       trail: [],
       isSpark,
@@ -159,105 +163,108 @@ export default function NucleusBackground({ nucleusX, nucleusY, scrollProgress =
 
       ctx.clearRect(0, 0, w, h);
 
-      // === NUCLEUS CORE (REGHEN orange palette: #A06F4C → rgb(160,111,76)) ===
-
-      // Outer glow — warm orange
-      const glowAlpha = 0.08 + Math.sin(time * behavior.breathSpeed * 0.7) * behavior.glowPulse;
-      const outerGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.3, cx, cy, effectiveR * 3.5);
-      outerGlow.addColorStop(0, `rgba(180, 120, 70, ${glowAlpha})`);
-      outerGlow.addColorStop(0.3, "rgba(160, 111, 76, 0.04)");
-      outerGlow.addColorStop(0.6, "rgba(140, 100, 65, 0.02)");
+      // === OUTER GLOW (soft halo beyond sphere) ===
+      const outerGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.8, cx, cy, effectiveR * 2.0);
+      outerGlow.addColorStop(0, "rgba(230, 170, 140, 0.15)");
+      outerGlow.addColorStop(0.4, "rgba(220, 155, 120, 0.06)");
+      outerGlow.addColorStop(0.7, "rgba(200, 140, 110, 0.02)");
       outerGlow.addColorStop(1, "transparent");
       ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR * 3.5, 0, Math.PI * 2);
+      ctx.arc(cx, cy, effectiveR * 2.0, 0, Math.PI * 2);
       ctx.fillStyle = outerGlow;
       ctx.fill();
 
-      // Mid glow — warm amber
-      const midGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.1, cx, cy, effectiveR * 1.8);
-      midGlow.addColorStop(0, "rgba(190, 125, 65, 0.20)");
-      midGlow.addColorStop(0.4, "rgba(170, 110, 70, 0.12)");
-      midGlow.addColorStop(0.7, "rgba(160, 111, 76, 0.05)");
-      midGlow.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR * 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = midGlow;
-      ctx.fill();
-
-      // Inner core — REGHEN orange, denser with defined edge
-      const coreGrad = ctx.createRadialGradient(cx - effectiveR * 0.08, cy - effectiveR * 0.08, 0, cx, cy, effectiveR);
-      coreGrad.addColorStop(0, "rgba(220, 160, 90, 0.65)");
-      coreGrad.addColorStop(0.3, "rgba(200, 140, 80, 0.50)");
-      coreGrad.addColorStop(0.55, "rgba(170, 115, 70, 0.35)");
-      coreGrad.addColorStop(0.78, "rgba(150, 100, 60, 0.22)");
-      coreGrad.addColorStop(0.92, "rgba(160, 111, 76, 0.30)"); // edge brightens for contour
-      coreGrad.addColorStop(1, "rgba(120, 80, 50, 0.05)");
+      // === SOLID SPHERE BODY — opaque, peach/coral fill ===
+      // Base solid fill
+      const bodyGrad = ctx.createRadialGradient(
+        cx - effectiveR * 0.2, cy - effectiveR * 0.25, effectiveR * 0.1,
+        cx + effectiveR * 0.05, cy + effectiveR * 0.1, effectiveR
+      );
+      bodyGrad.addColorStop(0, "rgba(245, 200, 170, 0.95)");  // bright top-left
+      bodyGrad.addColorStop(0.25, "rgba(235, 175, 145, 0.92)");
+      bodyGrad.addColorStop(0.5, "rgba(220, 155, 125, 0.88)");
+      bodyGrad.addColorStop(0.75, "rgba(200, 135, 110, 0.85)");
+      bodyGrad.addColorStop(0.95, "rgba(190, 120, 100, 0.80)");
+      bodyGrad.addColorStop(1, "rgba(180, 110, 90, 0.70)");
       ctx.beginPath();
       ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
-      ctx.fillStyle = coreGrad;
+      ctx.fillStyle = bodyGrad;
       ctx.fill();
 
-      // === SPHERE MEMBRANE / CONTOUR ===
-      // Outer ring stroke — defines the sphere boundary
+      // === 3D SHADING — darker bottom-right for depth ===
+      const shadowGrad = ctx.createRadialGradient(
+        cx + effectiveR * 0.3, cy + effectiveR * 0.35, 0,
+        cx, cy, effectiveR
+      );
+      shadowGrad.addColorStop(0, "rgba(140, 70, 55, 0.35)");
+      shadowGrad.addColorStop(0.5, "rgba(160, 90, 70, 0.15)");
+      shadowGrad.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
+      ctx.fillStyle = shadowGrad;
+      ctx.fill();
+
+      // === TOP-LEFT HIGHLIGHT (specular) ===
+      ctx.save();
+      const specX = cx - effectiveR * 0.3;
+      const specY = cy - effectiveR * 0.35;
+      const specGrad = ctx.createRadialGradient(specX, specY, 0, specX, specY, effectiveR * 0.6);
+      specGrad.addColorStop(0, "rgba(255, 240, 230, 0.50)");
+      specGrad.addColorStop(0.3, "rgba(250, 220, 200, 0.25)");
+      specGrad.addColorStop(0.6, "rgba(240, 200, 180, 0.08)");
+      specGrad.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(specX, specY, effectiveR * 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = specGrad;
+      ctx.fill();
+      ctx.restore();
+
+      // === MEMBRANE EDGE — thick, bright rim ===
+      // Inner edge brightening
+      const rimGrad = ctx.createRadialGradient(cx, cy, effectiveR * 0.82, cx, cy, effectiveR * 1.03);
+      rimGrad.addColorStop(0, "transparent");
+      rimGrad.addColorStop(0.4, "rgba(240, 190, 160, 0.15)");
+      rimGrad.addColorStop(0.7, "rgba(235, 180, 155, 0.40)");
+      rimGrad.addColorStop(0.88, "rgba(230, 175, 150, 0.55)");
+      rimGrad.addColorStop(0.96, "rgba(225, 170, 145, 0.35)");
+      rimGrad.addColorStop(1, "rgba(220, 160, 135, 0.08)");
+      ctx.beginPath();
+      ctx.arc(cx, cy, effectiveR * 1.03, 0, Math.PI * 2);
+      ctx.fillStyle = rimGrad;
+      ctx.fill();
+
+      // Crisp membrane stroke
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(200, 150, 100, ${0.25 + Math.sin(time * behavior.breathSpeed * 0.5) * 0.08})`;
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = `rgba(230, 185, 155, ${0.45 + Math.sin(time * behavior.breathSpeed * 0.5) * 0.1})`;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
       ctx.restore();
 
-      // Secondary softer contour ring (slightly larger, very subtle)
+      // Subtle outer rim glow
       ctx.save();
       ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR * 1.02, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(180, 130, 80, 0.10)";
-      ctx.lineWidth = 3;
+      ctx.arc(cx, cy, effectiveR * 1.01, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(240, 200, 170, 0.15)";
+      ctx.lineWidth = 4;
       ctx.stroke();
       ctx.restore();
 
-      // Edge glow band — concentrated gradient right at the boundary
-      const edgeGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.85, cx, cy, effectiveR * 1.12);
-      edgeGlow.addColorStop(0, "transparent");
-      edgeGlow.addColorStop(0.5, "rgba(200, 150, 100, 0.12)");
-      edgeGlow.addColorStop(0.75, "rgba(180, 130, 90, 0.18)");
-      edgeGlow.addColorStop(0.9, "rgba(160, 111, 76, 0.08)");
-      edgeGlow.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR * 1.12, 0, Math.PI * 2);
-      ctx.fillStyle = edgeGlow;
-      ctx.fill();
-
-      // Highlight — rotates slightly per section
-      ctx.save();
-      ctx.globalAlpha = 0.3;
-      const hlAngle = -0.8 + sp * 0.6;
-      const hlX = cx + Math.cos(hlAngle) * effectiveR * 0.35;
-      const hlY = cy + Math.sin(hlAngle) * effectiveR * 0.35;
-      const highlightGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, effectiveR * 0.55);
-      highlightGrad.addColorStop(0, "rgba(255, 235, 200, 0.45)");
-      highlightGrad.addColorStop(0.4, "rgba(220, 180, 140, 0.15)");
-      highlightGrad.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(hlX, hlY, effectiveR * 0.5, 0, Math.PI * 2);
-      ctx.fillStyle = highlightGrad;
-      ctx.fill();
-      ctx.restore();
-
-      // Inner dust — speed varies by section
+      // === HIGHLIGHT ARC — rotating per section ===
       ctx.save();
       ctx.globalAlpha = 0.4;
-      for (let i = 0; i < 30; i++) {
-        const angle = (i / 30) * Math.PI * 2 + time * behavior.dustSpeed + i * 0.7;
-        const dist = effectiveR * (0.15 + Math.sin(time * 0.3 + i * 1.2) * 0.25);
-        const dx = cx + Math.cos(angle) * dist;
-        const dy = cy + Math.sin(angle) * dist;
-        const dustR = 0.8 + Math.sin(time + i) * 0.4;
-        ctx.beginPath();
-        ctx.arc(dx, dy, dustR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(220, 170, 120, ${0.3 + Math.sin(time * 0.5 + i) * 0.15})`;
-        ctx.fill();
-      }
+      const hlAngle = -0.8 + sp * 0.6;
+      const hlX = cx + Math.cos(hlAngle) * effectiveR * 0.3;
+      const hlY = cy + Math.sin(hlAngle) * effectiveR * 0.3;
+      const highlightGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, effectiveR * 0.45);
+      highlightGrad.addColorStop(0, "rgba(255, 245, 235, 0.5)");
+      highlightGrad.addColorStop(0.35, "rgba(250, 225, 200, 0.2)");
+      highlightGrad.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(hlX, hlY, effectiveR * 0.45, 0, Math.PI * 2);
+      ctx.fillStyle = highlightGrad;
+      ctx.fill();
       ctx.restore();
 
       // === PARTICLES ===
@@ -288,30 +295,38 @@ export default function NucleusBackground({ nucleusX, nucleusY, scrollProgress =
         // Draw trail
         if (p.trail.length > 1) {
           for (let t = 1; t < p.trail.length; t++) {
-            const trailAlpha = p.alpha * (1 - t / p.trail.length) * 0.3;
+            const trailAlpha = p.alpha * (1 - t / p.trail.length) * 0.25;
             ctx.beginPath();
             ctx.arc(p.trail[t].x, p.trail[t].y, p.radius * (1 - t * 0.2), 0, Math.PI * 2);
             ctx.fillStyle = p.isSpark
-              ? `rgba(240, 220, 180, ${trailAlpha})`
-              : `rgba(180, 130, 80, ${trailAlpha})`;
+              ? `rgba(255, 240, 220, ${trailAlpha})`
+              : `rgba(180, 90, 70, ${trailAlpha})`;
             ctx.fill();
           }
         }
+
+        const distFromCenter = Math.hypot(p.x - cx, p.y - cy) / effectiveR;
+        const isInside = distFromCenter < 1.0;
 
         // Draw particle
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         if (p.isSpark) {
-          ctx.fillStyle = `rgba(255, 230, 180, ${p.alpha})`;
-          ctx.shadowColor = "rgba(200, 160, 100, 0.5)";
-          ctx.shadowBlur = 6;
+          // Bright sparkles — white/gold
+          ctx.fillStyle = `rgba(255, 245, 225, ${p.alpha})`;
+          ctx.shadowColor = "rgba(255, 220, 180, 0.6)";
+          ctx.shadowBlur = 8;
+        } else if (isInside) {
+          // Inside particles — deep coral/crimson (like the reference dense core)
+          const depth = 1 - distFromCenter;
+          const r = Math.round(160 + depth * 40);
+          const g = Math.round(60 + depth * 30);
+          const b = Math.round(50 + depth * 20);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.9})`;
+          ctx.shadowBlur = 0;
         } else {
-          const distFromCenter = Math.hypot(p.x - cx, p.y - cy) / effectiveR;
-          if (distFromCenter < 1.2) {
-            ctx.fillStyle = `rgba(200, 140, 80, ${p.alpha})`;
-          } else {
-            ctx.fillStyle = `rgba(160, 111, 76, ${p.alpha * 0.7})`;
-          }
+          // Outside particles — warm golden
+          ctx.fillStyle = `rgba(230, 190, 150, ${p.alpha * 0.6})`;
           ctx.shadowBlur = 0;
         }
         ctx.fill();
