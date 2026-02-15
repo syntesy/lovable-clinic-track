@@ -184,27 +184,59 @@ export default function NucleusBackground({ nucleusX, nucleusY, scrollProgress =
       ctx.fillStyle = midGlow;
       ctx.fill();
 
-      // Inner core — REGHEN orange center
-      const coreGrad = ctx.createRadialGradient(cx - effectiveR * 0.1, cy - effectiveR * 0.1, 0, cx, cy, effectiveR);
-      coreGrad.addColorStop(0, "rgba(200, 140, 80, 0.55)");
-      coreGrad.addColorStop(0.25, "rgba(180, 120, 70, 0.40)");
-      coreGrad.addColorStop(0.5, "rgba(160, 111, 76, 0.25)");
-      coreGrad.addColorStop(0.75, "rgba(140, 95, 60, 0.12)");
-      coreGrad.addColorStop(1, "transparent");
+      // Inner core — REGHEN orange, denser with defined edge
+      const coreGrad = ctx.createRadialGradient(cx - effectiveR * 0.08, cy - effectiveR * 0.08, 0, cx, cy, effectiveR);
+      coreGrad.addColorStop(0, "rgba(220, 160, 90, 0.65)");
+      coreGrad.addColorStop(0.3, "rgba(200, 140, 80, 0.50)");
+      coreGrad.addColorStop(0.55, "rgba(170, 115, 70, 0.35)");
+      coreGrad.addColorStop(0.78, "rgba(150, 100, 60, 0.22)");
+      coreGrad.addColorStop(0.92, "rgba(160, 111, 76, 0.30)"); // edge brightens for contour
+      coreGrad.addColorStop(1, "rgba(120, 80, 50, 0.05)");
       ctx.beginPath();
       ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
       ctx.fillStyle = coreGrad;
       ctx.fill();
 
+      // === SPHERE MEMBRANE / CONTOUR ===
+      // Outer ring stroke — defines the sphere boundary
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(200, 150, 100, ${0.25 + Math.sin(time * behavior.breathSpeed * 0.5) * 0.08})`;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      ctx.restore();
+
+      // Secondary softer contour ring (slightly larger, very subtle)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, effectiveR * 1.02, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(180, 130, 80, 0.10)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+
+      // Edge glow band — concentrated gradient right at the boundary
+      const edgeGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.85, cx, cy, effectiveR * 1.12);
+      edgeGlow.addColorStop(0, "transparent");
+      edgeGlow.addColorStop(0.5, "rgba(200, 150, 100, 0.12)");
+      edgeGlow.addColorStop(0.75, "rgba(180, 130, 90, 0.18)");
+      edgeGlow.addColorStop(0.9, "rgba(160, 111, 76, 0.08)");
+      edgeGlow.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(cx, cy, effectiveR * 1.12, 0, Math.PI * 2);
+      ctx.fillStyle = edgeGlow;
+      ctx.fill();
+
       // Highlight — rotates slightly per section
       ctx.save();
-      ctx.globalAlpha = 0.25;
-      const hlAngle = -0.8 + sp * 0.6; // highlight shifts as you scroll
-      const hlX = cx + Math.cos(hlAngle) * effectiveR * 0.4;
-      const hlY = cy + Math.sin(hlAngle) * effectiveR * 0.4;
-      const highlightGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, effectiveR * 0.6);
-      highlightGrad.addColorStop(0, "rgba(200, 240, 255, 0.5)");
-      highlightGrad.addColorStop(0.5, "rgba(150, 220, 240, 0.15)");
+      ctx.globalAlpha = 0.3;
+      const hlAngle = -0.8 + sp * 0.6;
+      const hlX = cx + Math.cos(hlAngle) * effectiveR * 0.35;
+      const hlY = cy + Math.sin(hlAngle) * effectiveR * 0.35;
+      const highlightGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, effectiveR * 0.55);
+      highlightGrad.addColorStop(0, "rgba(255, 235, 200, 0.45)");
+      highlightGrad.addColorStop(0.4, "rgba(220, 180, 140, 0.15)");
       highlightGrad.addColorStop(1, "transparent");
       ctx.beginPath();
       ctx.arc(hlX, hlY, effectiveR * 0.5, 0, Math.PI * 2);
