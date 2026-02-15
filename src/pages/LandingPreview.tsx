@@ -1,33 +1,11 @@
-import { useCallback, useState, useEffect, useMemo } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, FileCheck, BarChart3, Shield, Activity, TestTube2, Gauge, Target } from "lucide-react";
-import NucleusBackground from "@/components/landing/NucleusBackground";
+import NucleusScene from "@/components/landing/nucleus/NucleusScene";
 import logoReghen from "@/assets/logo-reghen.png";
 
-// Scroll → nucleus position map (proportion of screen)
-const NUCLEUS_PATH = [
-  { scroll: 0.0, x: 0.50, y: 0.78 },
-  { scroll: 0.25, x: 0.70, y: 0.60 },
-  { scroll: 0.50, x: 0.82, y: 0.42 },
-  { scroll: 0.75, x: 0.22, y: 0.40 },
-  { scroll: 1.0, x: 0.35, y: 0.62 },
-];
-
-function interpolateNucleus(sp: number) {
-  let i = 0;
-  while (i < NUCLEUS_PATH.length - 1 && NUCLEUS_PATH[i + 1].scroll <= sp) i++;
-  if (i >= NUCLEUS_PATH.length - 1) return { x: NUCLEUS_PATH[NUCLEUS_PATH.length - 1].x, y: NUCLEUS_PATH[NUCLEUS_PATH.length - 1].y };
-  const a = NUCLEUS_PATH[i];
-  const b = NUCLEUS_PATH[i + 1];
-  const t = (sp - a.scroll) / (b.scroll - a.scroll);
-  // Smooth ease
-  const ease = t * t * (3 - 2 * t);
-  return {
-    x: a.x + (b.x - a.x) * ease,
-    y: a.y + (b.y - a.y) * ease,
-  };
-}
+// Scroll position map now lives in nucleus/constants.ts
 
 const sectionEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const sectionAnim = {
@@ -54,7 +32,7 @@ export default function LandingPreview() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const nucleusPos = useMemo(() => interpolateNucleus(scrollProgress), [scrollProgress]);
+  // nucleusPos removed — NucleusScene handles scroll internally
 
   const getRedirectPath = useCallback(() => {
     const params = new URLSearchParams(location.search);
@@ -73,8 +51,8 @@ export default function LandingPreview() {
     <div className="min-h-screen text-foreground relative" style={{
       background: "linear-gradient(180deg, hsl(220 30% 14%) 0%, hsl(220 28% 16%) 30%, hsl(218 25% 18%) 60%, hsl(215 22% 15%) 100%)"
     }}>
-      {/* Nucleus background — fixed canvas with particles */}
-      <NucleusBackground nucleusX={nucleusPos.x} nucleusY={nucleusPos.y} scrollProgress={scrollProgress} />
+      {/* WebGL Nucleus background — fixed canvas with R3F */}
+      <NucleusScene scrollProgress={scrollProgress} />
 
       {/* Subtle grain overlay */}
       <div className="fixed inset-0 opacity-[0.025] z-[1]" style={{
