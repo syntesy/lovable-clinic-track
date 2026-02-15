@@ -86,10 +86,10 @@ const nucleusVertex = /* glsl */ `
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
     vPosition = position;
-    // Strong lobulation — multi-lobed cell nucleus look
-    float lobe = snoise(position * 1.8 + uTime * 0.05) * 0.18
-               + snoise(position * 3.5 + uTime * 0.03) * 0.08
-               + snoise(position * 6.0 + uTime * 0.02) * 0.03;
+    // Pronounced lobulation — 4-5 visible rounded lobes like cell division
+    float lobe = snoise(position * 1.4 + uTime * 0.04) * 0.22
+               + snoise(position * 2.8 + uTime * 0.025) * 0.10
+               + snoise(position * 5.5 + uTime * 0.015) * 0.04;
     vec3 pos = position + normal * lobe;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
   }
@@ -106,51 +106,56 @@ const nucleusFragment = /* glsl */ `
   ${noiseGLSL}
 
   void main() {
-    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.2);
 
-    // Lobule structure
-    vec3 nc = vPosition * 2.0 + vec3(uTime * 0.04, uTime * 0.03, uTime * 0.02);
+    // Lobule structure — multiple noise octaves for organic depth
+    vec3 nc = vPosition * 1.8 + vec3(uTime * 0.035, uTime * 0.025, uTime * 0.02);
     float lobules = fbm(nc) * 0.5 + 0.5;
-    float detail = fbm(nc * 3.0 + vec3(1.7, 3.2, 0.8)) * 0.5 + 0.5;
-    float micro = fbm(nc * 5.0 + vec3(4.1, 0.3, 2.5)) * 0.5 + 0.5;
+    float detail = fbm(nc * 2.5 + vec3(1.7, 3.2, 0.8)) * 0.5 + 0.5;
+    float micro = fbm(nc * 4.5 + vec3(4.1, 0.3, 2.5)) * 0.5 + 0.5;
 
-    // Colors matching reference: coral-pink outer, golden-orange center
-    vec3 deep     = vec3(0.72, 0.25, 0.22);   // deep coral-red
-    vec3 coral    = vec3(0.88, 0.38, 0.30);   // coral pink
-    vec3 salmon   = vec3(0.95, 0.52, 0.35);   // warm salmon
-    vec3 golden   = vec3(1.0, 0.72, 0.28);    // golden-amber center
-    vec3 hotPink  = vec3(0.92, 0.35, 0.45);   // pink highlight on lobes
+    // Colors from reference: orange-amber center, coral-red edges, pinkish lobes
+    vec3 deepRed   = vec3(0.65, 0.18, 0.15);   // darkest crevices between lobes
+    vec3 coral     = vec3(0.82, 0.32, 0.25);   // coral on lobe surfaces
+    vec3 orange    = vec3(0.95, 0.55, 0.25);   // warm orange mid-tone
+    vec3 amber     = vec3(1.0, 0.68, 0.18);    // bright amber
+    vec3 golden    = vec3(1.0, 0.78, 0.30);    // golden center highlight
+    vec3 pinkLobe  = vec3(0.85, 0.35, 0.35);   // pinkish lobe tops
 
-    // Base: coral with lobule variation
-    vec3 col = mix(deep, coral, lobules);
-    col = mix(col, salmon, detail * 0.5);
-    col = mix(col, hotPink, micro * 0.15);
+    // Base: blend from deep red to coral based on lobule noise
+    vec3 col = mix(deepRed, coral, lobules);
+    col = mix(col, orange, detail * 0.6);
+    col = mix(col, pinkLobe, micro * 0.12);
 
-    // Strong golden center glow
-    float centerDist = length(vPosition.xy) * 1.0;
-    float center = smoothstep(0.55, 0.0, centerDist);
-    col = mix(col, golden, center * 0.7);
-    col = mix(col, salmon, center * 0.2);
+    // Strong golden-amber center glow (dominant feature of reference)
+    float centerDist = length(vPosition.xy) * 0.9;
+    float center = smoothstep(0.6, 0.0, centerDist);
+    col = mix(col, amber, center * 0.75);
+    col = mix(col, golden, center * center * 0.5);
 
-    // Lobe edge darkening — gives 3D depth between lobes
-    float lobeEdge = 1.0 - smoothstep(0.3, 0.6, lobules);
-    col = mix(col, deep * 0.6, lobeEdge * 0.3);
+    // Subsurface scattering simulation — warm light through the mass
+    float sss = pow(max(dot(vNormal, normalize(vec3(0.3, -0.4, 0.6))), 0.0), 1.5);
+    col = mix(col, orange, sss * 0.25);
 
-    // Specular highlight — bright white spot (top-left like reference)
-    float spec = pow(max(dot(vNormal, normalize(vec3(-0.3, 0.5, 1.0))), 0.0), 24.0);
-    col += vec3(1.0, 0.95, 0.9) * spec * 0.5;
+    // Lobe crevice darkening — deeper shadows between lobes
+    float lobeEdge = 1.0 - smoothstep(0.25, 0.55, lobules);
+    col = mix(col, deepRed * 0.5, lobeEdge * 0.4);
 
-    // Small secondary spec
-    float spec2 = pow(max(dot(vNormal, normalize(vec3(0.4, 0.3, 0.9))), 0.0), 40.0);
-    col += vec3(1.0, 0.85, 0.8) * spec2 * 0.25;
+    // Bright specular highlight — white spot on lobe top (like reference)
+    float spec = pow(max(dot(vNormal, normalize(vec3(-0.2, 0.45, 1.0))), 0.0), 32.0);
+    col += vec3(1.0, 0.97, 0.92) * spec * 0.6;
 
-    // Rim: darker coral at edges
-    col = mix(col, deep * 0.55, fresnel * 0.5);
+    // Secondary smaller spec
+    float spec2 = pow(max(dot(vNormal, normalize(vec3(0.5, 0.2, 0.85))), 0.0), 50.0);
+    col += vec3(1.0, 0.9, 0.85) * spec2 * 0.3;
+
+    // Rim: darker reddish at edges
+    col = mix(col, deepRed * 0.45, fresnel * 0.55);
 
     // Mouse subtle shift
-    col += golden * length(uMouse) * 0.02 * lobules;
+    col += golden * length(uMouse) * 0.015 * lobules;
 
-    float alpha = uAlpha * (0.97 - fresnel * 0.05);
+    float alpha = uAlpha * (0.98 - fresnel * 0.03);
     gl_FragColor = vec4(col, alpha);
   }
 `;
