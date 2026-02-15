@@ -1,8 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight, FileCheck, BarChart3, Shield, Activity, TestTube2, Gauge, Target, CheckCircle2 } from "lucide-react";
-import NucleusScene from "@/components/landing/nucleus/NucleusScene";
 import logoReghen from "@/assets/logo-reghen.png";
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -10,14 +9,11 @@ const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
 export default function LandingPreview() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [navScrolled, setNavScrolled] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
       const top = window.scrollY;
-      const total = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(total > 0 ? Math.min(top / total, 1) : 0);
       setNavScrolled(top > 40);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -41,11 +37,24 @@ export default function LandingPreview() {
     <div className="min-h-screen text-white relative" style={{
       background: "linear-gradient(180deg, #070b18 0%, #0a1020 30%, #0c1228 60%, #080e1e 100%)"
     }}>
-      {/* WebGL Nucleus — fixed background */}
-      <NucleusScene scrollProgress={scrollProgress} />
+      {/* RedSun-style ambient glows */}
+      <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden" aria-hidden="true">
+        {/* Primary warm glow — top center */}
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full opacity-[0.12]" style={{
+          background: "radial-gradient(circle, hsl(25, 80%, 50%) 0%, hsl(15, 70%, 40%) 30%, transparent 70%)",
+        }} />
+        {/* Secondary glow — right side */}
+        <div className="absolute top-[10%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-[0.06]" style={{
+          background: "radial-gradient(circle, hsl(30, 90%, 55%) 0%, transparent 70%)",
+        }} />
+        {/* Subtle bottom glow */}
+        <div className="absolute bottom-[-10%] left-[20%] w-[500px] h-[500px] rounded-full opacity-[0.04]" style={{
+          background: "radial-gradient(circle, hsl(20, 70%, 45%) 0%, transparent 70%)",
+        }} />
+      </div>
 
       {/* Grain overlay */}
-      <div className="fixed inset-0 opacity-[0.018] z-[1]" style={{
+      <div className="fixed inset-0 opacity-[0.025] z-[2]" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
         backgroundRepeat: "repeat",
         backgroundSize: "128px 128px",
