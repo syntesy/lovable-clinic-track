@@ -86,10 +86,11 @@ const nucleusVertex = /* glsl */ `
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
     vPosition = position;
-    // Subtle organic deformation — lobule-like bumps
-    float deform = snoise(position * 2.5 + uTime * 0.06) * 0.08
-                 + snoise(position * 4.0 + uTime * 0.04) * 0.04;
-    vec3 pos = position + normal * deform;
+    // Strong lobulation — multi-lobed cell nucleus look
+    float lobe = snoise(position * 1.8 + uTime * 0.05) * 0.18
+               + snoise(position * 3.5 + uTime * 0.03) * 0.08
+               + snoise(position * 6.0 + uTime * 0.02) * 0.03;
+    vec3 pos = position + normal * lobe;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
   }
 `;
@@ -105,38 +106,51 @@ const nucleusFragment = /* glsl */ `
   ${noiseGLSL}
 
   void main() {
-    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
 
-    // Lobule structure — low-frequency bumps
+    // Lobule structure
     vec3 nc = vPosition * 2.0 + vec3(uTime * 0.04, uTime * 0.03, uTime * 0.02);
     float lobules = fbm(nc) * 0.5 + 0.5;
-    float detail = fbm(nc * 2.5 + vec3(1.7, 3.2, 0.8)) * 0.5 + 0.5;
+    float detail = fbm(nc * 3.0 + vec3(1.7, 3.2, 0.8)) * 0.5 + 0.5;
+    float micro = fbm(nc * 5.0 + vec3(4.1, 0.3, 2.5)) * 0.5 + 0.5;
 
-    // Cell nucleus colors — rosé/peach tones (like reference image)
-    vec3 deep    = vec3(0.75, 0.30, 0.25);   // deep rosé
-    vec3 mid     = vec3(0.90, 0.48, 0.35);   // warm peach-pink
-    vec3 light   = vec3(0.95, 0.60, 0.42);   // salmon highlight
-    vec3 hotspot = vec3(1.0, 0.75, 0.52);    // warm golden center
+    // Colors matching reference: coral-pink outer, golden-orange center
+    vec3 deep     = vec3(0.72, 0.25, 0.22);   // deep coral-red
+    vec3 coral    = vec3(0.88, 0.38, 0.30);   // coral pink
+    vec3 salmon   = vec3(0.95, 0.52, 0.35);   // warm salmon
+    vec3 golden   = vec3(1.0, 0.72, 0.28);    // golden-amber center
+    vec3 hotPink  = vec3(0.92, 0.35, 0.45);   // pink highlight on lobes
 
-    vec3 col = mix(deep, mid, lobules);
-    col = mix(col, light, detail * 0.6);
+    // Base: coral with lobule variation
+    vec3 col = mix(deep, coral, lobules);
+    col = mix(col, salmon, detail * 0.5);
+    col = mix(col, hotPink, micro * 0.15);
 
-    // Subtle center warmth (no harsh yellow)
-    float centerDist = length(vPosition.xy) * 1.2;
-    float center = smoothstep(0.6, 0.0, centerDist);
-    col = mix(col, light, center * 0.25);
+    // Strong golden center glow
+    float centerDist = length(vPosition.xy) * 1.0;
+    float center = smoothstep(0.55, 0.0, centerDist);
+    col = mix(col, golden, center * 0.7);
+    col = mix(col, salmon, center * 0.2);
 
-    // Subtle specular highlight (top-left) — reduced
-    float spec = pow(max(dot(vNormal, normalize(vec3(-0.3, 0.5, 1.0))), 0.0), 16.0);
-    col += vec3(1.0, 0.92, 0.85) * spec * 0.2;
+    // Lobe edge darkening — gives 3D depth between lobes
+    float lobeEdge = 1.0 - smoothstep(0.3, 0.6, lobules);
+    col = mix(col, deep * 0.6, lobeEdge * 0.3);
 
-    // Rim darkening
-    col = mix(col, deep * 0.7, fresnel * 0.4);
+    // Specular highlight — bright white spot (top-left like reference)
+    float spec = pow(max(dot(vNormal, normalize(vec3(-0.3, 0.5, 1.0))), 0.0), 24.0);
+    col += vec3(1.0, 0.95, 0.9) * spec * 0.5;
+
+    // Small secondary spec
+    float spec2 = pow(max(dot(vNormal, normalize(vec3(0.4, 0.3, 0.9))), 0.0), 40.0);
+    col += vec3(1.0, 0.85, 0.8) * spec2 * 0.25;
+
+    // Rim: darker coral at edges
+    col = mix(col, deep * 0.55, fresnel * 0.5);
 
     // Mouse subtle shift
-    col += hotspot * length(uMouse) * 0.03 * lobules;
+    col += golden * length(uMouse) * 0.02 * lobules;
 
-    float alpha = uAlpha * (0.95 - fresnel * 0.1);
+    float alpha = uAlpha * (0.97 - fresnel * 0.05);
     gl_FragColor = vec4(col, alpha);
   }
 `;
@@ -173,29 +187,36 @@ const membraneFragment = /* glsl */ `
   ${noiseGLSL}
 
   void main() {
-    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.2);
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.8);
 
-    // Very subtle translucent membrane
-    vec3 membraneColor = vec3(0.70, 0.78, 0.88);
-    vec3 edgeColor = vec3(0.85, 0.90, 0.96);
+    // Translucent membrane — slightly blue-tinted like reference
+    vec3 membraneColor = vec3(0.65, 0.75, 0.85);
+    vec3 edgeColor = vec3(0.80, 0.88, 0.95);
 
     float iri = snoise(vPosition * 5.0 + uTime * 0.03) * 0.5 + 0.5;
-    vec3 col = mix(membraneColor, edgeColor, iri * 0.2);
+    vec3 col = mix(membraneColor, edgeColor, iri * 0.3);
 
-    // Glass-like specular — sharper, subtler
-    float spec1 = pow(max(dot(vNormal, normalize(vec3(-0.4, 0.6, 0.8))), 0.0), 32.0);
-    float spec2 = pow(max(dot(vNormal, normalize(vec3(0.5, -0.3, 0.9))), 0.0), 20.0);
-    col += vec3(1.0) * spec1 * 0.4;
-    col += vec3(0.9, 0.95, 1.0) * spec2 * 0.15;
+    // Strong glass-like specular highlights (white spots like reference)
+    float spec1 = pow(max(dot(vNormal, normalize(vec3(-0.4, 0.6, 0.8))), 0.0), 48.0);
+    float spec2 = pow(max(dot(vNormal, normalize(vec3(0.6, -0.2, 0.9))), 0.0), 36.0);
+    float spec3 = pow(max(dot(vNormal, normalize(vec3(-0.7, -0.4, 0.5))), 0.0), 28.0);
+    col += vec3(1.0) * spec1 * 0.7;
+    col += vec3(1.0, 0.98, 0.95) * spec2 * 0.4;
+    col += vec3(0.95, 0.9, 1.0) * spec3 * 0.25;
 
-    // Warm light leak
-    float warmLight = pow(max(dot(vNormal, normalize(vec3(0.6, -0.5, 0.3))), 0.0), 3.0);
-    col += vec3(1.0, 0.7, 0.3) * warmLight * 0.12;
+    // Warm light leak from behind (orange-ish like reference)
+    float warmLight = pow(max(dot(vNormal, normalize(vec3(0.7, -0.5, -0.3))), 0.0), 2.5);
+    col += vec3(1.0, 0.65, 0.25) * warmLight * 0.25;
 
-    // Much more transparent — only edges really visible
-    float edgeAlpha = fresnel * 0.4;
-    float baseAlpha = 0.02 + iri * 0.015;
-    float alpha = uAlpha * (baseAlpha + edgeAlpha);
+    // Cool blue tint on shadow side
+    float coolSide = pow(max(dot(vNormal, normalize(vec3(-0.8, 0.3, -0.2))), 0.0), 2.0);
+    col += vec3(0.3, 0.5, 0.8) * coolSide * 0.1;
+
+    // Mostly transparent with visible edges and specular spots
+    float edgeAlpha = fresnel * 0.45;
+    float baseAlpha = 0.03 + iri * 0.02;
+    float specAlpha = (spec1 + spec2 + spec3) * 0.15;
+    float alpha = uAlpha * (baseAlpha + edgeAlpha + specAlpha);
 
     gl_FragColor = vec4(col, alpha);
   }
@@ -217,14 +238,14 @@ const glowFragment = /* glsl */ `
   uniform float uTime;
   varying vec3 vNormal;
   void main() {
-    float intensity = pow(0.50 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.5);
-    float pulse = 1.0 + sin(uTime * 0.4) * 0.04;
+    float intensity = pow(0.50 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+    float pulse = 1.0 + sin(uTime * 0.4) * 0.03;
     vec3 glowColor = mix(
-      vec3(0.55, 0.65, 0.80),
-      vec3(0.85, 0.50, 0.25),
-      intensity * 0.35
+      vec3(0.45, 0.55, 0.75),
+      vec3(1.0, 0.55, 0.20),
+      intensity * 0.5
     ) * intensity * pulse;
-    float alpha = intensity * uAlpha * 0.25;
+    float alpha = intensity * uAlpha * 0.2;
     gl_FragColor = vec4(glowColor, alpha);
   }
 `;
@@ -354,8 +375,8 @@ function CellScene({ scrollProgress }: { scrollProgress: number }) {
   return (
     <group ref={groupRef}>
       {/* Atmospheric glow — outermost */}
-      <mesh ref={glowRef} material={glowMat} visible={false}>
-        <sphereGeometry args={[R * 1.35, 48, 48]} />
+      <mesh ref={glowRef} material={glowMat} visible={true}>
+        <sphereGeometry args={[R * 1.3, 48, 48]} />
       </mesh>
 
       {/* Outer membrane — translucent shell */}
