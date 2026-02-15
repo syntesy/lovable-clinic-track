@@ -1,26 +1,60 @@
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, FileCheck, BarChart3, Shield, Building2, Users, Lock, FileText, Stethoscope, TestTube2, Gauge, ClipboardList } from "lucide-react";
-import CellNucleusCanvas from "@/components/landing/CellNucleusCanvas";
+import { motion } from "framer-motion";
+import { ArrowRight, FileCheck, BarChart3, Shield, Activity, TestTube2, Gauge, Target } from "lucide-react";
+import NucleusBackground from "@/components/landing/NucleusBackground";
 import logoReghen from "@/assets/logo-reghen.png";
+
+// Scroll → nucleus position map (proportion of screen)
+const NUCLEUS_PATH = [
+  { scroll: 0.0, x: 0.50, y: 0.78 },
+  { scroll: 0.25, x: 0.70, y: 0.60 },
+  { scroll: 0.50, x: 0.82, y: 0.42 },
+  { scroll: 0.75, x: 0.22, y: 0.40 },
+  { scroll: 1.0, x: 0.35, y: 0.62 },
+];
+
+function interpolateNucleus(sp: number) {
+  let i = 0;
+  while (i < NUCLEUS_PATH.length - 1 && NUCLEUS_PATH[i + 1].scroll <= sp) i++;
+  if (i >= NUCLEUS_PATH.length - 1) return { x: NUCLEUS_PATH[NUCLEUS_PATH.length - 1].x, y: NUCLEUS_PATH[NUCLEUS_PATH.length - 1].y };
+  const a = NUCLEUS_PATH[i];
+  const b = NUCLEUS_PATH[i + 1];
+  const t = (sp - a.scroll) / (b.scroll - a.scroll);
+  // Smooth ease
+  const ease = t * t * (3 - 2 * t);
+  return {
+    x: a.x + (b.x - a.x) * ease,
+    y: a.y + (b.y - a.y) * ease,
+  };
+}
+
+const sectionEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const sectionAnim = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-80px" as const },
+  transition: { duration: 0.9, ease: sectionEase },
+};
 
 export default function LandingPreview() {
   const navigate = useNavigate();
   const location = useLocation();
-  const containerRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [navScrolled, setNavScrolled] = useState(false);
 
-  // Track scroll progress 0→1 across entire page
   useEffect(() => {
     const onScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
+      const top = window.scrollY;
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(total > 0 ? Math.min(top / total, 1) : 0);
+      setNavScrolled(top > 40);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const nucleusPos = useMemo(() => interpolateNucleus(scrollProgress), [scrollProgress]);
 
   const getRedirectPath = useCallback(() => {
     const params = new URLSearchParams(location.search);
@@ -35,17 +69,19 @@ export default function LandingPreview() {
     navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`);
   }, [navigate, getRedirectPath]);
 
-  const [navScrolled, setNavScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
-    <div ref={containerRef} className="min-h-screen bg-background text-foreground relative">
-      {/* Nucleus canvas — fixed, scroll-driven */}
-      <CellNucleusCanvas scrollProgress={scrollProgress} className="z-[5]" />
+    <div className="min-h-screen text-foreground relative" style={{
+      background: "linear-gradient(180deg, hsl(220 30% 14%) 0%, hsl(220 28% 16%) 30%, hsl(218 25% 18%) 60%, hsl(215 22% 15%) 100%)"
+    }}>
+      {/* Nucleus background — fixed canvas with particles */}
+      <NucleusBackground nucleusX={nucleusPos.x} nucleusY={nucleusPos.y} />
+
+      {/* Subtle grain overlay */}
+      <div className="fixed inset-0 opacity-[0.025] z-[1]" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "128px 128px",
+      }} aria-hidden="true" />
 
       {/* ═══ NAVBAR ═══ */}
       <motion.nav
@@ -71,211 +107,223 @@ export default function LandingPreview() {
         </div>
       </motion.nav>
 
-      {/* ═══ HERO ═══ */}
-      <section className="relative min-h-screen flex items-center justify-center pt-16 z-10" style={{ background: 'transparent' }}>
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="text-3xl md:text-5xl lg:text-[3.5rem] font-semibold tracking-tight leading-[1.1] mb-6"
-          >
-            Infraestrutura clínica para{" "}
-            <span className="text-primary">Medicina Regenerativa</span>{" "}
-            responsável.
-          </motion.h1>
+      {/* Content wrapper — above nucleus */}
+      <div className="relative z-10">
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="text-muted-foreground text-base md:text-lg leading-relaxed mb-10 max-w-2xl mx-auto"
-          >
-            Padronize condutas, acompanhe desfechos e organize sua prática em
-            Medicina Regenerativa com estrutura, clareza e segurança.
-          </motion.p>
+        {/* ═══ SECTION 1: HERO ═══ */}
+        <section className="min-h-screen flex items-center justify-center pt-16 px-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="text-3xl md:text-5xl lg:text-[3.5rem] font-semibold tracking-tight leading-[1.1] mb-6"
+            >
+              Infraestrutura clínica para{" "}
+              <span className="text-primary">Medicina Regenerativa</span>{" "}
+              responsável.
+            </motion.h1>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-wrap justify-center gap-4 mb-16"
-          >
-            <button onClick={handleSignup} className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-xl transition-all duration-300">
-              Criar conta <ArrowRight className="w-4 h-4" />
-            </button>
-            <button onClick={handleLogin} className="px-8 py-3.5 rounded-xl text-sm font-medium border border-border/40 text-foreground/80 hover:border-border/60 hover:bg-secondary/30 transition-all duration-300">
-              Entrar
-            </button>
-          </motion.div>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="text-muted-foreground text-base md:text-lg leading-relaxed mb-10 max-w-2xl mx-auto"
+            >
+              Padronize condutas, acompanhe desfechos e organize sua prática em
+              Medicina Regenerativa com estrutura, clareza e segurança.
+            </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 1.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6 text-xs text-muted-foreground"
-          >
-            {[
-              { icon: FileCheck, text: "Procedimento padronizado" },
-              { icon: BarChart3, text: "Desfechos por timepoint" },
-              { icon: Shield, text: "Segurança por clínica" },
-            ].map((b) => (
-              <div key={b.text} className="flex items-center gap-2">
-                <b.icon className="w-3.5 h-3.5 text-primary/60" />
-                <span>{b.text}</span>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1 }}
+              className="flex flex-wrap justify-center gap-4 mb-16"
+            >
+              <button onClick={handleSignup} className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-xl transition-all duration-300">
+                Criar conta <ArrowRight className="w-4 h-4" />
+              </button>
+              <button onClick={handleLogin} className="px-8 py-3.5 rounded-xl text-sm font-medium border border-border/40 text-foreground/80 hover:border-border/60 hover:bg-secondary/30 transition-all duration-300">
+                Entrar
+              </button>
+            </motion.div>
 
-      {/* ═══ ABOUT — sphere moves right, text appears left ═══ */}
-      <section className="relative min-h-screen flex items-center z-10 py-32 px-6">
-        <div className="max-w-5xl mx-auto w-full">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-lg"
-          >
-            <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-6">
-              Visão geral
-            </p>
-            <h2 className="text-2xl md:text-4xl font-semibold tracking-tight mb-8 leading-tight">
-              O que é o REGHEN
-            </h2>
-            <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-6">
-              REGHEN é um sistema clínico estruturado para padronizar procedimentos
-              regenerativos e organizar desfechos com governança e segurança.
-            </p>
-            <p className="text-muted-foreground/70 text-sm leading-relaxed">
-              Ele transforma registros clínicos em dados analisáveis, preservando a
-              autonomia da prática e o isolamento por clínica.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══ MODULES — cards fade in staggered ═══ */}
-      <section className="relative z-10 py-28 md:py-36 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.9 }}
-            className="text-center mb-16"
-          >
-            <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Módulos</p>
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              Infraestrutura completa para a prática regenerativa
-            </h2>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { icon: FileText, title: "Procedimento Padronizado (PSR)", desc: "Registro estruturado de cada procedimento com protocolo, método e rastreabilidade completa." },
-              { icon: Stethoscope, title: "Triagem e Avaliação Estruturada", desc: "Critérios clínicos objetivos para decisão segura antes de cada intervenção regenerativa." },
-              { icon: TestTube2, title: "Exames e Contexto Biológico", desc: "Integração de dados laboratoriais e perfil biológico para fundamentar a conduta clínica." },
-              { icon: Gauge, title: "SCORE e Indicadores", desc: "Avaliação quantitativa e qualitativa para apoiar a tomada de decisão do profissional de saúde." },
-              { icon: ClipboardList, title: "Desfechos do Paciente (PRO)", desc: "Registro longitudinal de desfechos reportados pelo paciente por timepoint definido." },
-              { icon: BarChart3, title: "Análise de Resultados", desc: "Painel interno da clínica com filtros por procedimento, patologia e período de acompanhamento." },
-            ].map((mod, i) => (
-              <motion.div
-                key={mod.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: i * 0.1 }}
-                className="group"
-              >
-                <div className="h-full p-6 md:p-7 rounded-xl bg-card/40 border border-border/15 backdrop-blur-sm transition-all duration-500 hover:border-border/30 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/[0.04] hover:-translate-y-0.5">
-                  <mod.icon className="w-5 h-5 text-primary/60 mb-4 group-hover:text-primary transition-colors" strokeWidth={1.5} />
-                  <h3 className="text-foreground text-[15px] font-medium mb-2">{mod.title}</h3>
-                  <p className="text-muted-foreground/60 text-sm leading-relaxed">{mod.desc}</p>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-6 text-xs text-muted-foreground"
+            >
+              {[
+                { icon: FileCheck, text: "Procedimento padronizado" },
+                { icon: BarChart3, text: "Desfechos por timepoint" },
+                { icon: Shield, text: "Segurança por clínica" },
+              ].map((b) => (
+                <div key={b.text} className="flex items-center gap-2">
+                  <b.icon className="w-3.5 h-3.5 text-primary/60" />
+                  <span>{b.text}</span>
                 </div>
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ═══ SECURITY ═══ */}
-      <section className="relative z-10 py-28 md:py-36 px-6">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Segurança</p>
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-4">
-              Arquitetura pensada para proteção de dados clínicos
-            </h2>
-            <p className="text-muted-foreground text-[15px] max-w-2xl mx-auto">
-              Segurança não é uma funcionalidade opcional. É a base da infraestrutura.
-            </p>
-          </motion.div>
+        {/* ═══ SECTION 2: COMO FUNCIONA ═══ */}
+        <section className="min-h-screen flex items-center py-32 px-6">
+          <div className="max-w-5xl mx-auto w-full">
+            <motion.div {...sectionAnim} className="max-w-lg">
+              <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-6">
+                Como funciona
+              </p>
+              <h2 className="text-2xl md:text-4xl font-semibold tracking-tight mb-8 leading-tight">
+                Do procedimento ao desfecho em 4 etapas
+              </h2>
+            </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { icon: Building2, title: "Isolamento por clínica", desc: "Cada clínica opera em um ambiente completamente isolado. Nenhum dado é compartilhado entre organizações." },
-              { icon: Users, title: "Controle de acesso por perfil", desc: "Permissões granulares por função: administrador, profissional de saúde, técnico e recepção." },
-              { icon: Lock, title: "Políticas de segurança no banco", desc: "Row Level Security garante que cada consulta ao banco respeita as permissões do usuário autenticado." },
-            ].map((p, i) => (
+            <div className="grid md:grid-cols-2 gap-6 mt-12">
+              {[
+                { step: "01", title: "Triagem estruturada", desc: "Avaliação clínica com critérios objetivos para decisão segura antes da intervenção." },
+                { step: "02", title: "Procedimento padronizado", desc: "Registro completo do procedimento com protocolo, método, insumos e rastreabilidade." },
+                { step: "03", title: "Acompanhamento longitudinal", desc: "Desfechos reportados pelo paciente em timepoints definidos: 30, 90, 180 e 365 dias." },
+                { step: "04", title: "Análise e evolução", desc: "Painel interno com indicadores por patologia, procedimento e período de acompanhamento." },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.step}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.12 }}
+                  className="p-7 rounded-xl bg-card/30 border border-border/10 backdrop-blur-sm"
+                >
+                  <span className="text-primary/40 text-3xl font-bold">{item.step}</span>
+                  <h3 className="text-foreground text-[15px] font-medium mt-3 mb-2">{item.title}</h3>
+                  <p className="text-muted-foreground/60 text-sm leading-relaxed">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ SECTION 3: MÉTRICAS E RESULTADOS CLÍNICOS ═══ */}
+        <section className="min-h-screen flex items-center py-32 px-6">
+          <div className="max-w-5xl mx-auto w-full">
+            <motion.div {...sectionAnim} className="text-center mb-16">
+              <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">
+                Métricas clínicas
+              </p>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-4">
+                Resultados mensuráveis em cada etapa
+              </h2>
+              <p className="text-muted-foreground text-[15px] max-w-2xl mx-auto">
+                Acompanhe indicadores reais da sua prática regenerativa com dados longitudinais e rastreabilidade completa.
+              </p>
+            </motion.div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[
+                { icon: Activity, value: "VAS 0–10", label: "Escala de dor em cada timepoint" },
+                { icon: BarChart3, value: "PRO", label: "Desfechos reportados pelo paciente" },
+                { icon: TestTube2, value: "PRP/PRF", label: "Rastreabilidade de insumos biológicos" },
+                { icon: Target, value: "NPS Clínico", label: "Satisfação longitudinal do paciente" },
+                { icon: Gauge, value: "SCORE", label: "Índice de qualidade do procedimento" },
+                { icon: Shield, value: "RLS/RBAC", label: "Governança por clínica e perfil" },
+              ].map((m, i) => (
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.08 }}
+                  className="p-6 rounded-xl bg-card/30 border border-border/10 backdrop-blur-sm text-center"
+                >
+                  <m.icon className="w-5 h-5 text-primary/50 mx-auto mb-3" strokeWidth={1.5} />
+                  <p className="text-primary text-xl font-bold mb-1">{m.value}</p>
+                  <p className="text-muted-foreground/50 text-xs">{m.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ SECTION 4: SCORE E QUALIDADE DO PRP ═══ */}
+        <section className="min-h-screen flex items-center py-32 px-6">
+          <div className="max-w-5xl mx-auto w-full">
+            <div className="grid md:grid-cols-2 gap-16 items-center">
+              <motion.div {...sectionAnim}>
+                <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-6">
+                  SCORE & Qualidade
+                </p>
+                <h2 className="text-2xl md:text-4xl font-semibold tracking-tight mb-8 leading-tight">
+                  Qualidade do PRP como indicador clínico
+                </h2>
+                <p className="text-muted-foreground text-base leading-relaxed mb-6">
+                  O SCORE REGHEN integra variáveis do preparo, método de aplicação e contexto biológico
+                  do paciente para gerar um índice de qualidade do procedimento.
+                </p>
+                <p className="text-muted-foreground/60 text-sm leading-relaxed">
+                  Esse indicador permite comparação interna, identificação de padrões
+                  e evolução longitudinal da prática clínica regenerativa.
+                </p>
+              </motion.div>
+
               <motion.div
-                key={p.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.12 }}
-                className="p-7 rounded-xl bg-card/40 border border-border/15 backdrop-blur-sm"
+                transition={{ duration: 0.8 }}
+                className="grid grid-cols-2 gap-4"
               >
-                <div className="p-2.5 rounded-lg bg-primary/10 w-fit mb-5">
-                  <p.icon className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                </div>
-                <h3 className="text-foreground text-[15px] font-medium mb-2">{p.title}</h3>
-                <p className="text-muted-foreground/60 text-sm leading-relaxed">{p.desc}</p>
+                {[
+                  { label: "Contagem plaquetária", value: "≥ 1.0M/μL" },
+                  { label: "Fator de concentração", value: "3–5×" },
+                  { label: "Leucócitos", value: "LP / LR" },
+                  { label: "Volume final", value: "3–8 mL" },
+                ].map((item) => (
+                  <div key={item.label} className="p-5 rounded-xl bg-card/30 border border-border/10 backdrop-blur-sm">
+                    <p className="text-primary text-lg font-bold">{item.value}</p>
+                    <p className="text-muted-foreground/50 text-xs mt-1">{item.label}</p>
+                  </div>
+                ))}
               </motion.div>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ═══ CTA FINAL ═══ */}
-      <section className="relative z-10 py-32 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-6">
-              Pronto para estruturar sua prática?
-            </h2>
-            <p className="text-muted-foreground mb-10">
-              Comece a padronizar procedimentos e acompanhar desfechos com segurança e governança.
+        {/* ═══ SECTION 5: CTA FINAL ═══ */}
+        <section className="min-h-screen flex items-center justify-center py-32 px-6">
+          <div className="max-w-2xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <h2 className="text-2xl md:text-4xl font-semibold tracking-tight mb-6">
+                Pronto para estruturar sua prática?
+              </h2>
+              <p className="text-muted-foreground mb-10 text-base">
+                Comece a padronizar procedimentos e acompanhar desfechos com segurança e governança.
+              </p>
+              <button onClick={handleSignup} className="inline-flex items-center gap-2 px-10 py-4 rounded-xl text-sm font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-xl transition-all duration-300">
+                Criar conta gratuitamente <ArrowRight className="w-4 h-4" />
+              </button>
+              <p className="text-muted-foreground/40 text-xs mt-6">
+                Sem cartão de crédito. Configuração em minutos.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ═══ FOOTER ═══ */}
+        <footer className="border-t border-border/20 py-12 px-6">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <img src={logoReghen} alt="REGHEN" className="h-6 w-auto opacity-60" />
+            <p className="text-muted-foreground/40 text-xs">
+              © {new Date().getFullYear()} REGHEN. Infraestrutura clínica para Medicina Regenerativa.
             </p>
-            <button onClick={handleSignup} className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all duration-300">
-              Criar conta <ArrowRight className="w-4 h-4" />
-            </button>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══ FOOTER ═══ */}
-      <footer className="relative z-10 border-t border-border/20 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <img src={logoReghen} alt="REGHEN" className="h-6 w-auto opacity-60" />
-          <p className="text-muted-foreground/40 text-xs">
-            © {new Date().getFullYear()} REGHEN. Infraestrutura clínica para Medicina Regenerativa.
-          </p>
-        </div>
-      </footer>
+          </div>
+        </footer>
+      </div>
 
       {/* Back link */}
       <div className="fixed bottom-6 right-6 z-50">
