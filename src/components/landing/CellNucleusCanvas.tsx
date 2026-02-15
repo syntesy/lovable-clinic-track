@@ -1,249 +1,323 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
+import { Canvas, useFrame, useThree, extend } from "@react-three/fiber";
+import * as THREE from "three";
+
+// Extend shaderMaterial for R3F JSX
+extend({ ShaderMaterial: THREE.ShaderMaterial });
 
 interface Props {
   className?: string;
   scrollProgress?: number;
 }
 
-export default function CellNucleusCanvas({ className = "", scrollProgress = 0 }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animFrame = useRef(0);
-  const mouse = useRef({ x: -1000, y: -1000 });
-  const scrollRef = useRef(scrollProgress);
+/* ═══════════════════════════════════════════════
+   GLSL Plasma Sphere — fluid, organic, premium
+   ═══════════════════════════════════════════════ */
 
-  // Keep scroll in sync without re-running effect
+const vertexShader = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  
+  void main() {
+    vUv = uv;
+    vNormal = normalize(normalMatrix * normal);
+    vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const fragmentShader = /* glsl */ `
+  uniform float uTime;
+  uniform float uAlpha;
+  uniform vec2 uMouse;
+  
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  
+  // Simplex-like noise
+  vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
+  vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+  
+  float snoise(vec3 v) {
+    const vec2 C = vec2(1.0 / 6.0, 1.0 / 3.0);
+    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+    
+    vec3 i = floor(v + dot(v, C.yyy));
+    vec3 x0 = v - i + dot(i, C.xxx);
+    
+    vec3 g = step(x0.yzx, x0.xyz);
+    vec3 l = 1.0 - g;
+    vec3 i1 = min(g.xyz, l.zxy);
+    vec3 i2 = max(g.xyz, l.zxy);
+    
+    vec3 x1 = x0 - i1 + C.xxx;
+    vec3 x2 = x0 - i2 + C.yyy;
+    vec3 x3 = x0 - D.yyy;
+    
+    i = mod289(i);
+    vec4 p = permute(permute(permute(
+      i.z + vec4(0.0, i1.z, i2.z, 1.0))
+      + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+      + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+    
+    float n_ = 0.142857142857;
+    vec3 ns = n_ * D.wyz - D.xzx;
+    
+    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+    vec4 x_ = floor(j * ns.z);
+    vec4 y_ = floor(j - 7.0 * x_);
+    
+    vec4 x = x_ * ns.x + ns.yyyy;
+    vec4 y = y_ * ns.x + ns.yyyy;
+    vec4 h = 1.0 - abs(x) - abs(y);
+    
+    vec4 b0 = vec4(x.xy, y.xy);
+    vec4 b1 = vec4(x.zw, y.zw);
+    
+    vec4 s0 = floor(b0) * 2.0 + 1.0;
+    vec4 s1 = floor(b1) * 2.0 + 1.0;
+    vec4 sh = -step(h, vec4(0.0));
+    
+    vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+    vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+    
+    vec3 p0 = vec3(a0.xy, h.x);
+    vec3 p1 = vec3(a0.zw, h.y);
+    vec3 p2 = vec3(a1.xy, h.z);
+    vec3 p3 = vec3(a1.zw, h.w);
+    
+    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+    
+    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+    m = m * m;
+    return 42.0 * dot(m * m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+  }
+  
+  float fbm(vec3 p) {
+    float f = 0.0;
+    f += 0.5000 * snoise(p); p *= 2.01;
+    f += 0.2500 * snoise(p); p *= 2.02;
+    f += 0.1250 * snoise(p); p *= 2.03;
+    f += 0.0625 * snoise(p);
+    return f;
+  }
+  
+  void main() {
+    // Fresnel for edge glow
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
+    
+    // Flowing plasma noise
+    vec3 noiseCoord = vPosition * 1.8 + vec3(uTime * 0.08, uTime * 0.05, uTime * 0.03);
+    float n1 = fbm(noiseCoord);
+    float n2 = fbm(noiseCoord + vec3(3.7, 1.2, 2.8) + vec3(uTime * 0.02));
+    float n3 = fbm(noiseCoord * 0.5 + vec3(uTime * 0.015, -uTime * 0.01, 0.0));
+    
+    // Warm organic palette
+    vec3 deepCore   = vec3(0.28, 0.12, 0.08);  // deep brown-red
+    vec3 midTone    = vec3(0.65, 0.30, 0.15);   // warm amber
+    vec3 highlight  = vec3(0.92, 0.55, 0.30);   // golden orange
+    vec3 hotSpot    = vec3(1.0, 0.78, 0.55);     // bright warm
+    vec3 rimColor   = vec3(0.95, 0.45, 0.20);   // orange rim
+    
+    // Mix colors based on noise
+    float plasma = n1 * 0.5 + 0.5;
+    float veins = smoothstep(0.3, 0.7, n2 * 0.5 + 0.5);
+    float flow = smoothstep(0.2, 0.8, n3 * 0.5 + 0.5);
+    
+    vec3 baseColor = mix(deepCore, midTone, plasma);
+    baseColor = mix(baseColor, highlight, veins * 0.5);
+    baseColor = mix(baseColor, hotSpot, flow * 0.25 * (1.0 - fresnel));
+    
+    // Subtle mouse influence on internal flow
+    float mouseInfluence = length(uMouse) * 0.15;
+    baseColor += hotSpot * mouseInfluence * flow * 0.1;
+    
+    // Inner light — brighter toward center
+    float centerGlow = 1.0 - length(vUv - 0.5) * 1.6;
+    centerGlow = max(centerGlow, 0.0);
+    baseColor += highlight * centerGlow * 0.15;
+    
+    // Rim/edge glow
+    baseColor = mix(baseColor, rimColor, fresnel * 0.6);
+    
+    // Soft alpha with fresnel edge fade
+    float alpha = uAlpha * (0.92 - fresnel * 0.15);
+    alpha = max(alpha, fresnel * 0.4 * uAlpha); // keep rim visible
+    
+    gl_FragColor = vec4(baseColor, alpha);
+  }
+`;
+
+// Glow shader for atmospheric halo
+const glowVertexShader = /* glsl */ `
+  varying vec3 vNormal;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const glowFragmentShader = /* glsl */ `
+  uniform float uAlpha;
+  uniform float uTime;
+  varying vec3 vNormal;
+  
+  void main() {
+    float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+    float pulse = 1.0 + sin(uTime * 0.5) * 0.08;
+    vec3 glowColor = vec3(0.85, 0.35, 0.15) * intensity * pulse;
+    float alpha = intensity * uAlpha * 0.5;
+    gl_FragColor = vec4(glowColor, alpha);
+  }
+`;
+
+function PlasmaSphere({ scrollProgress }: { scrollProgress: number }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const { viewport, size } = useThree();
+
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uAlpha: { value: 1 },
+    uMouse: { value: new THREE.Vector2(0, 0) },
+  }), []);
+
+  const glowUniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uAlpha: { value: 1 },
+  }), []);
+
   useEffect(() => {
-    scrollRef.current = scrollProgress;
-  }, [scrollProgress]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let w = 0;
-    let h = 0;
-
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const rect = canvas.getBoundingClientRect();
-      w = rect.width;
-      h = rect.height;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
     const onMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-    const onLeave = () => {
-      mouse.current = { x: -1000, y: -1000 };
+      mouseRef.current = {
+        x: (e.clientX / size.width - 0.5) * 2,
+        y: -(e.clientY / size.height - 0.5) * 2,
+      };
     };
     window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseleave", onLeave);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [size]);
 
-    // Soft corona particles — fewer, smaller, subtler
-    const PARTICLE_COUNT = 220;
-    const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
-      angle: Math.random() * Math.PI * 2,
-      speed: 0.08 + Math.random() * 0.5,
-      size: 0.3 + Math.random() * 1.2,
-      opacity: 0.08 + Math.random() * 0.35,
-      life: Math.random(),
-      maxLife: 0.6 + Math.random() * 0.4,
-      drift: (Math.random() - 0.5) * 0.12,
-      layer: Math.random(),
-    }));
+  useFrame((_, delta) => {
+    uniforms.uTime.value += delta;
+    glowUniforms.uTime.value += delta;
 
-    let time = 0;
+    const sp = scrollProgress;
+    const vw = viewport.width;
+    const vh = viewport.height;
 
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    let targetX: number, targetY: number, targetScale: number, targetAlpha: number;
 
-    const draw = () => {
-      ctx.clearRect(0, 0, w, h);
-      time += 0.004;
+    if (sp < 0.15) {
+      const t = sp / 0.15;
+      const ease = 1 - Math.pow(1 - t, 3);
+      targetX = 0;
+      targetY = -(vh * 0.18) + ease * (vh * 0.08);
+      targetScale = 1.0 - ease * 0.08;
+      targetAlpha = 1;
+    } else if (sp < 0.4) {
+      const t = 1 - Math.pow(1 - (sp - 0.15) / 0.25, 3);
+      targetX = t * (vw * 0.28);
+      targetY = -(vh * 0.10) + t * (vh * 0.18);
+      targetScale = 1.0 - 0.08 - t * 0.45;
+      targetAlpha = 1;
+    } else if (sp < 0.7) {
+      const t = (sp - 0.4) / 0.3;
+      targetX = vw * 0.28 + Math.sin(uniforms.uTime.value * 0.3) * 0.08;
+      targetY = vh * 0.08 + t * (vh * 0.05) + Math.cos(uniforms.uTime.value * 0.25) * 0.05;
+      targetScale = 0.47 - t * 0.1;
+      targetAlpha = 1;
+    } else {
+      const t = 1 - Math.pow(1 - (sp - 0.7) / 0.3, 3);
+      targetX = vw * 0.28 + t * (vw * 0.1);
+      targetY = vh * 0.13 - t * (vh * 0.06);
+      targetScale = 0.37 - t * 0.15;
+      targetAlpha = Math.max(0, 1 - t * 1.5);
+    }
 
-      const sp = scrollRef.current;
-      const mx = mouse.current.x;
-      const my = mouse.current.y;
-      const mouseActive = mx > 0 && my > 0;
+    // Mouse influence
+    targetX += mouseRef.current.x * 0.06;
+    targetY += mouseRef.current.y * 0.04;
 
-      // Scroll-driven position
-      const baseR = Math.min(w, h) * 0.32;
-      let sphereX: number, sphereY: number, sphereR: number, sphereAlpha: number;
+    uniforms.uAlpha.value = targetAlpha;
+    uniforms.uMouse.value.set(mouseRef.current.x, mouseRef.current.y);
+    glowUniforms.uAlpha.value = targetAlpha;
 
-      if (sp < 0.15) {
-        const t = sp / 0.15;
-        sphereX = w / 2;
-        sphereY = lerp(h * 0.85, h * 0.72, easeOut(t));
-        sphereR = lerp(baseR, baseR * 0.92, t);
-        sphereAlpha = 1;
-      } else if (sp < 0.4) {
-        const t = easeOut((sp - 0.15) / 0.25);
-        sphereX = lerp(w / 2, w * 0.76, t);
-        sphereY = lerp(h * 0.72, h * 0.45, t);
-        sphereR = lerp(baseR * 0.92, baseR * 0.42, t);
-        sphereAlpha = 1;
-      } else if (sp < 0.7) {
-        const t = (sp - 0.4) / 0.3;
-        sphereX = w * 0.76 + Math.sin(time * 0.3) * 8;
-        sphereY = lerp(h * 0.45, h * 0.52, t) + Math.cos(time * 0.25) * 6;
-        sphereR = lerp(baseR * 0.42, baseR * 0.32, t);
-        sphereAlpha = 1;
-      } else {
-        const t = easeOut((sp - 0.7) / 0.3);
-        sphereX = lerp(w * 0.76, w * 0.88, t);
-        sphereY = lerp(h * 0.52, h * 0.4, t);
-        sphereR = lerp(baseR * 0.32, baseR * 0.18, t);
-        sphereAlpha = Math.max(0, 1 - t * 1.5);
-      }
+    if (meshRef.current) {
+      meshRef.current.position.x += (targetX - meshRef.current.position.x) * 0.04;
+      meshRef.current.position.y += (targetY - meshRef.current.position.y) * 0.04;
+      const s = meshRef.current.scale.x;
+      const ns = s + (targetScale - s) * 0.04;
+      meshRef.current.scale.set(ns, ns, ns);
+      meshRef.current.rotation.y += delta * 0.08;
+      meshRef.current.rotation.x += delta * 0.03;
+    }
 
-      if (mouseActive) {
-        sphereX += (mx - w / 2) * 0.008;
-        sphereY += (my - h / 2) * 0.005;
-      }
+    if (glowRef.current) {
+      glowRef.current.position.copy(meshRef.current!.position);
+      glowRef.current.scale.copy(meshRef.current!.scale);
+    }
+  });
 
-      if (sphereAlpha <= 0) {
-        animFrame.current = requestAnimationFrame(draw);
-        return;
-      }
+  const baseRadius = Math.min(viewport.width, viewport.height) * 0.45;
 
-      // ═══ Soft atmospheric glow ═══
-      const outerGlow = ctx.createRadialGradient(sphereX, sphereY, sphereR * 0.5, sphereX, sphereY, sphereR * 3);
-      outerGlow.addColorStop(0, `hsla(15, 60%, 55%, ${0.04 * sphereAlpha})`);
-      outerGlow.addColorStop(0.5, `hsla(20, 50%, 50%, ${0.015 * sphereAlpha})`);
-      outerGlow.addColorStop(1, "transparent");
-      ctx.fillStyle = outerGlow;
-      ctx.fillRect(0, 0, w, h);
+  const glowMaterial = useMemo(() => new THREE.ShaderMaterial({
+    vertexShader: glowVertexShader,
+    fragmentShader: glowFragmentShader,
+    uniforms: glowUniforms,
+    transparent: true,
+    side: THREE.BackSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), []);
 
-      // ═══ Soft corona particles ═══
-      for (const p of particles) {
-        p.life += p.speed * 0.002;
-        if (p.life > p.maxLife) {
-          p.life = 0;
-          p.angle = Math.random() * Math.PI * 2;
-          p.speed = 0.08 + Math.random() * 0.5;
-          p.size = 0.3 + Math.random() * 1.2;
-          p.opacity = 0.08 + Math.random() * 0.35;
-          p.drift = (Math.random() - 0.5) * 0.12;
-        }
-
-        const progress = p.life / p.maxLife;
-        const dist = sphereR * (0.92 + progress * 0.5);
-        const fadeIn = Math.min(progress * 5, 1);
-        const fadeOut = 1 - Math.pow(progress, 2.5);
-        const alpha = p.opacity * fadeIn * fadeOut * sphereAlpha;
-
-        if (alpha < 0.008) continue;
-
-        const wobble = Math.sin(time * 1.5 + p.angle * 3) * 3 * (1 + p.layer * 0.3);
-        const px = sphereX + Math.cos(p.angle + p.drift * progress) * (dist + wobble);
-        const py = sphereY + Math.sin(p.angle + p.drift * progress) * (dist + wobble);
-
-        if (py > h + 10 || px < -10 || px > w + 10 || py < -10) continue;
-
-        // Tiny soft glow
-        const glowR = p.size * (2.5 + p.layer);
-        const glow = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-        glow.addColorStop(0, `hsla(25, 70%, 82%, ${alpha * 0.25})`);
-        glow.addColorStop(1, "transparent");
-        ctx.fillStyle = glow;
-        ctx.fillRect(px - glowR, py - glowR, glowR * 2, glowR * 2);
-
-        // Tiny core dot
-        ctx.beginPath();
-        ctx.arc(px, py, p.size * (0.3 + fadeIn * 0.4), 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(28, 80%, 90%, ${alpha * 0.7})`;
-        ctx.fill();
-      }
-
-      // ═══ Main sphere — smooth multi-layer gradient ═══
-      const grad = ctx.createRadialGradient(
-        sphereX - sphereR * 0.1,
-        sphereY - sphereR * 0.12,
-        sphereR * 0.02,
-        sphereX,
-        sphereY,
-        sphereR
-      );
-      grad.addColorStop(0, `hsla(22, 75%, 80%, ${0.92 * sphereAlpha})`);
-      grad.addColorStop(0.2, `hsla(16, 68%, 68%, ${0.85 * sphereAlpha})`);
-      grad.addColorStop(0.45, `hsla(13, 65%, 58%, ${0.78 * sphereAlpha})`);
-      grad.addColorStop(0.7, `hsla(10, 60%, 48%, ${0.6 * sphereAlpha})`);
-      grad.addColorStop(0.9, `hsla(8, 55%, 38%, ${0.35 * sphereAlpha})`);
-      grad.addColorStop(1, `hsla(6, 50%, 28%, ${0.12 * sphereAlpha})`);
-
-      ctx.beginPath();
-      ctx.arc(sphereX, sphereY, sphereR, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // Subtle inner highlight — top-left
-      const hl = ctx.createRadialGradient(
-        sphereX - sphereR * 0.2, sphereY - sphereR * 0.25, 0,
-        sphereX - sphereR * 0.08, sphereY - sphereR * 0.1, sphereR * 0.55
-      );
-      hl.addColorStop(0, `hsla(30, 90%, 95%, ${0.3 * sphereAlpha})`);
-      hl.addColorStop(0.4, `hsla(25, 80%, 88%, ${0.08 * sphereAlpha})`);
-      hl.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(sphereX, sphereY, sphereR, 0, Math.PI * 2);
-      ctx.fillStyle = hl;
-      ctx.fill();
-
-      // Very soft rim light
-      const rim = ctx.createRadialGradient(sphereX, sphereY, sphereR * 0.85, sphereX, sphereY, sphereR * 1.06);
-      rim.addColorStop(0, "transparent");
-      rim.addColorStop(0.6, `hsla(20, 65%, 72%, ${(0.1 + Math.sin(time * 0.8) * 0.02) * sphereAlpha})`);
-      rim.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(sphereX, sphereY, sphereR * 1.06, 0, Math.PI * 2);
-      ctx.fillStyle = rim;
-      ctx.fill();
-
-      // Internal organic movement — very subtle
-      for (let i = 0; i < 3; i++) {
-        const swAngle = time * 0.15 + (i * Math.PI * 2) / 3;
-        const swDist = sphereR * (0.15 + Math.sin(time * 0.3 + i * 1.5) * 0.08);
-        const swX = sphereX + Math.cos(swAngle) * swDist;
-        const swY = sphereY + Math.sin(swAngle) * swDist;
-        const swG = ctx.createRadialGradient(swX, swY, 0, swX, swY, sphereR * 0.3);
-        swG.addColorStop(0, `hsla(18, 60%, 68%, ${(0.03 + Math.sin(time * 0.5 + i) * 0.01) * sphereAlpha})`);
-        swG.addColorStop(1, "transparent");
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(sphereX, sphereY, sphereR, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.fillStyle = swG;
-        ctx.fillRect(swX - sphereR, swY - sphereR, sphereR * 2, sphereR * 2);
-        ctx.restore();
-      }
-
-      animFrame.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animFrame.current);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseleave", onLeave);
-    };
-  }, []);
+  const sphereMaterial = useMemo(() => new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms,
+    transparent: true,
+    depthWrite: false,
+  }), []);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <>
+      {/* Atmospheric glow layer */}
+      <mesh ref={glowRef} material={glowMaterial}>
+        <sphereGeometry args={[baseRadius * 1.25, 48, 48]} />
+      </mesh>
+
+      {/* Main plasma sphere */}
+      <mesh ref={meshRef} material={sphereMaterial}>
+        <sphereGeometry args={[baseRadius, 64, 64]} />
+      </mesh>
+    </>
+  );
+}
+
+export default function CellNucleusCanvas({ className = "", scrollProgress = 0 }: Props) {
+  return (
+    <div
       className={`fixed inset-0 w-full h-full ${className}`}
       style={{ pointerEvents: "none" }}
       aria-hidden="true"
-    />
+    >
+      <Canvas
+        gl={{
+          alpha: true,
+          antialias: true,
+          powerPreference: "high-performance",
+        }}
+        camera={{ position: [0, 0, 5], fov: 50 }}
+        style={{ background: "transparent" }}
+      >
+        <PlasmaSphere scrollProgress={scrollProgress} />
+      </Canvas>
+    </div>
   );
 }
