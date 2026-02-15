@@ -168,8 +168,8 @@ export default function LandingPreview() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <p className="text-white/80 text-lg font-medium">Dashboard</p>
-                    <p className="text-white/25 text-xs">Visão geral da prática</p>
+                    <p className="text-white/80 text-lg font-medium">Dashboard Clínico Científico</p>
+                    <p className="text-white/25 text-xs" style={{ opacity: 0.7 }}>Monitoramento estruturado da prática regenerativa</p>
                   </div>
                   <div className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/40">
                     Últimos 30 dias
@@ -179,17 +179,22 @@ export default function LandingPreview() {
                 {/* KPIs */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                   {[
-                    { label: "PROCEDIMENTOS", value: "127", change: "+6.9%", up: true },
-                    { label: "FOLLOW-UPS", value: "84", change: "-12.5%", up: false },
-                    { label: "COBERTURA", value: "73.2%", change: "+19.3%", up: true },
-                    { label: "SCORE MÉDIO", value: "8.4", change: "+2.1%", up: true },
+                    { label: "PROCEDIMENTOS DOCUMENTADOS", value: "127", change: "+6.9%", up: true, sub: null },
+                    { label: "SEGUIMENTO LONGITUDINAL", value: "84%", change: null, up: true, sub: null },
+                    { label: "RESPOSTA CLÍNICA GLOBAL", value: "73.2%", change: null, up: true, sub: "Baseado em escalas funcionais padronizadas" },
+                    { label: "SCORE BIOLÓGICO MÉDIO", value: "8.4", change: null, up: true, sub: "Classificação de qualidade do PRP" },
                   ].map((kpi) => (
                     <div key={kpi.label} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                       <p className="text-[9px] text-white/25 tracking-wider uppercase mb-2">{kpi.label}</p>
                       <div className="flex items-end gap-2">
                         <span className="text-white/80 text-xl font-semibold">{kpi.value}</span>
-                        <span className={`text-[10px] font-medium ${kpi.up ? "text-emerald-400/70" : "text-red-400/70"}`}>{kpi.change}</span>
+                        {kpi.change && (
+                          <span className="text-[10px] font-medium text-emerald-400/70">{kpi.change}</span>
+                        )}
                       </div>
+                      {kpi.sub && (
+                        <p className="text-[8px] text-white/20 mt-1.5 leading-tight">{kpi.sub}</p>
+                      )}
                       {/* Mini sparkline */}
                       <div className="flex items-end gap-[2px] h-4 mt-2">
                         {[30, 45, 35, 55, 40, 60, 50, 65, 55, 70, 60, 75].map((h, i) => (
@@ -202,7 +207,7 @@ export default function LandingPreview() {
 
                 {/* Chart area */}
                 <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-5 mb-4">
-                  <p className="text-[10px] text-white/25 uppercase tracking-wider mb-4">Evolução VAS — Últimos 12 meses</p>
+                  <p className="text-[10px] text-white/25 uppercase tracking-wider mb-4">Evolução Clínica Longitudinal (VAS / Função) — Últimos 12 Meses</p>
                   <div className="flex items-end gap-2 h-28">
                     {[35, 50, 40, 65, 55, 70, 60, 75, 80, 60, 85, 70].map((h, i) => (
                       <div key={i} className="flex-1 rounded-sm bg-gradient-to-t from-primary/40 to-primary/10" style={{ height: `${h}%` }} />
@@ -223,6 +228,11 @@ export default function LandingPreview() {
                     </div>
                   ))}
                 </div>
+
+                {/* Scientific footer */}
+                <p className="text-[9px] text-white/[0.35] text-center mt-5 tracking-wide">
+                  Dados anonimizados • Escalas validadas • Padronização clínica
+                </p>
               </div>
             </div>
 
