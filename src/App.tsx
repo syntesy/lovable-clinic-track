@@ -59,6 +59,7 @@ import AdminScoreFluxoDoc from "./pages/admin/AdminScoreFluxoDoc";
 import AdminScoreQA from "./pages/admin/AdminScoreQA";
 import AdminSeedQA from "./pages/admin/AdminSeedQA";
 import LandingPage from "./pages/LandingPage";
+import LandingPreview from "./pages/LandingPreview";
 import NotFound from "./pages/NotFound";
 import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
@@ -111,6 +112,7 @@ const App = () => (
             <Route path="/select-environment" element={<ProtectedRoute><SelectEnvironmentPage /></ProtectedRoute>} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/" element={<LandingPage />} />
+            <Route path="/landing-preview" element={<LandingPreview />} />
             
             {/* Patient Portal Routes - Single Function */}
             <Route path="/patient/login" element={<PatientLogin />} />
