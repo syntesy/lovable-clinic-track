@@ -163,109 +163,179 @@ export default function NucleusBackground({ nucleusX, nucleusY, scrollProgress =
 
       ctx.clearRect(0, 0, w, h);
 
-      // === OUTER GLOW (soft halo beyond sphere) ===
-      const outerGlow = ctx.createRadialGradient(cx, cy, effectiveR * 0.8, cx, cy, effectiveR * 2.0);
-      outerGlow.addColorStop(0, "rgba(230, 170, 140, 0.15)");
-      outerGlow.addColorStop(0.4, "rgba(220, 155, 120, 0.06)");
-      outerGlow.addColorStop(0.7, "rgba(200, 140, 110, 0.02)");
-      outerGlow.addColorStop(1, "transparent");
+      const R = effectiveR;
+
+      // Helper: draw organic (wobbly) circle path
+      const drawOrganicCircle = (x: number, y: number, r: number, wobbleAmt: number, segments: number, seed: number) => {
+        ctx.beginPath();
+        for (let i = 0; i <= segments; i++) {
+          const a = (i / segments) * Math.PI * 2;
+          const wobble = 1 + Math.sin(a * 3 + seed + time * 0.15) * wobbleAmt
+                           + Math.sin(a * 5 + seed * 2.3 + time * 0.1) * wobbleAmt * 0.5
+                           + Math.sin(a * 7 + seed * 0.7 + time * 0.08) * wobbleAmt * 0.3;
+          const px = x + Math.cos(a) * r * wobble;
+          const py = y + Math.sin(a) * r * wobble;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      };
+
+      // === CYTOPLASM GLOW (faint halo around the cell) ===
+      const cytoGlow = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.8);
+      cytoGlow.addColorStop(0, "rgba(220, 170, 140, 0.08)");
+      cytoGlow.addColorStop(0.5, "rgba(200, 150, 120, 0.03)");
+      cytoGlow.addColorStop(1, "transparent");
       ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR * 2.0, 0, Math.PI * 2);
-      ctx.fillStyle = outerGlow;
+      ctx.arc(cx, cy, R * 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = cytoGlow;
       ctx.fill();
 
-      // === SOLID SPHERE BODY — opaque, peach/coral fill ===
-      // Base solid fill
-      const bodyGrad = ctx.createRadialGradient(
-        cx - effectiveR * 0.2, cy - effectiveR * 0.25, effectiveR * 0.1,
-        cx + effectiveR * 0.05, cy + effectiveR * 0.1, effectiveR
-      );
-      bodyGrad.addColorStop(0, "rgba(245, 200, 170, 0.95)");  // bright top-left
-      bodyGrad.addColorStop(0.25, "rgba(235, 175, 145, 0.92)");
-      bodyGrad.addColorStop(0.5, "rgba(220, 155, 125, 0.88)");
-      bodyGrad.addColorStop(0.75, "rgba(200, 135, 110, 0.85)");
-      bodyGrad.addColorStop(0.95, "rgba(190, 120, 100, 0.80)");
-      bodyGrad.addColorStop(1, "rgba(180, 110, 90, 0.70)");
-      ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
-      ctx.fillStyle = bodyGrad;
-      ctx.fill();
-
-      // === 3D SHADING — darker bottom-right for depth ===
-      const shadowGrad = ctx.createRadialGradient(
-        cx + effectiveR * 0.3, cy + effectiveR * 0.35, 0,
-        cx, cy, effectiveR
-      );
-      shadowGrad.addColorStop(0, "rgba(140, 70, 55, 0.35)");
-      shadowGrad.addColorStop(0.5, "rgba(160, 90, 70, 0.15)");
-      shadowGrad.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
-      ctx.fillStyle = shadowGrad;
-      ctx.fill();
-
-      // === TOP-LEFT HIGHLIGHT (specular) ===
+      // === NUCLEAR ENVELOPE (double membrane, organic shape) ===
       ctx.save();
-      const specX = cx - effectiveR * 0.3;
-      const specY = cy - effectiveR * 0.35;
-      const specGrad = ctx.createRadialGradient(specX, specY, 0, specX, specY, effectiveR * 0.6);
-      specGrad.addColorStop(0, "rgba(255, 240, 230, 0.50)");
-      specGrad.addColorStop(0.3, "rgba(250, 220, 200, 0.25)");
-      specGrad.addColorStop(0.6, "rgba(240, 200, 180, 0.08)");
-      specGrad.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(specX, specY, effectiveR * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = specGrad;
-      ctx.fill();
-      ctx.restore();
 
-      // === MEMBRANE EDGE — thick, bright rim ===
-      // Inner edge brightening
-      const rimGrad = ctx.createRadialGradient(cx, cy, effectiveR * 0.82, cx, cy, effectiveR * 1.03);
-      rimGrad.addColorStop(0, "transparent");
-      rimGrad.addColorStop(0.4, "rgba(240, 190, 160, 0.15)");
-      rimGrad.addColorStop(0.7, "rgba(235, 180, 155, 0.40)");
-      rimGrad.addColorStop(0.88, "rgba(230, 175, 150, 0.55)");
-      rimGrad.addColorStop(0.96, "rgba(225, 170, 145, 0.35)");
-      rimGrad.addColorStop(1, "rgba(220, 160, 135, 0.08)");
-      ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR * 1.03, 0, Math.PI * 2);
-      ctx.fillStyle = rimGrad;
-      ctx.fill();
-
-      // Crisp membrane stroke
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(230, 185, 155, ${0.45 + Math.sin(time * behavior.breathSpeed * 0.5) * 0.1})`;
+      // Outer membrane — semi-transparent, organic shape
+      drawOrganicCircle(cx, cy, R * 1.02, 0.025, 80, 1.0);
+      ctx.strokeStyle = `rgba(180, 120, 90, ${0.35 + Math.sin(time * 0.3) * 0.08})`;
       ctx.lineWidth = 2.5;
       ctx.stroke();
-      ctx.restore();
 
-      // Subtle outer rim glow
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, effectiveR * 1.01, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(240, 200, 170, 0.15)";
-      ctx.lineWidth = 4;
+      // Inner membrane — slightly smaller
+      drawOrganicCircle(cx, cy, R * 0.97, 0.02, 80, 2.5);
+      ctx.strokeStyle = `rgba(170, 115, 85, ${0.25 + Math.sin(time * 0.25 + 1) * 0.06})`;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.restore();
 
-      // === HIGHLIGHT ARC — rotating per section ===
+      // === NUCLEOPLASM (translucent interior fill) ===
       ctx.save();
-      ctx.globalAlpha = 0.4;
-      const hlAngle = -0.8 + sp * 0.6;
-      const hlX = cx + Math.cos(hlAngle) * effectiveR * 0.3;
-      const hlY = cy + Math.sin(hlAngle) * effectiveR * 0.3;
-      const highlightGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, effectiveR * 0.45);
-      highlightGrad.addColorStop(0, "rgba(255, 245, 235, 0.5)");
-      highlightGrad.addColorStop(0.35, "rgba(250, 225, 200, 0.2)");
-      highlightGrad.addColorStop(1, "transparent");
-      ctx.beginPath();
-      ctx.arc(hlX, hlY, effectiveR * 0.45, 0, Math.PI * 2);
-      ctx.fillStyle = highlightGrad;
+      drawOrganicCircle(cx, cy, R, 0.025, 80, 1.0);
+      ctx.clip();
+
+      // Base nucleoplasm — translucent warm tone
+      const nucleoplasmGrad = ctx.createRadialGradient(
+        cx - R * 0.15, cy - R * 0.1, R * 0.05,
+        cx, cy, R
+      );
+      nucleoplasmGrad.addColorStop(0, "rgba(235, 190, 160, 0.55)");
+      nucleoplasmGrad.addColorStop(0.3, "rgba(220, 170, 140, 0.45)");
+      nucleoplasmGrad.addColorStop(0.6, "rgba(200, 145, 115, 0.35)");
+      nucleoplasmGrad.addColorStop(0.85, "rgba(185, 130, 100, 0.30)");
+      nucleoplasmGrad.addColorStop(1, "rgba(170, 115, 85, 0.25)");
+      ctx.fillStyle = nucleoplasmGrad;
+      ctx.fillRect(cx - R * 1.1, cy - R * 1.1, R * 2.2, R * 2.2);
+
+      // === CHROMATIN NETWORK (fibrous, web-like structures) ===
+      ctx.globalAlpha = 0.3;
+      // Draw chromatin fibers — curved lines inside the nucleus
+      for (let i = 0; i < 18; i++) {
+        const startAngle = (i / 18) * Math.PI * 2 + time * 0.005;
+        const startR = R * (0.15 + Math.random() * 0.5);
+        const sx = cx + Math.cos(startAngle) * startR;
+        const sy = cy + Math.sin(startAngle) * startR;
+
+        const endAngle = startAngle + 0.8 + Math.sin(i * 2.7) * 1.5;
+        const endR = R * (0.2 + Math.sin(i * 1.3 + time * 0.02) * 0.35);
+        const ex = cx + Math.cos(endAngle) * endR;
+        const ey = cy + Math.sin(endAngle) * endR;
+
+        const cpAngle = (startAngle + endAngle) / 2 + Math.sin(i * 0.9) * 0.5;
+        const cpR = R * (0.3 + Math.sin(i * 1.7 + time * 0.03) * 0.25);
+        const cpx = cx + Math.cos(cpAngle) * cpR;
+        const cpy = cy + Math.sin(cpAngle) * cpR;
+
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.quadraticCurveTo(cpx, cpy, ex, ey);
+        const fiberAlpha = 0.12 + Math.sin(time * 0.2 + i * 1.1) * 0.06;
+        ctx.strokeStyle = `rgba(160, 85, 65, ${fiberAlpha})`;
+        ctx.lineWidth = 1 + Math.sin(i * 0.8) * 0.5;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // === HETEROCHROMATIN CLUSTERS (dark dense patches) ===
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2 + i * 0.4 + time * 0.008;
+        const dist = R * (0.25 + Math.sin(i * 2.1 + time * 0.015) * 0.25);
+        const hx = cx + Math.cos(angle) * dist;
+        const hy = cy + Math.sin(angle) * dist;
+        const hr = R * (0.06 + Math.sin(i * 1.5) * 0.04);
+
+        const hGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+        hGrad.addColorStop(0, `rgba(140, 70, 50, ${0.35 + Math.sin(time * 0.3 + i) * 0.1})`);
+        hGrad.addColorStop(0.6, `rgba(150, 80, 60, ${0.15 + Math.sin(time * 0.2 + i * 2) * 0.05})`);
+        hGrad.addColorStop(1, "transparent");
+
+        drawOrganicCircle(hx, hy, hr, 0.15, 20, i * 3.7);
+        ctx.fillStyle = hGrad;
+        ctx.fill();
+      }
+
+      // === NUCLEOLUS (dense, darker organelle inside the nucleus) ===
+      const nuclX = cx + Math.sin(time * 0.05) * R * 0.08;
+      const nuclY = cy + Math.cos(time * 0.04 + 0.5) * R * 0.06;
+      const nuclR = R * 0.18;
+
+      // Nucleolus body
+      drawOrganicCircle(nuclX, nuclY, nuclR, 0.08, 40, 5.5);
+      const nuclGrad = ctx.createRadialGradient(
+        nuclX - nuclR * 0.15, nuclY - nuclR * 0.15, 0,
+        nuclX, nuclY, nuclR
+      );
+      nuclGrad.addColorStop(0, "rgba(180, 100, 70, 0.70)");
+      nuclGrad.addColorStop(0.4, "rgba(160, 85, 60, 0.55)");
+      nuclGrad.addColorStop(0.75, "rgba(145, 75, 55, 0.40)");
+      nuclGrad.addColorStop(1, "rgba(130, 65, 50, 0.20)");
+      ctx.fillStyle = nuclGrad;
       ctx.fill();
-      ctx.restore();
+
+      // Nucleolus membrane
+      drawOrganicCircle(nuclX, nuclY, nuclR, 0.08, 40, 5.5);
+      ctx.strokeStyle = `rgba(150, 80, 55, ${0.4 + Math.sin(time * 0.3) * 0.1})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Nucleolus highlight
+      const nuclHL = ctx.createRadialGradient(
+        nuclX - nuclR * 0.3, nuclY - nuclR * 0.3, 0,
+        nuclX - nuclR * 0.2, nuclY - nuclR * 0.2, nuclR * 0.4
+      );
+      nuclHL.addColorStop(0, "rgba(240, 210, 180, 0.35)");
+      nuclHL.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(nuclX - nuclR * 0.2, nuclY - nuclR * 0.25, nuclR * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = nuclHL;
+      ctx.fill();
+
+      // === NUCLEAR PORES (small dots on the membrane) ===
+      ctx.globalAlpha = 0.35;
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2 + time * 0.01;
+        const wobble = 1 + Math.sin(a * 3 + 1.0 + time * 0.15) * 0.025;
+        const px = cx + Math.cos(a) * R * wobble;
+        const py = cy + Math.sin(a) * R * wobble;
+        const poreR = 1.5 + Math.sin(i * 2.3 + time * 0.2) * 0.5;
+        ctx.beginPath();
+        ctx.arc(px, py, poreR, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(140, 90, 65, ${0.4 + Math.sin(time * 0.4 + i) * 0.15})`;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // === SPECULAR HIGHLIGHT (top-left, subtle) ===
+      const specX = cx - R * 0.28;
+      const specY = cy - R * 0.32;
+      const specGrad = ctx.createRadialGradient(specX, specY, 0, specX, specY, R * 0.5);
+      specGrad.addColorStop(0, "rgba(255, 240, 225, 0.30)");
+      specGrad.addColorStop(0.3, "rgba(245, 220, 200, 0.12)");
+      specGrad.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(specX, specY, R * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = specGrad;
+      ctx.fill();
+
+      ctx.restore(); // release clip
 
       // === PARTICLES ===
       const particles = particlesRef.current;
