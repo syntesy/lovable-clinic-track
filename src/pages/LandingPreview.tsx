@@ -45,7 +45,7 @@ export default function LandingPreview() {
   return (
     <div ref={containerRef} className="min-h-screen bg-background text-foreground relative">
       {/* Nucleus canvas — fixed, scroll-driven */}
-      <CellNucleusCanvas scrollProgress={scrollProgress} className="z-10" />
+      <CellNucleusCanvas scrollProgress={scrollProgress} className="z-[5]" />
 
       {/* ═══ NAVBAR ═══ */}
       <motion.nav
@@ -72,7 +72,7 @@ export default function LandingPreview() {
       </motion.nav>
 
       {/* ═══ HERO ═══ */}
-      <section className="relative min-h-screen flex items-center justify-center pt-16 z-10">
+      <section className="relative min-h-screen flex items-center justify-center pt-16 z-10" style={{ background: 'transparent' }}>
         <div className="max-w-3xl mx-auto px-6 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
