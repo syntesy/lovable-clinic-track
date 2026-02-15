@@ -45,7 +45,7 @@ export default function LandingPreview() {
   return (
     <div ref={containerRef} className="min-h-screen bg-background text-foreground relative">
       {/* Nucleus canvas — fixed, scroll-driven */}
-      <CellNucleusCanvas scrollProgress={scrollProgress} className="z-0" />
+      <CellNucleusCanvas scrollProgress={scrollProgress} className="z-10" />
 
       {/* ═══ NAVBAR ═══ */}
       <motion.nav

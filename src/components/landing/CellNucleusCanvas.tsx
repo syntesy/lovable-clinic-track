@@ -214,49 +214,50 @@ function PlasmaSphere({ scrollProgress }: { scrollProgress: number }) {
 
     let targetX: number, targetY: number, targetScale: number, targetAlpha: number;
 
+    // Hero: sphere at bottom-center, partially below viewport (like a rising horizon)
     if (sp < 0.15) {
       const t = sp / 0.15;
       const ease = 1 - Math.pow(1 - t, 3);
       targetX = 0;
-      targetY = -(vh * 0.18) + ease * (vh * 0.08);
-      targetScale = 1.0 - ease * 0.08;
+      targetY = -2.4 + ease * 0.15;
+      targetScale = 1.0;
       targetAlpha = 1;
     } else if (sp < 0.4) {
       const t = 1 - Math.pow(1 - (sp - 0.15) / 0.25, 3);
-      targetX = t * (vw * 0.28);
-      targetY = -(vh * 0.10) + t * (vh * 0.18);
-      targetScale = 1.0 - 0.08 - t * 0.45;
+      targetX = t * 2.8;
+      targetY = -2.25 + t * 2.6;
+      targetScale = 1.0 - t * 0.5;
       targetAlpha = 1;
     } else if (sp < 0.7) {
       const t = (sp - 0.4) / 0.3;
-      targetX = vw * 0.28 + Math.sin(uniforms.uTime.value * 0.3) * 0.08;
-      targetY = vh * 0.08 + t * (vh * 0.05) + Math.cos(uniforms.uTime.value * 0.25) * 0.05;
-      targetScale = 0.47 - t * 0.1;
+      targetX = 2.8 + Math.sin(uniforms.uTime.value * 0.3) * 0.04;
+      targetY = 0.35 + t * 0.3 + Math.cos(uniforms.uTime.value * 0.25) * 0.03;
+      targetScale = 0.5 - t * 0.1;
       targetAlpha = 1;
     } else {
       const t = 1 - Math.pow(1 - (sp - 0.7) / 0.3, 3);
-      targetX = vw * 0.28 + t * (vw * 0.1);
-      targetY = vh * 0.13 - t * (vh * 0.06);
-      targetScale = 0.37 - t * 0.15;
+      targetX = 2.8 + t * 0.8;
+      targetY = 0.65 - t * 0.3;
+      targetScale = 0.4 - t * 0.15;
       targetAlpha = Math.max(0, 1 - t * 1.5);
     }
 
     // Mouse influence
-    targetX += mouseRef.current.x * 0.06;
-    targetY += mouseRef.current.y * 0.04;
+    targetX += mouseRef.current.x * 0.08;
+    targetY += mouseRef.current.y * 0.05;
 
-    uniforms.uAlpha.value = targetAlpha;
+    uniforms.uAlpha.value += (targetAlpha - uniforms.uAlpha.value) * 0.06;
     uniforms.uMouse.value.set(mouseRef.current.x, mouseRef.current.y);
-    glowUniforms.uAlpha.value = targetAlpha;
+    glowUniforms.uAlpha.value = uniforms.uAlpha.value;
 
     if (meshRef.current) {
-      meshRef.current.position.x += (targetX - meshRef.current.position.x) * 0.04;
-      meshRef.current.position.y += (targetY - meshRef.current.position.y) * 0.04;
+      meshRef.current.position.x += (targetX - meshRef.current.position.x) * 0.035;
+      meshRef.current.position.y += (targetY - meshRef.current.position.y) * 0.035;
       const s = meshRef.current.scale.x;
-      const ns = s + (targetScale - s) * 0.04;
+      const ns = s + (targetScale - s) * 0.035;
       meshRef.current.scale.set(ns, ns, ns);
-      meshRef.current.rotation.y += delta * 0.08;
-      meshRef.current.rotation.x += delta * 0.03;
+      meshRef.current.rotation.y += delta * 0.06;
+      meshRef.current.rotation.x += delta * 0.025;
     }
 
     if (glowRef.current) {
@@ -265,7 +266,8 @@ function PlasmaSphere({ scrollProgress }: { scrollProgress: number }) {
     }
   });
 
-  const baseRadius = Math.min(viewport.width, viewport.height) * 0.45;
+  // Big sphere: radius ~2 units, camera at z=5 with fov=50 means ~4.6 units visible vertically
+  const R = 2.2;
 
   const glowMaterial = useMemo(() => new THREE.ShaderMaterial({
     vertexShader: glowVertexShader,
@@ -287,14 +289,11 @@ function PlasmaSphere({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <>
-      {/* Atmospheric glow layer */}
       <mesh ref={glowRef} material={glowMaterial}>
-        <sphereGeometry args={[baseRadius * 1.25, 48, 48]} />
+        <sphereGeometry args={[R * 1.3, 48, 48]} />
       </mesh>
-
-      {/* Main plasma sphere */}
       <mesh ref={meshRef} material={sphereMaterial}>
-        <sphereGeometry args={[baseRadius, 64, 64]} />
+        <sphereGeometry args={[R, 64, 64]} />
       </mesh>
     </>
   );
