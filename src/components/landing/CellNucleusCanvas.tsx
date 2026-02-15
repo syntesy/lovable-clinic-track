@@ -1,96 +1,13 @@
-import { useRef, useEffect, useCallback } from "react";
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  baseRadius: number;
-  opacity: number;
-  baseOpacity: number;
-  hue: number;
-  orbitRadius: number;
-  orbitSpeed: number;
-  orbitAngle: number;
-  type: "organelle" | "membrane" | "filament";
-}
+import { useRef, useEffect } from "react";
 
 interface Props {
   className?: string;
-  particleCount?: number;
-  /** HSL hue for the primary color (default: 13 = REGHEN orange) */
-  primaryHue?: number;
 }
 
-export default function CellNucleusCanvas({
-  className = "",
-  particleCount = 80,
-  primaryHue = 13,
-}: Props) {
+export default function CellNucleusCanvas({ className = "" }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouse = useRef({ x: -1000, y: -1000 });
   const animFrame = useRef(0);
-  const particles = useRef<Particle[]>([]);
-  const dims = useRef({ w: 0, h: 0 });
-
-  const initParticles = useCallback(
-    (w: number, h: number) => {
-      const cx = w / 2;
-      const cy = h / 2;
-      const arr: Particle[] = [];
-
-      for (let i = 0; i < particleCount; i++) {
-        const type: Particle["type"] =
-          i < particleCount * 0.15
-            ? "organelle"
-            : i < particleCount * 0.6
-            ? "membrane"
-            : "filament";
-
-        const orbitRadius =
-          type === "organelle"
-            ? Math.random() * 60 + 20
-            : type === "membrane"
-            ? Math.random() * 180 + 80
-            : Math.random() * 320 + 120;
-
-        const baseRadius =
-          type === "organelle"
-            ? Math.random() * 4 + 3
-            : type === "membrane"
-            ? Math.random() * 2.5 + 1
-            : Math.random() * 1.2 + 0.4;
-
-        const baseOpacity =
-          type === "organelle"
-            ? 0.6 + Math.random() * 0.3
-            : type === "membrane"
-            ? 0.3 + Math.random() * 0.25
-            : 0.1 + Math.random() * 0.15;
-
-        const angle = Math.random() * Math.PI * 2;
-
-        arr.push({
-          x: cx + Math.cos(angle) * orbitRadius,
-          y: cy + Math.sin(angle) * orbitRadius,
-          vx: 0,
-          vy: 0,
-          radius: baseRadius,
-          baseRadius,
-          opacity: baseOpacity,
-          baseOpacity,
-          hue: primaryHue + (Math.random() * 30 - 15),
-          orbitRadius,
-          orbitSpeed: (0.0003 + Math.random() * 0.0008) * (Math.random() > 0.5 ? 1 : -1),
-          orbitAngle: angle,
-          type,
-        });
-      }
-      particles.current = arr;
-    },
-    [particleCount, primaryHue]
-  );
+  const mouse = useRef({ x: -1000, y: -1000 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -98,16 +15,17 @@ export default function CellNucleusCanvas({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    let w = 0;
+    let h = 0;
+
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
-      dims.current = { w: rect.width, h: rect.height };
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+      w = rect.width;
+      h = rect.height;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      if (particles.current.length === 0) {
-        initParticles(rect.width, rect.height);
-      }
     };
     resize();
     window.addEventListener("resize", resize);
@@ -122,111 +40,155 @@ export default function CellNucleusCanvas({
     canvas.addEventListener("mousemove", onMove);
     canvas.addEventListener("mouseleave", onLeave);
 
+    // Corona particles
+    const PARTICLE_COUNT = 600;
+    const particles = Array.from({ length: PARTICLE_COUNT }, () => {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.2 + Math.random() * 1.5;
+      const life = Math.random();
+      return {
+        angle,
+        dist: 0,
+        speed,
+        size: 0.5 + Math.random() * 2.5,
+        opacity: 0.3 + Math.random() * 0.7,
+        life,
+        maxLife: 0.6 + Math.random() * 0.4,
+        drift: (Math.random() - 0.5) * 0.3,
+      };
+    });
+
     let time = 0;
 
     const draw = () => {
-      const { w, h } = dims.current;
       ctx.clearRect(0, 0, w, h);
-      time++;
+      time += 0.008;
 
-      const cx = w / 2;
-      const cy = h / 2;
+      // Sphere position: bottom-center, partially off-screen
+      const sphereX = w / 2;
+      const sphereY = h * 0.92;
+      const sphereR = Math.min(w, h) * 0.38;
+
+      // Mouse influence on sphere position
       const mx = mouse.current.x;
       const my = mouse.current.y;
+      const mouseActive = mx > 0 && my > 0;
+      const offsetX = mouseActive ? (mx - w / 2) * 0.015 : 0;
+      const offsetY = mouseActive ? (my - h / 2) * 0.01 : 0;
+      const sx = sphereX + offsetX;
+      const sy = sphereY + offsetY;
 
-      // Draw nucleus glow
-      const nucleusGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
-      nucleusGrad.addColorStop(0, `hsla(${primaryHue}, 74%, 55%, 0.08)`);
-      nucleusGrad.addColorStop(0.5, `hsla(${primaryHue}, 74%, 55%, 0.03)`);
-      nucleusGrad.addColorStop(1, "transparent");
-      ctx.fillStyle = nucleusGrad;
+      // === Outer atmospheric glow ===
+      const outerGlow = ctx.createRadialGradient(sx, sy, sphereR * 0.5, sx, sy, sphereR * 3);
+      outerGlow.addColorStop(0, "hsla(13, 74%, 55%, 0.06)");
+      outerGlow.addColorStop(0.3, "hsla(20, 80%, 60%, 0.03)");
+      outerGlow.addColorStop(1, "transparent");
+      ctx.fillStyle = outerGlow;
       ctx.fillRect(0, 0, w, h);
 
-      // Mouse attraction glow
-      if (mx > 0 && my > 0) {
-        const mouseGrad = ctx.createRadialGradient(mx, my, 0, mx, my, 200);
-        mouseGrad.addColorStop(0, `hsla(${primaryHue}, 74%, 55%, 0.06)`);
-        mouseGrad.addColorStop(1, "transparent");
-        ctx.fillStyle = mouseGrad;
-        ctx.fillRect(0, 0, w, h);
-      }
+      // === Corona particles ===
+      for (const p of particles) {
+        p.life += p.speed * 0.004;
+        if (p.life > p.maxLife) {
+          p.life = 0;
+          p.angle = Math.random() * Math.PI * 2;
+          p.speed = 0.2 + Math.random() * 1.5;
+          p.size = 0.5 + Math.random() * 2.5;
+          p.opacity = 0.3 + Math.random() * 0.7;
+          p.drift = (Math.random() - 0.5) * 0.3;
+        }
 
-      // Update and draw particles
-      const pts = particles.current;
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
+        const progress = p.life / p.maxLife;
+        const dist = sphereR * (0.85 + progress * 0.8);
+        const fadeIn = Math.min(progress * 5, 1);
+        const fadeOut = 1 - Math.pow(progress, 2);
+        const alpha = p.opacity * fadeIn * fadeOut;
 
-        // Orbital movement
-        p.orbitAngle += p.orbitSpeed;
-        const targetX = cx + Math.cos(p.orbitAngle) * p.orbitRadius;
-        const targetY = cy + Math.sin(p.orbitAngle) * p.orbitRadius;
+        const wobble = Math.sin(time * 3 + p.angle * 5) * 8;
+        const px = sx + Math.cos(p.angle + p.drift * progress) * (dist + wobble);
+        const py = sy + Math.sin(p.angle + p.drift * progress) * (dist + wobble);
 
-        // Mouse influence
-        const dxM = mx - p.x;
-        const dyM = my - p.y;
-        const distM = Math.sqrt(dxM * dxM + dyM * dyM);
-        const mouseInfluence = distM < 250 ? (1 - distM / 250) * 0.8 : 0;
+        // Skip if off screen
+        if (py > h + 10 || px < -10 || px > w + 10 || py < -10) continue;
 
-        // Lerp to target + mouse attraction
-        p.x += (targetX - p.x) * 0.02 + dxM * mouseInfluence * 0.008;
-        p.y += (targetY - p.y) * 0.02 + dyM * mouseInfluence * 0.008;
+        // Glow
+        const glowR = p.size * 4;
+        const glow = ctx.createRadialGradient(px, py, 0, px, py, glowR);
+        glow.addColorStop(0, `hsla(25, 90%, 80%, ${alpha * 0.5})`);
+        glow.addColorStop(1, "transparent");
+        ctx.fillStyle = glow;
+        ctx.fillRect(px - glowR, py - glowR, glowR * 2, glowR * 2);
 
-        // Pulse radius near mouse
-        p.radius = p.baseRadius + (mouseInfluence * p.baseRadius * 0.8);
-        p.opacity = p.baseOpacity + mouseInfluence * 0.3;
-
-        // Draw particle
+        // Core dot
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        const sat = p.type === "organelle" ? "74%" : p.type === "membrane" ? "50%" : "30%";
-        const lit = p.type === "organelle" ? "55%" : p.type === "membrane" ? "60%" : "65%";
-        ctx.fillStyle = `hsla(${p.hue}, ${sat}, ${lit}, ${p.opacity})`;
+        ctx.arc(px, py, p.size * (0.5 + fadeIn * 0.5), 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(30, 95%, 90%, ${alpha})`;
         ctx.fill();
-
-        // Glow for organelles
-        if (p.type === "organelle") {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${p.hue}, 74%, 55%, ${p.opacity * 0.1})`;
-          ctx.fill();
-        }
       }
 
-      // Draw connections (membrane-like filaments)
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x;
-          const dy = pts[i].y - pts[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const maxDist = pts[i].type === "filament" || pts[j].type === "filament" ? 100 : 70;
+      // === Main sphere ===
+      // Sphere body gradient
+      const sphereGrad = ctx.createRadialGradient(
+        sx - sphereR * 0.15,
+        sy - sphereR * 0.2,
+        sphereR * 0.05,
+        sx,
+        sy,
+        sphereR
+      );
+      sphereGrad.addColorStop(0, "hsla(20, 85%, 78%, 0.95)");
+      sphereGrad.addColorStop(0.3, "hsla(13, 74%, 65%, 0.85)");
+      sphereGrad.addColorStop(0.6, "hsla(13, 74%, 55%, 0.75)");
+      sphereGrad.addColorStop(0.85, "hsla(10, 70%, 45%, 0.6)");
+      sphereGrad.addColorStop(1, "hsla(8, 65%, 35%, 0.3)");
 
-          if (dist < maxDist) {
-            const alpha = (1 - dist / maxDist) * 0.12;
-            ctx.beginPath();
-            ctx.moveTo(pts[i].x, pts[i].y);
-            ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = `hsla(${primaryHue}, 50%, 60%, ${alpha})`;
-            ctx.stroke();
-          }
-        }
+      ctx.beginPath();
+      ctx.arc(sx, sy, sphereR, 0, Math.PI * 2);
+      ctx.fillStyle = sphereGrad;
+      ctx.fill();
+
+      // Inner light reflection
+      const reflectGrad = ctx.createRadialGradient(
+        sx - sphereR * 0.25,
+        sy - sphereR * 0.3,
+        0,
+        sx - sphereR * 0.1,
+        sy - sphereR * 0.15,
+        sphereR * 0.6
+      );
+      reflectGrad.addColorStop(0, "hsla(30, 100%, 95%, 0.4)");
+      reflectGrad.addColorStop(0.5, "hsla(25, 90%, 85%, 0.1)");
+      reflectGrad.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(sx, sy, sphereR, 0, Math.PI * 2);
+      ctx.fillStyle = reflectGrad;
+      ctx.fill();
+
+      // Rim light / corona glow at the edge
+      const rimGrad = ctx.createRadialGradient(sx, sy, sphereR * 0.8, sx, sy, sphereR * 1.15);
+      rimGrad.addColorStop(0, "transparent");
+      rimGrad.addColorStop(0.5, `hsla(25, 90%, 75%, ${0.15 + Math.sin(time * 2) * 0.05})`);
+      rimGrad.addColorStop(0.8, `hsla(30, 95%, 85%, ${0.1 + Math.sin(time * 1.5) * 0.03})`);
+      rimGrad.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(sx, sy, sphereR * 1.15, 0, Math.PI * 2);
+      ctx.fillStyle = rimGrad;
+      ctx.fill();
+
+      // Surface texture - subtle swirls
+      for (let i = 0; i < 5; i++) {
+        const swAngle = time * 0.3 + (i * Math.PI * 2) / 5;
+        const swR = sphereR * (0.3 + i * 0.1);
+        const swX = sx + Math.cos(swAngle) * swR * 0.3;
+        const swY = sy + Math.sin(swAngle) * swR * 0.3;
+        const swGrad = ctx.createRadialGradient(swX, swY, 0, swX, swY, sphereR * 0.3);
+        swGrad.addColorStop(0, `hsla(15, 80%, 70%, ${0.06 + Math.sin(time + i) * 0.02})`);
+        swGrad.addColorStop(1, "transparent");
+        ctx.fillStyle = swGrad;
+        ctx.beginPath();
+        ctx.arc(sx, sy, sphereR, 0, Math.PI * 2);
+        ctx.fill();
       }
-
-      // Pulsating nucleus ring
-      const pulseR = 50 + Math.sin(time * 0.015) * 10;
-      ctx.beginPath();
-      ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
-      ctx.strokeStyle = `hsla(${primaryHue}, 74%, 55%, ${0.06 + Math.sin(time * 0.02) * 0.03})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Outer membrane ring
-      const outerR = 180 + Math.sin(time * 0.008) * 15;
-      ctx.beginPath();
-      ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
-      ctx.strokeStyle = `hsla(${primaryHue}, 40%, 55%, 0.04)`;
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
 
       animFrame.current = requestAnimationFrame(draw);
     };
@@ -239,7 +201,7 @@ export default function CellNucleusCanvas({
       canvas.removeEventListener("mousemove", onMove);
       canvas.removeEventListener("mouseleave", onLeave);
     };
-  }, [initParticles, primaryHue]);
+  }, []);
 
   return (
     <canvas

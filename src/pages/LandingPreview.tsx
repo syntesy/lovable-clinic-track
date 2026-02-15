@@ -141,7 +141,7 @@ export default function LandingPreview() {
       ═══════════════════════════════════════════ */}
       <section className="relative py-32 md:py-40 px-6">
         <div className="absolute inset-0 overflow-hidden">
-          <CellNucleusCanvas particleCount={40} className="opacity-30" />
+          <CellNucleusCanvas className="opacity-30" />
         </div>
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <motion.div
@@ -172,7 +172,7 @@ export default function LandingPreview() {
       <section className="relative py-28 md:py-36 px-6">
         <div className="absolute inset-0 bg-secondary/20" aria-hidden="true" />
         <div className="absolute inset-0 overflow-hidden">
-          <CellNucleusCanvas particleCount={30} className="opacity-20" />
+          <CellNucleusCanvas className="opacity-20" />
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto">
