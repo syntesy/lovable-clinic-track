@@ -23,7 +23,7 @@ interface Particle {
 
 const PARTICLE_COUNT_DESKTOP = 900;
 const PARTICLE_COUNT_MOBILE = 400;
-const NUCLEUS_RADIUS_RATIO = 0.14; // ratio of min(w,h)
+const NUCLEUS_RADIUS_RATIO = 0.38; // ratio of min(w,h) — fills ~half screen
 
 function createParticles(count: number, w: number, h: number): Particle[] {
   const particles: Particle[] = [];
