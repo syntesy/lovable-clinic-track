@@ -1,8 +1,7 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 
 interface Props {
   className?: string;
-  /** 0-1 scroll progress that drives sphere position */
   scrollProgress?: number;
 }
 
@@ -48,17 +47,17 @@ export default function CellNucleusCanvas({ className = "", scrollProgress = 0 }
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseleave", onLeave);
 
-    // Corona particles
-    const PARTICLE_COUNT = 500;
+    // Soft corona particles — fewer, smaller, subtler
+    const PARTICLE_COUNT = 220;
     const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
       angle: Math.random() * Math.PI * 2,
-      speed: 0.15 + Math.random() * 1.2,
-      size: 0.4 + Math.random() * 2.2,
-      opacity: 0.2 + Math.random() * 0.7,
+      speed: 0.08 + Math.random() * 0.5,
+      size: 0.3 + Math.random() * 1.2,
+      opacity: 0.08 + Math.random() * 0.35,
       life: Math.random(),
-      maxLife: 0.5 + Math.random() * 0.5,
-      drift: (Math.random() - 0.5) * 0.25,
-      layer: Math.random(), // 0=close, 1=far
+      maxLife: 0.6 + Math.random() * 0.4,
+      drift: (Math.random() - 0.5) * 0.12,
+      layer: Math.random(),
     }));
 
     let time = 0;
@@ -68,57 +67,46 @@ export default function CellNucleusCanvas({ className = "", scrollProgress = 0 }
 
     const draw = () => {
       ctx.clearRect(0, 0, w, h);
-      time += 0.006;
+      time += 0.004;
 
       const sp = scrollRef.current;
       const mx = mouse.current.x;
       const my = mouse.current.y;
       const mouseActive = mx > 0 && my > 0;
 
-      // ═══ Scroll-driven sphere position & size ═══
-      // Phase 0 (0-0.15): Hero — sphere at bottom center, large
-      // Phase 1 (0.15-0.4): Sphere rises and shrinks to right side
-      // Phase 2 (0.4-0.7): Sphere small, floating right
-      // Phase 3 (0.7-1.0): Sphere fades and drifts off
-
-      const baseR = Math.min(w, h) * 0.38;
-
+      // Scroll-driven position
+      const baseR = Math.min(w, h) * 0.32;
       let sphereX: number, sphereY: number, sphereR: number, sphereAlpha: number;
 
       if (sp < 0.15) {
-        // Hero state
         const t = sp / 0.15;
         sphereX = w / 2;
-        sphereY = lerp(h * 0.88, h * 0.75, easeOut(t));
-        sphereR = lerp(baseR, baseR * 0.9, t);
+        sphereY = lerp(h * 0.85, h * 0.72, easeOut(t));
+        sphereR = lerp(baseR, baseR * 0.92, t);
         sphereAlpha = 1;
       } else if (sp < 0.4) {
-        // Transition: rise and move right, shrink
         const t = easeOut((sp - 0.15) / 0.25);
-        sphereX = lerp(w / 2, w * 0.78, t);
-        sphereY = lerp(h * 0.75, h * 0.45, t);
-        sphereR = lerp(baseR * 0.9, baseR * 0.45, t);
+        sphereX = lerp(w / 2, w * 0.76, t);
+        sphereY = lerp(h * 0.72, h * 0.45, t);
+        sphereR = lerp(baseR * 0.92, baseR * 0.42, t);
         sphereAlpha = 1;
       } else if (sp < 0.7) {
-        // Floating right, gentle movement
         const t = (sp - 0.4) / 0.3;
-        sphereX = w * 0.78 + Math.sin(time * 0.5) * 15;
-        sphereY = lerp(h * 0.45, h * 0.55, t) + Math.cos(time * 0.4) * 10;
-        sphereR = lerp(baseR * 0.45, baseR * 0.35, t);
+        sphereX = w * 0.76 + Math.sin(time * 0.3) * 8;
+        sphereY = lerp(h * 0.45, h * 0.52, t) + Math.cos(time * 0.25) * 6;
+        sphereR = lerp(baseR * 0.42, baseR * 0.32, t);
         sphereAlpha = 1;
       } else {
-        // Fade out
         const t = easeOut((sp - 0.7) / 0.3);
-        sphereX = lerp(w * 0.78, w * 0.9, t);
-        sphereY = lerp(h * 0.55, h * 0.4, t);
-        sphereR = lerp(baseR * 0.35, baseR * 0.2, t);
+        sphereX = lerp(w * 0.76, w * 0.88, t);
+        sphereY = lerp(h * 0.52, h * 0.4, t);
+        sphereR = lerp(baseR * 0.32, baseR * 0.18, t);
         sphereAlpha = Math.max(0, 1 - t * 1.5);
       }
 
-      // Mouse subtle influence
       if (mouseActive) {
-        sphereX += (mx - w / 2) * 0.012;
-        sphereY += (my - h / 2) * 0.008;
+        sphereX += (mx - w / 2) * 0.008;
+        sphereY += (my - h / 2) * 0.005;
       }
 
       if (sphereAlpha <= 0) {
@@ -126,106 +114,107 @@ export default function CellNucleusCanvas({ className = "", scrollProgress = 0 }
         return;
       }
 
-      // ═══ Atmospheric glow ═══
-      const outerGlow = ctx.createRadialGradient(sphereX, sphereY, sphereR * 0.3, sphereX, sphereY, sphereR * 3.5);
-      outerGlow.addColorStop(0, `hsla(13, 74%, 55%, ${0.07 * sphereAlpha})`);
-      outerGlow.addColorStop(0.4, `hsla(20, 80%, 60%, ${0.03 * sphereAlpha})`);
+      // ═══ Soft atmospheric glow ═══
+      const outerGlow = ctx.createRadialGradient(sphereX, sphereY, sphereR * 0.5, sphereX, sphereY, sphereR * 3);
+      outerGlow.addColorStop(0, `hsla(15, 60%, 55%, ${0.04 * sphereAlpha})`);
+      outerGlow.addColorStop(0.5, `hsla(20, 50%, 50%, ${0.015 * sphereAlpha})`);
       outerGlow.addColorStop(1, "transparent");
       ctx.fillStyle = outerGlow;
       ctx.fillRect(0, 0, w, h);
 
-      // ═══ Corona particles ═══
+      // ═══ Soft corona particles ═══
       for (const p of particles) {
-        p.life += p.speed * 0.003;
+        p.life += p.speed * 0.002;
         if (p.life > p.maxLife) {
           p.life = 0;
           p.angle = Math.random() * Math.PI * 2;
-          p.speed = 0.15 + Math.random() * 1.2;
-          p.size = 0.4 + Math.random() * 2.2;
-          p.opacity = 0.2 + Math.random() * 0.7;
-          p.drift = (Math.random() - 0.5) * 0.25;
+          p.speed = 0.08 + Math.random() * 0.5;
+          p.size = 0.3 + Math.random() * 1.2;
+          p.opacity = 0.08 + Math.random() * 0.35;
+          p.drift = (Math.random() - 0.5) * 0.12;
         }
 
         const progress = p.life / p.maxLife;
-        const dist = sphereR * (0.88 + progress * 0.7);
-        const fadeIn = Math.min(progress * 4, 1);
-        const fadeOut = 1 - Math.pow(progress, 1.8);
+        const dist = sphereR * (0.92 + progress * 0.5);
+        const fadeIn = Math.min(progress * 5, 1);
+        const fadeOut = 1 - Math.pow(progress, 2.5);
         const alpha = p.opacity * fadeIn * fadeOut * sphereAlpha;
 
-        if (alpha < 0.01) continue;
+        if (alpha < 0.008) continue;
 
-        const wobble = Math.sin(time * 2.5 + p.angle * 4) * 6 * (1 + p.layer * 0.5);
+        const wobble = Math.sin(time * 1.5 + p.angle * 3) * 3 * (1 + p.layer * 0.3);
         const px = sphereX + Math.cos(p.angle + p.drift * progress) * (dist + wobble);
         const py = sphereY + Math.sin(p.angle + p.drift * progress) * (dist + wobble);
 
-        if (py > h + 20 || px < -20 || px > w + 20 || py < -20) continue;
+        if (py > h + 10 || px < -10 || px > w + 10 || py < -10) continue;
 
-        // Glow halo
-        const glowR = p.size * (3 + p.layer * 2);
+        // Tiny soft glow
+        const glowR = p.size * (2.5 + p.layer);
         const glow = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-        glow.addColorStop(0, `hsla(25, 90%, 80%, ${alpha * 0.4})`);
+        glow.addColorStop(0, `hsla(25, 70%, 82%, ${alpha * 0.25})`);
         glow.addColorStop(1, "transparent");
         ctx.fillStyle = glow;
         ctx.fillRect(px - glowR, py - glowR, glowR * 2, glowR * 2);
 
-        // Core
+        // Tiny core dot
         ctx.beginPath();
-        ctx.arc(px, py, p.size * (0.4 + fadeIn * 0.6), 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(30, 95%, 92%, ${alpha})`;
+        ctx.arc(px, py, p.size * (0.3 + fadeIn * 0.4), 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(28, 80%, 90%, ${alpha * 0.7})`;
         ctx.fill();
       }
 
-      // ═══ Main sphere ═══
+      // ═══ Main sphere — smooth multi-layer gradient ═══
       const grad = ctx.createRadialGradient(
-        sphereX - sphereR * 0.15,
-        sphereY - sphereR * 0.2,
-        sphereR * 0.05,
+        sphereX - sphereR * 0.1,
+        sphereY - sphereR * 0.12,
+        sphereR * 0.02,
         sphereX,
         sphereY,
         sphereR
       );
-      grad.addColorStop(0, `hsla(20, 85%, 78%, ${0.95 * sphereAlpha})`);
-      grad.addColorStop(0.25, `hsla(13, 74%, 65%, ${0.85 * sphereAlpha})`);
-      grad.addColorStop(0.55, `hsla(13, 74%, 55%, ${0.75 * sphereAlpha})`);
-      grad.addColorStop(0.8, `hsla(10, 70%, 45%, ${0.6 * sphereAlpha})`);
-      grad.addColorStop(1, `hsla(8, 65%, 35%, ${0.25 * sphereAlpha})`);
+      grad.addColorStop(0, `hsla(22, 75%, 80%, ${0.92 * sphereAlpha})`);
+      grad.addColorStop(0.2, `hsla(16, 68%, 68%, ${0.85 * sphereAlpha})`);
+      grad.addColorStop(0.45, `hsla(13, 65%, 58%, ${0.78 * sphereAlpha})`);
+      grad.addColorStop(0.7, `hsla(10, 60%, 48%, ${0.6 * sphereAlpha})`);
+      grad.addColorStop(0.9, `hsla(8, 55%, 38%, ${0.35 * sphereAlpha})`);
+      grad.addColorStop(1, `hsla(6, 50%, 28%, ${0.12 * sphereAlpha})`);
 
       ctx.beginPath();
       ctx.arc(sphereX, sphereY, sphereR, 0, Math.PI * 2);
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // Inner light reflection
-      const reflect = ctx.createRadialGradient(
-        sphereX - sphereR * 0.25, sphereY - sphereR * 0.3, 0,
-        sphereX - sphereR * 0.1, sphereY - sphereR * 0.15, sphereR * 0.6
+      // Subtle inner highlight — top-left
+      const hl = ctx.createRadialGradient(
+        sphereX - sphereR * 0.2, sphereY - sphereR * 0.25, 0,
+        sphereX - sphereR * 0.08, sphereY - sphereR * 0.1, sphereR * 0.55
       );
-      reflect.addColorStop(0, `hsla(30, 100%, 95%, ${0.4 * sphereAlpha})`);
-      reflect.addColorStop(0.5, `hsla(25, 90%, 85%, ${0.1 * sphereAlpha})`);
-      reflect.addColorStop(1, "transparent");
+      hl.addColorStop(0, `hsla(30, 90%, 95%, ${0.3 * sphereAlpha})`);
+      hl.addColorStop(0.4, `hsla(25, 80%, 88%, ${0.08 * sphereAlpha})`);
+      hl.addColorStop(1, "transparent");
       ctx.beginPath();
       ctx.arc(sphereX, sphereY, sphereR, 0, Math.PI * 2);
-      ctx.fillStyle = reflect;
+      ctx.fillStyle = hl;
       ctx.fill();
 
-      // Rim glow
-      const rim = ctx.createRadialGradient(sphereX, sphereY, sphereR * 0.82, sphereX, sphereY, sphereR * 1.12);
+      // Very soft rim light
+      const rim = ctx.createRadialGradient(sphereX, sphereY, sphereR * 0.85, sphereX, sphereY, sphereR * 1.06);
       rim.addColorStop(0, "transparent");
-      rim.addColorStop(0.5, `hsla(25, 90%, 75%, ${(0.18 + Math.sin(time * 1.5) * 0.05) * sphereAlpha})`);
-      rim.addColorStop(0.8, `hsla(30, 95%, 85%, ${(0.12 + Math.sin(time) * 0.04) * sphereAlpha})`);
+      rim.addColorStop(0.6, `hsla(20, 65%, 72%, ${(0.1 + Math.sin(time * 0.8) * 0.02) * sphereAlpha})`);
       rim.addColorStop(1, "transparent");
       ctx.beginPath();
-      ctx.arc(sphereX, sphereY, sphereR * 1.12, 0, Math.PI * 2);
+      ctx.arc(sphereX, sphereY, sphereR * 1.06, 0, Math.PI * 2);
       ctx.fillStyle = rim;
       ctx.fill();
 
-      // Surface swirls
-      for (let i = 0; i < 4; i++) {
-        const swAngle = time * 0.25 + (i * Math.PI * 2) / 4;
-        const swX = sphereX + Math.cos(swAngle) * sphereR * 0.25;
-        const swY = sphereY + Math.sin(swAngle) * sphereR * 0.25;
-        const swG = ctx.createRadialGradient(swX, swY, 0, swX, swY, sphereR * 0.35);
-        swG.addColorStop(0, `hsla(15, 80%, 70%, ${(0.05 + Math.sin(time + i) * 0.02) * sphereAlpha})`);
+      // Internal organic movement — very subtle
+      for (let i = 0; i < 3; i++) {
+        const swAngle = time * 0.15 + (i * Math.PI * 2) / 3;
+        const swDist = sphereR * (0.15 + Math.sin(time * 0.3 + i * 1.5) * 0.08);
+        const swX = sphereX + Math.cos(swAngle) * swDist;
+        const swY = sphereY + Math.sin(swAngle) * swDist;
+        const swG = ctx.createRadialGradient(swX, swY, 0, swX, swY, sphereR * 0.3);
+        swG.addColorStop(0, `hsla(18, 60%, 68%, ${(0.03 + Math.sin(time * 0.5 + i) * 0.01) * sphereAlpha})`);
         swG.addColorStop(1, "transparent");
         ctx.save();
         ctx.beginPath();
