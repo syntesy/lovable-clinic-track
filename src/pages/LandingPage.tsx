@@ -545,14 +545,16 @@ export default function LandingPage() {
               >
                 <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-semibold mb-4">SCORE & Qualidade</p>
                 <h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 leading-tight">
-                  Qualidade do PRP como <span className="text-white/40">indicador clínico</span>
+                  Qualidade técnica <span className="text-white/40">mensurável</span>
                 </h3>
+                <p className="text-white/35 text-[15px] leading-relaxed mb-4">
+                  O REGHEN estrutura variáveis do preparo, método de aplicação e contexto biológico do paciente em um modelo técnico comparável.
+                </p>
                 <p className="text-white/35 text-[15px] leading-relaxed mb-8">
-                  O SCORE REGHEN integra variáveis do preparo, método de aplicação e contexto biológico
-                  do paciente para gerar um índice de qualidade do procedimento.
+                  Cada procedimento é registrado sob parâmetros objetivos, permitindo controle de qualidade e análise estruturada.
                 </p>
                 <ul className="space-y-4">
-                  {["Comparação interna entre procedimentos", "Identificação de padrões clínicos", "Evolução longitudinal da prática"].map((item) => (
+                  {["Comparação técnica entre protocolos realizados", "Identificação de padrões de resposta clínica", "Evolução longitudinal da qualidade do preparo"].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-white/45 text-sm">
                       <div className="w-6 h-6 rounded-lg bg-primary/[0.08] flex items-center justify-center flex-shrink-0">
                         <CheckCircle2 className="w-3.5 h-3.5 text-primary/60" />
@@ -568,40 +570,43 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1, ease }}
-                className={`${glassCard} p-8 relative overflow-hidden`}
-                style={cardShadow}
+                className="flex flex-col gap-3"
               >
-                <div className="space-y-5">
-                  {[
-                    { label: "Contagem plaquetária", value: "≥ 1.0M/μL", bar: 85 },
-                    { label: "Fator de concentração", value: "3–5×", bar: 70 },
-                    { label: "Leucócitos", value: "LP / LR", bar: 60 },
-                    { label: "Volume final", value: "3–8 mL", bar: 75 },
-                  ].map((item, idx) => (
-                    <motion.div
-                      key={item.label}
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: idx * 0.1 }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/35 text-xs">{item.label}</span>
-                        <span className="text-primary text-sm font-semibold">{item.value}</span>
-                      </div>
-                      <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${item.bar}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1, delay: 0.3 + idx * 0.1, ease }}
-                          className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary/20"
-                        />
-                      </div>
-                    </motion.div>
-                  ))}
+                <p className="text-white/30 text-[11px] tracking-[0.2em] uppercase font-medium">Parâmetros técnicos estruturados</p>
+                <div className={`${glassCard} p-8 relative overflow-hidden`} style={cardShadow}>
+                  <div className="space-y-6">
+                    {[
+                      { label: "Contagem plaquetária final", value: "≥ 1.0 M/µL", bar: 85 },
+                      { label: "Fator de concentração relativo", value: "3–5×", bar: 70 },
+                      { label: "Perfil leucocitário (LP / LR)", value: "Classificação técnica do concentrado", bar: 60 },
+                      { label: "Volume final do concentrado", value: "3–8 mL", bar: 75 },
+                    ].map((item, idx) => (
+                      <motion.div
+                        key={item.label}
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: idx * 0.1 }}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-white/40 text-xs">{item.label}</span>
+                          <span className="text-primary text-sm font-semibold">{item.value}</span>
+                        </div>
+                        <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${item.bar}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1, delay: 0.3 + idx * 0.1, ease }}
+                            className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary/20"
+                          />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-primary/5 blur-3xl" />
                 </div>
-                <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-primary/5 blur-3xl" />
+                <p className="text-white/20 text-[11px] leading-relaxed mt-1">Parâmetros integrados ao modelo de qualidade do procedimento.</p>
               </motion.div>
             </div>
 
