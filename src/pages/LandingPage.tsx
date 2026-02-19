@@ -228,8 +228,7 @@ export default function LandingPage() {
                   Medicina Regenerativa
                 </span>
                 <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-              </span>{" "}
-              responsável.
+              </span>
             </motion.h1>
 
             {/* Subtitle */}
@@ -823,7 +822,7 @@ export default function LandingPage() {
               <div>
                 <img src={logoReghen} alt="REGHEN" className="h-6 w-auto mb-4 opacity-50" />
                 <p className="text-white/20 text-xs leading-relaxed">
-                  Infraestrutura clínica para Medicina Regenerativa responsável.
+                  Infraestrutura clínica para Medicina Regenerativa.
                 </p>
               </div>
               <div>
