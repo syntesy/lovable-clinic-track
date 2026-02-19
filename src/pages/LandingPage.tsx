@@ -154,21 +154,21 @@ export default function LandingPage() {
               <button
                 key={link.href}
                 onClick={() => scrollTo(link.href)}
-                className="px-4 py-2 text-[13px] text-white/35 hover:text-white transition-all duration-300 rounded-lg hover:bg-white/[0.04]"
+                className="px-4 py-2 text-[13px] text-white/50 hover:text-white transition-all duration-300 rounded-lg hover:bg-white/[0.04]"
               >
                 {link.label}
               </button>
             ))}
           </div>
           <div className="hidden sm:flex items-center gap-3">
-            <button onClick={handleLogin} className="px-5 py-2 text-[13px] font-medium text-white/45 hover:text-white transition-colors">
+            <button onClick={handleLogin} className="px-5 py-2 text-[13px] font-medium text-white/60 hover:text-white transition-colors">
               Entrar
             </button>
             <button onClick={handleSignup} className="px-5 py-2 text-[13px] font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40">
               Criar conta
             </button>
           </div>
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="sm:hidden p-2 text-white/50" aria-label="Menu">
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="sm:hidden p-2 text-white/60" aria-label="Menu">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
               {mobileOpen ? <path d="M5 5l10 10M15 5L5 15" /> : <path d="M3 6h14M3 10h14M3 14h14" />}
             </svg>
@@ -177,10 +177,10 @@ export default function LandingPage() {
         {mobileOpen && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="lg:hidden bg-[#080b14]/95 backdrop-blur-2xl border-b border-white/[0.06] px-6 py-4 space-y-2">
             {navLinks.map((link) => (
-              <button key={link.href} onClick={() => scrollTo(link.href)} className="block w-full text-left py-2 text-sm text-white/40 hover:text-white">{link.label}</button>
+              <button key={link.href} onClick={() => scrollTo(link.href)} className="block w-full text-left py-2 text-sm text-white/55 hover:text-white">{link.label}</button>
             ))}
             <div className="flex gap-3 pt-3 border-t border-white/[0.06]">
-              <button onClick={handleLogin} className="flex-1 py-2.5 text-sm border border-white/[0.08] rounded-lg text-white/40">Entrar</button>
+              <button onClick={handleLogin} className="flex-1 py-2.5 text-sm border border-white/[0.08] rounded-lg text-white/55">Entrar</button>
               <button onClick={handleSignup} className="flex-1 py-2.5 text-sm bg-primary text-primary-foreground rounded-lg">Criar conta</button>
             </div>
           </motion.div>
@@ -233,7 +233,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.8, ease }}
-              className="text-white/35 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto"
+              className="text-white/55 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto"
             >
               Padronize condutas, acompanhe desfechos e organize sua prática com estrutura, clareza e segurança.
             </motion.p>
@@ -250,7 +250,7 @@ export default function LandingPage() {
                 <span className="relative">Começar agora</span>
                 <ArrowRight className="w-4 h-4 relative group-hover:translate-x-0.5 transition-transform" />
               </button>
-              <button onClick={handleLogin} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-medium border border-white/[0.08] text-white/50 hover:border-white/20 hover:text-white hover:bg-white/[0.04] transition-all duration-500">
+              <button onClick={handleLogin} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-medium border border-white/[0.08] text-white/60 hover:border-white/20 hover:text-white hover:bg-white/[0.04] transition-all duration-500">
                 Entrar
               </button>
             </motion.div>
@@ -270,7 +270,7 @@ export default function LandingPage() {
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/40" />
                     <div className="w-2.5 h-2.5 rounded-full bg-green-400/40" />
                   </div>
-                  <div className="flex-1 flex items-center justify-center gap-6 text-[11px] text-white/25">
+                  <div className="flex-1 flex items-center justify-center gap-6 text-[11px] text-white/40">
                     <span className="text-primary/60 font-medium">Dashboard</span>
                     <span>Pacientes</span>
                     <span>Procedimentos</span>
@@ -282,9 +282,9 @@ export default function LandingPage() {
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <p className="text-white/80 text-lg font-medium">Dashboard Clínico Científico</p>
-                      <p className="text-white/25 text-xs">Monitoramento estruturado da prática regenerativa</p>
+                      <p className="text-white/45 text-xs">Monitoramento estruturado da prática regenerativa</p>
                     </div>
-                    <div className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/35">Últimos 30 dias</div>
+                    <div className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50">Últimos 30 dias</div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                     {[
@@ -296,7 +296,7 @@ export default function LandingPage() {
                     ].map((kpi) => (
                       <div key={kpi.label} className="group relative p-5 rounded-xl bg-white/[0.06] border border-white/[0.12] backdrop-blur-sm hover:bg-white/[0.09] hover:border-white/[0.18] transition-all duration-300 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_30px_-4px_rgba(160,111,76,0.15)]">
                         <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <p className="relative text-[10px] text-white/35 tracking-[0.15em] uppercase mb-3 font-medium">{kpi.label}</p>
+                        <p className="relative text-[10px] text-white/50 tracking-[0.15em] uppercase mb-3 font-medium">{kpi.label}</p>
                         <div className="relative flex items-end gap-2">
                           <span className="text-white/90 text-2xl font-bold tracking-tight">{kpi.value}</span>
                         </div>
@@ -309,7 +309,7 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-5">
-                    <p className="text-[10px] text-white/20 uppercase tracking-wider mb-4">Evolução Clínica Longitudinal (VAS / Função) — 12 Meses</p>
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider mb-4">Evolução Clínica Longitudinal (VAS / Função) — 12 Meses</p>
                     <div className="flex items-end gap-2 h-28">
                       {[35, 50, 40, 65, 55, 70, 60, 75, 80, 60, 85, 70].map((h, i) => (
                         <motion.div
@@ -323,7 +323,7 @@ export default function LandingPage() {
                       ))}
                     </div>
                   </div>
-                  <p className="text-[9px] text-white/[0.25] text-center mt-4 tracking-wide">
+                  <p className="text-[9px] text-white/40 text-center mt-4 tracking-wide">
                     Dados anonimizados • Escalas validadas • Padronização clínica
                   </p>
                 </div>
@@ -340,7 +340,7 @@ export default function LandingPage() {
             className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
           >
             <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
-              <ChevronDown className="w-5 h-5 text-white/20" />
+              <ChevronDown className="w-5 h-5 text-white/35" />
             </motion.div>
           </motion.div>
         </motion.section>
@@ -361,7 +361,7 @@ export default function LandingPage() {
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-snug">
                   Decisão clínica baseada em ciência.{" "}
-                  <span className="text-white/40">Não em tentativa e erro.</span>
+                  <span className="text-white/55">Não em tentativa e erro.</span>
                 </h2>
               </motion.div>
 
@@ -375,13 +375,13 @@ export default function LandingPage() {
                 <p className="text-white/70 text-[15px] leading-[1.9]">
                   O REGHEN é uma plataforma estruturada para padronizar procedimentos regenerativos, mensurar risco biológico e transformar desfechos clínicos em evidência real.
                 </p>
-                <p className="text-white/50 text-[15px] leading-[1.9]">
+                <p className="text-white/60 text-[15px] leading-[1.9]">
                   Cada registro se torna dado analisável.<br />
                   Cada procedimento, um aprendizado validado.
                 </p>
                 <div className="flex items-center gap-3 pt-2">
                   <div className="h-px flex-1 bg-gradient-to-r from-white/[0.12] to-transparent" />
-                  <span className="text-white/40 text-[11px] tracking-widest uppercase">Baseado em evidência. Orientado por dados.</span>
+                  <span className="text-white/55 text-[11px] tracking-widest uppercase">Baseado em evidência. Orientado por dados.</span>
                 </div>
               </motion.div>
             </div>
@@ -404,7 +404,7 @@ export default function LandingPage() {
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Como funciona</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Da consulta ao desfecho, <span className="text-white/40">com estrutura clínica</span>
+                Da consulta ao desfecho, <span className="text-white/55">com estrutura clínica</span>
               </h2>
             </motion.div>
 
@@ -424,10 +424,10 @@ export default function LandingPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/[0.08] flex items-center justify-center group-hover:bg-primary/15 transition-colors duration-500">
                       <step.icon className="w-4.5 h-4.5 text-primary/60 group-hover:text-primary transition-colors duration-500" />
                     </div>
-                    <span className="text-white/[0.08] text-2xl font-bold">{step.num}</span>
+                    <span className="text-white/[0.12] text-2xl font-bold">{step.num}</span>
                   </div>
                   <h3 className="text-white/85 text-sm font-semibold mb-2">{step.title}</h3>
-                  <p className="text-white/30 text-xs leading-relaxed">{step.desc}</p>
+                  <p className="text-white/50 text-xs leading-relaxed">{step.desc}</p>
                   {/* Connector line */}
                   {i < steps.length - 1 && (
                     <div className="absolute top-1/2 -right-3 w-6 h-px bg-gradient-to-r from-white/[0.08] to-transparent hidden md:block" />
@@ -452,9 +452,9 @@ export default function LandingPage() {
                     <step.icon className="w-4 h-4 text-primary/60" />
                   </div>
                   <div>
-                    <span className="text-white/[0.1] text-xs font-bold">{step.num}</span>
+                    <span className="text-white/[0.15] text-xs font-bold">{step.num}</span>
                     <h3 className="text-white/85 text-sm font-semibold mb-1">{step.title}</h3>
-                    <p className="text-white/30 text-xs leading-relaxed">{step.desc}</p>
+                    <p className="text-white/50 text-xs leading-relaxed">{step.desc}</p>
                   </div>
                 </motion.div>
               ))}
@@ -477,9 +477,9 @@ export default function LandingPage() {
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Módulos</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Ecossistema científico <span className="text-white/40">integrado</span>
+                Ecossistema científico <span className="text-white/55">integrado</span>
               </h2>
-              <p className="text-white/30 text-[15px] max-w-2xl mx-auto">
+              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
                 Inteligência, organização técnica e estrutura orientada à produção de evidência na prática regenerativa.
               </p>
             </motion.div>
@@ -503,7 +503,7 @@ export default function LandingPage() {
                       <mod.icon className="w-5 h-5 text-primary/60 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
                     </div>
                     <h3 className="text-white/90 text-[15px] font-semibold mb-2">{mod.title}</h3>
-                    <p className="text-white/30 text-sm leading-relaxed">{mod.desc}</p>
+                    <p className="text-white/50 text-sm leading-relaxed">{mod.desc}</p>
                   </div>
 
                   <div className="flex items-center gap-1.5 text-primary/40 group-hover:text-primary/70 text-xs font-medium pt-6 transition-colors duration-500">
@@ -531,7 +531,7 @@ export default function LandingPage() {
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Funcionalidades</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Funcionalidades <span className="text-white/40">premium</span>
+                Funcionalidades <span className="text-white/55">premium</span>
               </h2>
             </motion.div>
 
@@ -545,17 +545,17 @@ export default function LandingPage() {
               >
                 <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-semibold mb-4">SCORE & Qualidade</p>
                 <h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 leading-tight">
-                  Qualidade técnica <span className="text-white/40">mensurável</span>
+                  Qualidade técnica <span className="text-white/55">mensurável</span>
                 </h3>
-                <p className="text-white/35 text-[15px] leading-relaxed mb-4">
+                <p className="text-white/55 text-[15px] leading-relaxed mb-4">
                   O REGHEN estrutura variáveis do preparo, método de aplicação e contexto biológico do paciente em um modelo técnico comparável.
                 </p>
-                <p className="text-white/35 text-[15px] leading-relaxed mb-8">
+                <p className="text-white/55 text-[15px] leading-relaxed mb-8">
                   Cada procedimento é registrado sob parâmetros objetivos, permitindo controle de qualidade e análise estruturada.
                 </p>
                 <ul className="space-y-4">
                   {["Comparação técnica entre protocolos realizados", "Identificação de padrões de resposta clínica", "Evolução longitudinal da qualidade do preparo"].map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-white/45 text-sm">
+                    <li key={item} className="flex items-center gap-3 text-white/60 text-sm">
                       <div className="w-6 h-6 rounded-lg bg-primary/[0.08] flex items-center justify-center flex-shrink-0">
                         <CheckCircle2 className="w-3.5 h-3.5 text-primary/60" />
                       </div>
@@ -572,7 +572,7 @@ export default function LandingPage() {
                 transition={{ duration: 1, ease }}
                 className="flex flex-col gap-3"
               >
-                <p className="text-white/30 text-[11px] tracking-[0.2em] uppercase font-medium">Parâmetros técnicos estruturados</p>
+                <p className="text-white/50 text-[11px] tracking-[0.2em] uppercase font-medium">Parâmetros técnicos estruturados</p>
                 <div className={`${glassCard} p-8 relative overflow-hidden`} style={cardShadow}>
                   <div className="space-y-6">
                     {[
@@ -589,7 +589,7 @@ export default function LandingPage() {
                         transition={{ duration: 0.5, delay: idx * 0.1 }}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-white/40 text-xs">{item.label}</span>
+                          <span className="text-white/55 text-xs">{item.label}</span>
                           <span className="text-primary text-sm font-semibold">{item.value}</span>
                         </div>
                         <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
@@ -606,7 +606,7 @@ export default function LandingPage() {
                   </div>
                   <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-primary/5 blur-3xl" />
                 </div>
-                <p className="text-white/20 text-[11px] leading-relaxed mt-1">Parâmetros integrados ao modelo de qualidade do procedimento.</p>
+                <p className="text-white/40 text-[11px] leading-relaxed mt-1">Parâmetros integrados ao modelo de qualidade do procedimento.</p>
               </motion.div>
             </div>
 
@@ -636,9 +636,9 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
                   Integridade estrutural<br />
-                  <span className="text-white/30">dos dados clínicos</span>
+                  <span className="text-white/50">dos dados clínicos</span>
                 </h3>
-                <p className="text-white/50 text-base leading-relaxed max-w-2xl mx-auto mb-16">
+                <p className="text-white/60 text-base leading-relaxed max-w-2xl mx-auto mb-16">
                   O REGHEN organiza a prática regenerativa sob critérios estruturados, garantindo consistência metodológica, estabilidade dos registros e comparabilidade ao longo do acompanhamento clínico.
                 </p>
               </motion.div>
@@ -660,7 +660,7 @@ export default function LandingPage() {
                         <item.icon className="w-6 h-6 text-primary/50 group-hover:text-primary/80 transition-colors duration-500" />
                       </div>
                       <h4 className="text-white/90 text-base font-semibold mb-3 tracking-tight">{item.title}</h4>
-                      <p className="text-white/45 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
+                      <p className="text-white/55 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -685,9 +685,9 @@ export default function LandingPage() {
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Métricas clínicas</span>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
-                Resultados mensuráveis <span className="text-white/40">em cada etapa</span>
+                Resultados mensuráveis <span className="text-white/55">em cada etapa</span>
               </h2>
-              <p className="text-white/30 text-[15px] max-w-2xl mx-auto">
+              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
                 Acompanhe indicadores reais da sua prática regenerativa com dados longitudinais.
               </p>
             </motion.div>
@@ -709,7 +709,7 @@ export default function LandingPage() {
                       <m.icon className="w-5 h-5 text-primary/50 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
                     </div>
                     <p className="text-primary text-xl font-bold mb-1">{m.value}</p>
-                    <p className="text-white/25 text-xs">{m.label}</p>
+                    <p className="text-white/50 text-xs">{m.label}</p>
                   </div>
                 </motion.div>
               ))}
@@ -732,7 +732,7 @@ export default function LandingPage() {
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">FAQ</span>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Perguntas <span className="text-white/40">frequentes</span>
+                Perguntas <span className="text-white/55">frequentes</span>
               </h2>
             </motion.div>
 
@@ -753,7 +753,7 @@ export default function LandingPage() {
                     <AccordionTrigger className="text-sm font-medium text-white/80 hover:text-white hover:no-underline py-5">
                       {faq.q}
                     </AccordionTrigger>
-                    <AccordionContent className="text-white/35 text-sm leading-relaxed pb-5">
+                    <AccordionContent className="text-white/55 text-sm leading-relaxed pb-5">
                       {faq.a}
                     </AccordionContent>
                   </AccordionItem>
@@ -777,9 +777,9 @@ export default function LandingPage() {
               transition={{ duration: 1, ease }}
             >
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
-                Pronto para estruturar <span className="text-white/40">sua prática?</span>
+                Pronto para estruturar <span className="text-white/55">sua prática?</span>
               </h2>
-              <p className="text-white/35 mb-10 text-base leading-relaxed">
+              <p className="text-white/55 mb-10 text-base leading-relaxed">
                 Comece a padronizar procedimentos e acompanhar desfechos com segurança e governança.
               </p>
               <button onClick={handleSignup} className="group relative inline-flex items-center gap-2.5 px-10 py-4 rounded-xl text-sm font-semibold bg-primary text-primary-foreground overflow-hidden transition-all duration-500 hover:shadow-[0_0_60px_-8px] hover:shadow-primary/40">
@@ -787,7 +787,7 @@ export default function LandingPage() {
                 <span className="relative">Criar conta gratuitamente</span>
                 <ArrowRight className="w-4 h-4 relative group-hover:translate-x-0.5 transition-transform" />
               </button>
-              <p className="text-white/15 text-xs mt-6">Sem cartão de crédito. Configuração em minutos.</p>
+              <p className="text-white/30 text-xs mt-6">Sem cartão de crédito. Configuração em minutos.</p>
             </motion.div>
           </div>
         </section>
@@ -798,29 +798,29 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-4 gap-10 mb-12">
               <div>
                 <img src={logoReghen} alt="REGHEN" className="h-6 w-auto mb-4 opacity-50" />
-                <p className="text-white/20 text-xs leading-relaxed">
+                <p className="text-white/40 text-xs leading-relaxed">
                   Infraestrutura clínica para Medicina Regenerativa.
                 </p>
               </div>
               <div>
-                <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-4">Plataforma</p>
-                <ul className="space-y-2.5 text-white/20 text-sm">
-                  <li><button onClick={() => scrollTo("#modulos")} className="hover:text-white/50 transition-colors">Módulos</button></li>
-                  <li><button onClick={() => scrollTo("#seguranca")} className="hover:text-white/50 transition-colors">Métricas</button></li>
-                  <li><button onClick={() => scrollTo("#faq")} className="hover:text-white/50 transition-colors">FAQ</button></li>
+                <p className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-4">Plataforma</p>
+                <ul className="space-y-2.5 text-white/40 text-sm">
+                  <li><button onClick={() => scrollTo("#modulos")} className="hover:text-white/60 transition-colors">Módulos</button></li>
+                  <li><button onClick={() => scrollTo("#seguranca")} className="hover:text-white/60 transition-colors">Métricas</button></li>
+                  <li><button onClick={() => scrollTo("#faq")} className="hover:text-white/60 transition-colors">FAQ</button></li>
                 </ul>
               </div>
               <div>
-                <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-4">Recursos</p>
-                <ul className="space-y-2.5 text-white/20 text-sm">
+                <p className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-4">Recursos</p>
+                <ul className="space-y-2.5 text-white/40 text-sm">
                   <li><span className="cursor-default">Documentação</span></li>
                   <li><span className="cursor-default">Guia Clínico</span></li>
                   <li><span className="cursor-default">Suporte</span></li>
                 </ul>
               </div>
               <div>
-                <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-4">Legal</p>
-                <ul className="space-y-2.5 text-white/20 text-sm">
+                <p className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-4">Legal</p>
+                <ul className="space-y-2.5 text-white/40 text-sm">
                   <li><span className="cursor-default">Termos de Uso</span></li>
                   <li><span className="cursor-default">Privacidade</span></li>
                   <li><span className="cursor-default">LGPD</span></li>
@@ -828,8 +828,8 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="border-t border-white/[0.04] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-white/10 text-xs">© {new Date().getFullYear()} REGHEN. Todos os direitos reservados.</p>
-              <p className="text-white/10 text-xs">Desenvolvido com excelência clínica.</p>
+              <p className="text-white/25 text-xs">© {new Date().getFullYear()} REGHEN. Todos os direitos reservados.</p>
+              <p className="text-white/25 text-xs">Desenvolvido com excelência clínica.</p>
             </div>
           </div>
         </footer>
