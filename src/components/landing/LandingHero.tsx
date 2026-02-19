@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, BarChart3, FileCheck, Shield } from "lucide-react";
+import heroBg from "@/assets/hero-bg.png";
 
 export default function LandingHero() {
   const navigate = useNavigate();
@@ -40,8 +41,20 @@ export default function LandingHero() {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center pt-16" aria-labelledby="hero-heading">
-      <div className="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-16 lg:gap-20 items-center py-20 lg:py-0">
+    <section className="relative min-h-screen flex items-center pt-16 overflow-hidden" aria-labelledby="hero-heading">
+      {/* Hero background image */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${heroBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 0.35,
+        }}
+      />
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-background/60 via-transparent to-background" />
+
+      <div className="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-16 lg:gap-20 items-center py-20 lg:py-0 relative z-10">
         {/* Left - Copy */}
         <div>
           <motion.h1
