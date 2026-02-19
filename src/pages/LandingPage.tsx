@@ -261,10 +261,6 @@ export default function LandingPage() {
               transition={{ duration: 1.4, delay: 1.4, ease }}
               className="max-w-5xl mx-auto relative perspective-1000"
             >
-              {/* Glow arc */}
-              <div className="absolute -top-28 left-1/2 -translate-x-1/2 w-[110%] h-[250px] opacity-50 pointer-events-none" style={{
-                background: "radial-gradient(ellipse 60% 100% at 50% 100%, hsl(13, 74%, 50%) 0%, hsl(20, 80%, 30%) 30%, transparent 70%)",
-              }} aria-hidden="true" />
 
               <div className={`relative ${glassCard} overflow-hidden`} style={cardShadow}>
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06]">
