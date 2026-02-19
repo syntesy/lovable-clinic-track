@@ -638,7 +638,7 @@ export default function LandingPage() {
                   Integridade estrutural<br />
                   <span className="text-white/30">dos dados clínicos</span>
                 </h3>
-                <p className="text-white/30 text-base leading-relaxed max-w-2xl mx-auto mb-16">
+                <p className="text-white/50 text-base leading-relaxed max-w-2xl mx-auto mb-16">
                   O REGHEN organiza a prática regenerativa sob critérios estruturados, garantindo consistência metodológica, estabilidade dos registros e comparabilidade ao longo do acompanhamento clínico.
                 </p>
               </motion.div>
@@ -660,7 +660,7 @@ export default function LandingPage() {
                         <item.icon className="w-6 h-6 text-primary/50 group-hover:text-primary/80 transition-colors duration-500" />
                       </div>
                       <h4 className="text-white/90 text-base font-semibold mb-3 tracking-tight">{item.title}</h4>
-                      <p className="text-white/25 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
+                      <p className="text-white/45 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
                     </motion.div>
                   ))}
                 </div>
