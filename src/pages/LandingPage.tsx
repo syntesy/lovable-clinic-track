@@ -30,11 +30,11 @@ const navLinks = [
 ];
 
 const steps = [
-  { num: "01", title: "Paciente e atendimento", desc: "Cadastro e abertura do atendimento clínico.", icon: FileText },
-  { num: "02", title: "Registro Padronizado (PSR)", desc: "Procedimento documentado com estrutura e rastreabilidade.", icon: ClipboardList },
-  { num: "03", title: "Checklist e método", desc: "Verificação técnica, protocolo e controle de conformidade.", icon: CheckCircle2 },
-  { num: "04", title: "Desfechos longitudinais", desc: "Registro por timepoint: baseline → m1 → m3 → m6 → m12.", icon: TrendingUp },
-  { num: "05", title: "Painel de análise", desc: "Visualização interna dos resultados da clínica.", icon: BarChart3 },
+  { num: "01", title: "Avaliação Estruturada de Risco", desc: "Integra triagem, exames laboratoriais e variáveis clínicas para consolidar o contexto biológico do paciente.", icon: FileText },
+  { num: "02", title: "SCORE Biológico Quantificável", desc: "Sistema próprio que mensura risco, elegibilidade e adequação do procedimento com base em critérios objetivos.", icon: ClipboardList },
+  { num: "03", title: "Padronização Técnica do Procedimento", desc: "Registro detalhado do protocolo utilizado (PRP, PRF, BMA etc.), com rastreabilidade completa.", icon: CheckCircle2 },
+  { num: "04", title: "Desfechos Longitudinais Auditáveis", desc: "Follow-up estruturado por timepoints (baseline → m1 → m3 → m6 → m12), permitindo mensuração real de eficácia.", icon: TrendingUp },
+  { num: "05", title: "Inteligência Clínica e Performance", desc: "Transforma seus próprios dados em indicadores de resultado, ajudando a entender o que realmente funciona na sua prática.", icon: BarChart3 },
 ];
 
 const modules = [
