@@ -618,13 +618,13 @@ export default function LandingPage() {
             </div>
 
             {/* Feature 2 — Reversed */}
-            <div className="grid md:grid-cols-2 gap-16 items-center mt-24">
+            <div className="mt-24 space-y-12">
               <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1, ease }}
-                className="md:order-2"
+                className="max-w-3xl"
               >
                 <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-semibold mb-4">Segurança & Governança</p>
                 <h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 leading-tight">
@@ -646,13 +646,7 @@ export default function LandingPage() {
                 </ul>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, ease }}
-                className="md:order-1 space-y-4"
-              >
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {securityPillars.map((item, idx) => (
                   <motion.div
                     key={item.title}
@@ -672,7 +666,7 @@ export default function LandingPage() {
                     </div>
                   </motion.div>
                 ))}
-              </motion.div>
+              </div>
             </div>
           </div>
         </section>
