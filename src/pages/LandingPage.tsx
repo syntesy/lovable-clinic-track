@@ -380,17 +380,17 @@ export default function LandingPage() {
                 transition={{ duration: 1, delay: 0.15, ease }}
                 className="space-y-6"
               >
-                <p className="text-white/40 text-[15px] leading-[1.9]">
+                <p className="text-white/70 text-[15px] leading-[1.9]">
                   REGHEN é um sistema clínico estruturado para padronizar procedimentos regenerativos
                   e organizar desfechos com governança e segurança.
                 </p>
-                <p className="text-white/25 text-[15px] leading-[1.9]">
+                <p className="text-white/50 text-[15px] leading-[1.9]">
                   Ele transforma registros clínicos em dados analisáveis, preservando a autonomia
                   da prática e o isolamento por clínica.
                 </p>
                 <div className="flex items-center gap-3 pt-2">
-                  <div className="h-px flex-1 bg-gradient-to-r from-white/[0.08] to-transparent" />
-                  <span className="text-white/15 text-[11px] tracking-widest uppercase">Baseado em evidência</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-white/[0.12] to-transparent" />
+                  <span className="text-white/40 text-[11px] tracking-widest uppercase">Baseado em evidência</span>
                 </div>
               </motion.div>
             </div>
