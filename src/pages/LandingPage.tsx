@@ -625,8 +625,15 @@ export default function LandingPage() {
               </motion.div>
             </div>
 
+            {/* Section divider */}
+            <div className="flex items-center gap-6 my-8">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/30" />
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+            </div>
+
             {/* Feature 2 — Reversed */}
-            <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div className="grid md:grid-cols-2 gap-16 items-center mt-24">
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
