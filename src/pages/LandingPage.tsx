@@ -6,7 +6,8 @@ import {
   Activity, TestTube2, Gauge, Target, CheckCircle2, Zap,
   LineChart, Lock, Users, FlaskConical, ClipboardList,
   Stethoscope, FileText, PieChart, CalendarCheck, TrendingUp,
-  Building2, ChevronDown,
+  Building2, ChevronDown, MessageSquare, BookOpen, Database,
+  GraduationCap, Link, Layers,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import logoReghen from "@/assets/logo-reghen.png";
@@ -38,12 +39,12 @@ const steps = [
 ];
 
 const modules = [
-  { icon: FileText, title: "Procedimento Padronizado (PSR)", desc: "Registro estruturado de cada procedimento com protocolo, método e rastreabilidade completa." },
-  { icon: Stethoscope, title: "Triagem e Avaliação Estruturada", desc: "Critérios clínicos objetivos para decisão segura antes de cada intervenção regenerativa." },
-  { icon: TestTube2, title: "Exames e Contexto Biológico", desc: "Integração de dados laboratoriais e perfil biológico para fundamentar a conduta clínica." },
-  { icon: Gauge, title: "SCORE e Indicadores", desc: "Avaliação quantitativa e qualitativa para apoiar a tomada de decisão do profissional de saúde." },
-  { icon: ClipboardList, title: "Desfechos do Paciente (PRO)", desc: "Registro longitudinal de desfechos reportados pelo paciente por timepoint definido." },
-  { icon: BarChart3, title: "Análise de Resultados", desc: "Painel interno da clínica com filtros por procedimento, patologia e período de acompanhamento." },
+  { icon: MessageSquare, title: "Chat Científico Especializado", desc: "Ferramenta de apoio técnico baseada em literatura científica sobre ortobiológicos e protocolos regenerativos." },
+  { icon: BookOpen, title: "Curadoria de Evidência", desc: "Organização estruturada de revisões sistemáticas e estudos relevantes em medicina regenerativa." },
+  { icon: Database, title: "Base de Conhecimento Técnica", desc: "Conteúdo estruturado sobre fundamentos, protocolos e critérios clínicos aplicáveis à prática regenerativa." },
+  { icon: GraduationCap, title: "REGHEN Academy", desc: "Aulas e conteúdos conectados à prática clínica regenerativa, com abordagem técnica e aplicada." },
+  { icon: Link, title: "Integração entre prática e evidência", desc: "Ambiente que conecta registro clínico com referências científicas organizadas." },
+  { icon: Layers, title: "Estrutura de Padronização Científica", desc: "Arquitetura projetada para organizar variáveis clínicas e desfechos em um formato estruturado, comparável e potencialmente utilizável para produção científica." },
 ];
 
 const securityPillars = [
@@ -476,10 +477,10 @@ export default function LandingPage() {
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Módulos</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Infraestrutura completa <span className="text-white/40">para a prática regenerativa</span>
+                Ecossistema científico <span className="text-white/40">integrado</span>
               </h2>
               <p className="text-white/30 text-[15px] max-w-2xl mx-auto">
-                Cada módulo foi projetado para uma etapa específica do fluxo clínico.
+                Inteligência, organização técnica e estrutura orientada à produção de evidência na prática regenerativa.
               </p>
             </motion.div>
 
