@@ -64,7 +64,7 @@ export default function LandingModules() {
               <div className="h-full p-6 md:p-7 rounded-xl bg-card/50 border border-border/20 transition-all duration-500 hover:border-border/40 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/[0.04] hover:-translate-y-0.5">
                 <mod.icon className="w-5 h-5 text-primary/70 mb-4 transition-colors duration-300 group-hover:text-primary" strokeWidth={1.5} />
                 <h3 className="text-foreground text-[15px] font-medium mb-2">{mod.title}</h3>
-                <p className="text-muted-foreground/70 text-sm leading-relaxed">{mod.desc}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">{mod.desc}</p>
               </div>
             </motion.div>
           ))}
