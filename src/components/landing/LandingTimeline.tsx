@@ -21,7 +21,7 @@ export default function LandingTimeline() {
         >
           <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Como funciona</p>
           <h2 id="timeline-heading" className="text-foreground text-2xl md:text-3xl font-semibold tracking-tight">
-            Da consulta ao desfecho, com estrutura
+            Da consulta ao desfecho, com estrutura clínica
           </h2>
         </motion.div>
 

@@ -404,7 +404,7 @@ export default function LandingPage() {
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Como funciona</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Da consulta ao desfecho, <span className="text-white/40">com estrutura</span>
+                Da consulta ao desfecho, <span className="text-white/40">com estrutura clínica</span>
               </h2>
             </motion.div>
 
