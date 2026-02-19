@@ -484,45 +484,34 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            {/* Asymmetric Bento Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[240px]">
-              {modules.map((mod, i) => {
-                const spans = [
-                  "md:col-span-4 md:row-span-2",
-                  "md:col-span-4",
-                  "md:col-span-4",
-                  "md:col-span-5",
-                  "md:col-span-4",
-                  "md:col-span-3",
-                ];
-                return (
-                  <motion.div
-                    key={mod.title}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7, delay: i * 0.08, ease }}
-                    className={`${spans[i]} ${glassCard} ${glassCardHover} transition-all duration-700 p-7 flex flex-col justify-between group relative overflow-hidden`}
-                    style={cardShadow}
-                  >
-                    {/* Corner glow on hover */}
-                    <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/0 group-hover:bg-primary/[0.06] blur-3xl transition-all duration-700" />
+            {/* Uniform 3×2 Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {modules.map((mod, i) => (
+                <motion.div
+                  key={mod.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.08, ease }}
+                  className={`${glassCard} ${glassCardHover} transition-all duration-700 p-7 flex flex-col group relative overflow-hidden`}
+                  style={cardShadow}
+                >
+                  <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/0 group-hover:bg-primary/[0.06] blur-3xl transition-all duration-700" />
 
-                    <div className="relative">
-                      <div className="w-11 h-11 rounded-xl bg-primary/[0.08] flex items-center justify-center mb-5 group-hover:bg-primary/15 transition-colors duration-500">
-                        <mod.icon className="w-5 h-5 text-primary/60 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
-                      </div>
-                      <h3 className="text-white/90 text-[15px] font-semibold mb-2">{mod.title}</h3>
-                      <p className="text-white/30 text-sm leading-relaxed">{mod.desc}</p>
+                  <div className="relative flex-1">
+                    <div className="w-11 h-11 rounded-xl bg-primary/[0.08] flex items-center justify-center mb-5 group-hover:bg-primary/15 transition-colors duration-500">
+                      <mod.icon className="w-5 h-5 text-primary/60 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
                     </div>
+                    <h3 className="text-white/90 text-[15px] font-semibold mb-2">{mod.title}</h3>
+                    <p className="text-white/30 text-sm leading-relaxed">{mod.desc}</p>
+                  </div>
 
-                    <div className="flex items-center gap-1.5 text-primary/40 group-hover:text-primary/70 text-xs font-medium mt-auto pt-4 transition-colors duration-500">
-                      <span>Explorar</span>
-                      <ArrowUpRight className="w-3 h-3" />
-                    </div>
-                  </motion.div>
-                );
-              })}
+                  <div className="flex items-center gap-1.5 text-primary/40 group-hover:text-primary/70 text-xs font-medium pt-6 transition-colors duration-500">
+                    <span>Explorar</span>
+                    <ArrowUpRight className="w-3 h-3" />
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
