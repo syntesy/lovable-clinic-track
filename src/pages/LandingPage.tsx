@@ -192,7 +192,7 @@ export default function LandingPage() {
         {/* ════════ HERO ════════ */}
         <motion.section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden" style={{ opacity: heroOpacity, scale: heroScale }}>
           {/* Hero BG Image */}
-          <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.5 }} />
+          <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.7 }} />
           <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#080b14]/40 via-[#080b14]/20 to-[#080b14]" />
           {/* Radial glow behind text */}
           <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full opacity-[0.12] pointer-events-none" style={{
