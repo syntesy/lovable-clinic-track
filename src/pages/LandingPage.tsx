@@ -205,9 +205,9 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.8, delay: 0.3, ease }}
-              className="mb-10"
+              className="mb-14 mt-16 flex justify-center"
             >
-              <img src={logoReghen} alt="REGHEN" className="h-10 w-auto opacity-70" />
+              <img src={logoReghen} alt="REGHEN" className="h-28 w-auto opacity-80" />
             </motion.div>
 
             {/* Headline */}
