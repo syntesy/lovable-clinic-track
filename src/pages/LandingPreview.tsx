@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, FileCheck, BarChart3, Shield, Activity, TestTube2, Gauge, Target, CheckCircle2, Zap, LineChart, Lock, Users, FlaskConical, ClipboardList } from "lucide-react";
 import logoReghen from "@/assets/logo-reghen.png";
+import heroBg from "@/assets/hero-bg.png";
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -83,8 +84,19 @@ export default function LandingPreview() {
       <div className="relative z-10">
 
         {/* ═══ HERO ═══ */}
-        <section className="pt-32 pb-8 px-6">
-          <div className="max-w-4xl mx-auto text-center">
+        <section className="pt-32 pb-8 px-6 relative overflow-hidden">
+          {/* Hero background image */}
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: `url(${heroBg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              opacity: 0.35,
+            }}
+          />
+          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#080b14]/60 via-transparent to-[#080b14]" />
+          <div className="max-w-4xl mx-auto text-center relative z-10">
             {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
