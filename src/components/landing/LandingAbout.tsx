@@ -12,7 +12,8 @@ export default function LandingAbout() {
         >
           <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">O que é o REGHEN</p>
           <h2 id="about-heading" className="text-foreground text-2xl md:text-3xl font-semibold tracking-tight mb-6 leading-snug">
-            Decisão clínica baseada em ciência, não em tentativa e erro.
+            Decisão clínica baseada em ciência.{" "}
+            <span className="text-muted-foreground">Não em tentativa e erro.</span>
           </h2>
         </motion.div>
 
@@ -24,13 +25,17 @@ export default function LandingAbout() {
           className="space-y-5"
         >
           <p className="text-muted-foreground text-[15px] leading-[1.8]">
-            REGHEN é um sistema clínico estruturado para padronizar procedimentos regenerativos
-            e organizar desfechos com governança e segurança.
+            O REGHEN é uma plataforma estruturada para padronizar procedimentos regenerativos, mensurar risco biológico e transformar desfechos clínicos em evidência real.
           </p>
           <p className="text-muted-foreground/70 text-[15px] leading-[1.8]">
-            Ele transforma registros clínicos em dados analisáveis, preservando a autonomia
-            da prática e o isolamento por clínica.
+            Cada registro se torna dado analisável.<br />
+            Cada procedimento, um aprendizado validado.
           </p>
+          <div className="pt-4 border-t border-white/[0.08] text-right">
+            <span className="text-[11px] tracking-[0.3em] uppercase text-muted-foreground/40">
+              Baseado em evidência. Orientado por dados.
+            </span>
+          </div>
         </motion.div>
       </div>
     </section>
