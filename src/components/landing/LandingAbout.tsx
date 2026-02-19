@@ -12,7 +12,7 @@ export default function LandingAbout() {
         >
           <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">O que é o REGHEN</p>
           <h2 id="about-heading" className="text-foreground text-2xl md:text-3xl font-semibold tracking-tight mb-6 leading-snug">
-            Estrutura para decisões clínicas, não atalhos.
+            Decisão clínica baseada em ciência, não em tentativa e erro.
           </h2>
         </motion.div>
 

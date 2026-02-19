@@ -218,23 +218,39 @@ export default function LandingPage() {
               transition={{ duration: 1.2, delay: 0.5, ease }}
               className="text-4xl md:text-5xl lg:text-[4rem] font-bold tracking-tight leading-[1.06] mb-7"
             >
-              Infraestrutura clínica para{" "}
+              Decisão clínica baseada em ciência.{" "}
               <span className="relative">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/90 to-orange-400">
-                  Medicina Regenerativa
+                  Não em tentativa e erro.
                 </span>
                 <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
               </span>
             </motion.h1>
 
             {/* Subtitle */}
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.8, ease }}
-              className="text-white/35 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto"
+              className="text-white/50 text-base md:text-lg leading-relaxed mb-8 max-w-2xl mx-auto"
             >
-              Padronize condutas, acompanhe desfechos e organize sua prática com estrutura, clareza e segurança.
+              <p className="mb-4">
+                O REGHEN é uma plataforma estruturada para padronizar procedimentos regenerativos, mensurar risco biológico e transformar desfechos clínicos em evidência real.
+              </p>
+              <p className="text-white/35">
+                Cada registro se torna dado analisável.<br />
+                Cada procedimento, um aprendizado validado.
+              </p>
+            </motion.div>
+
+            {/* Selo */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 1.0, ease }}
+              className="text-[11px] tracking-[0.3em] uppercase text-white/25 mb-12"
+            >
+              Baseado em evidência. Orientado por dados.
             </motion.p>
 
             {/* CTAs */}
