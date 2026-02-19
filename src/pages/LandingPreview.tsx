@@ -399,7 +399,7 @@ export default function LandingPreview() {
             >
               <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">Controle Técnico</h2>
               <p className="text-white/35 text-base max-w-2xl mx-auto">
-                Explore a infraestrutura que redefine o padrão de qualidade em Medicina Regenerativa.
+                Da consulta ao desfecho, com estrutura clínica.
               </p>
             </motion.div>
 
