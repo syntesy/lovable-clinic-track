@@ -294,23 +294,24 @@ export default function LandingPage() {
                     </div>
                     <div className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/35">Últimos 30 dias</div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     {[
                       { label: "PROCEDIMENTOS", value: "127", change: "+6.9%" },
                       { label: "SEGUIMENTO", value: "84%" },
                       { label: "RESPOSTA CLÍNICA", value: "73.2%", sub: "Escalas funcionais" },
                       { label: "SCORE BIOLÓGICO", value: "8.4", sub: "Qualidade PRP" },
                     ].map((kpi) => (
-                      <div key={kpi.label} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                        <p className="text-[9px] text-white/20 tracking-wider uppercase mb-2">{kpi.label}</p>
-                        <div className="flex items-end gap-2">
-                          <span className="text-white/80 text-xl font-semibold">{kpi.value}</span>
-                          {kpi.change && <span className="text-[10px] font-medium text-emerald-400/60">{kpi.change}</span>}
+                      <div key={kpi.label} className="group relative p-5 rounded-xl bg-white/[0.06] border border-white/[0.12] backdrop-blur-sm hover:bg-white/[0.09] hover:border-white/[0.18] transition-all duration-300 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_30px_-4px_rgba(160,111,76,0.15)]">
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <p className="relative text-[10px] text-white/35 tracking-[0.15em] uppercase mb-3 font-medium">{kpi.label}</p>
+                        <div className="relative flex items-end gap-2">
+                          <span className="text-white/90 text-2xl font-bold tracking-tight">{kpi.value}</span>
+                          {kpi.change && <span className="text-[11px] font-semibold text-emerald-400/80">{kpi.change}</span>}
                         </div>
-                        {kpi.sub && <p className="text-[8px] text-white/15 mt-1">{kpi.sub}</p>}
-                        <div className="flex items-end gap-[2px] h-4 mt-2">
+                        {kpi.sub && <p className="relative text-[9px] text-white/25 mt-1.5">{kpi.sub}</p>}
+                        <div className="relative flex items-end gap-[3px] h-5 mt-3">
                           {[30, 45, 35, 55, 40, 60, 50, 65, 55, 70, 60, 75].map((h, i) => (
-                            <div key={i} className="flex-1 rounded-[1px] bg-primary/20" style={{ height: `${h}%` }} />
+                            <div key={i} className="flex-1 rounded-[2px] bg-primary/30" style={{ height: `${h}%` }} />
                           ))}
                         </div>
                       </div>
