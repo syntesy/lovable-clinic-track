@@ -359,8 +359,8 @@ export default function LandingPage() {
                   <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">O que é o REGHEN</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-snug">
-                  Estrutura para decisões clínicas,{" "}
-                  <span className="text-white/40">não atalhos.</span>
+                  Decisão clínica baseada em ciência.{" "}
+                  <span className="text-white/40">Não em tentativa e erro.</span>
                 </h2>
               </motion.div>
 
@@ -372,16 +372,15 @@ export default function LandingPage() {
                 className="space-y-6"
               >
                 <p className="text-white/70 text-[15px] leading-[1.9]">
-                  REGHEN é um sistema clínico estruturado para padronizar procedimentos regenerativos
-                  e organizar desfechos com governança e segurança.
+                  O REGHEN é uma plataforma estruturada para padronizar procedimentos regenerativos, mensurar risco biológico e transformar desfechos clínicos em evidência real.
                 </p>
                 <p className="text-white/50 text-[15px] leading-[1.9]">
-                  Ele transforma registros clínicos em dados analisáveis, preservando a autonomia
-                  da prática e o isolamento por clínica.
+                  Cada registro se torna dado analisável.<br />
+                  Cada procedimento, um aprendizado validado.
                 </p>
                 <div className="flex items-center gap-3 pt-2">
                   <div className="h-px flex-1 bg-gradient-to-r from-white/[0.12] to-transparent" />
-                  <span className="text-white/40 text-[11px] tracking-widest uppercase">Baseado em evidência</span>
+                  <span className="text-white/40 text-[11px] tracking-widest uppercase">Baseado em evidência. Orientado por dados.</span>
                 </div>
               </motion.div>
             </div>
