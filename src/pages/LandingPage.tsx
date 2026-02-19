@@ -48,9 +48,9 @@ const modules = [
 ];
 
 const securityPillars = [
-  { icon: Building2, title: "Isolamento por clínica", desc: "Cada clínica opera em um ambiente completamente isolado. Nenhum dado é compartilhado entre organizações." },
-  { icon: Users, title: "Controle de acesso por perfil", desc: "Permissões granulares por função: administrador, profissional de saúde, técnico e recepção." },
-  { icon: Lock, title: "Políticas de segurança no banco", desc: "Row Level Security garante que cada consulta ao banco respeita as permissões do usuário autenticado." },
+  { icon: Building2, title: "Arquitetura Independente por Clínica", desc: "Estrutura dedicada que preserva organização interna, coerência metodológica e consistência dos dados assistenciais." },
+  { icon: Users, title: "Controle Metodológico por Perfil", desc: "Definição clara de responsabilidades técnicas no registro clínico, assegurando integridade e padronização das informações." },
+  { icon: Lock, title: "Modelo Auditável de Registro", desc: "Rastreabilidade estruturada que sustenta estabilidade e integridade longitudinal dos dados clínicos." },
 ];
 
 const metrics = [
@@ -632,32 +632,15 @@ export default function LandingPage() {
               >
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.06] border border-primary/15 mb-8">
                   <Shield className="w-3.5 h-3.5 text-primary/70" />
-                  <span className="text-primary text-[11px] font-semibold tracking-[0.25em] uppercase">Segurança & Governança</span>
+                  <span className="text-primary text-[11px] font-semibold tracking-[0.25em] uppercase">Governança & Integridade</span>
                 </div>
                 <h3 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                  Dados clínicos<br />
-                  <span className="text-white/30">protegidos por design</span>
+                  Integridade estrutural<br />
+                  <span className="text-white/30">dos dados clínicos</span>
                 </h3>
-                <p className="text-white/30 text-base leading-relaxed max-w-2xl mx-auto">
-                  Cada clínica opera em isolamento lógico completo. Políticas de acesso granulares
-                  garantem que cada profissional veja apenas os dados pertinentes ao seu contexto.
+                <p className="text-white/30 text-base leading-relaxed max-w-2xl mx-auto mb-16">
+                  O REGHEN organiza a prática regenerativa sob critérios estruturados, garantindo consistência metodológica, estabilidade dos registros e comparabilidade ao longo do acompanhamento clínico.
                 </p>
-              </motion.div>
-
-              {/* Security metrics row */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2, ease }}
-                className="flex flex-wrap justify-center gap-8 mb-16"
-              >
-                {["Row Level Security por clínica", "Controle de acesso baseado em perfis (RBAC)", "Audit log completo de todas as operações"].map((item, idx) => (
-                  <div key={item} className="flex items-center gap-2.5 text-white/40 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                    <span>{item}</span>
-                  </div>
-                ))}
               </motion.div>
 
               {/* Pillar cards — horizontal with dividers */}
