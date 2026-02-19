@@ -617,55 +617,70 @@ export default function LandingPage() {
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
             </div>
 
-            {/* Feature 2 — Reversed */}
-            <div className="mt-24 space-y-12">
+            {/* Feature 2 — Security & Governance — Premium Layout */}
+            <div className="mt-32 relative">
+              {/* Ambient glow */}
+              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
+              
+              {/* Central badge */}
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 1, ease }}
-                className="max-w-3xl"
+                transition={{ duration: 0.8, ease }}
+                className="text-center mb-16 relative"
               >
-                <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-semibold mb-4">Segurança & Governança</p>
-                <h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 leading-tight">
-                  Dados clínicos <span className="text-white/40">protegidos por design</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.06] border border-primary/15 mb-8">
+                  <Shield className="w-3.5 h-3.5 text-primary/70" />
+                  <span className="text-primary text-[11px] font-semibold tracking-[0.25em] uppercase">Segurança & Governança</span>
+                </div>
+                <h3 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
+                  Dados clínicos<br />
+                  <span className="text-white/30">protegidos por design</span>
                 </h3>
-                <p className="text-white/35 text-[15px] leading-relaxed mb-8">
+                <p className="text-white/30 text-base leading-relaxed max-w-2xl mx-auto">
                   Cada clínica opera em isolamento lógico completo. Políticas de acesso granulares
                   garantem que cada profissional veja apenas os dados pertinentes ao seu contexto.
                 </p>
-                <ul className="space-y-4">
-                  {["Row Level Security por clínica", "Controle de acesso baseado em perfis (RBAC)", "Audit log completo de todas as operações"].map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-white/45 text-sm">
-                      <div className="w-6 h-6 rounded-lg bg-primary/[0.08] flex items-center justify-center flex-shrink-0">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-primary/60" />
-                      </div>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
               </motion.div>
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {securityPillars.map((item, idx) => (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: idx * 0.1 }}
-                    className={`p-6 ${glassCard} ${glassCardHover} transition-all duration-700 flex items-start gap-4 group`}
-                    style={cardShadow}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-primary/[0.08] flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors duration-500">
-                      <item.icon className="w-4.5 h-4.5 text-primary/60 group-hover:text-primary transition-colors duration-500" />
-                    </div>
-                    <div>
-                      <h4 className="text-white/85 text-[15px] font-semibold mb-1">{item.title}</h4>
-                      <p className="text-white/28 text-sm leading-relaxed">{item.desc}</p>
-                    </div>
-                  </motion.div>
+              {/* Security metrics row */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.2, ease }}
+                className="flex flex-wrap justify-center gap-8 mb-16"
+              >
+                {["Row Level Security por clínica", "Controle de acesso baseado em perfis (RBAC)", "Audit log completo de todas as operações"].map((item, idx) => (
+                  <div key={item} className="flex items-center gap-2.5 text-white/40 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                    <span>{item}</span>
+                  </div>
                 ))}
+              </motion.div>
+
+              {/* Pillar cards — horizontal with dividers */}
+              <div className="relative">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/[0.05]" />
+                <div className="relative grid md:grid-cols-3 divide-x divide-white/[0.06]">
+                  {securityPillars.map((item, idx) => (
+                    <motion.div
+                      key={item.title}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.7, delay: idx * 0.15, ease }}
+                      className="p-10 group text-center hover:bg-white/[0.015] transition-all duration-700"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-primary/[0.06] border border-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/10 group-hover:border-primary/20 group-hover:shadow-[0_0_30px_-5px] group-hover:shadow-primary/20 transition-all duration-700">
+                        <item.icon className="w-6 h-6 text-primary/50 group-hover:text-primary/80 transition-colors duration-500" />
+                      </div>
+                      <h4 className="text-white/90 text-base font-semibold mb-3 tracking-tight">{item.title}</h4>
+                      <p className="text-white/25 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
