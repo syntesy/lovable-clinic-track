@@ -9,7 +9,7 @@ export default function ResultadosPage() {
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Mensuração</span>
-          <h1 className="text-4xl md:text-6xl font-light text-white mb-6" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-4xl md:text-6xl font-light text-white mb-6">
             Resultados mensuráveis
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
@@ -36,7 +36,7 @@ export default function ResultadosPage() {
       </section>
 
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <h2 className="text-2xl font-light text-white mb-8" style={{ fontFamily: "Georgia, serif" }}>Desfechos por timepoint</h2>
+        <h2 className="text-2xl font-light text-white mb-8">Desfechos por timepoint</h2>
         <div className="space-y-4">
           {[
             { time: "Baseline", pct: 0 },

@@ -9,7 +9,7 @@ export default function ScorePage() {
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Quantificação</span>
-          <h1 className="text-4xl md:text-6xl font-light text-white mb-6" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-4xl md:text-6xl font-light text-white mb-6">
             SCORE biológico e técnico
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
@@ -21,7 +21,7 @@ export default function ScorePage() {
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16">
           <div>
-            <h2 className="text-2xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>Variáveis objetivas</h2>
+            <h2 className="text-2xl font-light text-white mb-4">Variáveis objetivas</h2>
             <p className="text-white/40 leading-relaxed mb-6">
               O SCORE combina variáveis biológicas (idade, comorbidades, marcadores) e técnicas (tipo de procedimento, parâmetros, co-intervenções) para gerar um índice numérico comparável.
             </p>
@@ -37,7 +37,7 @@ export default function ScorePage() {
           <div className="flex items-center justify-center">
             <div className="w-48 h-48 rounded-full border-4 border-primary/20 flex items-center justify-center relative">
               <div className="text-center">
-                <span className="text-5xl font-light text-primary" style={{ fontFamily: "Georgia, serif" }}>87</span>
+                <span className="text-5xl font-light text-primary">87</span>
                 <span className="block text-white/30 text-xs tracking-[0.2em] uppercase mt-1">Score</span>
               </div>
               <div className="absolute inset-0 rounded-full border-4 border-primary" style={{ clipPath: "polygon(0 0, 100% 0, 100% 87%, 0 87%)" }} />

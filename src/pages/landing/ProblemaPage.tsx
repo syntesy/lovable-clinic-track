@@ -12,7 +12,7 @@ export default function ProblemaPage() {
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">O cenário atual</span>
-          <h1 className="text-4xl md:text-6xl font-light text-white mb-6" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-4xl md:text-6xl font-light text-white mb-6">
             O problema da Medicina Regenerativa
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
@@ -25,13 +25,13 @@ export default function ProblemaPage() {
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16">
           <div>
-            <h2 className="text-2xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>Fragmentação da evidência</h2>
+            <h2 className="text-2xl font-light text-white mb-4">Fragmentação da evidência</h2>
             <p className="text-white/40 leading-relaxed">
               A medicina regenerativa avança rapidamente, mas sem padronização. Cada profissional segue protocolos próprios, tornando impossível comparar resultados entre clínicas, técnicas ou populações de pacientes.
             </p>
           </div>
           <div>
-            <h2 className="text-2xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>Ausência de rastreabilidade</h2>
+            <h2 className="text-2xl font-light text-white mb-4">Ausência de rastreabilidade</h2>
             <p className="text-white/40 leading-relaxed">
               Sem registro estruturado, cada procedimento é uma experiência isolada. Não há como construir uma base de evidência confiável, e o profissional não consegue demonstrar a qualidade da sua prática.
             </p>
@@ -97,7 +97,7 @@ function SolucaoSection() {
         {/* Left — Text */}
           <div className="space-y-8">
           <span className="text-primary text-xs tracking-[0.3em] uppercase block">Como o REGHEN resolve isso</span>
-          <h2 className="text-3xl md:text-[2.6rem] leading-[1.2] font-light text-white" style={{ fontFamily: "Georgia, serif" }}>
+          <h2 className="text-3xl md:text-[2.6rem] leading-[1.2] font-light text-white">
             Estrutura criada para potencializar seus{" "}
             <span className="text-[#A06F4C]">resultados clínicos</span>.
           </h2>
