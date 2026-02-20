@@ -116,28 +116,25 @@ export default function LandingPage() {
 
   return (
     <div className="h-screen w-screen overflow-hidden relative" style={{ background: "#080b14" }}>
-      {/* ═══ BACKGROUND IMAGES ═══ */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={current.id}
-          initial={{ opacity: 0, scale: 1.03 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="absolute inset-0 z-0"
+      {/* ═══ BACKGROUND IMAGES (all preloaded, instant switch) ═══ */}
+      {slides.map((slide, index) => (
+        <div
+          key={slide.id}
+          className="absolute inset-0 z-0 transition-opacity duration-200"
+          style={{ opacity: index === activeIndex ? 1 : 0 }}
         >
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `url(${current.bg})`,
+              backgroundImage: `url(${slide.bg})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           />
           <div className="absolute inset-0 bg-black/15" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#080b14] via-[#080b14]/20 to-transparent" />
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      ))}
 
       {/* ═══ HEADER ═══ */}
       <header className="absolute top-0 left-0 right-0 z-30 px-8 md:px-12 h-20 flex items-center justify-between">
