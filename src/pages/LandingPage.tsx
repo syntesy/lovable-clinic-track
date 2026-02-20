@@ -1,83 +1,75 @@
-import { useCallback, useState, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
-import {
-  ArrowRight, ArrowUpRight, FileCheck, BarChart3, Shield,
-  Activity, TestTube2, Gauge, Target, CheckCircle2,
-  LineChart, Lock, Users, FlaskConical, ClipboardList,
-  Stethoscope, FileText, TrendingUp,
-  Building2, ChevronDown, MessageSquare, BookOpen, Database,
-  GraduationCap, Link, Layers,
-} from "lucide-react";
-import BottomDock from "@/components/landing/BottomDock";
+import { motion, AnimatePresence } from "framer-motion";
 import logoReghen from "@/assets/logo-reghen.png";
-import heroBg from "@/assets/hero-bg.png";
+import slideBg01 from "@/assets/slide-bg-01.jpg";
+import slideBg02 from "@/assets/slide-bg-02.jpg";
+import slideBg03 from "@/assets/slide-bg-03.jpg";
+import slideBg04 from "@/assets/slide-bg-04.jpg";
+import slideBg05 from "@/assets/slide-bg-05.jpg";
+import slideBg06 from "@/assets/slide-bg-06.jpg";
 
-const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const AUTOPLAY_MS = 6000;
 
-const glassCard = "rounded-2xl border border-white/[0.06] bg-white/[0.025] backdrop-blur-sm";
-const glassCardHover = "hover:bg-white/[0.05] hover:border-white/[0.12] hover:shadow-2xl hover:shadow-primary/[0.06] hover:-translate-y-1";
-const cardShadow = {
-  boxShadow: "0 4px 50px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
-};
-
-const steps = [
-  { num: "01", title: "Avaliação Estruturada de Risco", desc: "Integra triagem, exames laboratoriais e variáveis clínicas para consolidar o contexto biológico do paciente.", icon: FileText },
-  { num: "02", title: "SCORE Biológico Quantificável", desc: "Sistema próprio que mensura risco, elegibilidade e adequação do procedimento com base em critérios objetivos.", icon: ClipboardList },
-  { num: "03", title: "Padronização Técnica do Procedimento", desc: "Registro detalhado do protocolo utilizado (PRP, PRF, BMA etc.), com rastreabilidade completa.", icon: CheckCircle2 },
-  { num: "04", title: "Desfechos Longitudinais Auditáveis", desc: "Follow-up estruturado por timepoints (baseline → m1 → m3 → m6 → m12), permitindo mensuração real de eficácia.", icon: TrendingUp },
-  { num: "05", title: "Inteligência Clínica e Performance", desc: "Transforma seus próprios dados em indicadores de resultado, ajudando a entender o que realmente funciona na sua prática.", icon: BarChart3 },
+const slides = [
+  {
+    id: "problema",
+    label: "Problema",
+    title: "Medicina regenerativa\nsem padrão",
+    subtitle: "Protocolos variam. Resultados não se comparam. Evidência vira ruído.",
+    tagline: "O cenário atual precisa de estrutura.",
+    bg: slideBg01,
+  },
+  {
+    id: "estrutura-clinica",
+    label: "Estrutura Clínica",
+    title: "Estrutura\nclínica",
+    subtitle: "Da consulta ao desfecho, com metodologia.",
+    tagline: "Baseado em evidência. Orientado por dados.",
+    bg: slideBg02,
+  },
+  {
+    id: "score",
+    label: "SCORE",
+    title: "SCORE\nbiológico",
+    subtitle: "Risco, elegibilidade e adequação do procedimento.",
+    tagline: "Quantificação objetiva da qualidade técnica.",
+    bg: slideBg03,
+  },
+  {
+    id: "resultados",
+    label: "Resultados",
+    title: "Resultados\nmensuráveis",
+    subtitle: "VAS, PRO, NPS e desfechos longitudinais.",
+    tagline: "Cada etapa documentada. Cada resultado rastreável.",
+    bg: slideBg04,
+  },
+  {
+    id: "evidencia",
+    label: "Evidência",
+    title: "Evidência\naplicada",
+    subtitle: "Curadoria científica conectada ao registro clínico.",
+    tagline: "Decisão clínica baseada em ciência.",
+    bg: slideBg05,
+  },
+  {
+    id: "integridade",
+    label: "Integridade",
+    title: "Integridade e\nrastreabilidade",
+    subtitle: "Registro auditável e comparável ao longo do tempo.",
+    tagline: "Governança estrutural dos dados clínicos.",
+    bg: slideBg06,
+  },
 ];
 
-const modules = [
-  { icon: MessageSquare, title: "Chat Científico Especializado", desc: "Ferramenta de apoio técnico baseada em literatura científica sobre ortobiológicos e protocolos regenerativos." },
-  { icon: BookOpen, title: "Curadoria de Evidência", desc: "Organização estruturada de revisões sistemáticas e estudos relevantes em medicina regenerativa." },
-  { icon: Database, title: "Base de Conhecimento Técnica", desc: "Conteúdo estruturado sobre fundamentos, protocolos e critérios clínicos aplicáveis à prática regenerativa." },
-  { icon: GraduationCap, title: "REGHEN Academy", desc: "Aulas e conteúdos conectados à prática clínica regenerativa, com abordagem técnica e aplicada." },
-  { icon: Link, title: "Integração entre prática e evidência", desc: "Ambiente que conecta registro clínico com referências científicas organizadas." },
-  { icon: Layers, title: "Estrutura de Padronização Científica", desc: "Arquitetura projetada para organizar variáveis clínicas e desfechos em um formato estruturado, comparável e potencialmente utilizável para produção científica." },
-];
-
-const securityPillars = [
-  { icon: Building2, title: "Arquitetura Independente por Clínica", desc: "Estrutura dedicada que preserva organização interna, coerência metodológica e consistência dos dados assistenciais." },
-  { icon: Users, title: "Controle Metodológico por Perfil", desc: "Definição clara de responsabilidades técnicas no registro clínico, assegurando integridade e padronização das informações." },
-  { icon: Lock, title: "Modelo Auditável de Registro", desc: "Rastreabilidade estruturada que sustenta estabilidade e integridade longitudinal dos dados clínicos." },
-];
-
-const metrics = [
-  { icon: Activity, value: "VAS 0–10", label: "Escala de dor em cada timepoint" },
-  { icon: BarChart3, value: "PRO", label: "Desfechos reportados pelo paciente" },
-  { icon: TestTube2, value: "PRP/PRF", label: "Rastreabilidade de insumos biológicos" },
-  { icon: Target, value: "NPS Clínico", label: "Satisfação longitudinal do paciente" },
-  { icon: Gauge, value: "SCORE", label: "Índice de qualidade do procedimento" },
-  { icon: Shield, value: "RLS/RBAC", label: "Governança por clínica e perfil" },
-];
-
-/* ─── Section Divider ─── */
-function SectionDivider() {
-  return (
-    <div className="flex items-center justify-center py-4">
-      <div className="h-px flex-1 max-w-xs bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
-      <div className="w-1.5 h-1.5 rounded-full bg-primary mx-4" />
-      <div className="h-px flex-1 max-w-xs bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
-    </div>
-  );
-}
-
-/* ─── COMPONENT ─── */
 export default function LandingPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [navScrolled, setNavScrolled] = useState(false);
-  const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
-
-  useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const [active, setActive] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef = useRef(Date.now());
 
   const getRedirectPath = useCallback(() => {
     const params = new URLSearchParams(location.search);
@@ -92,548 +84,206 @@ export default function LandingPage() {
     navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`);
   }, [navigate, getRedirectPath]);
 
+  const goTo = useCallback((idx: number) => {
+    setActive(idx);
+    setProgress(0);
+    startTimeRef.current = Date.now();
+    setIsPaused(false);
+  }, []);
+
+  const next = useCallback(() => {
+    goTo((active + 1) % slides.length);
+  }, [active, goTo]);
+
+  // Autoplay + progress
+  useEffect(() => {
+    if (isPaused) return;
+
+    const tick = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const pct = Math.min(elapsed / AUTOPLAY_MS, 1);
+      setProgress(pct);
+      if (pct >= 1) {
+        next();
+      }
+    };
+
+    timerRef.current = setInterval(tick, 30);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isPaused, active, next]);
+
+  // Keyboard nav
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === " ") {
+        e.preventDefault();
+        goTo((active + 1) % slides.length);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goTo((active - 1 + slides.length) % slides.length);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active, goTo]);
+
+  const handleNavClick = (idx: number) => {
+    setIsPaused(true);
+    goTo(idx);
+    // Resume after a short pause
+    setTimeout(() => setIsPaused(false), 300);
+  };
+
+  const current = slides[active];
+  const padNum = (n: number) => String(n).padStart(2, "0");
+
   return (
-    <div className="min-h-screen text-white relative overflow-hidden" style={{ background: "#080b14" }}>
-      {/* Skip link */}
-      <a href="#hero-heading" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg">
-        Ir para conteúdo principal
-      </a>
+    <div className="h-screen w-screen overflow-hidden relative" style={{ background: "#080b14" }}>
+      {/* ═══ FULLSCREEN BACKGROUND ═══ */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={active}
+          initial={{ opacity: 0, scale: 1.08 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 z-0"
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${current.bg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080b14]/80 via-transparent to-[#080b14]/30" />
+        </motion.div>
+      </AnimatePresence>
 
-      {/* ═══ AMBIENT GLOWS ═══ */}
-      <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute top-[-20%] left-[20%] w-[900px] h-[900px] rounded-full opacity-[0.07]" style={{
-          background: "radial-gradient(circle, hsl(13, 74%, 55%) 0%, transparent 60%)",
-        }} />
-        <div className="absolute top-[50%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-[0.04]" style={{
-          background: "radial-gradient(circle, hsl(25, 80%, 50%) 0%, transparent 70%)",
-        }} />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full opacity-[0.03]" style={{
-          background: "radial-gradient(circle, hsl(200, 60%, 40%) 0%, transparent 65%)",
-        }} />
-      </div>
-
-      {/* Grain overlay */}
-      <div className="fixed inset-0 opacity-[0.018] z-[2] pointer-events-none" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")`,
-        backgroundRepeat: "repeat", backgroundSize: "128px 128px",
-      }} aria-hidden="true" />
-
-      {/* Progress bar */}
-      <motion.div className="fixed top-0 left-0 right-0 h-[2px] z-[60] origin-left bg-gradient-to-r from-primary via-primary/80 to-primary/40" style={{ scaleX: scrollYProgress }} />
-
-      {/* ═══ NAVBAR ═══ */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.1 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
-          navScrolled
-            ? "bg-[#080b14]/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/20"
-            : "bg-transparent"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex-shrink-0">
-            <img src={logoReghen} alt="REGHEN" className="h-7 w-auto" />
-          </button>
-          <div className="flex items-center gap-3">
-            <button onClick={handleLogin} className="px-5 py-2 text-[13px] font-medium text-white/60 hover:text-white transition-colors">
-              Entrar
-            </button>
-            <button onClick={handleSignup} className="px-5 py-2 text-[13px] font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40">
-              Criar conta
-            </button>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* ═══ CONTENT ═══ */}
-      <div className="relative z-10">
-
-        {/* ════════ HERO ════════ */}
-        <motion.section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden" style={{ opacity: heroOpacity, scale: heroScale }}>
-          {/* Hero BG Image */}
-          <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.7 }} />
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#080b14]/40 via-[#080b14]/20 to-[#080b14]" />
-          {/* Radial glow behind text */}
-          <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full opacity-[0.12] pointer-events-none" style={{
-            background: "radial-gradient(ellipse, hsl(13, 74%, 55%) 0%, transparent 70%)",
-          }} aria-hidden="true" />
-
-          <div className="relative z-10 max-w-4xl mx-auto text-center pt-24">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.3, ease }}
-              className="mb-14 mt-16 flex justify-center"
-            >
-              <img src={logoReghen} alt="REGHEN" className="h-28 w-auto opacity-80" />
-            </motion.div>
-
-            {/* Headline */}
-            <motion.h1
-              id="hero-heading"
-              initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 1.2, delay: 0.5, ease }}
-              className="text-4xl md:text-5xl lg:text-[4rem] font-bold tracking-tight leading-[1.06] mb-7"
-            >
-              Infraestrutura clínica para{" "}
-              <span className="relative">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/90 to-orange-400">
-                  Medicina Regenerativa
-                </span>
-                <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-              </span>
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.8, ease }}
-              className="text-white/55 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto"
-            >
-              Padronize condutas, acompanhe desfechos e organize sua prática com estrutura, clareza e segurança.
-            </motion.p>
-
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.1 }}
-              className="flex flex-wrap justify-center gap-4 mb-16"
-            >
-              <button onClick={handleSignup} className="group relative inline-flex items-center gap-2.5 px-8 py-4 rounded-xl text-sm font-semibold bg-primary text-primary-foreground overflow-hidden transition-all duration-500 hover:shadow-[0_0_50px_-5px] hover:shadow-primary/40">
-                <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                <span className="relative">Começar agora</span>
-                <ArrowRight className="w-4 h-4 relative group-hover:translate-x-0.5 transition-transform" />
-              </button>
-              <button onClick={handleLogin} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-medium border border-white/[0.08] text-white/60 hover:border-white/20 hover:text-white hover:bg-white/[0.04] transition-all duration-500">
-                Entrar
-              </button>
-            </motion.div>
-          </div>
-
-          {/* Scroll indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2.5, duration: 1 }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+      {/* ═══ HEADER ═══ */}
+      <header className="absolute top-0 left-0 right-0 z-30 px-8 md:px-12 h-20 flex items-center justify-between">
+        <button onClick={() => goTo(0)} className="flex-shrink-0">
+          <img src={logoReghen} alt="REGHEN" className="h-7 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleLogin}
+            className="px-5 py-2 text-[13px] font-medium text-white/60 hover:text-white transition-colors"
           >
-            <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
-              <ChevronDown className="w-5 h-5 text-white/35" />
-            </motion.div>
-          </motion.div>
-        </motion.section>
+            Entrar
+          </button>
+          <button
+            onClick={handleSignup}
+            className="px-5 py-2 text-[13px] font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
+            Criar conta
+          </button>
+        </div>
+      </header>
 
-        {/* ═══════════════════════════════════════════════════════════
-            6 SEÇÕES INDEPENDENTES
-        ═══════════════════════════════════════════════════════════ */}
-
-        <SectionDivider />
-
-        {/* ════════ 1. ESTRUTURA CLÍNICA ════════ */}
-        <section id="estrutura-clinica" className="min-h-screen py-32 px-6 relative scroll-mt-[120px]">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.01] to-transparent pointer-events-none" />
-          <div className="max-w-6xl mx-auto relative">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, ease }}
-              className="text-center mb-20"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Estrutura Clínica</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Da consulta ao desfecho, <span className="text-white/55">com estrutura clínica</span>
-              </h2>
-            </motion.div>
-
-            {/* Timeline — Desktop */}
-            <div className="hidden md:grid grid-cols-5 gap-6">
-              {steps.map((step, i) => (
-                <motion.div
-                  key={step.num}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.7, delay: i * 0.1, ease }}
-                  className={`relative p-6 ${glassCard} ${glassCardHover} transition-all duration-700 group`}
-                  style={cardShadow}
-                >
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="w-10 h-10 rounded-xl bg-primary/[0.08] flex items-center justify-center group-hover:bg-primary/15 transition-colors duration-500">
-                      <step.icon className="w-4.5 h-4.5 text-primary/60 group-hover:text-primary transition-colors duration-500" />
-                    </div>
-                    <span className="text-white/[0.12] text-2xl font-bold">{step.num}</span>
-                  </div>
-                  <h3 className="text-white/85 text-sm font-semibold mb-2">{step.title}</h3>
-                  <p className="text-white/50 text-xs leading-relaxed">{step.desc}</p>
-                  {i < steps.length - 1 && (
-                    <div className="absolute top-1/2 -right-3 w-6 h-px bg-gradient-to-r from-white/[0.08] to-transparent hidden md:block" />
-                  )}
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Timeline — Mobile */}
-            <div className="md:hidden space-y-4">
-              {steps.map((step, i) => (
-                <motion.div
-                  key={step.num}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.08 }}
-                  className={`p-5 ${glassCard} flex items-start gap-4`}
-                  style={cardShadow}
-                >
-                  <div className="w-10 h-10 rounded-xl bg-primary/[0.08] flex items-center justify-center flex-shrink-0">
-                    <step.icon className="w-4 h-4 text-primary/60" />
-                  </div>
-                  <div>
-                    <span className="text-white/[0.15] text-xs font-bold">{step.num}</span>
-                    <h3 className="text-white/85 text-sm font-semibold mb-1">{step.title}</h3>
-                    <p className="text-white/50 text-xs leading-relaxed">{step.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ════════ 2. SCORE ════════ */}
-        <section id="score" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.008] via-transparent to-white/[0.008] pointer-events-none" />
-          <div className="max-w-6xl mx-auto relative">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, ease }}
-              className="text-center mb-24"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">SCORE & Qualidade</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Qualidade técnica <span className="text-white/55">mensurável</span>
-              </h2>
-            </motion.div>
-
-            <div className="grid md:grid-cols-2 gap-16 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, ease }}
-              >
-                <p className="text-white/55 text-[15px] leading-relaxed mb-4">
-                  O REGHEN estrutura variáveis do preparo, método de aplicação e contexto biológico do paciente em um modelo técnico comparável.
-                </p>
-                <p className="text-white/55 text-[15px] leading-relaxed mb-8">
-                  Cada procedimento é registrado sob parâmetros objetivos, permitindo controle de qualidade e análise estruturada.
-                </p>
-                <ul className="space-y-4">
-                  {["Comparação técnica entre protocolos realizados", "Identificação de padrões de resposta clínica", "Evolução longitudinal da qualidade do preparo"].map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-white/60 text-sm">
-                      <div className="w-6 h-6 rounded-lg bg-primary/[0.08] flex items-center justify-center flex-shrink-0">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-primary/60" />
-                      </div>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, ease }}
-                className="flex flex-col gap-3"
-              >
-                <p className="text-white/50 text-[11px] tracking-[0.2em] uppercase font-medium">Parâmetros técnicos estruturados</p>
-                <div className={`${glassCard} p-8 relative overflow-hidden`} style={cardShadow}>
-                  <div className="space-y-6">
-                    {[
-                      { label: "Contagem plaquetária final", value: "≥ 1.0 M/µL", bar: 85 },
-                      { label: "Fator de concentração relativo", value: "3–5×", bar: 70 },
-                      { label: "Perfil leucocitário (LP / LR)", value: "Classificação técnica do concentrado", bar: 60 },
-                      { label: "Volume final do concentrado", value: "3–8 mL", bar: 75 },
-                    ].map((item, idx) => (
-                      <motion.div
-                        key={item.label}
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: idx * 0.1 }}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-white/55 text-xs">{item.label}</span>
-                          <span className="text-primary text-sm font-semibold">{item.value}</span>
-                        </div>
-                        <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            whileInView={{ width: `${item.bar}%` }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 1, delay: 0.3 + idx * 0.1, ease }}
-                            className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary/20"
-                          />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-primary/5 blur-3xl" />
-                </div>
-                <p className="text-white/40 text-[11px] leading-relaxed mt-1">Parâmetros integrados ao modelo de qualidade do procedimento.</p>
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ════════ 3. RESULTADOS ════════ */}
-        <section id="resultados" className="min-h-screen py-32 px-6 relative scroll-mt-[120px]">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent pointer-events-none" />
-          <div className="max-w-6xl mx-auto relative">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, ease }}
-              className="text-center mb-16"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Resultados</span>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
-                Resultados mensuráveis <span className="text-white/55">em cada etapa</span>
-              </h2>
-              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
-                Acompanhe indicadores reais da sua prática regenerativa com dados longitudinais.
-              </p>
-            </motion.div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {metrics.map((m, i) => (
-                <motion.div
-                  key={m.label}
-                  initial={{ opacity: 0, y: 24, scale: 0.96 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: i * 0.06, ease }}
-                  className={`p-7 ${glassCard} ${glassCardHover} transition-all duration-700 text-center group relative overflow-hidden`}
-                  style={cardShadow}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/[0.03] group-hover:to-transparent transition-all duration-700" />
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-xl bg-primary/[0.08] flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/15 transition-colors duration-500">
-                      <m.icon className="w-5 h-5 text-primary/50 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
-                    </div>
-                    <p className="text-primary text-xl font-bold mb-1">{m.value}</p>
-                    <p className="text-white/50 text-xs">{m.label}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ════════ 4. PADRONIZAÇÃO ════════ */}
-        <section id="padronizacao" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.008] via-transparent to-white/[0.008] pointer-events-none" />
-          <div className="max-w-6xl mx-auto relative">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, ease }}
-              className="text-center mb-20"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Padronização</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Ecossistema científico <span className="text-white/55">integrado</span>
-              </h2>
-              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
-                Inteligência, organização técnica e estrutura orientada à produção de evidência na prática regenerativa.
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {modules.map((mod, i) => (
-                <motion.div
-                  key={mod.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.7, delay: i * 0.08, ease }}
-                  className={`${glassCard} ${glassCardHover} transition-all duration-700 p-7 flex flex-col group relative overflow-hidden`}
-                  style={cardShadow}
-                >
-                  <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/0 group-hover:bg-primary/[0.06] blur-3xl transition-all duration-700" />
-                  <div className="relative flex-1">
-                    <div className="w-11 h-11 rounded-xl bg-primary/[0.08] flex items-center justify-center mb-5 group-hover:bg-primary/15 transition-colors duration-500">
-                      <mod.icon className="w-5 h-5 text-primary/60 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
-                    </div>
-                    <h3 className="text-white/90 text-[15px] font-semibold mb-2">{mod.title}</h3>
-                    <p className="text-white/50 text-sm leading-relaxed">{mod.desc}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-primary/40 group-hover:text-primary/70 text-xs font-medium pt-6 transition-colors duration-500">
-                    <span>Explorar</span>
-                    <ArrowUpRight className="w-3 h-3" />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ════════ 5. EVIDÊNCIA ════════ */}
-        <section id="evidencia" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent pointer-events-none" />
-          <div className="max-w-4xl mx-auto text-center relative flex flex-col items-center justify-center min-h-[60vh]">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, ease }}
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Evidência</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Curadoria científica <span className="text-white/55">estruturada</span>
-              </h2>
-              <p className="text-white/50 text-[15px] max-w-2xl mx-auto mb-12">
-                Evidência traduzida em decisão clínica — revisões sistemáticas, estudos relevantes e referências organizadas para a prática regenerativa.
-              </p>
-
-              {/* Placeholder visual */}
-              <div className={`${glassCard} p-10 max-w-lg mx-auto`} style={cardShadow}>
-                <BookOpen className="w-10 h-10 text-primary/30 mx-auto mb-4" />
-                <p className="text-white/40 text-sm">Conteúdo de curadoria será inserido nesta seção.</p>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ════════ 6. INTEGRIDADE ════════ */}
-        <section id="integridade" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.008] via-transparent to-white/[0.008] pointer-events-none" />
-          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
-          <div className="max-w-6xl mx-auto relative">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, ease }}
-              className="text-center mb-16"
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.06] border border-primary/15 mb-8">
-                <Shield className="w-3.5 h-3.5 text-primary/70" />
-                <span className="text-primary text-[11px] font-semibold tracking-[0.25em] uppercase">Governança & Integridade</span>
-              </div>
-              <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Integridade estrutural<br />
-                <span className="text-white/50">dos dados clínicos</span>
-              </h2>
-              <p className="text-white/60 text-base leading-relaxed max-w-2xl mx-auto mb-16">
-                O REGHEN organiza a prática regenerativa sob critérios estruturados, garantindo consistência metodológica, estabilidade dos registros e comparabilidade ao longo do acompanhamento clínico.
-              </p>
-            </motion.div>
-
-            <div className="relative">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/[0.05]" />
-              <div className="relative grid md:grid-cols-3 divide-x divide-white/[0.06]">
-                {securityPillars.map((item, idx) => (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7, delay: idx * 0.15, ease }}
-                    className="p-10 group text-center hover:bg-white/[0.015] transition-all duration-700"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-primary/[0.06] border border-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/10 group-hover:border-primary/20 group-hover:shadow-[0_0_30px_-5px] group-hover:shadow-primary/20 transition-all duration-700">
-                      <item.icon className="w-6 h-6 text-primary/50 group-hover:text-primary/80 transition-colors duration-500" />
-                    </div>
-                    <h4 className="text-white/90 text-base font-semibold mb-3 tracking-tight">{item.title}</h4>
-                    <p className="text-white/55 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ════════ FOOTER ════════ */}
-        <footer className="border-t border-white/[0.06] py-16 px-6 pb-40">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid md:grid-cols-4 gap-10 mb-12">
-              <div>
-                <img src={logoReghen} alt="REGHEN" className="h-6 w-auto mb-4 opacity-50" />
-                <p className="text-white/40 text-xs leading-relaxed">
-                  Infraestrutura clínica para Medicina Regenerativa.
-                </p>
-              </div>
-              <div>
-                <p className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-4">Plataforma</p>
-                <ul className="space-y-2.5 text-white/40 text-sm">
-                  <li><span className="cursor-default">Estrutura Clínica</span></li>
-                  <li><span className="cursor-default">SCORE</span></li>
-                  <li><span className="cursor-default">Resultados</span></li>
-                </ul>
-              </div>
-              <div>
-                <p className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-4">Recursos</p>
-                <ul className="space-y-2.5 text-white/40 text-sm">
-                  <li><span className="cursor-default">Documentação</span></li>
-                  <li><span className="cursor-default">Guia Clínico</span></li>
-                  <li><span className="cursor-default">Suporte</span></li>
-                </ul>
-              </div>
-              <div>
-                <p className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-4">Legal</p>
-                <ul className="space-y-2.5 text-white/40 text-sm">
-                  <li><span className="cursor-default">Termos de Uso</span></li>
-                  <li><span className="cursor-default">Privacidade</span></li>
-                  <li><span className="cursor-default">LGPD</span></li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-white/[0.04] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-white/25 text-xs">© {new Date().getFullYear()} REGHEN. Todos os direitos reservados.</p>
-              <p className="text-white/25 text-xs">Desenvolvido com excelência clínica.</p>
-            </div>
-          </div>
-        </footer>
+      {/* ═══ SLIDE COUNTER — LEFT ═══ */}
+      <div className="absolute left-8 md:left-12 top-1/2 -translate-y-1/2 z-20">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={active}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.5 }}
+            className="text-white/30 text-4xl md:text-5xl font-light tracking-widest"
+            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+          >
+            {padNum(active + 1)}
+          </motion.span>
+        </AnimatePresence>
       </div>
 
-      {/* Bottom Dock Navigation */}
-      <BottomDock />
+      {/* ═══ SLIDE COUNTER — RIGHT ═══ */}
+      <div className="absolute right-8 md:right-12 top-1/2 -translate-y-1/2 z-20">
+        <span
+          className="text-white/20 text-4xl md:text-5xl font-light tracking-widest"
+          style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+        >
+          {padNum(slides.length)}
+        </span>
+      </div>
+
+      {/* ═══ CENTER CONTENT ═══ */}
+      <main className="absolute inset-0 z-10 flex flex-col items-center justify-center px-8 md:px-24">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={active}
+            initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -20, filter: "blur(6px)" }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center max-w-5xl"
+          >
+            <h1
+              className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-6 whitespace-pre-line"
+              style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 400 }}
+            >
+              {current.title}
+            </h1>
+            <p className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-4">
+              {current.subtitle}
+            </p>
+            {current.tagline && (
+              <p className="text-white/30 text-xs md:text-sm tracking-[0.2em] uppercase">
+                {current.tagline}
+              </p>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* ═══ BOTTOM NAV ═══ */}
+      <nav className="absolute bottom-0 left-0 right-0 z-30 px-6 md:px-12 pb-8 md:pb-10">
+        {/* Top line */}
+        <div className="h-px bg-white/[0.08] mb-5" />
+
+        <div className="flex items-start gap-0 overflow-x-auto no-scrollbar">
+          {slides.map((slide, idx) => {
+            const isActive = idx === active;
+            return (
+              <button
+                key={slide.id}
+                onClick={() => handleNavClick(idx)}
+                className="flex-1 min-w-[120px] md:min-w-0 group relative text-left px-2 md:px-3 pt-3 pb-1 transition-all duration-500"
+              >
+                {/* Progress bar above */}
+                <div className="absolute top-0 left-2 right-2 md:left-3 md:right-3 h-[2px] bg-white/[0.06] overflow-hidden">
+                  {isActive && (
+                    <motion.div
+                      className="h-full bg-primary"
+                      style={{ width: `${progress * 100}%` }}
+                      transition={{ duration: 0.03 }}
+                    />
+                  )}
+                  {idx < active && (
+                    <div className="h-full bg-white/20 w-full" />
+                  )}
+                </div>
+
+                <span
+                  className={`block text-[10px] md:text-[11px] tracking-[0.15em] uppercase font-medium transition-all duration-500 ${
+                    isActive
+                      ? "text-white"
+                      : "text-white/30 group-hover:text-white/50"
+                  }`}
+                >
+                  {slide.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
