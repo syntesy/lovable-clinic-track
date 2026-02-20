@@ -165,7 +165,7 @@ export default function LandingPage() {
             }}
           />
           <div className="absolute inset-0 bg-black/0" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#080b14]/60 via-transparent to-[#080b14]/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080b14]/40 via-transparent to-[#080b14]/0" />
         </motion.div>
       </AnimatePresence>
 
