@@ -91,6 +91,14 @@ export default function LandingPage() {
     navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`);
   }, [navigate, getRedirectPath]);
 
+  // Auto-advance slides
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((p) => (p + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
