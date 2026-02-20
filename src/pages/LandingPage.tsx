@@ -22,14 +22,7 @@ const cardShadow = {
   boxShadow: "0 4px 50px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 
-/* ─── DATA ─── */
-const navLinks = [
-  { label: "Visão geral", href: "#visao-geral" },
-  { label: "Estrutura Clínica", href: "#estrutura-clinica" },
-  { label: "Padronização", href: "#padronizacao" },
-  { label: "Evidência", href: "#evidencia" },
-  { label: "FAQ", href: "#faq" },
-];
+/* Navigation links removed — dock handles navigation */
 
 const steps = [
   { num: "01", title: "Avaliação Estruturada de Risco", desc: "Integra triagem, exames laboratoriais e variáveis clínicas para consolidar o contexto biológico do paciente.", icon: FileText },
@@ -76,7 +69,6 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [navScrolled, setNavScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
@@ -99,12 +91,6 @@ export default function LandingPage() {
   const handleSignup = useCallback(() => {
     navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`);
   }, [navigate, getRedirectPath]);
-
-  const scrollTo = (href: string) => {
-    setMobileOpen(false);
-    const el = document.querySelector(href);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   return (
     <div className="min-h-screen text-white relative overflow-hidden" style={{ background: "#080b14" }}>
@@ -150,18 +136,7 @@ export default function LandingPage() {
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex-shrink-0">
             <img src={logoReghen} alt="REGHEN" className="h-7 w-auto" />
           </button>
-          <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => scrollTo(link.href)}
-                className="px-4 py-2 text-[13px] text-white/50 hover:text-white transition-all duration-300 rounded-lg hover:bg-white/[0.04]"
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <button onClick={handleLogin} className="px-5 py-2 text-[13px] font-medium text-white/60 hover:text-white transition-colors">
               Entrar
             </button>
@@ -169,23 +144,7 @@ export default function LandingPage() {
               Criar conta
             </button>
           </div>
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="sm:hidden p-2 text-white/60" aria-label="Menu">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-              {mobileOpen ? <path d="M5 5l10 10M15 5L5 15" /> : <path d="M3 6h14M3 10h14M3 14h14" />}
-            </svg>
-          </button>
         </div>
-        {mobileOpen && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="lg:hidden bg-[#080b14]/95 backdrop-blur-2xl border-b border-white/[0.06] px-6 py-4 space-y-2">
-            {navLinks.map((link) => (
-              <button key={link.href} onClick={() => scrollTo(link.href)} className="block w-full text-left py-2 text-sm text-white/55 hover:text-white">{link.label}</button>
-            ))}
-            <div className="flex gap-3 pt-3 border-t border-white/[0.06]">
-              <button onClick={handleLogin} className="flex-1 py-2.5 text-sm border border-white/[0.08] rounded-lg text-white/55">Entrar</button>
-              <button onClick={handleSignup} className="flex-1 py-2.5 text-sm bg-primary text-primary-foreground rounded-lg">Criar conta</button>
-            </div>
-          </motion.div>
-        )}
       </motion.nav>
 
       {/* ═══ CONTENT ═══ */}
@@ -389,8 +348,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ ESTRUTURA CLÍNICA (TIMELINE) ════════ */}
-        <section id="estrutura-clinica" className="py-32 px-6 relative scroll-mt-[100px]">
+        {/* ════════ 1. ESTRUTURA CLÍNICA ════════ */}
+        <section id="estrutura-clinica" className="min-h-[80vh] py-32 px-6 relative scroll-mt-[100px]">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.01] to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto relative">
             <motion.div
@@ -463,62 +422,9 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ MÓDULOS / PADRONIZAÇÃO (Bento Grid) ════════ */}
-        <section id="padronizacao" className="py-32 px-6 scroll-mt-[100px]">
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, ease }}
-              className="text-center mb-20"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Módulos</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Ecossistema científico <span className="text-white/55">integrado</span>
-              </h2>
-              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
-                Inteligência, organização técnica e estrutura orientada à produção de evidência na prática regenerativa.
-              </p>
-            </motion.div>
-
-            {/* Uniform 3×2 Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {modules.map((mod, i) => (
-                <motion.div
-                  key={mod.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.7, delay: i * 0.08, ease }}
-                  className={`${glassCard} ${glassCardHover} transition-all duration-700 p-7 flex flex-col group relative overflow-hidden`}
-                  style={cardShadow}
-                >
-                  <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/0 group-hover:bg-primary/[0.06] blur-3xl transition-all duration-700" />
-
-                  <div className="relative flex-1">
-                    <div className="w-11 h-11 rounded-xl bg-primary/[0.08] flex items-center justify-center mb-5 group-hover:bg-primary/15 transition-colors duration-500">
-                      <mod.icon className="w-5 h-5 text-primary/60 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
-                    </div>
-                    <h3 className="text-white/90 text-[15px] font-semibold mb-2">{mod.title}</h3>
-                    <p className="text-white/50 text-sm leading-relaxed">{mod.desc}</p>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 text-primary/40 group-hover:text-primary/70 text-xs font-medium pt-6 transition-colors duration-500">
-                    <span>Explorar</span>
-                    <ArrowUpRight className="w-3 h-3" />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* ════════ SCORE & QUALIDADE ════════ */}
-        <section id="score" className="py-32 px-6 scroll-mt-[100px]">
+        <section id="score" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px]">
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -529,25 +435,20 @@ export default function LandingPage() {
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Funcionalidades</span>
+                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">SCORE & Qualidade</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Funcionalidades <span className="text-white/55">premium</span>
+                Qualidade técnica <span className="text-white/55">mensurável</span>
               </h2>
             </motion.div>
 
-            {/* Feature 1 */}
-            <div className="grid md:grid-cols-2 gap-16 items-center mb-32">
+            <div className="grid md:grid-cols-2 gap-16 items-center">
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1, ease }}
               >
-                <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-semibold mb-4">SCORE & Qualidade</p>
-                <h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 leading-tight">
-                  Qualidade técnica <span className="text-white/55">mensurável</span>
-                </h3>
                 <p className="text-white/55 text-[15px] leading-relaxed mb-4">
                   O REGHEN estrutura variáveis do preparo, método de aplicação e contexto biológico do paciente em um modelo técnico comparável.
                 </p>
@@ -610,68 +511,11 @@ export default function LandingPage() {
                 <p className="text-white/40 text-[11px] leading-relaxed mt-1">Parâmetros integrados ao modelo de qualidade do procedimento.</p>
               </motion.div>
             </div>
-
-            {/* Section divider */}
-            <div className="flex items-center gap-6 my-8">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/30" />
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-            </div>
-
-            {/* Feature 2 — Security & Governance — Integridade */}
-            <div id="integridade" className="mt-32 relative scroll-mt-[100px]">
-              {/* Ambient glow */}
-              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
-              
-              {/* Central badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease }}
-                className="text-center mb-16 relative"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.06] border border-primary/15 mb-8">
-                  <Shield className="w-3.5 h-3.5 text-primary/70" />
-                  <span className="text-primary text-[11px] font-semibold tracking-[0.25em] uppercase">Governança & Integridade</span>
-                </div>
-                <h3 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                  Integridade estrutural<br />
-                  <span className="text-white/50">dos dados clínicos</span>
-                </h3>
-                <p className="text-white/60 text-base leading-relaxed max-w-2xl mx-auto mb-16">
-                  O REGHEN organiza a prática regenerativa sob critérios estruturados, garantindo consistência metodológica, estabilidade dos registros e comparabilidade ao longo do acompanhamento clínico.
-                </p>
-              </motion.div>
-
-              {/* Pillar cards — horizontal with dividers */}
-              <div className="relative">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/[0.05]" />
-                <div className="relative grid md:grid-cols-3 divide-x divide-white/[0.06]">
-                  {securityPillars.map((item, idx) => (
-                    <motion.div
-                      key={item.title}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.7, delay: idx * 0.15, ease }}
-                      className="p-10 group text-center hover:bg-white/[0.015] transition-all duration-700"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-primary/[0.06] border border-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/10 group-hover:border-primary/20 group-hover:shadow-[0_0_30px_-5px] group-hover:shadow-primary/20 transition-all duration-700">
-                        <item.icon className="w-6 h-6 text-primary/50 group-hover:text-primary/80 transition-colors duration-500" />
-                      </div>
-                      <h4 className="text-white/90 text-base font-semibold mb-3 tracking-tight">{item.title}</h4>
-                      <p className="text-white/55 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
-        {/* ════════ RESULTADOS / MÉTRICAS ════════ */}
-        <section id="resultados" className="py-32 px-6 relative scroll-mt-[100px]">
+        {/* ════════ 3. RESULTADOS / MÉTRICAS ════════ */}
+        <section id="resultados" className="min-h-[80vh] py-32 px-6 relative scroll-mt-[100px]">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto relative">
             <motion.div
@@ -718,8 +562,59 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ EVIDÊNCIA (placeholder) ════════ */}
-        <section id="evidencia" className="py-32 px-6 scroll-mt-[100px]">
+        {/* ════════ 4. PADRONIZAÇÃO (Módulos) ════════ */}
+        <section id="padronizacao" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px]">
+          <div className="max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.9, ease }}
+              className="text-center mb-20"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Padronização</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Ecossistema científico <span className="text-white/55">integrado</span>
+              </h2>
+              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
+                Inteligência, organização técnica e estrutura orientada à produção de evidência na prática regenerativa.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {modules.map((mod, i) => (
+                <motion.div
+                  key={mod.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.08, ease }}
+                  className={`${glassCard} ${glassCardHover} transition-all duration-700 p-7 flex flex-col group relative overflow-hidden`}
+                  style={cardShadow}
+                >
+                  <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/0 group-hover:bg-primary/[0.06] blur-3xl transition-all duration-700" />
+                  <div className="relative flex-1">
+                    <div className="w-11 h-11 rounded-xl bg-primary/[0.08] flex items-center justify-center mb-5 group-hover:bg-primary/15 transition-colors duration-500">
+                      <mod.icon className="w-5 h-5 text-primary/60 group-hover:text-primary transition-colors duration-500" strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-white/90 text-[15px] font-semibold mb-2">{mod.title}</h3>
+                    <p className="text-white/50 text-sm leading-relaxed">{mod.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-primary/40 group-hover:text-primary/70 text-xs font-medium pt-6 transition-colors duration-500">
+                    <span>Explorar</span>
+                    <ArrowUpRight className="w-3 h-3" />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ════════ 5. EVIDÊNCIA (placeholder) ════════ */}
+        <section id="evidencia" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px] flex items-center">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -738,6 +633,54 @@ export default function LandingPage() {
                 (conteúdo será inserido)
               </p>
             </motion.div>
+          </div>
+        </section>
+
+        {/* ════════ 6. INTEGRIDADE ════════ */}
+        <section id="integridade" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px] relative">
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
+          <div className="max-w-6xl mx-auto relative">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease }}
+              className="text-center mb-16"
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.06] border border-primary/15 mb-8">
+                <Shield className="w-3.5 h-3.5 text-primary/70" />
+                <span className="text-primary text-[11px] font-semibold tracking-[0.25em] uppercase">Governança & Integridade</span>
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
+                Integridade estrutural<br />
+                <span className="text-white/50">dos dados clínicos</span>
+              </h2>
+              <p className="text-white/60 text-base leading-relaxed max-w-2xl mx-auto mb-16">
+                O REGHEN organiza a prática regenerativa sob critérios estruturados, garantindo consistência metodológica, estabilidade dos registros e comparabilidade ao longo do acompanhamento clínico.
+              </p>
+            </motion.div>
+
+            <div className="relative">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/[0.05]" />
+              <div className="relative grid md:grid-cols-3 divide-x divide-white/[0.06]">
+                {securityPillars.map((item, idx) => (
+                  <motion.div
+                    key={item.title}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.7, delay: idx * 0.15, ease }}
+                    className="p-10 group text-center hover:bg-white/[0.015] transition-all duration-700"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-primary/[0.06] border border-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/10 group-hover:border-primary/20 group-hover:shadow-[0_0_30px_-5px] group-hover:shadow-primary/20 transition-all duration-700">
+                      <item.icon className="w-6 h-6 text-primary/50 group-hover:text-primary/80 transition-colors duration-500" />
+                    </div>
+                    <h4 className="text-white/90 text-base font-semibold mb-3 tracking-tight">{item.title}</h4>
+                    <p className="text-white/55 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
@@ -829,9 +772,9 @@ export default function LandingPage() {
               <div>
                 <p className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-4">Plataforma</p>
                 <ul className="space-y-2.5 text-white/40 text-sm">
-                  <li><button onClick={() => scrollTo("#modulos")} className="hover:text-white/60 transition-colors">Módulos</button></li>
-                  <li><button onClick={() => scrollTo("#seguranca")} className="hover:text-white/60 transition-colors">Métricas</button></li>
-                  <li><button onClick={() => scrollTo("#faq")} className="hover:text-white/60 transition-colors">FAQ</button></li>
+                  <li><span className="cursor-default">Estrutura Clínica</span></li>
+                  <li><span className="cursor-default">SCORE</span></li>
+                  <li><span className="cursor-default">Resultados</span></li>
                 </ul>
               </div>
               <div>
