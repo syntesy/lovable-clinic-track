@@ -9,7 +9,7 @@ export default function EvidenciaPage() {
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Ciência</span>
-          <h1 className="text-4xl md:text-6xl font-light text-white mb-6" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-4xl md:text-6xl font-light text-white mb-6">
             Evidência conectada à prática
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
@@ -21,13 +21,13 @@ export default function EvidenciaPage() {
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16">
           <div>
-            <h2 className="text-2xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>Curadoria científica</h2>
+            <h2 className="text-2xl font-light text-white mb-4">Curadoria científica</h2>
             <p className="text-white/40 leading-relaxed">
               Artigos revisados por pares, classificados por nível de evidência e conectados diretamente às dimensões do registro clínico. A ciência deixa de ser abstrata e passa a informar cada decisão.
             </p>
           </div>
           <div>
-            <h2 className="text-2xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>Decisão informada</h2>
+            <h2 className="text-2xl font-light text-white mb-4">Decisão informada</h2>
             <p className="text-white/40 leading-relaxed">
               Ao registrar um caso, o profissional tem acesso à evidência disponível para aquela combinação de técnica, patologia e região — em tempo real, sem sair do fluxo clínico.
             </p>

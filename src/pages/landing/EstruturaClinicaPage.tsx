@@ -9,7 +9,7 @@ export default function EstruturaClinicaPage() {
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Metodologia</span>
-          <h1 className="text-4xl md:text-6xl font-light text-white mb-6" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-4xl md:text-6xl font-light text-white mb-6">
             Estrutura clínica padronizada
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
@@ -28,7 +28,7 @@ export default function EstruturaClinicaPage() {
             { step: "05", title: "Desfecho e análise", desc: "Consolidação dos resultados com métricas comparáveis e rastreabilidade completa." },
           ].map((item) => (
             <div key={item.step} className="flex gap-8 items-start">
-              <span className="text-primary/30 text-5xl font-light shrink-0 w-16" style={{ fontFamily: "Georgia, serif" }}>{item.step}</span>
+              <span className="text-primary/30 text-5xl font-light shrink-0 w-16">{item.step}</span>
               <div>
                 <h3 className="text-white text-xl font-medium mb-2">{item.title}</h3>
                 <p className="text-white/40 leading-relaxed">{item.desc}</p>

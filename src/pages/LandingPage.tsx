@@ -200,7 +200,7 @@ export default function LandingPage() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.5 }}
             className="text-white/30 text-4xl md:text-5xl font-light tracking-widest"
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+            
           >
             {padNum(active + 1)}
           </motion.span>
@@ -211,7 +211,7 @@ export default function LandingPage() {
       <div className="absolute right-8 md:right-12 top-1/2 -translate-y-1/2 z-20">
         <span
           className="text-white/20 text-4xl md:text-5xl font-light tracking-widest"
-          style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+          
         >
           {padNum(slides.length)}
         </span>
@@ -230,7 +230,7 @@ export default function LandingPage() {
           >
             <h1
               className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-6 whitespace-pre-line"
-              style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 400 }}
+              style={{ fontWeight: 400 }}
             >
               {current.title}
             </h1>

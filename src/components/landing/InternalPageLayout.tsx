@@ -50,7 +50,7 @@ export default function InternalPageLayout({ children }: InternalPageLayoutProps
 
       {/* Footer CTA */}
       <section className="py-24 px-8 md:px-16 text-center border-t border-white/[0.06]">
-        <h2 className="text-3xl md:text-4xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>
+        <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
           Pronto para transformar sua prática?
         </h2>
         <p className="text-white/40 mb-8 max-w-xl mx-auto">

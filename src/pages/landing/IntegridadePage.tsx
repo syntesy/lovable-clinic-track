@@ -9,7 +9,7 @@ export default function IntegridadePage() {
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Governança</span>
-          <h1 className="text-4xl md:text-6xl font-light text-white mb-6" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-4xl md:text-6xl font-light text-white mb-6">
             Integridade estrutural dos dados
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
@@ -21,13 +21,13 @@ export default function IntegridadePage() {
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16">
           <div>
-            <h2 className="text-2xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>Registro auditável</h2>
+            <h2 className="text-2xl font-light text-white mb-4">Registro auditável</h2>
             <p className="text-white/40 leading-relaxed">
               Cada alteração é versionada. Cada registro possui hash de integridade. A trilha de auditoria permite verificar a autenticidade e a consistência dos dados ao longo do tempo.
             </p>
           </div>
           <div>
-            <h2 className="text-2xl font-light text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>Dados comparáveis</h2>
+            <h2 className="text-2xl font-light text-white mb-4">Dados comparáveis</h2>
             <p className="text-white/40 leading-relaxed">
               Com estrutura padronizada e controle de versão, os dados clínicos passam a ser comparáveis entre profissionais, clínicas e períodos — base essencial para evidência real.
             </p>
