@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logoReghen from "@/assets/logo-reghen.png";
-import slideBg01 from "@/assets/slide-bg-01.jpg";
+import slideBg01 from "@/assets/slide-bg-01-new.png";
 import slideBg02 from "@/assets/slide-bg-02.jpg";
 import slideBg03 from "@/assets/slide-bg-03.jpg";
 import slideBg04 from "@/assets/slide-bg-04.jpg";

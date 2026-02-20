@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
 import { useNavigate } from "react-router-dom";
-import slideBg01 from "@/assets/slide-bg-01.jpg";
+import slideBg01 from "@/assets/slide-bg-01-new.png";
 
 export default function ProblemaPage() {
   return (
