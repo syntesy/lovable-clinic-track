@@ -3,13 +3,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight, ArrowUpRight, FileCheck, BarChart3, Shield,
-  Activity, TestTube2, Gauge, Target, CheckCircle2, Zap,
+  Activity, TestTube2, Gauge, Target, CheckCircle2,
   LineChart, Lock, Users, FlaskConical, ClipboardList,
-  Stethoscope, FileText, PieChart, CalendarCheck, TrendingUp,
+  Stethoscope, FileText, TrendingUp,
   Building2, ChevronDown, MessageSquare, BookOpen, Database,
   GraduationCap, Link, Layers,
 } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import BottomDock from "@/components/landing/BottomDock";
 import logoReghen from "@/assets/logo-reghen.png";
 import heroBg from "@/assets/hero-bg.png";
@@ -21,8 +20,6 @@ const glassCardHover = "hover:bg-white/[0.05] hover:border-white/[0.12] hover:sh
 const cardShadow = {
   boxShadow: "0 4px 50px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
 };
-
-/* Navigation links removed — dock handles navigation */
 
 const steps = [
   { num: "01", title: "Avaliação Estruturada de Risco", desc: "Integra triagem, exames laboratoriais e variáveis clínicas para consolidar o contexto biológico do paciente.", icon: FileText },
@@ -56,13 +53,16 @@ const metrics = [
   { icon: Shield, value: "RLS/RBAC", label: "Governança por clínica e perfil" },
 ];
 
-const faqs = [
-  { q: "O REGHEN é exclusivo para médicos?", a: "Não. O REGHEN é destinado a profissionais de saúde habilitados que atuam ou desejam atuar com medicina regenerativa de forma ética e baseada em evidência." },
-  { q: "O sistema compara resultados entre clínicas?", a: "Não. O REGHEN não realiza qualquer comparação entre clínicas ou profissionais. Todos os dados são isolados por organização." },
-  { q: "Como funciona o isolamento por clínica?", a: "Cada clínica opera em um ambiente completamente isolado no banco de dados. Políticas de segurança (RLS) garantem que nenhum dado seja acessível fora da organização correspondente." },
-  { q: "É possível acompanhar desfechos por período?", a: "Sim. O sistema organiza desfechos por timepoints definidos (baseline, 1 mês, 3 meses, 6 meses e 12 meses)." },
-  { q: "Preciso preencher todos os campos do procedimento?", a: "Campos obrigatórios são definidos pelo protocolo ativo. O sistema orienta o preenchimento mínimo para garantir rastreabilidade." },
-];
+/* ─── Section Divider ─── */
+function SectionDivider() {
+  return (
+    <div className="flex items-center justify-center py-4">
+      <div className="h-px flex-1 max-w-xs bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
+      <div className="w-1.5 h-1.5 rounded-full bg-primary mx-4" />
+      <div className="h-px flex-1 max-w-xs bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
+    </div>
+  );
+}
 
 /* ─── COMPONENT ─── */
 export default function LandingPage() {
@@ -214,82 +214,6 @@ export default function LandingPage() {
                 Entrar
               </button>
             </motion.div>
-
-            {/* Dashboard Mock */}
-            <motion.div
-              initial={{ opacity: 0, y: 80, rotateX: 8 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ duration: 1.4, delay: 1.4, ease }}
-              className="max-w-5xl mx-auto relative perspective-1000"
-            >
-
-              <div className={`relative ${glassCard} overflow-hidden`} style={cardShadow}>
-                <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06]">
-                  <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-400/40" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/40" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-400/40" />
-                  </div>
-                  <div className="flex-1 flex items-center justify-center gap-6 text-[11px] text-white/40">
-                    <span className="text-primary/60 font-medium">Dashboard</span>
-                    <span>Pacientes</span>
-                    <span>Procedimentos</span>
-                    <span className="hidden sm:inline">Evolução</span>
-                  </div>
-                  <div className="w-6 h-6 rounded-full bg-primary/20" />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <p className="text-white/80 text-lg font-medium">Dashboard Clínico Científico</p>
-                      <p className="text-white/45 text-xs">Monitoramento estruturado da prática regenerativa</p>
-                    </div>
-                    <div className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50">Últimos 30 dias</div>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-                    {[
-                      { label: "RESULTADO CLÍNICO MÉDIO", value: "68%" },
-                      { label: "TAXA DE RESPOSTA CLÍNICA", value: "72%" },
-                      { label: "SEGUIMENTO ATIVO", value: "84%" },
-                      { label: "SCORE BIOLÓGICO MÉDIO", value: "8.4" },
-                      { label: "CASOS ESTRUTURADOS", value: "127%" },
-                    ].map((kpi) => (
-                      <div key={kpi.label} className="group relative p-5 rounded-xl bg-white/[0.06] border border-white/[0.12] backdrop-blur-sm hover:bg-white/[0.09] hover:border-white/[0.18] transition-all duration-300 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_30px_-4px_rgba(160,111,76,0.15)]">
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <p className="relative text-[10px] text-white/50 tracking-[0.15em] uppercase mb-3 font-medium">{kpi.label}</p>
-                        <div className="relative flex items-end gap-2">
-                          <span className="text-white/90 text-2xl font-bold tracking-tight">{kpi.value}</span>
-                        </div>
-                        <div className="relative flex items-end gap-[3px] h-5 mt-3">
-                          {[30, 45, 35, 55, 40, 60, 50, 65, 55, 70, 60, 75].map((h, i) => (
-                            <div key={i} className="flex-1 rounded-[2px] bg-primary/30" style={{ height: `${h}%` }} />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-5">
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider mb-4">Evolução Clínica Longitudinal (VAS / Função) — 12 Meses</p>
-                    <div className="flex items-end gap-2 h-28">
-                      {[35, 50, 40, 65, 55, 70, 60, 75, 80, 60, 85, 70].map((h, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ height: 0 }}
-                          whileInView={{ height: `${h}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 1.6 + i * 0.05, ease }}
-                          className="flex-1 rounded-sm bg-gradient-to-t from-primary/50 to-primary/10"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-[9px] text-white/40 text-center mt-4 tracking-wide">
-                    Dados anonimizados • Escalas validadas • Padronização clínica
-                  </p>
-                </div>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#080b14] to-transparent pointer-events-none" />
-            </motion.div>
           </div>
 
           {/* Scroll indicator */}
@@ -305,51 +229,14 @@ export default function LandingPage() {
           </motion.div>
         </motion.section>
 
-        {/* ════════ ABOUT / VISÃO GERAL ════════ */}
-        <section id="visao-geral" className="py-32 px-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-20 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 1, ease }}
-              >
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">O que é o REGHEN</span>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6 leading-snug">
-                  Decisão clínica baseada em ciência.{" "}
-                  <span className="text-white/55">Não em tentativa e erro.</span>
-                </h2>
-              </motion.div>
+        {/* ═══════════════════════════════════════════════════════════
+            6 SEÇÕES INDEPENDENTES
+        ═══════════════════════════════════════════════════════════ */}
 
-              <motion.div
-                initial={{ opacity: 0, x: 40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 1, delay: 0.15, ease }}
-                className="space-y-6"
-              >
-                <p className="text-white/70 text-[15px] leading-[1.9]">
-                  O REGHEN é uma plataforma estruturada para padronizar procedimentos regenerativos, mensurar risco biológico e transformar desfechos clínicos em evidência real.
-                </p>
-                <p className="text-white/60 text-[15px] leading-[1.9]">
-                  Cada registro se torna dado analisável.<br />
-                  Cada procedimento, um aprendizado validado.
-                </p>
-                <div className="flex items-center gap-3 pt-2">
-                  <div className="h-px flex-1 bg-gradient-to-r from-white/[0.12] to-transparent" />
-                  <span className="text-white/55 text-[11px] tracking-widest uppercase">Baseado em evidência. Orientado por dados.</span>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+        <SectionDivider />
 
         {/* ════════ 1. ESTRUTURA CLÍNICA ════════ */}
-        <section id="estrutura-clinica" className="min-h-[80vh] py-32 px-6 relative scroll-mt-[100px]">
+        <section id="estrutura-clinica" className="min-h-screen py-32 px-6 relative scroll-mt-[120px]">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.01] to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto relative">
             <motion.div
@@ -361,7 +248,7 @@ export default function LandingPage() {
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Como funciona</span>
+                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Estrutura Clínica</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
                 Da consulta ao desfecho, <span className="text-white/55">com estrutura clínica</span>
@@ -388,7 +275,6 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-white/85 text-sm font-semibold mb-2">{step.title}</h3>
                   <p className="text-white/50 text-xs leading-relaxed">{step.desc}</p>
-                  {/* Connector line */}
                   {i < steps.length - 1 && (
                     <div className="absolute top-1/2 -right-3 w-6 h-px bg-gradient-to-r from-white/[0.08] to-transparent hidden md:block" />
                   )}
@@ -422,10 +308,12 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <SectionDivider />
 
-        {/* ════════ SCORE & QUALIDADE ════════ */}
-        <section id="score" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px]">
-          <div className="max-w-6xl mx-auto">
+        {/* ════════ 2. SCORE ════════ */}
+        <section id="score" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.008] via-transparent to-white/[0.008] pointer-events-none" />
+          <div className="max-w-6xl mx-auto relative">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -514,8 +402,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ 3. RESULTADOS / MÉTRICAS ════════ */}
-        <section id="resultados" className="min-h-[80vh] py-32 px-6 relative scroll-mt-[100px]">
+        <SectionDivider />
+
+        {/* ════════ 3. RESULTADOS ════════ */}
+        <section id="resultados" className="min-h-screen py-32 px-6 relative scroll-mt-[120px]">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto relative">
             <motion.div
@@ -527,7 +417,7 @@ export default function LandingPage() {
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Métricas clínicas</span>
+                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Resultados</span>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
                 Resultados mensuráveis <span className="text-white/55">em cada etapa</span>
@@ -562,9 +452,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ 4. PADRONIZAÇÃO (Módulos) ════════ */}
-        <section id="padronizacao" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px]">
-          <div className="max-w-6xl mx-auto">
+        <SectionDivider />
+
+        {/* ════════ 4. PADRONIZAÇÃO ════════ */}
+        <section id="padronizacao" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.008] via-transparent to-white/[0.008] pointer-events-none" />
+          <div className="max-w-6xl mx-auto relative">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -613,9 +506,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ 5. EVIDÊNCIA (placeholder) ════════ */}
-        <section id="evidencia" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px] flex items-center">
-          <div className="max-w-4xl mx-auto text-center">
+        <SectionDivider />
+
+        {/* ════════ 5. EVIDÊNCIA ════════ */}
+        <section id="evidencia" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent pointer-events-none" />
+          <div className="max-w-4xl mx-auto text-center relative flex flex-col items-center justify-center min-h-[60vh]">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -626,18 +522,27 @@ export default function LandingPage() {
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                 <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Evidência</span>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
-                Evidência <span className="text-white/55">científica estruturada</span>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Curadoria científica <span className="text-white/55">estruturada</span>
               </h2>
-              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
-                (conteúdo será inserido)
+              <p className="text-white/50 text-[15px] max-w-2xl mx-auto mb-12">
+                Evidência traduzida em decisão clínica — revisões sistemáticas, estudos relevantes e referências organizadas para a prática regenerativa.
               </p>
+
+              {/* Placeholder visual */}
+              <div className={`${glassCard} p-10 max-w-lg mx-auto`} style={cardShadow}>
+                <BookOpen className="w-10 h-10 text-primary/30 mx-auto mb-4" />
+                <p className="text-white/40 text-sm">Conteúdo de curadoria será inserido nesta seção.</p>
+              </div>
             </motion.div>
           </div>
         </section>
 
+        <SectionDivider />
+
         {/* ════════ 6. INTEGRIDADE ════════ */}
-        <section id="integridade" className="min-h-[80vh] py-32 px-6 scroll-mt-[100px] relative">
+        <section id="integridade" className="min-h-screen py-32 px-6 scroll-mt-[120px] relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.008] via-transparent to-white/[0.008] pointer-events-none" />
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
           <div className="max-w-6xl mx-auto relative">
             <motion.div
@@ -684,83 +589,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ FAQ ════════ */}
-        <section id="faq" className="py-32 px-6">
-          <div className="max-w-3xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, ease }}
-              className="text-center mb-16"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">FAQ</span>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Perguntas <span className="text-white/55">frequentes</span>
-              </h2>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <Accordion type="single" collapsible className="space-y-3">
-                {faqs.map((faq, i) => (
-                  <AccordionItem
-                    key={i}
-                    value={`faq-${i}`}
-                    className={`${glassCard} px-6 data-[state=open]:bg-white/[0.04] data-[state=open]:border-white/[0.1] transition-all duration-500`}
-                    style={cardShadow}
-                  >
-                    <AccordionTrigger className="text-sm font-medium text-white/80 hover:text-white hover:no-underline py-5">
-                      {faq.q}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-white/55 text-sm leading-relaxed pb-5">
-                      {faq.a}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ════════ CTA FINAL ════════ */}
-        <section className="py-32 px-6 relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full opacity-[0.06] pointer-events-none" style={{
-            background: "radial-gradient(circle, hsl(13, 74%, 55%) 0%, transparent 65%)",
-          }} aria-hidden="true" />
-
-          <div className="max-w-2xl mx-auto text-center relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, ease }}
-            >
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
-                Pronto para estruturar <span className="text-white/55">sua prática?</span>
-              </h2>
-              <p className="text-white/55 mb-10 text-base leading-relaxed">
-                Comece a padronizar procedimentos e acompanhar desfechos com segurança e governança.
-              </p>
-              <button onClick={handleSignup} className="group relative inline-flex items-center gap-2.5 px-10 py-4 rounded-xl text-sm font-semibold bg-primary text-primary-foreground overflow-hidden transition-all duration-500 hover:shadow-[0_0_60px_-8px] hover:shadow-primary/40">
-                <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                <span className="relative">Criar conta gratuitamente</span>
-                <ArrowRight className="w-4 h-4 relative group-hover:translate-x-0.5 transition-transform" />
-              </button>
-              <p className="text-white/30 text-xs mt-6">Sem cartão de crédito. Configuração em minutos.</p>
-            </motion.div>
-          </div>
-        </section>
-
         {/* ════════ FOOTER ════════ */}
-        <footer className="border-t border-white/[0.06] py-16 px-6 pb-32">
+        <footer className="border-t border-white/[0.06] py-16 px-6 pb-40">
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-4 gap-10 mb-12">
               <div>
