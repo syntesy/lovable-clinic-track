@@ -95,7 +95,8 @@ function SolucaoSection() {
     >
       <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
         {/* Left — Text */}
-        <div className="space-y-8">
+          <div className="space-y-8">
+          <span className="text-primary text-xs tracking-[0.3em] uppercase block">Como o REGHEN resolve isso</span>
           <h2 className="text-3xl md:text-[2.6rem] leading-[1.2] font-light text-white" style={{ fontFamily: "Georgia, serif" }}>
             Estrutura criada para potencializar seus{" "}
             <span className="text-[#A06F4C]">resultados clínicos</span>.
@@ -106,31 +107,38 @@ function SolucaoSection() {
             <p>Sem clareza, não há evolução clínica.</p>
           </div>
 
-          <div className="space-y-4 text-white/50 leading-relaxed text-[15px]">
-            <p>
-              O REGHEN organiza sua prática de forma estruturada, padroniza registros e acompanha seus desfechos ao longo do tempo.
-            </p>
-            <p>
-              Cada procedimento deixa de ser isolado e passa a integrar um fluxo clínico claro, comparável e ajustável.
-            </p>
-            <p className="text-white/60 font-medium">
-              Melhorar resultado deixa de ser tentativa.<br />
-              Passa a ser método.
-            </p>
-          </div>
+          <ul className="space-y-3 text-white/50 leading-relaxed text-[15px]">
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#A06F4C] flex-shrink-0" />
+              Organiza o registro clínico e padroniza o fluxo do atendimento
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#A06F4C] flex-shrink-0" />
+              Transforma cada procedimento em acompanhamento comparável (baseline e follow-ups)
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#A06F4C] flex-shrink-0" />
+              Mostra o que funciona na sua prática — para melhorar seus resultados
+            </li>
+          </ul>
+
+          <p className="text-white/60 font-medium text-[15px]">
+            Melhorar resultado deixa de ser tentativa.<br />
+            Passa a ser método.
+          </p>
 
           <div className="flex items-center gap-4 pt-4">
             <button
-              onClick={() => navigate("/estrutura-clinica")}
+              onClick={() => navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`)}
               className="px-7 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
             >
-              Explorar como funciona
+              Criar conta
             </button>
             <button
-              onClick={() => navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`)}
+              onClick={() => navigate(`/auth?redirect=${encodeURIComponent(getRedirectPath())}`)}
               className="px-7 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
             >
-              Criar conta
+              Entrar
             </button>
           </div>
         </div>
