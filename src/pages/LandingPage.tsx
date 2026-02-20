@@ -10,6 +10,7 @@ import {
   GraduationCap, Link, Layers,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import BottomDock from "@/components/landing/BottomDock";
 import logoReghen from "@/assets/logo-reghen.png";
 import heroBg from "@/assets/hero-bg.png";
 
@@ -24,9 +25,9 @@ const cardShadow = {
 /* ─── DATA ─── */
 const navLinks = [
   { label: "Visão geral", href: "#visao-geral" },
-  { label: "Como funciona", href: "#como-funciona" },
-  { label: "Módulos", href: "#modulos" },
-  { label: "Segurança", href: "#seguranca" },
+  { label: "Estrutura Clínica", href: "#estrutura-clinica" },
+  { label: "Padronização", href: "#padronizacao" },
+  { label: "Evidência", href: "#evidencia" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -388,8 +389,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ COMO FUNCIONA (TIMELINE) ════════ */}
-        <section id="como-funciona" className="py-32 px-6 relative">
+        {/* ════════ ESTRUTURA CLÍNICA (TIMELINE) ════════ */}
+        <section id="estrutura-clinica" className="py-32 px-6 relative scroll-mt-[100px]">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.01] to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto relative">
             <motion.div
@@ -462,8 +463,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ MÓDULOS (Bento Grid) ════════ */}
-        <section id="modulos" className="py-32 px-6">
+        {/* ════════ MÓDULOS / PADRONIZAÇÃO (Bento Grid) ════════ */}
+        <section id="padronizacao" className="py-32 px-6 scroll-mt-[100px]">
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -516,8 +517,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ FEATURES ALTERNADAS ════════ */}
-        <section className="py-32 px-6">
+        {/* ════════ SCORE & QUALIDADE ════════ */}
+        <section id="score" className="py-32 px-6 scroll-mt-[100px]">
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -617,8 +618,8 @@ export default function LandingPage() {
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
             </div>
 
-            {/* Feature 2 — Security & Governance — Premium Layout */}
-            <div className="mt-32 relative">
+            {/* Feature 2 — Security & Governance — Integridade */}
+            <div id="integridade" className="mt-32 relative scroll-mt-[100px]">
               {/* Ambient glow */}
               <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
               
@@ -669,8 +670,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════ MÉTRICAS ════════ */}
-        <section id="seguranca" className="py-32 px-6 relative">
+        {/* ════════ RESULTADOS / MÉTRICAS ════════ */}
+        <section id="resultados" className="py-32 px-6 relative scroll-mt-[100px]">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto relative">
             <motion.div
@@ -714,6 +715,29 @@ export default function LandingPage() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ════════ EVIDÊNCIA (placeholder) ════════ */}
+        <section id="evidencia" className="py-32 px-6 scroll-mt-[100px]">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.9, ease }}
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-6">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <span className="text-primary text-[11px] font-semibold tracking-wider uppercase">Evidência</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
+                Evidência <span className="text-white/55">científica estruturada</span>
+              </h2>
+              <p className="text-white/50 text-[15px] max-w-2xl mx-auto">
+                (conteúdo será inserido)
+              </p>
+            </motion.div>
           </div>
         </section>
 
@@ -793,7 +817,7 @@ export default function LandingPage() {
         </section>
 
         {/* ════════ FOOTER ════════ */}
-        <footer className="border-t border-white/[0.06] py-16 px-6">
+        <footer className="border-t border-white/[0.06] py-16 px-6 pb-32">
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-4 gap-10 mb-12">
               <div>
@@ -834,6 +858,9 @@ export default function LandingPage() {
           </div>
         </footer>
       </div>
+
+      {/* Bottom Dock Navigation */}
+      <BottomDock />
     </div>
   );
 }
