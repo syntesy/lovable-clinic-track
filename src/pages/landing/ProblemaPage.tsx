@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
+import { useNavigate } from "react-router-dom";
 import slideBg01 from "@/assets/slide-bg-01.jpg";
 
 export default function ProblemaPage() {
@@ -52,6 +54,144 @@ export default function ProblemaPage() {
           ))}
         </div>
       </section>
+
+      {/* Seção Solução */}
+      <SolucaoSection />
     </InternalPageLayout>
+  );
+}
+
+function SolucaoSection() {
+  const navigate = useNavigate();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("opacity-100", "translate-y-0");
+          el.classList.remove("opacity-0", "translate-y-8");
+        }
+      },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const getRedirectPath = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("redirect") || "/select-environment";
+  };
+
+  return (
+    <section
+      ref={sectionRef}
+      id="estrutura-solucao"
+      className="min-h-[90vh] flex items-center px-8 md:px-16 py-24 opacity-0 translate-y-8 transition-all duration-[900ms] ease-out"
+      style={{ background: "linear-gradient(180deg, rgba(8,11,20,1) 0%, rgba(14,18,30,1) 50%, rgba(8,11,20,1) 100%)" }}
+    >
+      <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
+        {/* Left — Text */}
+        <div className="space-y-8">
+          <h2 className="text-3xl md:text-[2.6rem] leading-[1.2] font-light text-white" style={{ fontFamily: "Georgia, serif" }}>
+            Estrutura criada para potencializar seus{" "}
+            <span className="text-[#A06F4C]">resultados clínicos</span>.
+          </h2>
+
+          <div className="space-y-1 text-white/40 text-lg italic">
+            <p>Sem organização, não há clareza.</p>
+            <p>Sem clareza, não há evolução clínica.</p>
+          </div>
+
+          <div className="space-y-4 text-white/50 leading-relaxed text-[15px]">
+            <p>
+              O REGHEN organiza sua prática de forma estruturada, padroniza registros e acompanha seus desfechos ao longo do tempo.
+            </p>
+            <p>
+              Cada procedimento deixa de ser isolado e passa a integrar um fluxo clínico claro, comparável e ajustável.
+            </p>
+            <p className="text-white/60 font-medium">
+              Melhorar resultado deixa de ser tentativa.<br />
+              Passa a ser método.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 pt-4">
+            <button
+              onClick={() => navigate("/estrutura-clinica")}
+              className="px-7 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            >
+              Explorar como funciona
+            </button>
+            <button
+              onClick={() => navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`)}
+              className="px-7 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
+            >
+              Criar conta
+            </button>
+          </div>
+        </div>
+
+        {/* Right — Dashboard Mock */}
+        <div className="relative">
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-5" style={{ boxShadow: "0 20px 60px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
+            {/* Mock header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#A06F4C]/60" />
+                <span className="text-white/40 text-xs tracking-wider uppercase">Painel clínico</span>
+              </div>
+              <span className="text-white/20 text-[11px]">Atualizado agora</span>
+            </div>
+
+            {/* Score bar */}
+            <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/50 text-xs">SCORE geral</span>
+                <span className="text-[#A06F4C] text-sm font-semibold">78 / 100</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#A06F4C]/60 to-[#A06F4C] w-[78%] transition-all duration-700" />
+              </div>
+            </div>
+
+            {/* Mini cards */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Procedimentos", value: "124" },
+                { label: "Follow-ups", value: "89" },
+                { label: "Melhora VAS", value: "62%" },
+              ].map((m) => (
+                <div key={m.label} className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3 text-center">
+                  <span className="block text-white/30 text-[10px] uppercase tracking-wider mb-1">{m.label}</span>
+                  <span className="block text-white text-lg font-light">{m.value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Timeline */}
+            <div className="space-y-3">
+              <span className="text-white/30 text-[10px] uppercase tracking-wider">Timeline recente</span>
+              {[
+                { dot: "bg-[#5E8F7B]", text: "PRP Joelho — Follow-up 90d concluído" },
+                { dot: "bg-[#4A6378]", text: "Registro padronizado — Score atualizado" },
+                { dot: "bg-[#A06F4C]", text: "Novo procedimento — Baseline registrado" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className={`w-1.5 h-1.5 rounded-full ${item.dot} flex-shrink-0`} />
+                  <span className="text-white/35 text-xs">{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Subtle glow behind card */}
+          <div className="absolute -inset-4 rounded-3xl bg-[#A06F4C]/[0.03] blur-2xl -z-10" />
+        </div>
+      </div>
+    </section>
   );
 }
