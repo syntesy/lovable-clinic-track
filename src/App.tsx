@@ -61,6 +61,12 @@ import AdminSeedQA from "./pages/admin/AdminSeedQA";
 import LandingPage from "./pages/LandingPage";
 import LandingPreview from "./pages/LandingPreview";
 import NotFound from "./pages/NotFound";
+import ProblemaPage from "./pages/landing/ProblemaPage";
+import EstruturaClinicaPage from "./pages/landing/EstruturaClinicaPage";
+import ScorePage from "./pages/landing/ScorePage";
+import ResultadosPage from "./pages/landing/ResultadosPage";
+import EvidenciaPage from "./pages/landing/EvidenciaPage";
+import IntegridadePage from "./pages/landing/IntegridadePage";
 import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
 import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
@@ -112,6 +118,12 @@ const App = () => (
             <Route path="/select-environment" element={<ProtectedRoute><SelectEnvironmentPage /></ProtectedRoute>} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/" element={<LandingPage />} />
+            <Route path="/problema" element={<ProblemaPage />} />
+            <Route path="/estrutura-clinica" element={<EstruturaClinicaPage />} />
+            <Route path="/score" element={<ScorePage />} />
+            <Route path="/resultados" element={<ResultadosPage />} />
+            <Route path="/evidencia" element={<EvidenciaPage />} />
+            <Route path="/integridade" element={<IntegridadePage />} />
             <Route path="/landing-preview" element={<LandingPreview />} />
             
             {/* Patient Portal Routes - Single Function */}
