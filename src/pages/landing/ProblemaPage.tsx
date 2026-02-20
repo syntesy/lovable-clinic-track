@@ -12,7 +12,7 @@ export default function ProblemaPage() {
         <div className="absolute inset-0 bg-black/30" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">O cenário atual</span>
-          <h1 className="text-4xl md:text-6xl font-light text-white mb-6">
+          <h1 className="text-3xl md:text-5xl font-light text-white mb-6">
             O problema da Medicina Regenerativa
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
