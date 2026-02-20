@@ -15,50 +15,56 @@ const slides = [
   {
     id: "problema",
     label: "Problema",
-    title: "Medicina regenerativa\nsem padrão",
-    subtitle: "Protocolos variam. Resultados não se comparam. Evidência vira ruído.",
+    title: "O problema da\nMedicina Regenerativa",
+    subtitle: "Evidência fragmentada, protocolos variáveis e desfechos pouco comparáveis. Sem padronização, a prática vira tentativa e erro.",
     tagline: "O cenário atual precisa de estrutura.",
     bg: slideBg01,
+    route: "/problema",
   },
   {
     id: "estrutura-clinica",
     label: "Estrutura Clínica",
-    title: "Estrutura\nclínica",
-    subtitle: "Da consulta ao desfecho, com metodologia.",
+    title: "Estrutura clínica\npadronizada",
+    subtitle: "Do primeiro registro ao follow-up, tudo documentado em um fluxo consistente e auditável.",
     tagline: "Baseado em evidência. Orientado por dados.",
     bg: slideBg02,
+    route: "/estrutura-clinica",
   },
   {
     id: "score",
     label: "SCORE",
-    title: "SCORE\nbiológico",
-    subtitle: "Risco, elegibilidade e adequação do procedimento.",
+    title: "SCORE biológico\ne técnico",
+    subtitle: "Um índice estruturado para apoiar elegibilidade, risco e qualidade do procedimento com base em variáveis objetivas.",
     tagline: "Quantificação objetiva da qualidade técnica.",
     bg: slideBg03,
+    route: "/score",
   },
   {
     id: "resultados",
     label: "Resultados",
     title: "Resultados\nmensuráveis",
-    subtitle: "VAS, PRO, NPS e desfechos longitudinais.",
+    subtitle: "VAS, PRO, NPS e desfechos longitudinais por timepoints — mensuração real do que funciona na sua prática.",
     tagline: "Cada etapa documentada. Cada resultado rastreável.",
     bg: slideBg04,
+    route: "/resultados",
   },
   {
     id: "evidencia",
     label: "Evidência",
-    title: "Evidência\naplicada",
-    subtitle: "Curadoria científica conectada ao registro clínico.",
+    title: "Evidência conectada\nà prática",
+    subtitle: "Curadoria científica e rastreabilidade: cada decisão clínica conectada ao que existe de melhor na literatura.",
     tagline: "Decisão clínica baseada em ciência.",
     bg: slideBg05,
+    route: "/evidencia",
   },
   {
     id: "integridade",
     label: "Integridade",
-    title: "Integridade e\nrastreabilidade",
-    subtitle: "Registro auditável e comparável ao longo do tempo.",
+    title: "Integridade estrutural\ndos dados",
+    subtitle: "Consistência metodológica, rastreabilidade e estabilidade dos registros para produzir dados comparáveis e confiáveis.",
     tagline: "Governança estrutural dos dados clínicos.",
     bg: slideBg06,
+    route: "/integridade",
   },
 ];
 
@@ -132,8 +138,7 @@ export default function LandingPage() {
   const handleNavClick = (idx: number) => {
     setIsPaused(true);
     goTo(idx);
-    // Resume after a short pause
-    setTimeout(() => setIsPaused(false), 300);
+    setTimeout(() => setIsPaused(false), 3000);
   };
 
   const current = slides[active];
@@ -159,7 +164,6 @@ export default function LandingPage() {
               backgroundPosition: "center",
             }}
           />
-          {/* Dark overlay for text readability */}
           <div className="absolute inset-0 bg-black/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#080b14]/80 via-transparent to-[#080b14]/30" />
         </motion.div>
@@ -234,17 +238,31 @@ export default function LandingPage() {
               {current.subtitle}
             </p>
             {current.tagline && (
-              <p className="text-white/30 text-xs md:text-sm tracking-[0.2em] uppercase">
+              <p className="text-white/30 text-xs md:text-sm tracking-[0.2em] uppercase mb-8">
                 {current.tagline}
               </p>
             )}
+            {/* CTA Buttons */}
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => navigate(current.route)}
+                className="px-7 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+              >
+                Explorar
+              </button>
+              <button
+                onClick={handleSignup}
+                className="px-7 py-3 text-sm font-medium text-white/40 border border-white/10 rounded-lg hover:text-white/70 hover:border-white/20 transition-all"
+              >
+                Criar conta
+              </button>
+            </div>
           </motion.div>
         </AnimatePresence>
       </main>
 
       {/* ═══ BOTTOM NAV ═══ */}
       <nav className="absolute bottom-0 left-0 right-0 z-30 px-6 md:px-12 pb-8 md:pb-10">
-        {/* Top line */}
         <div className="h-px bg-white/[0.08] mb-5" />
 
         <div className="flex items-start gap-0 overflow-x-auto no-scrollbar">
@@ -256,7 +274,6 @@ export default function LandingPage() {
                 onClick={() => handleNavClick(idx)}
                 className="flex-1 min-w-[120px] md:min-w-0 group relative text-left px-2 md:px-3 pt-3 pb-1 transition-all duration-500"
               >
-                {/* Progress bar above */}
                 <div className="absolute top-0 left-2 right-2 md:left-3 md:right-3 h-[2px] bg-white/[0.06] overflow-hidden">
                   {isActive && (
                     <motion.div
