@@ -164,8 +164,8 @@ export default function LandingPage() {
               backgroundPosition: "center",
             }}
           />
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#080b14]/80 via-transparent to-[#080b14]/30" />
+          <div className="absolute inset-0 bg-black/0" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080b14]/60 via-transparent to-[#080b14]/10" />
         </motion.div>
       </AnimatePresence>
 
