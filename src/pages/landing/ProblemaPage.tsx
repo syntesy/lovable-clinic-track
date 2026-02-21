@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { AlertTriangle, GitBranch, TrendingDown, ShieldAlert } from "lucide-react";
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
 import slideBg01 from "@/assets/slide-bg-01-new.png";
 
@@ -62,25 +63,35 @@ Medicina Regenerativa
 
       {/* SEÇÃO 3 – COMPLEMENTAR */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
-          Por que isso compromete a evolução clínica?
-        </h2>
-        <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
-          A medicina regenerativa exige critérios objetivos, alinhamento à ciência atual e acompanhamento longitudinal.
-          Sem estrutura, esses elementos permanecem desconectados.
-        </p>
-        <div className="space-y-4">
+        <div className="text-center mb-16">
+          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Impacto na prática</span>
+          <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+            Por que isso compromete a evolução clínica?
+          </h2>
+          <p className="text-white/50 leading-relaxed max-w-2xl mx-auto">
+            A medicina regenerativa exige critérios objetivos, alinhamento à ciência atual e acompanhamento longitudinal.
+            Sem estrutura, esses elementos permanecem desconectados.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {[
-          "Decisão clínica com baixa visibilidade longitudinal",
-          "Dificuldade de correlacionar protocolo e resposta biológica",
-          "Impossibilidade de construir consistência ao longo do tempo",
-          "Maior exposição profissional por ausência de rastreabilidade"].
-          map((item) =>
-          <div key={item} className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0" />
-              <span className="text-white/40 leading-relaxed">{item}</span>
+            { icon: AlertTriangle, title: "Baixa visibilidade longitudinal", desc: "Decisão clínica sem dados evolutivos compromete a capacidade de avaliar resposta terapêutica ao longo do tempo." },
+            { icon: GitBranch, title: "Protocolo × resposta desconectados", desc: "Dificuldade de correlacionar variáveis do protocolo com a resposta biológica individual do paciente." },
+            { icon: TrendingDown, title: "Consistência comprometida", desc: "Impossibilidade de construir consistência metodológica ao longo do tempo sem dados organizados." },
+            { icon: ShieldAlert, title: "Exposição profissional elevada", desc: "Maior vulnerabilidade profissional por ausência de rastreabilidade documental e registro estruturado." },
+          ].map((item) => (
+            <div key={item.title} className="group relative p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.05] hover:shadow-[0_8px_40px_-12px_rgba(160,111,76,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:-translate-y-1 cursor-default">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/[0.08] border border-primary/[0.12] flex items-center justify-center shrink-0 transition-all duration-500 group-hover:bg-primary/[0.15] group-hover:border-primary/[0.25] group-hover:shadow-[0_0_20px_-4px_rgba(160,111,76,0.3)]">
+                  <item.icon className="w-4.5 h-4.5 text-primary/60 transition-colors duration-500 group-hover:text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-white text-[15px] font-medium mb-1.5 transition-colors duration-300 group-hover:text-primary/90">{item.title}</h3>
+                  <p className="text-white/40 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       </section>
 
