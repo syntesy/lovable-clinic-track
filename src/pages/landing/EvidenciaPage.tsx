@@ -106,9 +106,9 @@ export default function EvidenciaPage() {
             "Base de conhecimento atualizada",
             "REGHEN Academy integrada",
           ].map((item) => (
-            <div key={item} className="p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] flex items-start gap-3 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.06] hover:shadow-[0_8px_30px_-10px_rgba(160,111,76,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:-translate-y-0.5 cursor-default">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-1.5 shrink-0" />
-              <span className="text-white/40 text-sm leading-relaxed">{item}</span>
+            <div key={item} className="p-5 rounded-xl border border-white/[0.10] bg-white/[0.04] flex items-start gap-3 transition-all duration-500 hover:border-white/[0.18] hover:bg-white/[0.08] hover:shadow-[0_8px_30px_-10px_rgba(160,111,76,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] hover:-translate-y-0.5 cursor-default">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
+              <span className="text-white/60 text-sm leading-relaxed">{item}</span>
             </div>
           ))}
         </div>
