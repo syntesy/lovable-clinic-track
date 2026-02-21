@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Eye, Copy, Edit, ToggleLeft, ToggleRight, Shield, Loader2 } from "lucide-react";
+import { Search, Eye, Copy, Edit, ToggleLeft, ToggleRight, Shield, Loader2, Plus } from "lucide-react";
 import { useProtocolsList, useProtocolAreas, useUserRole, useDuplicateProtocol, useToggleProtocolActive, Protocol } from "@/hooks/useProtocols";
 import { DuplicateProtocolModal } from "@/components/governance/DuplicateProtocolModal";
 import { format } from "date-fns";
@@ -66,14 +66,21 @@ export default function ProtocolsList() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Shield className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Protocolos Clínicos</h1>
-          <p className="text-sm text-muted-foreground">
-            Gestão de protocolos base, derivados e institucionais
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Shield className="h-7 w-7 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Protocolos Clínicos</h1>
+            <p className="text-sm text-muted-foreground">
+              Gestão de protocolos base, derivados e institucionais
+            </p>
+          </div>
         </div>
+        {canEdit && (
+          <Button onClick={() => navigate(`/governanca/protocolos/novo?type=${activeTab}`)}>
+            <Plus className="h-4 w-4 mr-2" />Novo Protocolo
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -125,8 +132,17 @@ export default function ProtocolsList() {
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : protocols.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                Nenhum protocolo encontrado.
+              <div className="text-center py-16 space-y-3">
+                <Shield className="h-10 w-10 mx-auto text-muted-foreground/50" />
+                <h3 className="text-lg font-semibold text-foreground">Nenhum protocolo criado</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Protocolos estruturam sua governança clínica e padronizam resultados.
+                </p>
+                {canEdit && (
+                  <Button className="mt-2" onClick={() => navigate(`/governanca/protocolos/novo?type=${type}`)}>
+                    <Plus className="h-4 w-4 mr-2" />Criar Primeiro Protocolo
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="rounded-md border">
