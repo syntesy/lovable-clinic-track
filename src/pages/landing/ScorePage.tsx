@@ -41,11 +41,11 @@ export default function ScorePage() {
             { num: "04", title: "Estratificação de elegibilidade", desc: "Classificação objetiva do paciente quanto à adequação para determinado procedimento." },
             { num: "05", title: "Registro rastreável da decisão", desc: "Documentação estruturada que demonstra que a conduta foi fundamentada em critérios técnicos e científicos." },
           ].map((item) => (
-            <div key={item.num} className="flex gap-8 items-start">
-              <span className="text-primary/30 text-5xl font-light shrink-0 w-16">{item.num}</span>
+            <div key={item.num} className="group flex gap-8 items-start p-4 -mx-4 rounded-xl transition-all duration-500 hover:-translate-y-1 hover:bg-white/[0.02] hover:border-white/[0.06]" style={{ boxShadow: "inset 0 0 0 transparent" }}>
+              <span className="text-primary/30 text-5xl font-light shrink-0 w-16 transition-colors duration-500 group-hover:text-primary/50">{item.num}</span>
               <div>
-                <h3 className="text-white text-xl font-medium mb-2">{item.title}</h3>
-                <p className="text-white/40 leading-relaxed">{item.desc}</p>
+                <h3 className="text-white text-xl font-medium mb-2 transition-colors duration-500">{item.title}</h3>
+                <p className="text-white/40 leading-relaxed transition-colors duration-500 group-hover:text-white/55">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -91,8 +91,8 @@ export default function ScorePage() {
             "Alinhamento à ciência atual",
             "Registro rastreável da decisão",
           ].map((label) => (
-            <div key={label} className="p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] text-center">
-              <span className="text-white/60 text-sm leading-relaxed">{label}</span>
+            <div key={label} className="group p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] text-center transition-all duration-500 hover:-translate-y-1 hover:border-white/[0.12] hover:bg-white/[0.04]" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>
+              <span className="text-white/60 text-sm leading-relaxed transition-colors duration-500 group-hover:text-white/80">{label}</span>
             </div>
           ))}
         </div>
