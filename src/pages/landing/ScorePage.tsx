@@ -1,50 +1,45 @@
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
+import { useNavigate } from "react-router-dom";
 import slideBg03 from "@/assets/slide-bg-03.jpg";
 
 export default function ScorePage() {
+  const navigate = useNavigate();
+
   return (
-    <InternalPageLayout>
+    <InternalPageLayout hideFooterCTA>
       {/* SEÇÃO 1 – HERO */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0" style={{ backgroundImage: `url(${slideBg03})`, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="absolute inset-0 bg-black/30" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
-          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Quantificação</span>
+          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Elegibilidade Clínica</span>
           <h1 className="text-3xl md:text-5xl font-light text-white mb-6">
-            SCORE biológico e técnico
+            SCORE baseado em critérios objetivos e ciência atual
           </h1>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">
-            Critérios objetivos para apoiar elegibilidade, avaliar risco e proteger a conduta do profissional com base em ciência.
+          <p className="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed">
+            Decisão clínica exige critério estruturado.
+            <br />
+            Critério estruturado reduz risco e aumenta consistência.
           </p>
         </div>
       </section>
 
-      {/* SEÇÃO 2 – CONTEXTO */}
+      {/* SEÇÃO 2 – PRINCIPAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16">
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Critérios objetivos</h2>
-            <p className="text-white/40 leading-relaxed">
-              O SCORE combina variáveis biológicas e técnicas para gerar um índice numérico que apoia a decisão clínica. Ele não substitui o julgamento do profissional — ele o protege com dados objetivos.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Proteção profissional</h2>
-            <p className="text-white/40 leading-relaxed">
-              Documentar a adequação de cada procedimento com um índice estruturado demonstra diligência clínica. O SCORE é uma ferramenta de proteção para o profissional que quer operar com segurança.
-            </p>
-          </div>
-        </div>
-      </section>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          O que acontece quando a elegibilidade é estruturada?
+        </h2>
+        <p className="text-white/50 text-lg leading-relaxed max-w-3xl mb-16">
+          Quando critérios técnicos e biológicos são organizados, a indicação deixa de ser intuitiva e passa a ser fundamentada.
+        </p>
 
-      {/* SEÇÃO 3 – DIFERENCIAIS */}
-      <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
         <div className="space-y-12">
           {[
-            { num: "01", title: "Elegibilidade do paciente", desc: "Avaliação padronizada de critérios clínicos que determinam se o paciente é candidato adequado ao procedimento." },
-            { num: "02", title: "Risco do procedimento", desc: "Quantificação objetiva dos fatores de risco associados, permitindo decisão informada antes da intervenção." },
-            { num: "03", title: "Adequação técnica", desc: "Verificação estruturada de que o protocolo escolhido é compatível com o perfil clínico do paciente." },
-            { num: "04", title: "Qualidade do preparo biológico", desc: "Índice que avalia parâmetros laboratoriais e de processamento, garantindo controle de qualidade do material." },
+            { num: "01", title: "Avaliação de critérios clínicos", desc: "Organização de dados clínicos relevantes para análise objetiva da indicação." },
+            { num: "02", title: "Análise de variáveis biológicas", desc: "Consideração estruturada de fatores que influenciam resposta terapêutica." },
+            { num: "03", title: "Alinhamento à ciência atual", desc: "Aplicação de critérios baseados em evidências disponíveis e parâmetros técnicos reconhecidos." },
+            { num: "04", title: "Estratificação de elegibilidade", desc: "Classificação objetiva do paciente quanto à adequação para determinado procedimento." },
+            { num: "05", title: "Registro rastreável da decisão", desc: "Documentação estruturada que demonstra que a conduta foi fundamentada em critérios técnicos e científicos." },
           ].map((item) => (
             <div key={item.num} className="flex gap-8 items-start">
               <span className="text-primary/30 text-5xl font-light shrink-0 w-16">{item.num}</span>
@@ -57,63 +52,73 @@ export default function ScorePage() {
         </div>
       </section>
 
-      {/* SEÇÃO 4 – VISUAL DO PRODUTO */}
+      {/* SEÇÃO 3 – IMPACTO NA PRÁTICA */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Índice estruturado</span>
-            <h2 className="text-2xl md:text-3xl font-light text-white mb-6">
-              Um número que protege sua decisão
-            </h2>
-            <p className="text-white/40 leading-relaxed">
-              O SCORE transforma variáveis clínicas dispersas em um índice consolidado e comparável — documentando a qualidade técnica de cada procedimento.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6" style={{ boxShadow: "0 20px 60px -15px rgba(0,0,0,0.5)" }}>
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary/60" />
-              <span className="text-white/40 text-xs tracking-wider uppercase">Score do procedimento</span>
-            </div>
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-40 h-40 rounded-full border-4 border-primary/20 flex items-center justify-center relative">
-                <div className="text-center">
-                  <span className="text-5xl font-light text-primary">87</span>
-                  <span className="block text-white/30 text-xs tracking-[0.2em] uppercase mt-1">Score</span>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Biológico", value: "91" },
-                { label: "Técnico", value: "83" },
-              ].map((s) => (
-                <div key={s.label} className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3 text-center">
-                  <span className="block text-white/30 text-[10px] uppercase tracking-wider mb-1">{s.label}</span>
-                  <span className="block text-white text-lg font-light">{s.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SEÇÃO 5 – IMPACTO PRÁTICO */}
-      <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <h2 className="text-2xl font-light text-white mb-4">Impacto na sua prática</h2>
+        <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Impacto na Prática</span>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          Por que o SCORE fortalece a decisão clínica?
+        </h2>
         <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
-          O SCORE dá ao profissional uma base objetiva para justificar sua conduta. Cada procedimento passa a ter documentação quantificada de adequação — protegendo a prática e demonstrando qualidade.
+          A elegibilidade estruturada reduz variabilidade, aumenta previsibilidade e protege o profissional.
         </p>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {[
-            { title: "Decisão documentada", desc: "Cada procedimento tem um registro objetivo que justifica a escolha técnica e a adequação ao paciente." },
-            { title: "Segurança jurídica", desc: "A quantificação de critérios demonstra diligência e aderência a padrões clínicos reconhecidos." },
-            { title: "Qualidade mensurável", desc: "O índice permite acompanhar a evolução da qualidade técnica ao longo do tempo e entre procedimentos." },
+            { title: "Indicação mais consistente", desc: "Decisão baseada em critérios organizados e não apenas em experiência isolada." },
+            { title: "Redução de variabilidade clínica", desc: "Menor dependência de julgamento subjetivo não documentado." },
+            { title: "Maior previsibilidade de resposta", desc: "Melhor correlação entre perfil do paciente e intervenção proposta." },
+            { title: "Proteção documental", desc: "Registro claro de que a decisão foi fundamentada em critérios técnicos e alinhada à ciência atual." },
           ].map((item) => (
             <div key={item.title} className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]">
               <h3 className="text-white text-lg font-medium mb-2">{item.title}</h3>
               <p className="text-white/35 text-sm leading-relaxed">{item.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* SEÇÃO 4 – HORIZONTAL */}
+      <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          O SCORE integra múltiplas dimensões da decisão clínica
+        </h2>
+        <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
+          A elegibilidade passa a considerar fatores clínicos, biológicos e técnicos de forma estruturada.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            "Critérios clínicos organizados",
+            "Variáveis biológicas consideradas",
+            "Alinhamento à ciência atual",
+            "Registro rastreável da decisão",
+          ].map((label) => (
+            <div key={label} className="p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] text-center">
+              <span className="text-white/60 text-sm leading-relaxed">{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SEÇÃO 5 – CTA FINAL */}
+      <section className="py-24 px-8 md:px-16 text-center border-t border-white/[0.06]">
+        <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
+          Decidir com método é decidir com segurança.
+        </h2>
+        <p className="text-white/40 mb-8 max-w-xl mx-auto">
+          Elegibilidade estruturada é parte essencial de uma prática regenerativa consistente.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => navigate("/auth?mode=signup&redirect=%2Fselect-environment")}
+            className="px-8 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
+            Criar conta
+          </button>
+          <button
+            onClick={() => navigate("/resultados")}
+            className="px-8 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
+          >
+            Ver Resultados
+          </button>
         </div>
       </section>
     </InternalPageLayout>
