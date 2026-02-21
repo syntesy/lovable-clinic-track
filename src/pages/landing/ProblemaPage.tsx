@@ -105,12 +105,6 @@ export default function ProblemaPage() {
             </div>
           ))}
         </div>
-        <button
-          onClick={() => navigate("/estrutura-clinica")}
-          className="px-8 py-3 text-sm font-medium text-white/70 border border-white/15 rounded-lg hover:text-white hover:border-white/30 hover:bg-white/[0.04] transition-all"
-        >
-          Ver Estrutura Clínica
-        </button>
       </section>
 
       {/* SEÇÃO 5 – CTA FINAL (substitui o CTA padrão do layout) */}
