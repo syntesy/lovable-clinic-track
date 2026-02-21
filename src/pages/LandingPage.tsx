@@ -95,6 +95,7 @@ const slides = [
 
 export default function LandingPage() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -111,13 +112,27 @@ export default function LandingPage() {
     navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`);
   }, [navigate, getRedirectPath]);
 
-  // Auto-advance slides
+  // Auto-advance slides with progress
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((p) => (p + 1) % slides.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, []);
+    setProgress(0);
+    const startTime = Date.now();
+    const duration = 6000;
+    let raf: number;
+
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(elapsed / duration, 1);
+      setProgress(pct);
+      if (pct < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        setActiveIndex((p) => (p + 1) % slides.length);
+      }
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [activeIndex]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -253,14 +268,17 @@ export default function LandingPage() {
             return (
               <button
                 key={slide.id}
-                onClick={() => setActiveIndex(index)}
+                onClick={() => { setActiveIndex(index); setProgress(0); }}
                 className="flex-1 min-w-[120px] md:min-w-0 group relative text-left px-2 md:px-3 pt-3 pb-1 transition-all duration-500"
               >
-                <div
-                  className={`absolute top-0 left-2 right-2 md:left-3 md:right-3 h-[2px] overflow-hidden transition-all duration-500 ${
-                    isActive ? "bg-primary" : "bg-white/[0.06]"
-                  }`}
-                />
+                <div className="absolute top-0 left-2 right-2 md:left-3 md:right-3 h-[2px] overflow-hidden bg-white/[0.06]">
+                  {isActive && (
+                    <div
+                      className="h-full bg-primary origin-left"
+                      style={{ transform: `scaleX(${progress})`, transition: 'none' }}
+                    />
+                  )}
+                </div>
 
                 <span
                   className={`block text-[10px] md:text-[11px] tracking-[0.15em] uppercase font-medium transition-all duration-500 ${
