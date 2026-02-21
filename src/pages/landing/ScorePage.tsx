@@ -1,5 +1,6 @@
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
 import { useNavigate } from "react-router-dom";
+import { Target, Activity, BookOpen, Layers, FileCheck } from "lucide-react";
 import slideBg03 from "@/assets/slide-bg-03.jpg";
 
 export default function ScorePage() {
@@ -61,16 +62,23 @@ export default function ScorePage() {
         <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
           A elegibilidade estruturada reduz variabilidade, aumenta previsibilidade e protege o profissional.
         </p>
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {[
-            { title: "Indicação mais consistente", desc: "Decisão baseada em critérios organizados e não apenas em experiência isolada." },
-            { title: "Redução de variabilidade clínica", desc: "Menor dependência de julgamento subjetivo não documentado." },
-            { title: "Maior previsibilidade de resposta", desc: "Melhor correlação entre perfil do paciente e intervenção proposta." },
-            { title: "Proteção documental", desc: "Registro claro de que a decisão foi fundamentada em critérios técnicos e alinhada à ciência atual." },
+            { icon: Target, title: "Indicação mais consistente", desc: "Decisão baseada em critérios organizados e não apenas em experiência isolada." },
+            { icon: Activity, title: "Redução de variabilidade clínica", desc: "Menor dependência de julgamento subjetivo não documentado." },
+            { icon: Layers, title: "Maior previsibilidade de resposta", desc: "Melhor correlação entre perfil do paciente e intervenção proposta." },
+            { icon: FileCheck, title: "Proteção documental", desc: "Registro claro de que a decisão foi fundamentada em critérios técnicos e alinhada à ciência atual." },
           ].map((item) => (
-            <div key={item.title} className="group p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all duration-500 hover:-translate-y-1 hover:border-white/[0.12] hover:bg-white/[0.04]" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>
-              <h3 className="text-white text-lg font-medium mb-2 transition-colors duration-500 group-hover:text-white">{item.title}</h3>
-              <p className="text-white/35 text-sm leading-relaxed transition-colors duration-500 group-hover:text-white/50">{item.desc}</p>
+            <div key={item.title} className="group relative p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.05] hover:shadow-[0_8px_40px_-12px_rgba(160,111,76,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:-translate-y-1 cursor-default">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/[0.08] border border-primary/[0.12] flex items-center justify-center shrink-0 transition-all duration-500 group-hover:bg-primary/[0.15] group-hover:border-primary/[0.25] group-hover:shadow-[0_0_20px_-4px_rgba(160,111,76,0.3)]">
+                  <item.icon className="w-4.5 h-4.5 text-primary/60 transition-colors duration-500 group-hover:text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-white text-[15px] font-medium mb-1.5 transition-colors duration-300 group-hover:text-primary/90">{item.title}</h3>
+                  <p className="text-white/40 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
