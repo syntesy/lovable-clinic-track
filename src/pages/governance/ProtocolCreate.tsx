@@ -37,6 +37,7 @@ interface Reference {
   year: string;
   journal: string;
   doi: string;
+  pubmed_link: string;
   study_type: string;
   evidence_level: string;
   conclusion: string;
@@ -294,7 +295,7 @@ export default function ProtocolCreate() {
   const addReference = () => {
     setReferences((prev) => [...prev, {
       id: crypto.randomUUID(),
-      title: "", main_author: "", year: "", journal: "", doi: "",
+      title: "", main_author: "", year: "", journal: "", doi: "", pubmed_link: "",
       study_type: "", evidence_level: "", conclusion: "", is_primary: false,
     }]);
     markDirty();
@@ -321,7 +322,11 @@ export default function ProtocolCreate() {
   };
 
   // ─── Save ──────────────────────────────────────────────────────
+  // Normalize title: trim + collapse multiple spaces
+  const normalizeTitle = (t: string) => t.trim().replace(/\s+/g, " ");
+
   const buildPayload = (status: "draft" | "active") => {
+    const normalizedTitle = normalizeTitle(title);
     const inclusionCriteria = {
       diagnosis,
       score_min: scoreMin ? Number(scoreMin) : null,
@@ -348,7 +353,7 @@ export default function ProtocolCreate() {
     const sortedRefs = [...references].sort((a, b) => Number(b.year) - Number(a.year));
 
     return {
-      title,
+      title: normalizedTitle,
       area,
       protocol_type: protocolType,
       indication_summary: description || null,
@@ -404,6 +409,16 @@ export default function ProtocolCreate() {
     if (validRefs.length === 0) {
       setCurrentStep(5);
       toast.error("Não é possível ativar protocolo sem pelo menos uma referência científica.");
+      return;
+    }
+
+    // Check that each reference has DOI or PubMed link
+    const refsWithoutIdentifier = validRefs.filter(
+      (r) => !r.doi?.trim() && !(r as any).pubmed_link?.trim()
+    );
+    if (refsWithoutIdentifier.length > 0) {
+      setCurrentStep(5);
+      toast.error("Cada referência deve ter pelo menos um identificador: DOI ou link PubMed.");
       return;
     }
 
@@ -799,9 +814,21 @@ export default function ProtocolCreate() {
                   <Input value={ref.journal} onChange={(e) => updateReference(ref.id, "journal", e.target.value)} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">DOI / PubMed</Label>
-                  <Input value={ref.doi} onChange={(e) => updateReference(ref.id, "doi", e.target.value)} />
+                  <Label className="text-xs">DOI</Label>
+                  <Input value={ref.doi} onChange={(e) => updateReference(ref.id, "doi", e.target.value)} placeholder="10.xxxx/..." />
                 </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Link PubMed</Label>
+                  <Input value={ref.pubmed_link} onChange={(e) => updateReference(ref.id, "pubmed_link", e.target.value)} placeholder="https://pubmed.ncbi.nlm.nih.gov/..." />
+                </div>
+                {!ref.doi?.trim() && !ref.pubmed_link?.trim() && ref.title?.trim() && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Obrigatório: preencha DOI ou Link PubMed para ativar o protocolo.
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <Label className="text-xs">Tipo de estudo</Label>
                   <Select value={ref.study_type} onValueChange={(v) => updateReference(ref.id, "study_type", v)}>

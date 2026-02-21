@@ -430,6 +430,7 @@ export function useChangeProtocolStatus() {
       if (newStatus === "active" && oldStatus === "draft") action = "PUBLISH";
       else if (newStatus === "active") action = "ACTIVATE";
       else if (newStatus === "archived") action = "ARCHIVE";
+      else if (newStatus === "draft" && oldStatus === "archived") action = "RESTORE";
       else if (newStatus === "draft") action = "DEACTIVATE";
       else action = "UPDATE";
 
@@ -459,12 +460,13 @@ export function useCheckTitleUnique() {
   const { data: clinicId } = useClinicId();
 
   return async (title: string, excludeId?: string): Promise<boolean> => {
-    if (!clinicId || !title.trim()) return true;
+    const normalized = title.trim().replace(/\s+/g, " ");
+    if (!clinicId || !normalized) return true;
     let query = supabase
       .from("protocols")
       .select("id")
       .eq("clinic_id", clinicId)
-      .ilike("title", title.trim())
+      .ilike("title", normalized)
       .limit(1);
     if (excludeId) {
       query = query.neq("id", excludeId);
