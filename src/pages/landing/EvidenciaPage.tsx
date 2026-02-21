@@ -42,7 +42,7 @@ export default function EvidenciaPage() {
         <div className="space-y-12">
           {[
             { num: "01", title: "Curadoria científica contínua", desc: "Seleção estruturada de literatura relevante, priorizando revisões sistemáticas, metanálises e estudos de maior nível de evidência." },
-            { num: "02", title: "Base de conhecimento atualizada", desc: "Atualização permanente alinhada às publicações recentes em ortobiológicos e medicina regenerativa." },
+            { num: "02", title: "Tradução prática da evidência", desc: "A literatura científica é convertida em critérios clínicos aplicáveis, transformando revisões sistemáticas e metanálises em parâmetros objetivos de decisão, elegibilidade e acompanhamento estruturado." },
             { num: "03", title: "Chat especializado baseado em curadoria científica estruturada", desc: "Interface consultiva construída sobre literatura selecionada e organizada, voltada ao suporte técnico e interpretação científica." },
             { num: "04", title: "Mecanismo de busca estruturada na literatura", desc: "Pesquisa organizada para acesso direcionado a evidências relevantes conforme tema, patologia ou procedimento." },
             { num: "05", title: "Integração entre desfecho real e literatura", desc: "Correlação entre resultados clínicos registrados no sistema e evidências científicas publicadas." },
