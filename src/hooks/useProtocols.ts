@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────
+export type ProtocolStatus = "draft" | "active" | "archived";
+
 export interface Protocol {
   id: string;
   clinic_id: string;
@@ -21,6 +23,7 @@ export interface Protocol {
   source_protocol_id: string | null;
   source_protocol_version_id: string | null;
   is_active: boolean;
+  status: ProtocolStatus;
   created_by_user_id: string;
   created_at: string;
   updated_at: string;
@@ -100,7 +103,7 @@ export function useClinicId() {
 // ─── List Protocols ──────────────────────────────────────────────
 export function useProtocolsList(
   protocolType: "REGEN_BASE" | "DERIVED" | "INSTITUTIONAL",
-  filters?: { search?: string; area?: string; isActive?: boolean }
+  filters?: { search?: string; area?: string; status?: ProtocolStatus | "all" }
 ) {
   const { data: clinicId } = useClinicId();
 
@@ -122,8 +125,12 @@ export function useProtocolsList(
       if (filters?.area) {
         query = query.eq("area", filters.area);
       }
-      if (filters?.isActive !== undefined) {
-        query = query.eq("is_active", filters.isActive);
+      // Filter by status (default: exclude archived)
+      if (filters?.status && filters.status !== "all") {
+        query = query.eq("status", filters.status as any);
+      } else if (!filters?.status) {
+        // By default, hide archived
+        query = query.neq("status", "archived" as any);
       }
 
       const { data, error } = await query;
@@ -138,7 +145,6 @@ export function useProtocolsList(
           .in("protocol_id", protocolIds)
           .order("created_at", { ascending: false });
 
-        // Map latest version to each protocol
         const latestVersionMap = new Map<string, { label: string; createdAt: string }>();
         if (versions) {
           for (const v of versions) {
@@ -373,35 +379,68 @@ export function useUpdateProtocol() {
   });
 }
 
-// ─── Toggle Active ───────────────────────────────────────────────
-export function useToggleProtocolActive() {
+// ─── Change Protocol Status ──────────────────────────────────────
+export function useChangeProtocolStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
       protocolId,
-      isActive,
+      newStatus,
     }: {
       protocolId: string;
-      isActive: boolean;
+      newStatus: ProtocolStatus;
     }) => {
       const clinicId = await getClinicId();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
+      // Get current state for audit
+      const { data: current } = await supabase
+        .from("protocols")
+        .select("status, evidence_refs, title")
+        .eq("id", protocolId)
+        .single();
+
+      const oldStatus = current?.status || "draft";
+
+      // Frontend validation: block activation without evidence
+      if (newStatus === "active") {
+        const refs = current?.evidence_refs;
+        if (!refs || (Array.isArray(refs) && refs.length === 0)) {
+          throw new Error("protocol_activation_blocked: Não é possível ativar protocolo sem pelo menos uma referência científica.");
+        }
+      }
+
       const { error } = await supabase
         .from("protocols")
-        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .update({ status: newStatus as any, updated_at: new Date().toISOString() })
         .eq("id", protocolId);
 
-      if (error) throw error;
+      if (error) {
+        // Parse backend trigger error
+        if (error.message?.includes("protocol_activation_blocked")) {
+          throw new Error("Não é possível ativar protocolo sem pelo menos uma referência científica.");
+        }
+        throw error;
+      }
+
+      // Determine audit action
+      let action: string;
+      if (newStatus === "active" && oldStatus === "draft") action = "PUBLISH";
+      else if (newStatus === "active") action = "ACTIVATE";
+      else if (newStatus === "archived") action = "ARCHIVE";
+      else if (newStatus === "draft") action = "DEACTIVATE";
+      else action = "UPDATE";
 
       await supabase.from("governance_audit_logs").insert({
         clinic_id: clinicId,
         entity_type: "protocol",
         entity_id: protocolId,
-        action: (isActive ? "ACTIVATE" : "DEACTIVATE") as any,
-        justification: isActive ? "Protocolo ativado" : "Protocolo desativado",
+        action: action as any,
+        previous_snapshot: { status: oldStatus },
+        new_snapshot: { status: newStatus },
+        justification: `Status alterado: ${oldStatus} → ${newStatus}`,
         performed_by_user_id: user.id,
       });
     },
@@ -409,10 +448,30 @@ export function useToggleProtocolActive() {
       queryClient.invalidateQueries({ queryKey: ["protocols"] });
       toast.success("Status atualizado!");
     },
-    onError: () => {
-      toast.error("Erro ao alterar status");
+    onError: (err: any) => {
+      toast.error(err.message || "Erro ao alterar status");
     },
   });
+}
+
+// ─── Check Title Uniqueness ─────────────────────────────────────
+export function useCheckTitleUnique() {
+  const { data: clinicId } = useClinicId();
+
+  return async (title: string, excludeId?: string): Promise<boolean> => {
+    if (!clinicId || !title.trim()) return true;
+    let query = supabase
+      .from("protocols")
+      .select("id")
+      .eq("clinic_id", clinicId)
+      .ilike("title", title.trim())
+      .limit(1);
+    if (excludeId) {
+      query = query.neq("id", excludeId);
+    }
+    const { data } = await query;
+    return !data || data.length === 0;
+  };
 }
 
 // ─── Create Protocol ─────────────────────────────────────────────
@@ -433,14 +492,18 @@ export function useCreateProtocol() {
       evidence_level?: string | null;
       evidence_notes?: string | null;
       evidence_refs?: any;
-      is_active: boolean;
+      is_active?: boolean;
+      status?: ProtocolStatus;
       extended_data?: any;
     }) => {
       const clinicId = await getClinicId();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      const { extended_data, ...protocolFields } = payload;
+      const { extended_data, is_active, ...protocolFields } = payload;
+
+      // Determine status: use explicit status, or derive from is_active for backward compat
+      const status = payload.status || (is_active ? "active" : "draft");
 
       const { data: newProto, error } = await supabase
         .from("protocols")
@@ -448,13 +511,22 @@ export function useCreateProtocol() {
           clinic_id: clinicId,
           ...protocolFields,
           protocol_type: payload.protocol_type as any,
+          status: status as any,
           created_by_user_id: user.id,
           checklist_template: extended_data || payload.checklist_template || null,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes("protocols_clinic_title_unique")) {
+          throw new Error("Já existe um protocolo com este nome.");
+        }
+        if (error.message?.includes("protocol_activation_blocked")) {
+          throw new Error("Não é possível ativar protocolo sem pelo menos uma referência científica.");
+        }
+        throw error;
+      }
 
       await supabase.from("governance_audit_logs").insert({
         clinic_id: clinicId,
@@ -462,7 +534,7 @@ export function useCreateProtocol() {
         entity_id: newProto.id,
         action: "CREATE" as any,
         new_snapshot: newProto,
-        justification: `Protocolo "${payload.title}" criado`,
+        justification: `Protocolo "${payload.title}" criado como ${status}`,
         performed_by_user_id: user.id,
       });
 
@@ -474,7 +546,7 @@ export function useCreateProtocol() {
     },
     onError: (err: any) => {
       console.error("Create error:", err);
-      toast.error("Erro ao criar protocolo");
+      toast.error(err.message || "Erro ao criar protocolo");
     },
   });
 }

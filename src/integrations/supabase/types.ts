@@ -3399,6 +3399,7 @@ export type Database = {
           required_exams: Json | null
           source_protocol_id: string | null
           source_protocol_version_id: string | null
+          status: Database["public"]["Enums"]["protocol_status"]
           technique_summary: string | null
           title: string
           updated_at: string
@@ -3422,6 +3423,7 @@ export type Database = {
           required_exams?: Json | null
           source_protocol_id?: string | null
           source_protocol_version_id?: string | null
+          status?: Database["public"]["Enums"]["protocol_status"]
           technique_summary?: string | null
           title: string
           updated_at?: string
@@ -3445,6 +3447,7 @@ export type Database = {
           required_exams?: Json | null
           source_protocol_id?: string | null
           source_protocol_version_id?: string | null
+          status?: Database["public"]["Enums"]["protocol_status"]
           technique_summary?: string | null
           title?: string
           updated_at?: string
@@ -5793,8 +5796,13 @@ export type Database = {
         | "UNLOCK"
         | "ACTIVATE"
         | "DEACTIVATE"
+        | "PUBLISH"
+        | "ARCHIVE"
+        | "UPDATE_REFERENCE"
+        | "VERSION_CREATED"
       mentor_status: "pending_review" | "approved" | "rejected" | "suspended"
       outcome_timepoint: "baseline" | "m1" | "m3" | "m6" | "m12"
+      protocol_status: "draft" | "active" | "archived"
       protocol_type: "REGEN_BASE" | "DERIVED" | "INSTITUTIONAL"
       safety_checklist_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
       scientific_badge_status: "NONE" | "DRAFT" | "VALIDATED"
@@ -5988,9 +5996,14 @@ export const Constants = {
         "UNLOCK",
         "ACTIVATE",
         "DEACTIVATE",
+        "PUBLISH",
+        "ARCHIVE",
+        "UPDATE_REFERENCE",
+        "VERSION_CREATED",
       ],
       mentor_status: ["pending_review", "approved", "rejected", "suspended"],
       outcome_timepoint: ["baseline", "m1", "m3", "m6", "m12"],
+      protocol_status: ["draft", "active", "archived"],
       protocol_type: ["REGEN_BASE", "DERIVED", "INSTITUTIONAL"],
       safety_checklist_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
       scientific_badge_status: ["NONE", "DRAFT", "VALIDATED"],
