@@ -35,7 +35,7 @@ export default function ProblemaPage() {
       {/* SEÇÃO 2 – PRINCIPAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
-          O que acontece quando a prática não é estruturada?
+          O que acontece quando a prática clínica não é estruturada?
         </h2>
         <p className="text-white/50 leading-relaxed max-w-3xl mb-14">
           Sem método estruturado e mensuração longitudinal, a intervenção ocorre — mas não se consolida em evidência clínica aplicável.
