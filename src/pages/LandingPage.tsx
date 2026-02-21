@@ -64,7 +64,7 @@ const slides = [
   {
     id: "integridade",
     number: "06",
-    label: "Integridade",
+    label: "SEGURANÇA",
     route: "/integridade",
     bg: slideBg06,
     headline: "Rastreabilidade, auditoria e segurança jurídica",
