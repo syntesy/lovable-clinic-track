@@ -92,16 +92,16 @@ export default function ProblemaPage() {
         <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
           Organizar variáveis técnicas, critérios de elegibilidade e métricas de evolução é o que transforma intervenção em prática consistente.
         </p>
-        <div className="space-y-4 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
             "Registro clínico estruturado",
             "Critérios objetivos de elegibilidade",
             "Follow-up longitudinal automatizado",
             "Consolidação de dados clínicos",
           ].map((item) => (
-            <div key={item} className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0" />
-              <span className="text-white/40 leading-relaxed">{item}</span>
+            <div key={item} className="p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-1.5 shrink-0" />
+              <span className="text-white/40 text-sm leading-relaxed">{item}</span>
             </div>
           ))}
         </div>
