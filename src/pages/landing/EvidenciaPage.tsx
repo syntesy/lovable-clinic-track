@@ -1,55 +1,56 @@
+import { useNavigate, useLocation } from "react-router-dom";
+import { BookOpen, GitCompare, Search, GraduationCap } from "lucide-react";
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
 import slideBg05 from "@/assets/slide-bg-05.jpg";
 
 export default function EvidenciaPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getRedirectPath = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("redirect") || "/select-environment";
+  };
+
   return (
-    <InternalPageLayout>
+    <InternalPageLayout hideFooterCTA>
       {/* SEÇÃO 1 – HERO */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0" style={{ backgroundImage: `url(${slideBg05})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
-          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Ciência aplicada</span>
+          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Base científica integrada</span>
           <h1 className="text-3xl md:text-5xl font-light text-white mb-6">
-            Evidência conectada à prática
+            Evidência estruturada para prática regenerativa
           </h1>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">
-            Curadoria científica integrada ao fluxo clínico — cada decisão conectada ao que existe de melhor na literatura.
+          <p className="text-lg max-w-2xl mx-auto mb-4 text-teal-50">
+            Prática clínica exige atualização contínua.<br />
+            Atualização estruturada fortalece decisão e consistência.
           </p>
         </div>
       </section>
 
-      {/* SEÇÃO 2 – CONTEXTO */}
+      {/* SEÇÃO 2 – PRINCIPAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16">
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Ciência dentro do fluxo</h2>
-            <p className="text-white/40 leading-relaxed">
-              O REGHEN conecta evidência científica diretamente ao registro clínico. O profissional acessa a literatura relevante no momento da decisão — sem sair do fluxo de atendimento e sem depender de buscas manuais.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Curadoria estruturada</h2>
-            <p className="text-white/40 leading-relaxed">
-              Cada artigo é revisado, classificado por nível de evidência e vinculado às dimensões clínicas do registro — técnica, patologia e região. A ciência deixa de ser abstrata e passa a informar a prática.
-            </p>
-          </div>
-        </div>
-      </section>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          O que acontece quando a evidência é integrada à prática?
+        </h2>
+        <p className="text-white/50 leading-relaxed max-w-3xl mb-14">
+          Quando ciência atual, critérios técnicos e desfechos clínicos reais são conectados, a decisão deixa de ser isolada e passa a ser fundamentada.
+        </p>
 
-      {/* SEÇÃO 3 – DIFERENCIAIS */}
-      <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
         <div className="space-y-12">
           {[
-            { num: "01", title: "Revisão por pares", desc: "Cada artigo passa por curadoria humana antes de ser conectado ao registro clínico, garantindo qualidade e relevância." },
-            { num: "02", title: "Classificação por nível de evidência", desc: "RCT, meta-análise, coorte, série de casos — cada estudo classificado para que o profissional saiba o peso da informação." },
-            { num: "03", title: "Vínculo dimensional", desc: "Conexão direta entre evidência e as dimensões do registro: técnica aplicada, patologia tratada e região anatômica." },
-            { num: "04", title: "Acesso contextual", desc: "Ao registrar um caso, o profissional visualiza a evidência disponível para aquela combinação específica — em tempo real." },
+            { num: "01", title: "Curadoria científica contínua", desc: "Seleção estruturada de literatura relevante, priorizando revisões sistemáticas, metanálises e estudos de maior nível de evidência." },
+            { num: "02", title: "Base de conhecimento atualizada", desc: "Atualização permanente alinhada às publicações recentes em ortobiológicos e medicina regenerativa." },
+            { num: "03", title: "Chat especializado baseado em curadoria científica estruturada", desc: "Interface consultiva construída sobre literatura selecionada e organizada, voltada ao suporte técnico e interpretação científica." },
+            { num: "04", title: "Mecanismo de busca estruturada na literatura", desc: "Pesquisa organizada para acesso direcionado a evidências relevantes conforme tema, patologia ou procedimento." },
+            { num: "05", title: "Integração entre desfecho real e literatura", desc: "Correlação entre resultados clínicos registrados no sistema e evidências científicas publicadas." },
           ].map((item) => (
-            <div key={item.num} className="flex gap-8 items-start">
-              <span className="text-primary/30 text-5xl font-light shrink-0 w-16">{item.num}</span>
+            <div key={item.num} className="group flex gap-8 items-start cursor-default">
+              <span className="text-primary/30 text-5xl font-light shrink-0 w-16 transition-all duration-300 group-hover:text-primary/60 group-hover:drop-shadow-[0_0_12px_rgba(160,111,76,0.3)]">{item.num}</span>
               <div>
-                <h3 className="text-white text-xl font-medium mb-2">{item.title}</h3>
+                <h3 className="text-white text-xl font-medium mb-2 transition-all duration-300 group-hover:text-primary/90">{item.title}</h3>
                 <p className="text-white/40 leading-relaxed">{item.desc}</p>
               </div>
             </div>
@@ -57,60 +58,83 @@ export default function EvidenciaPage() {
         </div>
       </section>
 
-      {/* SEÇÃO 4 – VISUAL DO PRODUTO */}
+      {/* SEÇÃO 3 – IMPACTO NA PRÁTICA */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Evidência integrada</span>
-            <h2 className="text-2xl md:text-3xl font-light text-white mb-6">
-              Ciência que informa, não que paralisa
-            </h2>
-            <p className="text-white/40 leading-relaxed">
-              O REGHEN traz a evidência para dentro do fluxo clínico, sem transformar o profissional em pesquisador. A ciência aparece no momento certo, no contexto certo.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4" style={{ boxShadow: "0 20px 60px -15px rgba(0,0,0,0.5)" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary/60" />
-              <span className="text-white/40 text-xs tracking-wider uppercase">Curadoria científica</span>
-            </div>
-            <div className="space-y-3">
-              {[
-                { level: "Meta-análise", tag: "Nível I", articles: "12 artigos" },
-                { level: "RCT", tag: "Nível II", articles: "34 artigos" },
-                { level: "Coorte", tag: "Nível III", articles: "28 artigos" },
-                { level: "Série de casos", tag: "Nível IV", articles: "45 artigos" },
-              ].map((item) => (
-                <div key={item.level} className="flex items-center justify-between rounded-lg bg-white/[0.03] border border-white/[0.06] px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-primary/60 text-[10px] tracking-wider uppercase font-medium">{item.tag}</span>
-                    <span className="text-white/40 text-sm">{item.level}</span>
-                  </div>
-                  <span className="text-white/25 text-xs">{item.articles}</span>
+        <div className="text-center mb-16">
+          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Impacto na prática</span>
+          <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+            Por que integrar evidência fortalece a prática clínica?
+          </h2>
+          <p className="text-white/50 leading-relaxed max-w-2xl mx-auto">
+            A ciência deixa de ser externa ao atendimento e passa a fazer parte do fluxo estruturado da prática regenerativa.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {[
+            { icon: BookOpen, title: "Atualização contínua fundamentada", desc: "Acesso organizado à literatura relevante com priorização de evidência de maior nível." },
+            { icon: GitCompare, title: "Redução de variabilidade clínica", desc: "Decisão fundamentada em critérios científicos estruturados." },
+            { icon: Search, title: "Integração prática × evidência", desc: "Correlação entre protocolo aplicado e base científica disponível." },
+            { icon: GraduationCap, title: "Educação integrada ao método", desc: "REGHEN Academy conectada à prática clínica estruturada." },
+          ].map((item) => (
+            <div key={item.title} className="group relative p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.05] hover:shadow-[0_8px_40px_-12px_rgba(160,111,76,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:-translate-y-1 cursor-default">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/[0.08] border border-primary/[0.12] flex items-center justify-center shrink-0 transition-all duration-500 group-hover:bg-primary/[0.15] group-hover:border-primary/[0.25] group-hover:shadow-[0_0_20px_-4px_rgba(160,111,76,0.3)]">
+                  <item.icon className="w-4.5 h-4.5 text-primary/60 transition-colors duration-500 group-hover:text-primary" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-white text-[15px] font-medium mb-1.5 transition-colors duration-300 group-hover:text-primary/90">{item.title}</h3>
+                  <p className="text-white/40 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* SEÇÃO 5 – IMPACTO PRÁTICO */}
+      {/* SEÇÃO 4 – HORIZONTAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <h2 className="text-2xl font-light text-white mb-4">Impacto na sua prática</h2>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          Evidência integrada ao método clínico
+        </h2>
         <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
-          Com evidência integrada ao fluxo, o profissional toma decisões mais seguras, justifica condutas com base científica e evolui sua prática de forma contínua e informada.
+          O conhecimento científico passa a integrar o fluxo estruturado da prática regenerativa.
         </p>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
-            { title: "Decisão informada", desc: "Acesse a evidência relevante para cada caso no momento da decisão clínica, sem interromper o fluxo." },
-            { title: "Justificativa científica", desc: "Documente a base científica de cada conduta, fortalecendo sua posição profissional e técnica." },
-            { title: "Evolução contínua", desc: "Acompanhe atualizações da literatura conectadas à sua prática e refine protocolos com base em ciência." },
+            "Curadoria contínua de artigos",
+            "Chat especializado com base estruturada",
+            "Base de conhecimento atualizada",
+            "REGHEN Academy integrada",
           ].map((item) => (
-            <div key={item.title} className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-              <h3 className="text-white text-lg font-medium mb-2">{item.title}</h3>
-              <p className="text-white/35 text-sm leading-relaxed">{item.desc}</p>
+            <div key={item} className="p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] flex items-start gap-3 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.06] hover:shadow-[0_8px_30px_-10px_rgba(160,111,76,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:-translate-y-0.5 cursor-default">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-1.5 shrink-0" />
+              <span className="text-white/40 text-sm leading-relaxed">{item}</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* SEÇÃO 5 – CTA FINAL */}
+      <section className="py-24 px-8 md:px-16 text-center border-t border-white/[0.06]">
+        <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
+          Prática consistente exige ciência integrada.
+        </h2>
+        <p className="text-white/40 mb-8 max-w-xl mx-auto">
+          Atualização estruturada é parte essencial de uma medicina regenerativa consistente.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`)}
+            className="px-8 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
+            Criar conta
+          </button>
+          <button
+            onClick={() => navigate("/seguranca")}
+            className="px-8 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
+          >
+            Ver Segurança
+          </button>
         </div>
       </section>
     </InternalPageLayout>
