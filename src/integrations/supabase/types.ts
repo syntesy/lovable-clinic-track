@@ -3388,7 +3388,7 @@ export type Database = {
           created_by_user_id: string
           evidence_level: string | null
           evidence_notes: string | null
-          evidence_refs: Json | null
+          evidence_refs: Json
           exclusion_criteria: Json | null
           id: string
           inclusion_criteria: Json | null
@@ -3412,7 +3412,7 @@ export type Database = {
           created_by_user_id: string
           evidence_level?: string | null
           evidence_notes?: string | null
-          evidence_refs?: Json | null
+          evidence_refs?: Json
           exclusion_criteria?: Json | null
           id?: string
           inclusion_criteria?: Json | null
@@ -3436,7 +3436,7 @@ export type Database = {
           created_by_user_id?: string
           evidence_level?: string | null
           evidence_notes?: string | null
-          evidence_refs?: Json | null
+          evidence_refs?: Json
           exclusion_criteria?: Json | null
           id?: string
           inclusion_criteria?: Json | null
