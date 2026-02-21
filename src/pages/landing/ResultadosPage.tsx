@@ -1,118 +1,132 @@
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
+import { useNavigate } from "react-router-dom";
+import { BarChart3, TrendingUp, GitCompare, Link, Database } from "lucide-react";
 import slideBg04 from "@/assets/slide-bg-04.jpg";
 
 export default function ResultadosPage() {
+  const navigate = useNavigate();
+
   return (
-    <InternalPageLayout>
+    <InternalPageLayout hideFooterCTA>
       {/* SEÇÃO 1 – HERO */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0" style={{ backgroundImage: `url(${slideBg04})`, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="absolute inset-0 bg-black/30" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
-          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Mensuração</span>
+          <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Mensuração Clínica</span>
           <h1 className="text-3xl md:text-5xl font-light text-white mb-6">
-            Resultados mensuráveis
+            Resultados estruturados e comparáveis
           </h1>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">
-            VAS, PRO, NPS e desfechos longitudinais por timepoints — mensuração real do que funciona na sua prática.
+          <p className="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed">
+            Sem mensuração, não há clareza.
+            <br />
+            Com mensuração estruturada, há evolução clínica real.
           </p>
         </div>
       </section>
 
-      {/* SEÇÃO 2 – CONTEXTO */}
+      {/* SEÇÃO 2 – PRINCIPAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16">
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Mensuração padronizada</h2>
-            <p className="text-white/40 leading-relaxed">
-              O REGHEN utiliza escalas clínicas validadas para medir dor, função e satisfação em intervalos padronizados. Cada procedimento gera dados comparáveis que mostram a evolução real do paciente.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Desfechos longitudinais</h2>
-            <p className="text-white/40 leading-relaxed">
-              Com timepoints em 30, 90, 180 e 365 dias, o profissional acompanha a trajetória do resultado ao longo do tempo — não apenas o efeito imediato, mas a sustentabilidade da melhora.
-            </p>
-          </div>
-        </div>
-      </section>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          O que acontece quando seus resultados são organizados de forma estruturada?
+        </h2>
+        <p className="text-white/50 text-lg leading-relaxed max-w-3xl mb-16">
+          Quando desfechos são medidos de forma padronizada e longitudinal, cada intervenção passa a gerar evidência clínica aplicável.
+        </p>
 
-      {/* SEÇÃO 3 – DIFERENCIAIS */}
-      <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
         <div className="space-y-12">
           {[
-            { num: "01", title: "VAS — Escala de dor", desc: "Escala visual analógica padronizada aplicada em cada timepoint para mensuração objetiva da evolução da dor." },
-            { num: "02", title: "PRO — Resultado funcional", desc: "Resultado reportado pelo paciente que captura a percepção funcional e a melhoria na qualidade de vida." },
-            { num: "03", title: "NPS — Satisfação clínica", desc: "Net Promoter Score clínico que mede a satisfação do paciente com o procedimento e o atendimento." },
-            { num: "04", title: "Follow-up longitudinal", desc: "Acompanhamento estruturado em 30, 90, 180 e 365 dias para visão completa da trajetória do resultado." },
-            { num: "05", title: "Comparação entre procedimentos", desc: "Dados padronizados permitem comparar desfechos entre técnicas, regiões e perfis de paciente." },
+            { num: "01", title: "Métricas padronizadas", desc: "Utilização estruturada de escalas clínicas (VAS, PROs, funcionais) em checkpoints definidos." },
+            { num: "02", title: "Acompanhamento longitudinal", desc: "Registro consistente da evolução do paciente ao longo do tempo." },
+            { num: "03", title: "Comparabilidade clínica", desc: "Capacidade de analisar resultados entre diferentes protocolos e perfis de pacientes." },
+            { num: "04", title: "Correlação protocolo × desfecho", desc: "Possibilidade de identificar padrões entre variáveis técnicas aplicadas e resposta clínica observada." },
+            { num: "05", title: "Consolidação de dados estruturados", desc: "Transformação do atendimento individual em base organizada para análise metodológica." },
           ].map((item) => (
-            <div key={item.num} className="flex gap-8 items-start">
-              <span className="text-primary/30 text-5xl font-light shrink-0 w-16">{item.num}</span>
+            <div key={item.num} className="group flex gap-8 items-start p-4 -mx-4 rounded-xl transition-all duration-500 hover:-translate-y-1 hover:bg-white/[0.02] hover:border-white/[0.06]" style={{ boxShadow: "inset 0 0 0 transparent" }}>
+              <span className="text-primary/30 text-5xl font-light shrink-0 w-16 transition-colors duration-500 group-hover:text-primary/50">{item.num}</span>
               <div>
-                <h3 className="text-white text-xl font-medium mb-2">{item.title}</h3>
-                <p className="text-white/40 leading-relaxed">{item.desc}</p>
+                <h3 className="text-white text-xl font-medium mb-2 transition-colors duration-500">{item.title}</h3>
+                <p className="text-white/40 leading-relaxed transition-colors duration-500 group-hover:text-white/55">{item.desc}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* SEÇÃO 4 – VISUAL DO PRODUTO */}
+      {/* SEÇÃO 3 – IMPACTO NA PRÁTICA */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Evolução do paciente</span>
-            <h2 className="text-2xl md:text-3xl font-light text-white mb-6">
-              Cada resultado rastreável e comparável
-            </h2>
-            <p className="text-white/40 leading-relaxed">
-              O REGHEN transforma cada follow-up em dado mensurável. Ao longo do tempo, o profissional constrói uma visão clara do que funciona na sua prática.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4" style={{ boxShadow: "0 20px 60px -15px rgba(0,0,0,0.5)" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary/60" />
-              <span className="text-white/40 text-xs tracking-wider uppercase">Desfechos por timepoint</span>
-            </div>
-            <div className="space-y-3">
-              {[
-                { time: "Baseline", pct: 0 },
-                { time: "30 dias", pct: 35 },
-                { time: "90 dias", pct: 62 },
-                { time: "180 dias", pct: 78 },
-                { time: "365 dias", pct: 85 },
-              ].map((tp) => (
-                <div key={tp.time} className="flex items-center gap-3">
-                  <span className="text-white/40 text-xs w-16 shrink-0">{tp.time}</span>
-                  <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div className="h-full bg-primary/50 rounded-full" style={{ width: `${tp.pct}%` }} />
-                  </div>
-                  <span className="text-white/30 text-xs w-8 text-right">{tp.pct}%</span>
+        <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Impacto na Prática</span>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          Por que mensurar transforma a prática clínica?
+        </h2>
+        <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
+          Resultados organizados permitem sair da percepção subjetiva e avançar para decisão baseada em dados estruturados.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {[
+            { icon: BarChart3, title: "Visibilidade da evolução", desc: "Clareza sobre resposta clínica real ao longo do tempo." },
+            { icon: TrendingUp, title: "Identificação de padrões", desc: "Reconhecimento de tendências de melhora, estabilidade ou regressão." },
+            { icon: GitCompare, title: "Aprimoramento metodológico", desc: "Ajuste progressivo de protocolos com base em dados organizados." },
+            { icon: Link, title: "Integração com evidência científica", desc: "Correlação entre desfecho real e literatura disponível." },
+          ].map((item) => (
+            <div key={item.title} className="group relative p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.05] hover:shadow-[0_8px_40px_-12px_rgba(160,111,76,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:-translate-y-1 cursor-default">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/[0.08] border border-primary/[0.12] flex items-center justify-center shrink-0 transition-all duration-500 group-hover:bg-primary/[0.15] group-hover:border-primary/[0.25] group-hover:shadow-[0_0_20px_-4px_rgba(160,111,76,0.3)]">
+                  <item.icon className="w-4.5 h-4.5 text-primary/60 transition-colors duration-500 group-hover:text-primary" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-white text-[15px] font-medium mb-1.5 transition-colors duration-300 group-hover:text-primary/90">{item.title}</h3>
+                  <p className="text-white/40 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* SEÇÃO 5 – IMPACTO PRÁTICO */}
+      {/* SEÇÃO 4 – HORIZONTAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <h2 className="text-2xl font-light text-white mb-4">Impacto na sua prática</h2>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          Resultados estruturados conectam prática e ciência
+        </h2>
         <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
-          A mensuração contínua permite ao profissional identificar padrões de melhora, ajustar protocolos e demonstrar a eficácia real de cada intervenção com dados objetivos.
+          A mensuração organizada transforma atendimento individual em informação clínica comparável.
         </p>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { title: "Visibilidade real", desc: "Saiba exatamente como seus pacientes evoluem ao longo do tempo com métricas padronizadas." },
-            { title: "Ajuste de protocolo", desc: "Identifique quais técnicas geram melhores desfechos e refine sua abordagem com base em dados." },
-            { title: "Demonstração de valor", desc: "Apresente resultados mensuráveis que comprovam a qualidade do seu trabalho clínico." },
-          ].map((item) => (
-            <div key={item.title} className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-              <h3 className="text-white text-lg font-medium mb-2">{item.title}</h3>
-              <p className="text-white/35 text-sm leading-relaxed">{item.desc}</p>
+            "Desfechos padronizados",
+            "Acompanhamento longitudinal",
+            "Análise comparativa estruturada",
+            "Integração entre prática e literatura",
+          ].map((label) => (
+            <div key={label} className="group p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] text-center transition-all duration-500 hover:-translate-y-1 hover:border-white/[0.12] hover:bg-white/[0.04]" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>
+              <span className="text-white/60 text-sm leading-relaxed transition-colors duration-500 group-hover:text-white/80">{label}</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* SEÇÃO 5 – CTA FINAL */}
+      <section className="py-24 px-8 md:px-16 text-center border-t border-white/[0.06]">
+        <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
+          Evolução clínica exige mensuração consistente.
+        </h2>
+        <p className="text-white/40 mb-8 max-w-xl mx-auto">
+          Resultados estruturados permitem consistência metodológica ao longo do tempo.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => navigate("/auth?mode=signup&redirect=%2Fselect-environment")}
+            className="px-8 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
+            Criar conta
+          </button>
+          <button
+            onClick={() => navigate("/evidencia")}
+            className="px-8 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
+          >
+            Ver Evidência
+          </button>
         </div>
       </section>
     </InternalPageLayout>
