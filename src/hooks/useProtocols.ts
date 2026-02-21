@@ -415,6 +415,70 @@ export function useToggleProtocolActive() {
   });
 }
 
+// ─── Create Protocol ─────────────────────────────────────────────
+export function useCreateProtocol() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      title: string;
+      area: string;
+      protocol_type: string;
+      indication_summary?: string | null;
+      inclusion_criteria?: any;
+      exclusion_criteria?: any;
+      required_exams?: any;
+      technique_summary?: string | null;
+      checklist_template?: any;
+      evidence_level?: string | null;
+      evidence_notes?: string | null;
+      evidence_refs?: any;
+      is_active: boolean;
+      extended_data?: any;
+    }) => {
+      const clinicId = await getClinicId();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+
+      const { extended_data, ...protocolFields } = payload;
+
+      const { data: newProto, error } = await supabase
+        .from("protocols")
+        .insert({
+          clinic_id: clinicId,
+          ...protocolFields,
+          protocol_type: payload.protocol_type as any,
+          created_by_user_id: user.id,
+          checklist_template: extended_data || payload.checklist_template || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await supabase.from("governance_audit_logs").insert({
+        clinic_id: clinicId,
+        entity_type: "protocol",
+        entity_id: newProto.id,
+        action: "CREATE" as any,
+        new_snapshot: newProto,
+        justification: `Protocolo "${payload.title}" criado`,
+        performed_by_user_id: user.id,
+      });
+
+      return newProto;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["protocols"] });
+      toast.success("Protocolo criado com sucesso!");
+    },
+    onError: (err: any) => {
+      console.error("Create error:", err);
+      toast.error("Erro ao criar protocolo");
+    },
+  });
+}
+
 // ─── Unique areas for filter ─────────────────────────────────────
 export function useProtocolAreas() {
   const { data: clinicId } = useClinicId();
