@@ -1,9 +1,18 @@
+import { useNavigate, useLocation } from "react-router-dom";
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
 import slideBg01 from "@/assets/slide-bg-01-new.png";
 
 export default function ProblemaPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getRedirectPath = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("redirect") || "/select-environment";
+  };
+
   return (
-    <InternalPageLayout>
+    <InternalPageLayout hideFooterCTA>
       {/* SEÇÃO 1 – HERO */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0" style={{ backgroundImage: `url(${slideBg01})`, backgroundSize: "cover", backgroundPosition: "center" }} />
@@ -11,41 +20,34 @@ export default function ProblemaPage() {
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">O cenário atual</span>
           <h1 className="text-3xl md:text-5xl font-light text-white mb-6">
-            O problema da Medicina Regenerativa
+            O problema estrutural da Medicina Regenerativa
           </h1>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">
-            Evidência fragmentada, protocolos variáveis e desfechos pouco comparáveis. Sem padronização, a prática clínica se torna imprevisível.
+          <p className="text-white/60 text-lg max-w-2xl mx-auto mb-4">
+            Sem organização, não há clareza.<br />
+            Sem clareza, não há evolução clínica.
+          </p>
+          <p className="text-white/35 text-sm max-w-2xl mx-auto leading-relaxed">
+            Protocolos heterogêneos, ausência de critérios objetivos de elegibilidade e acompanhamento inconsistente comprometem a consistência da prática regenerativa.
           </p>
         </div>
       </section>
 
-      {/* SEÇÃO 2 – CONTEXTO */}
+      {/* SEÇÃO 2 – PRINCIPAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16">
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Fragmentação da evidência</h2>
-            <p className="text-white/40 leading-relaxed">
-              A medicina regenerativa avança rapidamente, mas sem padronização. Cada profissional segue protocolos próprios, tornando impossível comparar resultados entre clínicas, técnicas ou populações de pacientes.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-light text-white mb-4">Ausência de rastreabilidade</h2>
-            <p className="text-white/40 leading-relaxed">
-              Sem registro estruturado, cada procedimento é uma experiência isolada. O profissional não consegue demonstrar a qualidade da sua prática nem construir uma base de dados confiável.
-            </p>
-          </div>
-        </div>
-      </section>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          O que acontece quando a prática não é estruturada?
+        </h2>
+        <p className="text-white/50 leading-relaxed max-w-3xl mb-14">
+          Sem método estruturado e mensuração longitudinal, a intervenção ocorre — mas não se consolida em evidência clínica aplicável.
+        </p>
 
-      {/* SEÇÃO 3 – DIFERENCIAIS */}
-      <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
         <div className="space-y-12">
           {[
-            { num: "01", title: "Protocolos variáveis", desc: "Cada clínica opera de forma isolada, sem padrão de coleta ou registro. O resultado é uma prática descoordenada e não comparável." },
-            { num: "02", title: "Desfechos incomparáveis", desc: "Sem métricas padronizadas, é impossível saber o que realmente funciona. Cada profissional mede o sucesso à sua maneira." },
-            { num: "03", title: "Evidência como ruído", desc: "Dados existem, mas sem estrutura viram apenas anedotas clínicas. Não há base para decisão informada." },
-            { num: "04", title: "Risco profissional", desc: "Sem documentação estruturada, o profissional fica exposto juridicamente. Não há como comprovar a adequação da conduta." },
-            { num: "05", title: "Evolução estagnada", desc: "Sem mensuração longitudinal, não há como identificar padrões de melhora ou piora. A prática não evolui de forma objetiva." },
+            { num: "01", title: "Protocolos heterogêneos", desc: "Variáveis técnicas como indicação, concentração, volume, número de aplicações e tempo de acompanhamento variam entre profissionais, dificultando replicabilidade e previsibilidade de resposta clínica." },
+            { num: "02", title: "Elegibilidade pouco estruturada", desc: "Sem critérios objetivos alinhados à ciência atual, a indicação pode não considerar adequadamente o perfil biológico do paciente." },
+            { num: "03", title: "Desfechos não padronizados", desc: "Sem métricas estruturadas (VAS, PROs, escalas funcionais e checkpoints definidos), não é possível avaliar evolução clínica de forma consistente." },
+            { num: "04", title: "Fragilidade documental", desc: "Sem registro estruturado, o profissional não consegue demonstrar que a conduta aplicada estava alinhada à ciência atual, aos critérios técnicos de elegibilidade e às variáveis biológicas do paciente." },
+            { num: "05", title: "Evolução limitada da prática", desc: "Sem dados organizados, não é possível identificar padrões, ajustar protocolos com precisão ou construir método clínico consistente." },
           ].map((item) => (
             <div key={item.num} className="flex gap-8 items-start">
               <span className="text-primary/30 text-5xl font-light shrink-0 w-16">{item.num}</span>
@@ -58,62 +60,80 @@ export default function ProblemaPage() {
         </div>
       </section>
 
-      {/* SEÇÃO 4 – VISUAL DO PRODUTO */}
+      {/* SEÇÃO 3 – COMPLEMENTAR */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Como o REGHEN resolve isso</span>
-            <h2 className="text-2xl md:text-3xl font-light text-white mb-6">
-              Estrutura criada para organizar sua prática clínica
-            </h2>
-            <p className="text-white/40 leading-relaxed">
-              O REGHEN substitui a fragmentação por um fluxo padronizado — do registro à mensuração de resultados — garantindo rastreabilidade e consistência em cada procedimento.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4" style={{ boxShadow: "0 20px 60px -15px rgba(0,0,0,0.5)" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary/60" />
-              <span className="text-white/40 text-xs tracking-wider uppercase">Visão do cenário</span>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          Por que isso compromete a evolução clínica?
+        </h2>
+        <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
+          A medicina regenerativa exige critérios objetivos, alinhamento à ciência atual e acompanhamento longitudinal.
+          Sem estrutura, esses elementos permanecem desconectados.
+        </p>
+        <div className="space-y-4">
+          {[
+            "Decisão clínica com baixa visibilidade longitudinal",
+            "Dificuldade de correlacionar protocolo e resposta biológica",
+            "Impossibilidade de construir consistência ao longo do tempo",
+            "Maior exposição profissional por ausência de rastreabilidade",
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0" />
+              <span className="text-white/40 leading-relaxed">{item}</span>
             </div>
-            <div className="space-y-3">
-              {[
-                { label: "Sem REGHEN", items: ["Registros manuais", "Sem padronização", "Dados isolados"] },
-                { label: "Com REGHEN", items: ["Fluxo estruturado", "Métricas padronizadas", "Dados comparáveis"] },
-              ].map((col) => (
-                <div key={col.label} className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
-                  <span className="text-white/50 text-xs uppercase tracking-wider block mb-3">{col.label}</span>
-                  <div className="space-y-2">
-                    {col.items.map((item) => (
-                      <div key={item} className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                        <span className="text-white/35 text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* SEÇÃO 5 – IMPACTO PRÁTICO */}
+      {/* SEÇÃO 4 – TRANSIÇÃO CONTROLADA */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto border-t border-white/[0.06]">
-        <h2 className="text-2xl font-light text-white mb-4">Impacto na sua prática</h2>
+        <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
+          Existe uma forma estruturada de organizar a prática clínica
+        </h2>
         <p className="text-white/40 leading-relaxed max-w-3xl mb-10">
-          Quando o cenário é estruturado, o profissional sai da tentativa e erro para a decisão informada. O REGHEN transforma cada procedimento em dado comparável — e cada dado em melhoria real.
+          Organizar variáveis técnicas, critérios de elegibilidade e métricas de evolução é o que transforma intervenção em prática consistente.
         </p>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="space-y-4 mb-10">
           {[
-            { title: "Clareza no registro", desc: "Cada atendimento gera dados padronizados que podem ser auditados e comparados." },
-            { title: "Base para decisão", desc: "Dados estruturados permitem identificar o que funciona — e replicar com segurança." },
-            { title: "Proteção profissional", desc: "Documentação rastreável que protege sua conduta e demonstra diligência clínica." },
+            "Registro clínico estruturado",
+            "Critérios objetivos de elegibilidade",
+            "Follow-up longitudinal automatizado",
+            "Consolidação de dados clínicos",
           ].map((item) => (
-            <div key={item.title} className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-              <h3 className="text-white text-lg font-medium mb-2">{item.title}</h3>
-              <p className="text-white/35 text-sm leading-relaxed">{item.desc}</p>
+            <div key={item} className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0" />
+              <span className="text-white/40 leading-relaxed">{item}</span>
             </div>
           ))}
+        </div>
+        <button
+          onClick={() => navigate("/estrutura-clinica")}
+          className="px-8 py-3 text-sm font-medium text-white/70 border border-white/15 rounded-lg hover:text-white hover:border-white/30 hover:bg-white/[0.04] transition-all"
+        >
+          Ver Estrutura Clínica
+        </button>
+      </section>
+
+      {/* SEÇÃO 5 – CTA FINAL (substitui o CTA padrão do layout) */}
+      <section className="py-24 px-8 md:px-16 text-center border-t border-white/[0.06]">
+        <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
+          Evoluir exige método.
+        </h2>
+        <p className="text-white/40 mb-8 max-w-xl mx-auto">
+          Clareza estrutural é o que permite consistência clínica ao longo do tempo.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`)}
+            className="px-8 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
+            Criar conta
+          </button>
+          <button
+            onClick={() => navigate("/estrutura-clinica")}
+            className="px-8 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
+          >
+            Ver Estrutura Clínica
+          </button>
         </div>
       </section>
     </InternalPageLayout>
