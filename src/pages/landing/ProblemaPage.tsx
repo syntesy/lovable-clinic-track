@@ -49,10 +49,10 @@ export default function ProblemaPage() {
             { num: "04", title: "Fragilidade documental", desc: "Sem registro estruturado, o profissional não consegue demonstrar que a conduta aplicada estava alinhada à ciência atual, aos critérios técnicos de elegibilidade e às variáveis biológicas do paciente." },
             { num: "05", title: "Evolução limitada da prática", desc: "Sem dados organizados, não é possível identificar padrões, ajustar protocolos com precisão ou construir método clínico consistente." },
           ].map((item) => (
-            <div key={item.num} className="flex gap-8 items-start">
-              <span className="text-primary/30 text-5xl font-light shrink-0 w-16">{item.num}</span>
+            <div key={item.num} className="group flex gap-8 items-start cursor-default">
+              <span className="text-primary/30 text-5xl font-light shrink-0 w-16 transition-all duration-300 group-hover:text-primary/60 group-hover:drop-shadow-[0_0_12px_rgba(160,111,76,0.3)]">{item.num}</span>
               <div>
-                <h3 className="text-white text-xl font-medium mb-2">{item.title}</h3>
+                <h3 className="text-white text-xl font-medium mb-2 transition-all duration-300 group-hover:text-primary/90">{item.title}</h3>
                 <p className="text-white/40 leading-relaxed">{item.desc}</p>
               </div>
             </div>
