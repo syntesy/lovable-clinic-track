@@ -65,7 +65,7 @@ const slides = [
     id: "integridade",
     number: "06",
     label: "SEGURANÇA",
-    route: "/integridade",
+    route: "/seguranca",
     bg: slideBg06,
     headline: "Rastreabilidade, auditoria e segurança jurídica",
     subtitle: "Cada registro é versionado, auditável e protegido com integridade criptográfica.",
