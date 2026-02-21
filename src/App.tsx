@@ -67,6 +67,8 @@ import ScorePage from "./pages/landing/ScorePage";
 import ResultadosPage from "./pages/landing/ResultadosPage";
 import EvidenciaPage from "./pages/landing/EvidenciaPage";
 import SegurancaPage from "./pages/landing/SegurancaPage";
+import FollowUpPage from "./pages/landing/FollowUpPage";
+import AcademyLandingPage from "./pages/landing/AcademyLandingPage";
 import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
 import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
@@ -124,6 +126,8 @@ const App = () => (
             <Route path="/resultados" element={<ResultadosPage />} />
             <Route path="/evidencia" element={<EvidenciaPage />} />
             <Route path="/seguranca" element={<SegurancaPage />} />
+            <Route path="/follow-up" element={<FollowUpPage />} />
+            <Route path="/academy-info" element={<AcademyLandingPage />} />
             <Route path="/landing-preview" element={<LandingPreview />} />
             
             {/* Patient Portal Routes - Single Function */}

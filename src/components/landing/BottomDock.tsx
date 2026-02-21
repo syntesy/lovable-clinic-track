@@ -3,12 +3,14 @@ import { motion } from "framer-motion";
 import { LayoutGrid, Gauge, LineChart, SlidersHorizontal, BookOpen, ShieldCheck } from "lucide-react";
 
 const dockItems = [
-  { id: "estrutura-clinica", label: "Estrutura Clínica", icon: LayoutGrid },
+  { id: "problema", label: "Problema", icon: LayoutGrid },
+  { id: "estrutura-clinica", label: "Estrutura Clínica", icon: SlidersHorizontal },
   { id: "score", label: "SCORE", icon: Gauge },
+  { id: "follow-up", label: "Follow-up", icon: LineChart },
   { id: "resultados", label: "Resultados", icon: LineChart },
-  { id: "padronizacao", label: "Padronização", icon: SlidersHorizontal },
   { id: "evidencia", label: "Evidência", icon: BookOpen },
-  { id: "integridade", label: "Integridade", icon: ShieldCheck },
+  { id: "seguranca", label: "Segurança", icon: ShieldCheck },
+  { id: "academy", label: "Academy", icon: BookOpen },
 ];
 
 const SCROLL_OFFSET = 100;
