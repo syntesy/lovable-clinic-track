@@ -33,7 +33,7 @@ export default function EstruturaClinicaPage() {
       {/* SEÇÃO 2 – PRINCIPAL */}
       <section className="py-24 px-8 md:px-16 max-w-5xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
-          O que acontece quando a prática é estruturada?
+          Como funciona uma prática clínica estruturada
         </h2>
         <p className="text-white/50 leading-relaxed max-w-3xl mb-14">
           Quando há método estruturado e mensuração longitudinal, cada intervenção passa a contribuir para consistência clínica aplicável.
