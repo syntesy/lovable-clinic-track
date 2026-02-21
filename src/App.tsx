@@ -66,7 +66,6 @@ import EstruturaClinicaPage from "./pages/landing/EstruturaClinicaPage";
 import ScorePage from "./pages/landing/ScorePage";
 import ResultadosPage from "./pages/landing/ResultadosPage";
 import EvidenciaPage from "./pages/landing/EvidenciaPage";
-import IntegridadePage from "./pages/landing/IntegridadePage";
 import SegurancaPage from "./pages/landing/SegurancaPage";
 import FollowupPanel from "./pages/FollowupPanel";
 import { RegistryDashboard, RegistryExport } from "./pages/Registry";
@@ -124,7 +123,6 @@ const App = () => (
             <Route path="/score" element={<ScorePage />} />
             <Route path="/resultados" element={<ResultadosPage />} />
             <Route path="/evidencia" element={<EvidenciaPage />} />
-            <Route path="/integridade" element={<IntegridadePage />} />
             <Route path="/seguranca" element={<SegurancaPage />} />
             <Route path="/landing-preview" element={<LandingPreview />} />
             
