@@ -99,16 +99,18 @@ const SCALE_OPTIONS = [
   "SF-36", "Lysholm", "AOFAS", "Harris Hip Score",
 ];
 
-const AUTOSAVE_KEY = "protocol_wizard_draft";
+function getAutosaveKey(clinicId?: string) {
+  return `protocol_wizard_draft_${clinicId || "unknown"}`;
+}
 
-function loadDraftFromStorage(): Partial<WizardState> | null {
+function loadDraftFromStorage(clinicId?: string): Partial<WizardState> | null {
   try {
-    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    const raw = localStorage.getItem(getAutosaveKey(clinicId));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     // Check if draft is less than 24h old
     if (parsed._savedAt && Date.now() - parsed._savedAt > 24 * 60 * 60 * 1000) {
-      localStorage.removeItem(AUTOSAVE_KEY);
+      localStorage.removeItem(getAutosaveKey(clinicId));
       return null;
     }
     return parsed;
@@ -117,14 +119,14 @@ function loadDraftFromStorage(): Partial<WizardState> | null {
   }
 }
 
-function saveDraftToStorage(state: WizardState) {
+function saveDraftToStorage(state: WizardState, clinicId?: string) {
   try {
-    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...state, _savedAt: Date.now() }));
+    localStorage.setItem(getAutosaveKey(clinicId), JSON.stringify({ ...state, _savedAt: Date.now() }));
   } catch { /* ignore */ }
 }
 
-function clearDraftFromStorage() {
-  localStorage.removeItem(AUTOSAVE_KEY);
+function clearDraftFromStorage(clinicId?: string) {
+  localStorage.removeItem(getAutosaveKey(clinicId));
 }
 
 export default function ProtocolCreate() {
@@ -134,8 +136,8 @@ export default function ProtocolCreate() {
   const { data: clinicId } = useClinicId();
   const checkTitleUnique = useCheckTitleUnique();
 
-  // Load from localStorage if available
-  const savedDraft = loadDraftFromStorage();
+  // Load from localStorage if available (scoped by clinic)
+  const savedDraft = loadDraftFromStorage(clinicId);
   const typeFromParams = (searchParams.get("type") as ProtocolType) || "INSTITUTIONAL";
 
   const [currentStep, setCurrentStep] = useState(savedDraft?.currentStep || 0);
@@ -210,14 +212,14 @@ export default function ProtocolCreate() {
   useEffect(() => {
     if (!isDirty) return;
     const timer = setInterval(() => {
-      saveDraftToStorage(getWizardState());
+      saveDraftToStorage(getWizardState(), clinicId);
     }, 30_000);
     return () => clearInterval(timer);
   }, [isDirty, getWizardState]);
 
   // Also save on step change
   useEffect(() => {
-    if (isDirty) saveDraftToStorage(getWizardState());
+    if (isDirty) saveDraftToStorage(getWizardState(), clinicId);
   }, [currentStep]);
 
   // ─── Validation ────────────────────────────────────────────────
@@ -382,7 +384,7 @@ export default function ProtocolCreate() {
     const payload = buildPayload("draft");
     await createMutation.mutateAsync(payload);
     setIsDirty(false);
-    clearDraftFromStorage();
+    clearDraftFromStorage(clinicId);
     navigate("/governanca/protocolos");
   };
 
@@ -408,7 +410,7 @@ export default function ProtocolCreate() {
     const payload = buildPayload("active");
     await createMutation.mutateAsync(payload);
     setIsDirty(false);
-    clearDraftFromStorage();
+    clearDraftFromStorage(clinicId);
     navigate("/governanca/protocolos");
   };
 
@@ -902,9 +904,24 @@ export default function ProtocolCreate() {
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
-          <ArrowLeft className="h-4 w-4 mr-2" />Voltar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
+            <ArrowLeft className="h-4 w-4 mr-2" />Voltar
+          </Button>
+          {savedDraft && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground text-xs"
+              onClick={() => {
+                clearDraftFromStorage(clinicId);
+                window.location.reload();
+              }}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />Limpar rascunho
+            </Button>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleSaveDraft} disabled={createMutation.isPending}>
             {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

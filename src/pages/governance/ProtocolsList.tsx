@@ -170,7 +170,7 @@ export default function ProtocolsList() {
                   </TableHeader>
                   <TableBody>
                     {protocols.map((protocol) => {
-                      const status = (protocol as any).status as ProtocolStatus || (protocol.is_active ? "active" : "draft");
+                      const status = protocol.status as ProtocolStatus;
                       return (
                         <TableRow key={protocol.id}>
                           <TableCell className="font-medium max-w-[200px] truncate">
