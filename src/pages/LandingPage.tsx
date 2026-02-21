@@ -139,7 +139,7 @@ export default function LandingPage() {
       {/* ═══ HEADER ═══ */}
       <header className="absolute top-0 left-0 right-0 z-30 px-8 md:px-12 h-20 flex items-center justify-between">
         <button onClick={() => navigate("/")} className="flex-shrink-0">
-          <img src={logoReghen} alt="REGHEN" className="h-7 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+          <img src={logoReghen} alt="REGHEN" className="h-[84px] w-auto opacity-80 hover:opacity-100 transition-opacity" />
         </button>
         <div className="flex items-center gap-3">
           <button
