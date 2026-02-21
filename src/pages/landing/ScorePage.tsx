@@ -68,9 +68,9 @@ export default function ScorePage() {
             { title: "Maior previsibilidade de resposta", desc: "Melhor correlação entre perfil do paciente e intervenção proposta." },
             { title: "Proteção documental", desc: "Registro claro de que a decisão foi fundamentada em critérios técnicos e alinhada à ciência atual." },
           ].map((item) => (
-            <div key={item.title} className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-              <h3 className="text-white text-lg font-medium mb-2">{item.title}</h3>
-              <p className="text-white/35 text-sm leading-relaxed">{item.desc}</p>
+            <div key={item.title} className="group p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all duration-500 hover:-translate-y-1 hover:border-white/[0.12] hover:bg-white/[0.04]" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>
+              <h3 className="text-white text-lg font-medium mb-2 transition-colors duration-500 group-hover:text-white">{item.title}</h3>
+              <p className="text-white/35 text-sm leading-relaxed transition-colors duration-500 group-hover:text-white/50">{item.desc}</p>
             </div>
           ))}
         </div>
