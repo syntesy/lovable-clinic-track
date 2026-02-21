@@ -4,9 +4,10 @@ import logoReghen from "@/assets/logo-reghen.png";
 
 interface InternalPageLayoutProps {
   children: React.ReactNode;
+  hideFooterCTA?: boolean;
 }
 
-export default function InternalPageLayout({ children }: InternalPageLayoutProps) {
+export default function InternalPageLayout({ children, hideFooterCTA = false }: InternalPageLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,28 +50,30 @@ export default function InternalPageLayout({ children }: InternalPageLayoutProps
       <main>{children}</main>
 
       {/* Footer CTA */}
-      <section className="py-24 px-8 md:px-16 text-center border-t border-white/[0.06]">
-        <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
-          Pronto para transformar sua prática?
-        </h2>
-        <p className="text-white/40 mb-8 max-w-xl mx-auto">
-          Comece agora com o REGHEN e tenha acesso à estrutura clínica que sua prática precisa.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <button
-            onClick={() => navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`)}
-            className="px-8 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
-          >
-            Criar conta
-          </button>
-          <button
-            onClick={() => navigate("/")}
-            className="px-8 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
-          >
-            Ver demonstração
-          </button>
-        </div>
-      </section>
+      {!hideFooterCTA && (
+        <section className="py-24 px-8 md:px-16 text-center border-t border-white/[0.06]">
+          <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
+            Pronto para transformar sua prática?
+          </h2>
+          <p className="text-white/40 mb-8 max-w-xl mx-auto">
+            Comece agora com o REGHEN e tenha acesso à estrutura clínica que sua prática precisa.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`)}
+              className="px-8 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            >
+              Criar conta
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="px-8 py-3 text-sm font-medium text-white/50 border border-white/10 rounded-lg hover:text-white hover:border-white/20 transition-all"
+            >
+              Ver demonstração
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
