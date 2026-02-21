@@ -6,37 +6,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Eye, Copy, Edit, ToggleLeft, ToggleRight, Shield, Loader2, Plus } from "lucide-react";
-import { useProtocolsList, useProtocolAreas, useUserRole, useDuplicateProtocol, useToggleProtocolActive, Protocol } from "@/hooks/useProtocols";
+import { Search, Eye, Copy, Edit, Shield, Loader2, Plus, Play, Pause, Archive } from "lucide-react";
+import { useProtocolsList, useProtocolAreas, useUserRole, useDuplicateProtocol, useChangeProtocolStatus, Protocol, ProtocolStatus } from "@/hooks/useProtocols";
 import { DuplicateProtocolModal } from "@/components/governance/DuplicateProtocolModal";
+import { ProtocolVersionHistory } from "@/components/governance/ProtocolVersionHistory";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type ProtocolType = "REGEN_BASE" | "DERIVED" | "INSTITUTIONAL";
+
+const STATUS_LABELS: Record<ProtocolStatus, string> = {
+  draft: "Rascunho",
+  active: "Ativo",
+  archived: "Arquivado",
+};
+
+const STATUS_VARIANTS: Record<ProtocolStatus, "default" | "secondary" | "outline"> = {
+  draft: "secondary",
+  active: "default",
+  archived: "outline",
+};
 
 export default function ProtocolsList() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ProtocolType>("REGEN_BASE");
   const [search, setSearch] = useState("");
   const [areaFilter, setAreaFilter] = useState<string>("all");
-  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<ProtocolStatus | "all">("all");
   const [duplicateTarget, setDuplicateTarget] = useState<Protocol | null>(null);
+  const [versionHistoryTarget, setVersionHistoryTarget] = useState<Protocol | null>(null);
 
   const { data: userRole, isLoading: roleLoading } = useUserRole();
   const { data: areas = [] } = useProtocolAreas();
   const duplicateMutation = useDuplicateProtocol();
-  const toggleActiveMutation = useToggleProtocolActive();
+  const changeStatusMutation = useChangeProtocolStatus();
 
   const filters = {
     search: search || undefined,
     area: areaFilter !== "all" ? areaFilter : undefined,
-    isActive: activeFilter === "all" ? undefined : activeFilter === "active",
+    status: statusFilter,
   };
 
   const { data: protocols = [], isLoading } = useProtocolsList(activeTab, filters);
 
   const canEdit = userRole === "admin" || userRole === "professional";
-  const isReadOnly = userRole === "nurse_tech";
 
   const handleDuplicate = async (title: string) => {
     if (!duplicateTarget) return;
@@ -48,11 +61,8 @@ export default function ProtocolsList() {
     navigate(`/governanca/protocolos/${newProto.id}/editar`);
   };
 
-  const handleToggleActive = (protocol: Protocol) => {
-    toggleActiveMutation.mutate({
-      protocolId: protocol.id,
-      isActive: !protocol.is_active,
-    });
+  const handleChangeStatus = (protocol: Protocol, newStatus: ProtocolStatus) => {
+    changeStatusMutation.mutate({ protocolId: protocol.id, newStatus });
   };
 
   if (roleLoading) {
@@ -105,14 +115,15 @@ export default function ProtocolsList() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={activeFilter} onValueChange={setActiveFilter}>
-          <SelectTrigger className="w-[140px]">
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProtocolStatus | "all")}>
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Ativos</SelectItem>
-            <SelectItem value="inactive">Inativos</SelectItem>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="draft">Rascunho</SelectItem>
+            <SelectItem value="active">Ativo</SelectItem>
+            <SelectItem value="archived">Arquivado</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -158,79 +169,121 @@ export default function ProtocolsList() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {protocols.map((protocol) => (
-                      <TableRow key={protocol.id}>
-                        <TableCell className="font-medium max-w-[200px] truncate">
-                          {protocol.title}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge variant="outline" className="text-xs">
-                            {protocol.area || "—"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <Badge variant={protocol.is_active ? "default" : "secondary"} className="text-xs">
-                            {protocol.is_active ? "Ativo" : "Inativo"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                          v{protocol.latest_version_label || "—"}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                          {protocol.updated_at
-                            ? format(new Date(protocol.updated_at), "dd/MM/yyyy", { locale: ptBR })
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => navigate(`/governanca/protocolos/${protocol.id}`)}
-                              title="Ver detalhes"
+                    {protocols.map((protocol) => {
+                      const status = (protocol as any).status as ProtocolStatus || (protocol.is_active ? "active" : "draft");
+                      return (
+                        <TableRow key={protocol.id}>
+                          <TableCell className="font-medium max-w-[200px] truncate">
+                            {protocol.title}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Badge variant="outline" className="text-xs">
+                              {protocol.area || "—"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant={STATUS_VARIANTS[status]} className="text-xs">
+                              {STATUS_LABELS[status]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <button
+                              className="text-sm text-primary hover:underline cursor-pointer"
+                              onClick={() => setVersionHistoryTarget(protocol)}
                             >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-
-                            {canEdit && (
+                              v{protocol.latest_version_label || "—"}
+                            </button>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                            {protocol.updated_at
+                              ? format(new Date(protocol.updated_at), "dd/MM/yyyy", { locale: ptBR })
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setDuplicateTarget(protocol)}
-                                title="Duplicar"
+                                onClick={() => navigate(`/governanca/protocolos/${protocol.id}`)}
+                                title="Ver detalhes"
                               >
-                                <Copy className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
-                            )}
 
-                            {canEdit && type !== "REGEN_BASE" && (
-                              <>
+                              {canEdit && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => navigate(`/governanca/protocolos/${protocol.id}/editar`)}
-                                  title="Editar"
+                                  onClick={() => setDuplicateTarget(protocol)}
+                                  title="Duplicar"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Copy className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleToggleActive(protocol)}
-                                  title={protocol.is_active ? "Desativar" : "Ativar"}
-                                >
-                                  {protocol.is_active ? (
-                                    <ToggleRight className="h-4 w-4 text-primary" />
-                                  ) : (
-                                    <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                              )}
+
+                              {canEdit && type !== "REGEN_BASE" && (
+                                <>
+                                  {status === "draft" && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => navigate(`/governanca/protocolos/${protocol.id}/editar`)}
+                                        title="Editar"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleChangeStatus(protocol, "active")}
+                                        title="Ativar protocolo"
+                                        disabled={changeStatusMutation.isPending}
+                                      >
+                                        <Play className="h-4 w-4 text-primary" />
+                                      </Button>
+                                    </>
                                   )}
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                  {status === "active" && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleChangeStatus(protocol, "draft")}
+                                        title="Voltar para rascunho"
+                                        disabled={changeStatusMutation.isPending}
+                                      >
+                                        <Pause className="h-4 w-4 text-muted-foreground" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleChangeStatus(protocol, "archived")}
+                                        title="Arquivar"
+                                        disabled={changeStatusMutation.isPending}
+                                      >
+                                        <Archive className="h-4 w-4 text-muted-foreground" />
+                                      </Button>
+                                    </>
+                                  )}
+                                  {status === "archived" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleChangeStatus(protocol, "draft")}
+                                      title="Restaurar como rascunho"
+                                      disabled={changeStatusMutation.isPending}
+                                    >
+                                      <Play className="h-4 w-4 text-primary" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -246,6 +299,14 @@ export default function ProtocolsList() {
         sourceTitle={duplicateTarget?.title || ""}
         onConfirm={handleDuplicate}
         isPending={duplicateMutation.isPending}
+      />
+
+      {/* Version History Dialog */}
+      <ProtocolVersionHistory
+        open={!!versionHistoryTarget}
+        onOpenChange={(open) => !open && setVersionHistoryTarget(null)}
+        protocolId={versionHistoryTarget?.id}
+        protocolTitle={versionHistoryTarget?.title || ""}
       />
     </div>
   );

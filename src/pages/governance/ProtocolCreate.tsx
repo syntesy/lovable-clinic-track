@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, Save, Loader2, Plus, Trash2, AlertTriangle, BookOpen, CheckCircle2 } from "lucide-react";
-import { useCreateProtocol, useClinicId } from "@/hooks/useProtocols";
+import { useCreateProtocol, useClinicId, useCheckTitleUnique } from "@/hooks/useProtocols";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -44,6 +45,34 @@ interface Reference {
 
 type ProtocolType = "REGEN_BASE" | "DERIVED" | "INSTITUTIONAL";
 
+interface WizardState {
+  title: string;
+  area: string;
+  protocolType: ProtocolType;
+  description: string;
+  diagnosis: string;
+  scoreMin: string;
+  scoreMax: string;
+  requiredExams: string[];
+  alerts: InclusionAlert[];
+  customAlertLabel: string;
+  procedureType: string;
+  technique: string;
+  volume: string;
+  volumeUnit: string;
+  numSessions: string;
+  sessionInterval: string;
+  scales: string[];
+  followupIntervals: string[];
+  primaryOutcome: string;
+  secondaryOutcome: string;
+  indicators: Indicator[];
+  references: Reference[];
+  reviewDate: string;
+  nextReviewMonths: string;
+  currentStep: number;
+}
+
 const STEPS = [
   { title: "Informações Gerais", description: "Nome, área e tipo" },
   { title: "Critérios de Inclusão", description: "Diagnóstico e alertas" },
@@ -70,54 +99,88 @@ const SCALE_OPTIONS = [
   "SF-36", "Lysholm", "AOFAS", "Harris Hip Score",
 ];
 
+const AUTOSAVE_KEY = "protocol_wizard_draft";
+
+function loadDraftFromStorage(): Partial<WizardState> | null {
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Check if draft is less than 24h old
+    if (parsed._savedAt && Date.now() - parsed._savedAt > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(AUTOSAVE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraftToStorage(state: WizardState) {
+  try {
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...state, _savedAt: Date.now() }));
+  } catch { /* ignore */ }
+}
+
+function clearDraftFromStorage() {
+  localStorage.removeItem(AUTOSAVE_KEY);
+}
+
 export default function ProtocolCreate() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const createMutation = useCreateProtocol();
   const { data: clinicId } = useClinicId();
+  const checkTitleUnique = useCheckTitleUnique();
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isDirty, setIsDirty] = useState(false);
+  // Load from localStorage if available
+  const savedDraft = loadDraftFromStorage();
+  const typeFromParams = (searchParams.get("type") as ProtocolType) || "INSTITUTIONAL";
+
+  const [currentStep, setCurrentStep] = useState(savedDraft?.currentStep || 0);
+  const [isDirty, setIsDirty] = useState(!!savedDraft);
+  const [titleError, setTitleError] = useState<string | null>(null);
 
   // Step 1 — General
-  const [title, setTitle] = useState("");
-  const [area, setArea] = useState("");
+  const [title, setTitle] = useState(savedDraft?.title || "");
+  const [area, setArea] = useState(savedDraft?.area || "");
   const [protocolType, setProtocolType] = useState<ProtocolType>(
-    (searchParams.get("type") as ProtocolType) || "INSTITUTIONAL"
+    savedDraft?.protocolType || typeFromParams
   );
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(savedDraft?.description || "");
 
   // Step 2 — Inclusion
-  const [diagnosis, setDiagnosis] = useState("");
-  const [scoreMin, setScoreMin] = useState("");
-  const [scoreMax, setScoreMax] = useState("");
-  const [requiredExams, setRequiredExams] = useState<string[]>([]);
-  const [alerts, setAlerts] = useState<InclusionAlert[]>(DEFAULT_ALERTS);
+  const [diagnosis, setDiagnosis] = useState(savedDraft?.diagnosis || "");
+  const [scoreMin, setScoreMin] = useState(savedDraft?.scoreMin || "");
+  const [scoreMax, setScoreMax] = useState(savedDraft?.scoreMax || "");
+  const [requiredExams, setRequiredExams] = useState<string[]>(savedDraft?.requiredExams || []);
+  const [alerts, setAlerts] = useState<InclusionAlert[]>(savedDraft?.alerts || DEFAULT_ALERTS);
   const [customAlertLabel, setCustomAlertLabel] = useState("");
 
   // Step 3 — Procedure
-  const [procedureType, setProcedureType] = useState("");
-  const [technique, setTechnique] = useState("");
-  const [volume, setVolume] = useState("");
-  const [volumeUnit, setVolumeUnit] = useState("ml");
-  const [numSessions, setNumSessions] = useState("");
-  const [sessionInterval, setSessionInterval] = useState("");
+  const [procedureType, setProcedureType] = useState(savedDraft?.procedureType || "");
+  const [technique, setTechnique] = useState(savedDraft?.technique || "");
+  const [volume, setVolume] = useState(savedDraft?.volume || "");
+  const [volumeUnit, setVolumeUnit] = useState(savedDraft?.volumeUnit || "ml");
+  const [numSessions, setNumSessions] = useState(savedDraft?.numSessions || "");
+  const [sessionInterval, setSessionInterval] = useState(savedDraft?.sessionInterval || "");
 
   // Step 4 — Follow-up
-  const [scales, setScales] = useState<string[]>([]);
-  const [followupIntervals, setFollowupIntervals] = useState<string[]>(["30", "90"]);
-  const [primaryOutcome, setPrimaryOutcome] = useState("");
-  const [secondaryOutcome, setSecondaryOutcome] = useState("");
+  const [scales, setScales] = useState<string[]>(savedDraft?.scales || []);
+  const [followupIntervals, setFollowupIntervals] = useState<string[]>(savedDraft?.followupIntervals || ["30", "90"]);
+  const [primaryOutcome, setPrimaryOutcome] = useState(savedDraft?.primaryOutcome || "");
+  const [secondaryOutcome, setSecondaryOutcome] = useState(savedDraft?.secondaryOutcome || "");
 
   // Step 5 — Indicators
-  const [indicators, setIndicators] = useState<Indicator[]>([]);
+  const [indicators, setIndicators] = useState<Indicator[]>(savedDraft?.indicators || []);
 
   // Step 6 — Evidence
-  const [references, setReferences] = useState<Reference[]>([]);
-  const [reviewDate, setReviewDate] = useState("");
-  const [nextReviewMonths, setNextReviewMonths] = useState("");
+  const [references, setReferences] = useState<Reference[]>(savedDraft?.references || []);
+  const [reviewDate, setReviewDate] = useState(savedDraft?.reviewDate || "");
+  const [nextReviewMonths, setNextReviewMonths] = useState(savedDraft?.nextReviewMonths || "");
 
-  // Dirty tracking
+  // Dirty tracking & unsaved warning
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
@@ -131,12 +194,39 @@ export default function ProtocolCreate() {
 
   const markDirty = () => { if (!isDirty) setIsDirty(true); };
 
+  // Auto-save to localStorage every 30s
+  const getWizardState = useCallback((): WizardState => ({
+    title, area, protocolType, description, diagnosis, scoreMin, scoreMax,
+    requiredExams, alerts, customAlertLabel, procedureType, technique, volume,
+    volumeUnit, numSessions, sessionInterval, scales, followupIntervals,
+    primaryOutcome, secondaryOutcome, indicators, references, reviewDate,
+    nextReviewMonths, currentStep,
+  }), [title, area, protocolType, description, diagnosis, scoreMin, scoreMax,
+    requiredExams, alerts, customAlertLabel, procedureType, technique, volume,
+    volumeUnit, numSessions, sessionInterval, scales, followupIntervals,
+    primaryOutcome, secondaryOutcome, indicators, references, reviewDate,
+    nextReviewMonths, currentStep]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const timer = setInterval(() => {
+      saveDraftToStorage(getWizardState());
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [isDirty, getWizardState]);
+
+  // Also save on step change
+  useEffect(() => {
+    if (isDirty) saveDraftToStorage(getWizardState());
+  }, [currentStep]);
+
   // ─── Validation ────────────────────────────────────────────────
   const validateStep = (step: number): string | null => {
     switch (step) {
       case 0:
         if (title.trim().length < 5) return "Nome deve ter pelo menos 5 caracteres.";
         if (!area) return "Área clínica é obrigatória.";
+        if (titleError) return titleError;
         return null;
       case 1:
         if (scoreMin && scoreMax && Number(scoreMin) > Number(scoreMax))
@@ -160,6 +250,16 @@ export default function ProtocolCreate() {
         return null;
     }
   };
+
+  // Title uniqueness check (debounced)
+  useEffect(() => {
+    if (title.trim().length < 5) { setTitleError(null); return; }
+    const timer = setTimeout(async () => {
+      const isUnique = await checkTitleUnique(title.trim());
+      setTitleError(isUnique ? null : "Já existe um protocolo com este nome.");
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [title]);
 
   const handleNext = () => {
     const error = validateStep(currentStep);
@@ -253,13 +353,12 @@ export default function ProtocolCreate() {
       inclusion_criteria: inclusionCriteria,
       exclusion_criteria: null,
       required_exams: requiredExams,
-      technique_summary: `${procedureType} — ${technique}`,
+      technique_summary: procedureType ? `${procedureType} — ${technique}` : technique || null,
       checklist_template: null,
       evidence_level: sortedRefs[0]?.evidence_level || null,
       evidence_notes: null,
       evidence_refs: sortedRefs.length > 0 ? sortedRefs : null,
-      is_active: status === "active",
-      // Extended data stored in a JSON field
+      status,
       extended_data: {
         procedure: procedureData,
         followup: followupData,
@@ -283,6 +382,7 @@ export default function ProtocolCreate() {
     const payload = buildPayload("draft");
     await createMutation.mutateAsync(payload);
     setIsDirty(false);
+    clearDraftFromStorage();
     navigate("/governanca/protocolos");
   };
 
@@ -297,9 +397,18 @@ export default function ProtocolCreate() {
       }
     }
 
+    // Check bibliography requirement for activation
+    const validRefs = references.filter((r) => r.title.trim() && r.year.trim());
+    if (validRefs.length === 0) {
+      setCurrentStep(5);
+      toast.error("Não é possível ativar protocolo sem pelo menos uma referência científica.");
+      return;
+    }
+
     const payload = buildPayload("active");
     await createMutation.mutateAsync(payload);
     setIsDirty(false);
+    clearDraftFromStorage();
     navigate("/governanca/protocolos");
   };
 
@@ -322,7 +431,13 @@ export default function ProtocolCreate() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label>Nome do protocolo *</Label>
-          <Input value={title} onChange={(e) => { setTitle(e.target.value); markDirty(); }} placeholder="Mínimo 5 caracteres" />
+          <Input
+            value={title}
+            onChange={(e) => { setTitle(e.target.value); markDirty(); }}
+            placeholder="Mínimo 5 caracteres"
+            className={titleError ? "border-destructive" : ""}
+          />
+          {titleError && <p className="text-xs text-destructive">{titleError}</p>}
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -602,6 +717,7 @@ export default function ProtocolCreate() {
 
   const renderStep6 = () => {
     const currentYear = new Date().getFullYear();
+    const hasValidRef = references.some((r) => r.title.trim() && r.year.trim());
     return (
       <Card>
         <CardHeader>
@@ -617,7 +733,7 @@ export default function ProtocolCreate() {
               <Badge variant="outline" className="text-xs">
                 {references.length} referência{references.length > 1 ? "s" : ""} cadastrada{references.length > 1 ? "s" : ""}
               </Badge>
-              {references.some((r) => r.title && r.year) && (
+              {hasValidRef && (
                 <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
                   <CheckCircle2 className="h-3 w-3 mr-1" />Baseado em Evidência
                 </Badge>
@@ -626,9 +742,15 @@ export default function ProtocolCreate() {
           )}
 
           {references.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Nenhuma referência adicionada. Protocolo não pode ser ativado sem evidência.
-            </p>
+            <div className="text-center py-6 border border-dashed rounded-lg border-destructive/30 bg-destructive/5">
+              <AlertTriangle className="h-5 w-5 mx-auto text-destructive mb-2" />
+              <p className="text-sm text-destructive font-medium">
+                Obrigatório para ativação
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Protocolo não pode ser ativado sem pelo menos uma referência científica.
+              </p>
+            </div>
           )}
 
           {[...references].sort((a, b) => Number(b.year) - Number(a.year)).map((ref, idx) => (
@@ -734,11 +856,17 @@ export default function ProtocolCreate() {
           if (isDirty) {
             if (!window.confirm("Existem alterações não salvas. Deseja sair?")) return;
           }
+          clearDraftFromStorage();
           navigate("/governanca/protocolos");
         }}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold text-foreground">Novo Protocolo</h1>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Novo Protocolo</h1>
+          {isDirty && (
+            <p className="text-xs text-muted-foreground">Rascunho salvo automaticamente</p>
+          )}
+        </div>
       </div>
 
       {/* Step Indicator */}
@@ -789,7 +917,7 @@ export default function ProtocolCreate() {
           ) : (
             <Button onClick={handleFinalize} disabled={createMutation.isPending}>
               {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Criar Protocolo
+              Criar e Ativar
             </Button>
           )}
         </div>

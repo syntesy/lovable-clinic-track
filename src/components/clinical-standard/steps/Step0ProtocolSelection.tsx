@@ -21,9 +21,9 @@ export function Step0ProtocolSelection({
   onResponsibleChange,
 }: Step0Props) {
   // Fetch all active protocols (all types)
-  const { data: baseProtocols, isLoading: loadingBase } = useProtocolsList("REGEN_BASE", { isActive: true });
-  const { data: derivedProtocols, isLoading: loadingDerived } = useProtocolsList("DERIVED", { isActive: true });
-  const { data: institutionalProtocols, isLoading: loadingInst } = useProtocolsList("INSTITUTIONAL", { isActive: true });
+  const { data: baseProtocols, isLoading: loadingBase } = useProtocolsList("REGEN_BASE", { status: "active" });
+  const { data: derivedProtocols, isLoading: loadingDerived } = useProtocolsList("DERIVED", { status: "active" });
+  const { data: institutionalProtocols, isLoading: loadingInst } = useProtocolsList("INSTITUTIONAL", { status: "active" });
 
   // Fetch professionals and current user
   const { data: professionals, isLoading: loadingProfessionals } = useClinicProfessionals();
