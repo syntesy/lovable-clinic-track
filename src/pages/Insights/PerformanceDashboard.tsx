@@ -14,6 +14,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,6 +39,9 @@ import {
   DEFAULT_TIMEPOINT,
 } from '@/hooks/usePerformanceBenchmark';
 import { OutcomeTimepoint } from '@/hooks/useCollectiveOutcomes';
+import { usePrpOaKl1M3Report } from '@/hooks/usePrpOaKl1M3Report';
+import { PrpOaKl1M3ReportCard } from '@/components/insights/PrpOaKl1M3ReportCard';
+import { FlaskConical as FlaskIcon } from 'lucide-react';
 
 const TIMEPOINT_LABELS: Record<OutcomeTimepoint, string> = {
   baseline: 'Baseline',
@@ -414,6 +418,7 @@ function LoadingState() {
 export default function PerformanceDashboard() {
   const [selectedTimepoint, setSelectedTimepoint] = useState<OutcomeTimepoint>(DEFAULT_TIMEPOINT);
   const { data, isLoading, error } = usePerformanceBenchmark(selectedTimepoint);
+  const { data: prpReport, isLoading: prpLoading, error: prpError } = usePrpOaKl1M3Report('CLINIC');
 
   return (
     <div className="space-y-6">
@@ -438,72 +443,101 @@ export default function PerformanceDashboard() {
         </AlertDescription>
       </Alert>
 
-      {/* Official timepoint note */}
-      <Alert variant="default" className="bg-muted/30 border-muted">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Selo principal: M3 (3 meses).</strong> Este é o timepoint oficial para avaliação de performance.
-          Outros timepoints (M1, M6, M12) são análises complementares.
-        </AlertDescription>
-      </Alert>
+      <Tabs defaultValue="seal" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="seal">Selo de Performance</TabsTrigger>
+          <TabsTrigger value="prp-oa-kl1" className="flex items-center gap-1">
+            <FlaskIcon className="h-4 w-4" />
+            PRP · Artrose KL1 · M3
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Content */}
-      {isLoading ? (
-        <LoadingState />
-      ) : error ? (
-        <Alert variant="destructive">
-          <XCircle className="h-4 w-4" />
-          <AlertDescription>
-            Erro ao carregar dados de performance. Tente novamente mais tarde.
-          </AlertDescription>
-        </Alert>
-      ) : !data?.isEligible ? (
-        <Card className="bg-muted/50">
-          <CardContent className="py-12 text-center">
-            <Info className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">Dados insuficientes para benchmark</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {data?.eligibilityReason || 'Continue registrando protocolos padronizados e coletando outcomes para receber seu selo de performance clínica.'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-6">
-          <AdherenceSealCard seal={data.adherenceSeal} />
-          <ResultsSealCard 
-            seal={data.resultsSeal} 
-            selectedTimepoint={selectedTimepoint}
-            onTimepointChange={setSelectedTimepoint}
-          />
-        </div>
-      )}
+        <TabsContent value="seal" className="space-y-6">
+          {/* Official timepoint note */}
+          <Alert variant="default" className="bg-muted/30 border-muted">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Selo principal: M3 (3 meses).</strong> Este é o timepoint oficial para avaliação de performance.
+              Outros timepoints (M1, M6, M12) são análises complementares.
+            </AlertDescription>
+          </Alert>
 
-      {/* Methodology Note */}
-      <Card className="bg-muted/30">
-        <CardContent className="py-4">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>
-                <strong>Metodologia:</strong> O selo compara suas métricas com a média nacional 
-                de todos os profissionais REGHEN em clusters clínicos semelhantes (mesma patologia, 
-                região, gravidade). Apenas casos com baseline e follow-up completos são considerados.
-              </p>
-              <p>
-                <strong>Classificação:</strong>{' '}
-                <span className="text-clinical-safe">🟢 ≥+15%</span> acima da média,{' '}
-                <span className="text-clinical-warning">🟡 ±15%</span> dentro da média,{' '}
-                <span className="text-destructive">🔴 ≤-15%</span> oportunidade de otimização.
-              </p>
-              <p>
-                <strong>Modo conservador:</strong> Clusters com 10-19 casos exibem{' '}
-                <span className="text-clinical-warning">🟡 dados iniciais</span> independente do resultado,
-                indicando que a estimativa pode variar com mais dados.
-              </p>
+          {/* Content */}
+          {isLoading ? (
+            <LoadingState />
+          ) : error ? (
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertDescription>
+                Erro ao carregar dados de performance. Tente novamente mais tarde.
+              </AlertDescription>
+            </Alert>
+          ) : !data?.isEligible ? (
+            <Card className="bg-muted/50">
+              <CardContent className="py-12 text-center">
+                <Info className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">Dados insuficientes para benchmark</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  {data?.eligibilityReason || 'Continue registrando protocolos padronizados e coletando outcomes para receber seu selo de performance clínica.'}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6">
+              <AdherenceSealCard seal={data.adherenceSeal} />
+              <ResultsSealCard 
+                seal={data.resultsSeal} 
+                selectedTimepoint={selectedTimepoint}
+                onTimepointChange={setSelectedTimepoint}
+              />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+
+          {/* Methodology Note */}
+          <Card className="bg-muted/30">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p>
+                    <strong>Metodologia:</strong> O selo compara suas métricas com a média nacional 
+                    de todos os profissionais REGHEN em clusters clínicos semelhantes (mesma patologia, 
+                    região, gravidade). Apenas casos com baseline e follow-up completos são considerados.
+                  </p>
+                  <p>
+                    <strong>Classificação:</strong>{' '}
+                    <span className="text-clinical-safe">🟢 ≥+15%</span> acima da média,{' '}
+                    <span className="text-clinical-warning">🟡 ±15%</span> dentro da média,{' '}
+                    <span className="text-destructive">🔴 ≤-15%</span> oportunidade de otimização.
+                  </p>
+                  <p>
+                    <strong>Modo conservador:</strong> Clusters com 10-19 casos exibem{' '}
+                    <span className="text-clinical-warning">🟡 dados iniciais</span> independente do resultado,
+                    indicando que a estimativa pode variar com mais dados.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="prp-oa-kl1" className="space-y-4">
+          <Alert variant="default" className="bg-muted/30 border-muted">
+            <FlaskIcon className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Relatório: PRP em Artrose KL1 – Follow-up 3 meses.</strong>{' '}
+              Coorte restrito a diagnósticos confirmados (Kellgren-Lawrence 1) com baseline e M3 completos.
+              Dados exclusivos da sua clínica.
+            </AlertDescription>
+          </Alert>
+          <PrpOaKl1M3ReportCard
+            data={prpReport}
+            isLoading={prpLoading}
+            error={prpError}
+            scope="CLINIC"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
