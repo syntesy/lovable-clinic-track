@@ -909,7 +909,17 @@ const AtendimentoDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={() => setIsAddProcedureOpen(true)} disabled={isClosed}>
+                  <Button onClick={() => {
+                    // Check diagnosis_stage before allowing procedure
+                    const diagStage = (dbAttendancePathology as any)?.diagnosis_stage;
+                    if (diagStage !== 'CONFIRMED') {
+                      toast.error("Para iniciar um procedimento, registre o diagnóstico confirmado por imagem.");
+                      setIsConfirmedDiagnosisVisible(true);
+                      setCurrentStep("clinical");
+                      return;
+                    }
+                    setIsAddProcedureOpen(true);
+                  }} disabled={isClosed}>
                     <Plus className="w-4 h-4 mr-2" />
                     Adicionar Procedimento
                   </Button>

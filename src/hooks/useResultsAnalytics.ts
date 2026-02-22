@@ -232,28 +232,15 @@ export function useResultsAnalytics(
   return { data, loading, error, refetch: fetchData };
 }
 
-// ─── Exemplo de uso (comentado) ───────────────────────────────────
+// ─── NOTA TÉCNICA: Clusters & Analytics ───────────────────────
 //
-// import { useResultsAnalytics } from "@/hooks/useResultsAnalytics";
+// Para cálculos agregados e clusters válidos, a RPC get_results_analytics
+// deve filtrar apenas:
+//   - diagnosis_stage = 'CONFIRMED'
+//   - eva_pain IS NOT NULL AND ifn_function IS NOT NULL
 //
-// function MyComponent() {
-//   const { data, loading, error } = useResultsAnalytics({
-//     start: "2025-01-01T00:00:00Z",
-//     end:   "2025-12-31T23:59:59Z",
-//     procedureType: "PRP",
-//   });
+// Índices parciais criados no banco:
+//   idx_attendance_pathology_confirmed (attendance_id) WHERE diagnosis_stage = 'CONFIRMED'
+//   idx_attendance_pathology_confirmed_full (pathology_id, structural_grade) WHERE diagnosis_stage = 'CONFIRMED'
 //
-//   if (loading) return <p>Carregando…</p>;
-//   if (error)   return <p>Erro: {error}</p>;
-//   if (!data)   return null;
-//
-//   return (
-//     <div>
-//       <p>Total: {data.kpis.total_cases}</p>
-//       <p>Respondedores: {data.kpis.response_rate_pct}%</p>
-//       {data.cases.items.map(c => (
-//         <div key={c.psr_id}>{c.patient_display} — {c.classification}</div>
-//       ))}
-//     </div>
-//   );
-// }
+// View materializada: considerar quando volume > ~50k confirmados.

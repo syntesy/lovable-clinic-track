@@ -127,6 +127,8 @@ export type Database = {
           attendance_id: string
           category_id: string
           clinical_observation: string | null
+          confirmed_at: string | null
+          confirmed_by_professional_id: string | null
           created_at: string
           custom_pathology_label: string | null
           diagnosis_stage: string
@@ -150,6 +152,8 @@ export type Database = {
           attendance_id: string
           category_id: string
           clinical_observation?: string | null
+          confirmed_at?: string | null
+          confirmed_by_professional_id?: string | null
           created_at?: string
           custom_pathology_label?: string | null
           diagnosis_stage?: string
@@ -173,6 +177,8 @@ export type Database = {
           attendance_id?: string
           category_id?: string
           clinical_observation?: string | null
+          confirmed_at?: string | null
+          confirmed_by_professional_id?: string | null
           created_at?: string
           custom_pathology_label?: string | null
           diagnosis_stage?: string

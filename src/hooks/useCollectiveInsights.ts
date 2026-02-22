@@ -76,6 +76,11 @@ export function useCollectiveInsights(filters: DashboardFilters) {
         .eq('is_comparable', true)
         .eq('procedure_type', filters.procedure_type);
 
+      // NOTE: Clusters/analytics should only use CONFIRMED diagnoses with complete EVA/IFN.
+      // The attendance_pathology filter (diagnosis_stage='CONFIRMED') is applied at the
+      // procedure_standard_records level via joins when applicable.
+      // Future: materialized view when volume > ~50k confirmed records.
+
       // Apply status filter
       if (filters.status === 'eligible') {
         query = query.eq('clinical_standard_status', 'eligible');
