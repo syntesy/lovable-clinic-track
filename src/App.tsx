@@ -103,6 +103,7 @@ import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate"
 import { QAModeBanner } from "./components/QAModeBanner";
 import { ProtocolsList, ProtocolDetail, ProtocolEdit, ProtocolCreate, ConformidadeDashboard } from "./pages/governance";
 import { RequireGovernanceAccess } from "./components/governance/RequireGovernanceAccess";
+import DevRlsTest from "./pages/DevRlsTest";
 
 const queryClient = new QueryClient();
 
@@ -456,7 +457,10 @@ const App = () => (
           <Route path="/governanca/protocolos/novo" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolCreate /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           <Route path="/governanca/protocolos/:protocolId" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolDetail /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           <Route path="/governanca/protocolos/:protocolId/editar" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolEdit /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
-          <Route path="/governanca/conformidade" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ConformidadeDashboard /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
+           <Route path="/governanca/conformidade" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ConformidadeDashboard /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
+
+          {/* DEV — temporary RLS test page */}
+          <Route path="/dev/rls-test" element={<ProtectedRoute><DevRlsTest /></ProtectedRoute>} />
 
           {/* Admin Routes - Protected by RequireAdminRole */}
           <Route
