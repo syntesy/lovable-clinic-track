@@ -63,6 +63,21 @@ const EPI_US_GUIDED_OPTIONS = [
   { value: "UNKNOWN", label: "Não informado" },
 ] as const;
 
+const PHYSIO_TYPE_OPTIONS = [
+  { value: "CONVENTIONAL", label: "Convencional" },
+  { value: "EXERCISE", label: "Exercício terapêutico estruturado" },
+  { value: "MANUAL", label: "Terapia manual" },
+  { value: "INVASIVE", label: "Fisioterapia invasiva" },
+  { value: "UNKNOWN", label: "Não informado" },
+] as const;
+
+const PHYSIO_DURATION_OPTIONS = [
+  { value: "LT_4W", label: "< 4 semanas" },
+  { value: "M1_3", label: "1–3 meses" },
+  { value: "GT_3M", label: "> 3 meses" },
+  { value: "UNKNOWN", label: "Não informado" },
+] as const;
+
 export interface PreviousTreatmentsState {
   treatments: string[];
   lastTreatmentTimeBucket: string;
@@ -72,6 +87,8 @@ export interface PreviousTreatmentsState {
   orthobiologicPrevType: string;
   orthobiologicPrevOtherText: string;
   epiUsGuided: string;
+  physioType: string;
+  physioDuration: string;
 }
 
 interface PreviousTreatmentsCardProps {
@@ -99,7 +116,7 @@ export function PreviousTreatmentsCard({
   orthobiologicPrevValidationError = null,
   orthobiologicPrevOtherValidationError = null,
 }: PreviousTreatmentsCardProps) {
-  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided } = value;
+  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided, physioType, physioDuration } = value;
 
   const handleTreatmentToggle = useCallback(
     (treatmentValue: string, checked: boolean) => {
@@ -121,10 +138,12 @@ export function PreviousTreatmentsCard({
       const newOrthobiologicPrevType = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevType : "";
       const newOrthobiologicPrevOtherText = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevOtherText : "";
       const newEpiUsGuided = next.includes("EPI") ? epiUsGuided : "";
+      const newPhysioType = next.includes("PHYSIOTHERAPY") ? physioType : "";
+      const newPhysioDuration = next.includes("PHYSIOTHERAPY") ? physioDuration : "";
 
-      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity, orthobiologicPrevType: newOrthobiologicPrevType, orthobiologicPrevOtherText: newOrthobiologicPrevOtherText, epiUsGuided: newEpiUsGuided });
+      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity, orthobiologicPrevType: newOrthobiologicPrevType, orthobiologicPrevOtherText: newOrthobiologicPrevOtherText, epiUsGuided: newEpiUsGuided, physioType: newPhysioType, physioDuration: newPhysioDuration });
     },
-    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided, onChange]
+    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided, physioType, physioDuration, onChange]
   );
 
   return (
@@ -154,6 +173,50 @@ export function PreviousTreatmentsCard({
             </div>
           ))}
         </div>
+
+        {/* PHYSIOTHERAPY type + duration dropdowns (optional) */}
+        {treatments.includes("PHYSIOTHERAPY") && (
+          <div className="space-y-3 pl-6">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Tipo de fisioterapia predominante</Label>
+              <Select
+                value={physioType}
+                onValueChange={(v) => onChange({ ...value, physioType: v })}
+                disabled={disabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PHYSIO_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Duração aproximada</Label>
+              <Select
+                value={physioDuration}
+                onValueChange={(v) => onChange({ ...value, physioDuration: v })}
+                disabled={disabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PHYSIO_DURATION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
 
         {/* SHOCKWAVE type dropdown */}
         {treatments.includes("SHOCKWAVE") && (

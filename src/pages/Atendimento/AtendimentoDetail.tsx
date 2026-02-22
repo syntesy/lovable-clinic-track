@@ -75,6 +75,8 @@ const AtendimentoDetail = () => {
     orthobiologicPrevType: "",
     orthobiologicPrevOtherText: "",
     epiUsGuided: "",
+    physioType: "",
+    physioDuration: "",
   });
 
   // Plan step modals
@@ -124,6 +126,7 @@ const AtendimentoDetail = () => {
       const laser = details?.laser as Record<string, unknown> | null;
       const orthobiologicPrev = details?.orthobiologic_prev as Record<string, unknown> | null;
       const epi = details?.epi as Record<string, unknown> | null;
+      const physio = details?.physiotherapy as Record<string, unknown> | null;
       setPreviousTreatments({
         treatments: dbPreviousTreatments.treatments ?? [],
         lastTreatmentTimeBucket: dbPreviousTreatments.last_treatment_time_bucket ?? "",
@@ -133,6 +136,8 @@ const AtendimentoDetail = () => {
         orthobiologicPrevType: (orthobiologicPrev?.type as string) ?? "",
         orthobiologicPrevOtherText: (orthobiologicPrev?.other_text as string) ?? "",
         epiUsGuided: (epi?.us_guided as string) ?? "",
+        physioType: (physio?.type as string) ?? "",
+        physioDuration: (physio?.duration as string) ?? "",
       });
     }
   }, [dbPreviousTreatments]);
@@ -284,6 +289,12 @@ const AtendimentoDetail = () => {
     }
     if (previousTreatments.treatments.includes("EPI") && previousTreatments.epiUsGuided) {
       details.epi = { us_guided: previousTreatments.epiUsGuided };
+    }
+    if (previousTreatments.treatments.includes("PHYSIOTHERAPY") && (previousTreatments.physioType || previousTreatments.physioDuration)) {
+      const physio: Record<string, string> = {};
+      if (previousTreatments.physioType) physio.type = previousTreatments.physioType;
+      if (previousTreatments.physioDuration) physio.duration = previousTreatments.physioDuration;
+      details.physiotherapy = physio;
     }
 
     // NONE enforcement
