@@ -60,6 +60,8 @@ const AtendimentoDetail = () => {
   const [completedSteps] = useState<AttendanceStepId[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isSavingTreatments, setIsSavingTreatments] = useState(false);
+  const [treatmentsValidationError, setTreatmentsValidationError] = useState<string | null>(null);
   const [previousTreatments, setPreviousTreatments] = useState<PreviousTreatmentsState>({
     treatments: [],
     lastTreatmentTimeBucket: "",
@@ -205,7 +207,54 @@ const AtendimentoDetail = () => {
   }, [attendance, attendanceId, queryClient]);
 
 
-  // Handler: Generate Report with gating
+  // Handler: Save previous treatments via UPSERT
+  const handleSavePreviousTreatments = useCallback(async () => {
+    if (!attendanceId) return;
+
+    // Validation: if OTHER is selected, otherText is required
+    if (previousTreatments.treatments.includes("OTHER") && !previousTreatments.otherText.trim()) {
+      setTreatmentsValidationError("Especifique o tratamento.");
+      return;
+    }
+    setTreatmentsValidationError(null);
+
+    // Build details JSONB
+    const details: Record<string, unknown> = {};
+    if (previousTreatments.treatments.includes("OTHER") && previousTreatments.otherText.trim()) {
+      details.other_text = previousTreatments.otherText.trim();
+    }
+
+    // NONE enforcement
+    const finalTreatments = previousTreatments.treatments.includes("NONE")
+      ? ["NONE"]
+      : previousTreatments.treatments;
+
+    setIsSavingTreatments(true);
+    try {
+      const payload = {
+        attendance_id: attendanceId,
+        treatments: finalTreatments,
+        last_treatment_time_bucket: previousTreatments.lastTreatmentTimeBucket || null,
+        details: details as unknown as import("@/integrations/supabase/types").Json,
+      };
+      const { error } = await supabase
+        .from("attendance_previous_treatments")
+        .upsert(payload, { onConflict: "attendance_id" });
+
+      if (error) throw error;
+
+      toast.success("Tratamentos prévios salvos");
+      await queryClient.invalidateQueries({
+        queryKey: ["attendance-previous-treatments", attendanceId],
+      });
+    } catch (e) {
+      logError("previous_treatments.save.error", { attendanceId });
+      toast.error("Erro ao salvar tratamentos prévios");
+    } finally {
+      setIsSavingTreatments(false);
+    }
+  }, [attendanceId, previousTreatments, queryClient]);
+
   const handleGenerateReport = useCallback(() => {
     logInfo("report.generate.clicked", { attendanceId: attendanceId || "unknown" });
 
@@ -461,8 +510,14 @@ const AtendimentoDetail = () => {
             {/* Previous Treatments Card */}
             <PreviousTreatmentsCard
               value={previousTreatments}
-              onChange={setPreviousTreatments}
+              onChange={(v) => {
+                setPreviousTreatments(v);
+                setTreatmentsValidationError(null);
+              }}
+              onSave={handleSavePreviousTreatments}
               disabled={isClosed}
+              isSaving={isSavingTreatments}
+              validationError={treatmentsValidationError}
             />
           </div>
         );
