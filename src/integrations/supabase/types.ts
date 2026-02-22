@@ -126,8 +126,10 @@ export type Database = {
         Row: {
           attendance_id: string
           category_id: string
+          clinical_observation: string | null
           created_at: string
           custom_pathology_label: string | null
+          diagnosis_stage: string
           disc_level_enum: string | null
           disc_location_enum: string | null
           eva_pain: number | null
@@ -147,8 +149,10 @@ export type Database = {
         Insert: {
           attendance_id: string
           category_id: string
+          clinical_observation?: string | null
           created_at?: string
           custom_pathology_label?: string | null
+          diagnosis_stage?: string
           disc_level_enum?: string | null
           disc_location_enum?: string | null
           eva_pain?: number | null
@@ -168,8 +172,10 @@ export type Database = {
         Update: {
           attendance_id?: string
           category_id?: string
+          clinical_observation?: string | null
           created_at?: string
           custom_pathology_label?: string | null
+          diagnosis_stage?: string
           disc_level_enum?: string | null
           disc_location_enum?: string | null
           eva_pain?: number | null
