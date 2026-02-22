@@ -16,8 +16,9 @@ import { Info, Users, TrendingUp, Shield, FlaskConical, Activity, HeartPulse, Ta
 import { useCollectiveInsights, DashboardFilters, getMostFrequent } from '@/hooks/useCollectiveInsights';
 import { useCollectiveOutcomes, OutcomeTimepoint, ResponseThreshold, ClusterOutcomeAggregation, TrendInfo } from '@/hooks/useCollectiveOutcomes';
 import { humanReadableClusterKey } from '@/lib/cluster-signature-generator';
-import { usePrpOaKl1M3Report } from '@/hooks/usePrpOaKl1M3Report';
-import { PrpOaKl1M3ReportCard } from '@/components/insights/PrpOaKl1M3ReportCard';
+import { useProcedureOutcomeReport, type OutcomeReportParams, REPORT_PRESETS } from '@/hooks/useProcedureOutcomeReport';
+import { OutcomeReportCard } from '@/components/insights/OutcomeReportCard';
+import { OutcomeReportFilterPanel } from '@/components/insights/OutcomeReportFilterPanel';
 import {
   PATHOLOGY_OPTIONS,
   ANATOMIC_REGION_OPTIONS,
@@ -101,7 +102,8 @@ export default function CollectiveDashboard() {
 
   const { data: protocolData, isLoading: protocolLoading } = useCollectiveInsights(filters);
   const { data: outcomeData, isLoading: outcomeLoading } = useCollectiveOutcomes(filters, selectedTimepoint);
-  const { data: prpReport, isLoading: prpLoading, error: prpError } = usePrpOaKl1M3Report('COLLECTIVE');
+  const [reportParams, setReportParams] = useState<OutcomeReportParams | null>(REPORT_PRESETS[0].params);
+  const { data: outcomeReport, isLoading: outcomeReportLoading, error: outcomeReportError } = useProcedureOutcomeReport('COLLECTIVE', reportParams);
 
   const updateFilter = (key: keyof DashboardFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -135,9 +137,9 @@ export default function CollectiveDashboard() {
             <Activity className="h-4 w-4" />
             Resultados
           </TabsTrigger>
-          <TabsTrigger value="prp-oa-kl1" className="flex items-center gap-1">
+          <TabsTrigger value="outcome-report" className="flex items-center gap-1">
             <FlaskConical className="h-4 w-4" />
-            PRP · Artrose KL1
+            Relatório de Resultados
           </TabsTrigger>
         </TabsList>
 
@@ -168,19 +170,24 @@ export default function CollectiveDashboard() {
           />
         </TabsContent>
 
-        <TabsContent value="prp-oa-kl1" className="space-y-4">
+        <TabsContent value="outcome-report" className="space-y-4">
           <Alert variant="default" className="bg-muted/30 border-muted">
             <FlaskConical className="h-4 w-4" />
             <AlertDescription>
-              <strong>Relatório agregado: PRP em Artrose KL1 – Follow-up 3 meses.</strong>{' '}
+              <strong>Relatório agregado de resultados.</strong>{' '}
               Dados anônimos de todas as clínicas. Mínimo 5 casos para exibição.
             </AlertDescription>
           </Alert>
-          <PrpOaKl1M3ReportCard
-            data={prpReport}
-            isLoading={prpLoading}
-            error={prpError}
+          <OutcomeReportFilterPanel
+            onGenerate={setReportParams}
+            currentParams={reportParams}
+          />
+          <OutcomeReportCard
+            data={outcomeReport}
+            isLoading={outcomeReportLoading}
+            error={outcomeReportError}
             scope="COLLECTIVE"
+            params={reportParams}
           />
         </TabsContent>
       </Tabs>
