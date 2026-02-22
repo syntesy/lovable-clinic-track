@@ -26,7 +26,7 @@ import {
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { PreviousTreatmentsCard, type PreviousTreatmentsState } from "@/components/attendance/PreviousTreatmentsCard";
-import { PathologyCard, type PathologyState } from "@/components/attendance/PathologyCard";
+import { PathologyCard, type PathologyState, INITIAL_PATHOLOGY_STATE } from "@/components/attendance/PathologyCard";
 import { 
   AttendanceStatus, 
   isAttendanceClosed,
@@ -81,14 +81,7 @@ const AtendimentoDetail = () => {
     physioDuration: "",
   });
 
-  const [pathologyState, setPathologyState] = useState<PathologyState>({
-    categoryId: null,
-    pathologyId: null,
-    customLabel: "",
-    severityModel: "UNKNOWN",
-    severityScaleId: null,
-    severityValue: null,
-  });
+  const [pathologyState, setPathologyState] = useState<PathologyState>(INITIAL_PATHOLOGY_STATE);
 
   // Plan step modals
   const [isAddProcedureOpen, setIsAddProcedureOpen] = useState(false);
@@ -177,14 +170,7 @@ const AtendimentoDetail = () => {
   useEffect(() => {
     // Reset hydration flag when attendanceId changes
     didHydratePathologyRef.current = false;
-    setPathologyState({
-      categoryId: null,
-      pathologyId: null,
-      customLabel: "",
-      severityModel: "UNKNOWN",
-      severityScaleId: null,
-      severityValue: null,
-    });
+    setPathologyState(INITIAL_PATHOLOGY_STATE);
   }, [attendanceId]);
 
   useEffect(() => {
@@ -195,9 +181,15 @@ const AtendimentoDetail = () => {
         categoryId: dbAttendancePathology.category_id,
         pathologyId: dbAttendancePathology.pathology_id,
         customLabel: dbAttendancePathology.custom_pathology_label ?? "",
-        severityModel: (dbAttendancePathology.severity_model as PathologyState["severityModel"]) ?? "UNKNOWN",
-        severityScaleId: dbAttendancePathology.severity_scale_id,
-        severityValue: dbAttendancePathology.severity_value,
+        structuralModel: (dbAttendancePathology.structural_model as PathologyState["structuralModel"]) ?? "NONE",
+        structuralGrade: dbAttendancePathology.structural_grade ?? null,
+        structuralGroup: dbAttendancePathology.structural_group ?? null,
+        imagingMethod: dbAttendancePathology.imaging_method ?? null,
+        tearPercentage: dbAttendancePathology.tear_percentage ?? null,
+        discLevelEnum: dbAttendancePathology.disc_level_enum ?? null,
+        discLocationEnum: dbAttendancePathology.disc_location_enum ?? null,
+        evaPain: dbAttendancePathology.eva_pain ?? null,
+        ifnFunction: dbAttendancePathology.ifn_function ?? null,
       });
     }
 
@@ -296,7 +288,7 @@ const AtendimentoDetail = () => {
   const handleSavePathology = useCallback(async () => {
     if (!attendanceId) return;
 
-    const { categoryId, pathologyId, customLabel, severityModel, severityScaleId, severityValue } = pathologyState;
+    const { categoryId, pathologyId, customLabel, structuralModel, structuralGrade, structuralGroup, imagingMethod, tearPercentage, discLevelEnum, discLocationEnum, evaPain, ifnFunction } = pathologyState;
 
     // A) Category required
     if (!categoryId) {
@@ -314,43 +306,49 @@ const AtendimentoDetail = () => {
       }
     }
 
-    // C) Severity validation
-    if (!["CLINICAL_SIMPLE", "SPECIFIC_SCALE", "UNKNOWN"].includes(severityModel)) {
-      toast.error("Selecione a classificação.");
+    // C) EVA & IFN required
+    if (evaPain == null) {
+      toast.error("Informe a Dor (EVA).");
+      return;
+    }
+    if (ifnFunction == null) {
+      toast.error("Informe a Função (IFN).");
       return;
     }
 
-    let finalScaleId: string | null = null;
-    let finalValue: string | null = null;
-
-    if (severityModel === "CLINICAL_SIMPLE") {
-      if (!severityValue || !["MILD", "MODERATE", "SEVERE"].includes(severityValue.toUpperCase().trim())) {
-        toast.error("Selecione a gravidade clínica.");
+    // D) Structural validation
+    if (structuralModel !== "NONE") {
+      if (!structuralGrade) {
+        toast.error("Selecione a classificação estrutural.");
         return;
       }
-      finalValue = severityValue.toUpperCase().trim();
-    } else if (severityModel === "SPECIFIC_SCALE") {
-      if (!severityScaleId) {
-        toast.error("Selecione a escala.");
+      if (!imagingMethod) {
+        toast.error("Selecione o método de imagem.");
         return;
       }
-      if (!severityValue) {
-        toast.error("Selecione o grau/gravidade.");
-        return;
+      if (structuralModel === "DISC_HERNIATION_TYPE") {
+        if (!discLevelEnum) { toast.error("Selecione o nível do disco."); return; }
+        if (!discLocationEnum) { toast.error("Selecione a localização."); return; }
       }
-      finalScaleId = severityScaleId;
-      finalValue = severityValue.toUpperCase().trim();
     }
-    // UNKNOWN: both stay null
 
     const payload = {
       attendance_id: attendanceId,
       category_id: categoryId,
       pathology_id: isCustom ? null : pathologyId,
       custom_pathology_label: isCustom ? trimmedCustom : null,
-      severity_model: severityModel,
-      severity_scale_id: finalScaleId,
-      severity_value: finalValue,
+      severity_model: structuralModel, // keep column name for backward compat
+      severity_scale_id: null as string | null,
+      severity_value: structuralGrade,
+      structural_model: structuralModel,
+      structural_grade: structuralModel !== "NONE" ? structuralGrade : null,
+      structural_group: structuralGroup,
+      imaging_method: structuralModel !== "NONE" ? imagingMethod : null,
+      tear_percentage: tearPercentage,
+      disc_level_enum: discLevelEnum,
+      disc_location_enum: discLocationEnum,
+      eva_pain: evaPain,
+      ifn_function: ifnFunction,
     };
 
     setIsSavingPathology(true);
