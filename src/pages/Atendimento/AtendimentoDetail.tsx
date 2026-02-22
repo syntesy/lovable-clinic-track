@@ -26,7 +26,9 @@ import {
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { PreviousTreatmentsCard, type PreviousTreatmentsState } from "@/components/attendance/PreviousTreatmentsCard";
-import { PathologyCard, type PathologyState, INITIAL_PATHOLOGY_STATE } from "@/components/attendance/PathologyCard";
+import { type PathologyState, INITIAL_PATHOLOGY_STATE } from "@/components/attendance/PathologyCard";
+import { DiagnosticHypothesisCard, type HypothesisState, INITIAL_HYPOTHESIS_STATE } from "@/components/attendance/DiagnosticHypothesisCard";
+import { ConfirmedDiagnosisCard } from "@/components/attendance/ConfirmedDiagnosisCard";
 import { 
   AttendanceStatus, 
   isAttendanceClosed,
@@ -82,6 +84,8 @@ const AtendimentoDetail = () => {
   });
 
   const [pathologyState, setPathologyState] = useState<PathologyState>(INITIAL_PATHOLOGY_STATE);
+  const [hypothesisState, setHypothesisState] = useState<HypothesisState>(INITIAL_HYPOTHESIS_STATE);
+  const [isConfirmedDiagnosisVisible, setIsConfirmedDiagnosisVisible] = useState(false);
 
   // Plan step modals
   const [isAddProcedureOpen, setIsAddProcedureOpen] = useState(false);
@@ -171,12 +175,25 @@ const AtendimentoDetail = () => {
     // Reset hydration flag when attendanceId changes
     didHydratePathologyRef.current = false;
     setPathologyState(INITIAL_PATHOLOGY_STATE);
+    setHypothesisState(INITIAL_HYPOTHESIS_STATE);
+    setIsConfirmedDiagnosisVisible(false);
   }, [attendanceId]);
 
   useEffect(() => {
     if (!isPathologyQuerySuccess || didHydratePathologyRef.current) return;
 
     if (dbAttendancePathology) {
+      const diagStage = (dbAttendancePathology as any).diagnosis_stage ?? "SUSPECTED";
+      
+      // Hydrate hypothesis
+      setHypothesisState({
+        categoryId: dbAttendancePathology.category_id,
+        pathologyId: dbAttendancePathology.pathology_id,
+        customLabel: dbAttendancePathology.custom_pathology_label ?? "",
+        clinicalObservation: (dbAttendancePathology as any).clinical_observation ?? "",
+      });
+
+      // Hydrate confirmed diagnosis state
       setPathologyState({
         categoryId: dbAttendancePathology.category_id,
         pathologyId: dbAttendancePathology.pathology_id,
@@ -191,6 +208,11 @@ const AtendimentoDetail = () => {
         evaPain: dbAttendancePathology.eva_pain ?? null,
         ifnFunction: dbAttendancePathology.ifn_function ?? null,
       });
+
+      // If already confirmed, show the confirmed card
+      if (diagStage === "CONFIRMED") {
+        setIsConfirmedDiagnosisVisible(true);
+      }
     }
 
     didHydratePathologyRef.current = true;
@@ -284,40 +306,88 @@ const AtendimentoDetail = () => {
   }, [attendance, attendanceId, queryClient]);
 
 
-  // Handler: Save pathology via UPSERT
+  // Handler: Save hypothesis (SUSPECTED stage)
+  const handleSaveHypothesis = useCallback(async () => {
+    if (!attendanceId) return;
+
+    const { categoryId, pathologyId, customLabel, clinicalObservation } = hypothesisState;
+
+    const isCustom = pathologyId === null;
+    const trimmedCustom = customLabel.trim();
+
+    // At least category or pathology should be present for a meaningful save
+    if (!categoryId && !trimmedCustom) {
+      toast.error("Selecione pelo menos uma categoria ou informe a patologia.");
+      return;
+    }
+
+    if (isCustom && trimmedCustom && (trimmedCustom.length < 2 || trimmedCustom.length > 120)) {
+      toast.error("Informe a patologia (2 a 120 caracteres).");
+      return;
+    }
+
+    const payload = {
+      attendance_id: attendanceId,
+      category_id: categoryId || "00000000-0000-0000-0000-000000000000", // fallback required by NOT NULL
+      pathology_id: isCustom ? null : pathologyId,
+      custom_pathology_label: isCustom ? trimmedCustom : null,
+      clinical_observation: clinicalObservation.trim() || null,
+      diagnosis_stage: "SUSPECTED",
+      severity_model: "NONE",
+      structural_model: null as string | null,
+      structural_grade: null as string | null,
+      structural_group: null as string | null,
+      imaging_method: null as string | null,
+      tear_percentage: null as number | null,
+      disc_level_enum: null as string | null,
+      disc_location_enum: null as string | null,
+      eva_pain: null as number | null,
+      ifn_function: null as number | null,
+    };
+
+    setIsSavingPathology(true);
+    try {
+      const { error } = await supabase
+        .from("attendance_pathology")
+        .upsert(payload as any, { onConflict: "attendance_id" });
+
+      if (error) throw error;
+
+      toast.success("Hipótese diagnóstica salva.");
+      await queryClient.invalidateQueries({
+        queryKey: ["attendance-pathology", attendanceId],
+      });
+    } catch (e) {
+      console.error("hypothesis.save.error", e);
+      toast.error("Não foi possível salvar. Revise os campos.");
+    } finally {
+      setIsSavingPathology(false);
+    }
+  }, [attendanceId, hypothesisState, queryClient]);
+
+  // Handler: Save confirmed diagnosis (CONFIRMED stage)
   const handleSavePathology = useCallback(async () => {
     if (!attendanceId) return;
 
-    const { categoryId, pathologyId, customLabel, structuralModel, structuralGrade, structuralGroup, imagingMethod, tearPercentage, discLevelEnum, discLocationEnum, evaPain, ifnFunction } = pathologyState;
+    const categoryId = pathologyState.categoryId || hypothesisState.categoryId;
+    const pathologyId = pathologyState.pathologyId || hypothesisState.pathologyId;
+    const customLabel = pathologyState.customLabel || hypothesisState.customLabel;
+    const { structuralModel, structuralGrade, structuralGroup, imagingMethod, tearPercentage, discLevelEnum, discLocationEnum, evaPain, ifnFunction } = pathologyState;
 
-    // A) Category required
     if (!categoryId) {
       toast.error("Selecione a categoria.");
       return;
     }
 
-    // B) Pathology validation
     const trimmedCustom = customLabel.trim();
     const isCustom = pathologyId === null;
-    if (isCustom) {
-      if (!trimmedCustom || trimmedCustom.length < 2 || trimmedCustom.length > 120) {
-        toast.error("Informe a patologia (2 a 120 caracteres).");
-        return;
-      }
-    }
-
-    // C) EVA & IFN required
-    if (evaPain == null) {
-      toast.error("Informe a Dor (EVA).");
-      return;
-    }
-    if (ifnFunction == null) {
-      toast.error("Informe a Função (IFN).");
+    if (isCustom && (!trimmedCustom || trimmedCustom.length < 2 || trimmedCustom.length > 120)) {
+      toast.error("Informe a patologia (2 a 120 caracteres).");
       return;
     }
 
-    // D) Structural validation
-    if (structuralModel !== "NONE") {
+    // Structural validation
+    if (structuralModel && structuralModel !== "NONE") {
       if (!structuralGrade) {
         toast.error("Selecione a classificação estrutural.");
         return;
@@ -337,13 +407,15 @@ const AtendimentoDetail = () => {
       category_id: categoryId,
       pathology_id: isCustom ? null : pathologyId,
       custom_pathology_label: isCustom ? trimmedCustom : null,
-      severity_model: structuralModel, // keep column name for backward compat
+      clinical_observation: hypothesisState.clinicalObservation?.trim() || null,
+      diagnosis_stage: "CONFIRMED",
+      severity_model: structuralModel || "NONE",
       severity_scale_id: null as string | null,
       severity_value: structuralGrade,
-      structural_model: structuralModel,
-      structural_grade: structuralModel !== "NONE" ? structuralGrade : null,
+      structural_model: structuralModel || "NONE",
+      structural_grade: (structuralModel && structuralModel !== "NONE") ? structuralGrade : null,
       structural_group: structuralGroup,
-      imaging_method: structuralModel !== "NONE" ? imagingMethod : null,
+      imaging_method: (structuralModel && structuralModel !== "NONE") ? imagingMethod : null,
       tear_percentage: tearPercentage,
       disc_level_enum: discLevelEnum,
       disc_location_enum: discLocationEnum,
@@ -355,21 +427,21 @@ const AtendimentoDetail = () => {
     try {
       const { error } = await supabase
         .from("attendance_pathology")
-        .upsert(payload, { onConflict: "attendance_id" });
+        .upsert(payload as any, { onConflict: "attendance_id" });
 
       if (error) throw error;
 
-      toast.success("Patologia salva.");
+      toast.success("Diagnóstico confirmado salvo.");
       await queryClient.invalidateQueries({
         queryKey: ["attendance-pathology", attendanceId],
       });
     } catch (e) {
-      console.error("attendance_pathology.save.error", e);
+      console.error("confirmed_diagnosis.save.error", e);
       toast.error("Não foi possível salvar. Revise os campos.");
     } finally {
       setIsSavingPathology(false);
     }
-  }, [attendanceId, pathologyState, queryClient]);
+  }, [attendanceId, pathologyState, hypothesisState, queryClient]);
 
   // Handler: Save previous treatments via UPSERT
   const handleSavePreviousTreatments = useCallback(async () => {
@@ -721,13 +793,27 @@ const AtendimentoDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Pathology Card */}
-            <PathologyCard
+            {/* Hipótese Diagnóstica Inicial */}
+            <DiagnosticHypothesisCard
+              value={hypothesisState}
+              onChange={setHypothesisState}
+              onSave={handleSaveHypothesis}
+              disabled={isClosed}
+              isSaving={isSavingPathology}
+            />
+
+            {/* Diagnóstico Confirmado (Imagem) */}
+            <ConfirmedDiagnosisCard
               value={pathologyState}
               onChange={setPathologyState}
               onSave={handleSavePathology}
               disabled={isClosed}
               isSaving={isSavingPathology}
+              isVisible={isConfirmedDiagnosisVisible}
+              onRequestOpen={() => setIsConfirmedDiagnosisVisible(true)}
+              hypothesisCategoryId={hypothesisState.categoryId}
+              hypothesisPathologyId={hypothesisState.pathologyId}
+              hypothesisCustomLabel={hypothesisState.customLabel}
             />
 
             {/* Previous Treatments Card */}
