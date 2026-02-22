@@ -62,10 +62,12 @@ const AtendimentoDetail = () => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isSavingTreatments, setIsSavingTreatments] = useState(false);
   const [treatmentsValidationError, setTreatmentsValidationError] = useState<string | null>(null);
+  const [shockwaveValidationError, setShockwaveValidationError] = useState<string | null>(null);
   const [previousTreatments, setPreviousTreatments] = useState<PreviousTreatmentsState>({
     treatments: [],
     lastTreatmentTimeBucket: "",
     otherText: "",
+    shockwaveType: "",
   });
 
   // Plan step modals
@@ -111,10 +113,12 @@ const AtendimentoDetail = () => {
   useEffect(() => {
     if (dbPreviousTreatments) {
       const details = dbPreviousTreatments.details as Record<string, unknown> | null;
+      const shockwave = details?.shockwave as Record<string, unknown> | null;
       setPreviousTreatments({
         treatments: dbPreviousTreatments.treatments ?? [],
         lastTreatmentTimeBucket: dbPreviousTreatments.last_treatment_time_bucket ?? "",
         otherText: (details?.other_text as string) ?? "",
+        shockwaveType: (shockwave?.type as string) ?? "",
       });
     }
   }, [dbPreviousTreatments]);
@@ -218,10 +222,20 @@ const AtendimentoDetail = () => {
     }
     setTreatmentsValidationError(null);
 
+    // Validation: if SHOCKWAVE is selected, shockwaveType is required
+    if (previousTreatments.treatments.includes("SHOCKWAVE") && !previousTreatments.shockwaveType) {
+      setShockwaveValidationError("Selecione o tipo de ondas de choque.");
+      return;
+    }
+    setShockwaveValidationError(null);
+
     // Build details JSONB
     const details: Record<string, unknown> = {};
     if (previousTreatments.treatments.includes("OTHER") && previousTreatments.otherText.trim()) {
       details.other_text = previousTreatments.otherText.trim();
+    }
+    if (previousTreatments.treatments.includes("SHOCKWAVE") && previousTreatments.shockwaveType) {
+      details.shockwave = { type: previousTreatments.shockwaveType };
     }
 
     // NONE enforcement
@@ -513,11 +527,13 @@ const AtendimentoDetail = () => {
               onChange={(v) => {
                 setPreviousTreatments(v);
                 setTreatmentsValidationError(null);
+                setShockwaveValidationError(null);
               }}
               onSave={handleSavePreviousTreatments}
               disabled={isClosed}
               isSaving={isSavingTreatments}
               validationError={treatmentsValidationError}
+              shockwaveValidationError={shockwaveValidationError}
             />
           </div>
         );
