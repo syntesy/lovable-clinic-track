@@ -1,4 +1,5 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { PreviousTreatmentsSummary } from "@/components/attendance/PreviousTreatmentsSummary";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,22 @@ const VisualizarRelatorio = () => {
         .select("*")
         .eq("patient_id", id);
 
+      // Fetch previous treatments if clinical record has an attendance_id
+      let previousTreatments = null;
+      const { data: crRaw } = await supabase
+        .from("clinical_records")
+        .select("attendance_id")
+        .eq("id", recordIdFromQuery!)
+        .maybeSingle();
+      if (crRaw?.attendance_id) {
+        const { data: ptData } = await supabase
+          .from("attendance_previous_treatments")
+          .select("treatments, last_treatment_time_bucket, details")
+          .eq("attendance_id", crRaw.attendance_id)
+          .maybeSingle();
+        previousTreatments = ptData;
+      }
+
       return {
         patient,
         clinicalRecord,
@@ -103,6 +120,7 @@ const VisualizarRelatorio = () => {
         ultrasoundImages: ultrasoundImages || [],
         thermographyImages: thermographyImages || [],
         bloodTests: bloodTests || [],
+        previousTreatments,
       };
     },
   });
@@ -404,6 +422,11 @@ const VisualizarRelatorio = () => {
               </div>
             )}
           </section>
+
+          <Separator className="mb-6" />
+
+          {/* Tratamentos Prévios */}
+          <PreviousTreatmentsSummary data={patientReport.previousTreatments} />
 
           {/* Protocolos MAC */}
           {patientReport.protocols.length > 0 && (
