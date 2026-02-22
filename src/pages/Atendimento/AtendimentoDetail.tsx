@@ -64,12 +64,16 @@ const AtendimentoDetail = () => {
   const [treatmentsValidationError, setTreatmentsValidationError] = useState<string | null>(null);
   const [shockwaveValidationError, setShockwaveValidationError] = useState<string | null>(null);
   const [laserValidationError, setLaserValidationError] = useState<string | null>(null);
+  const [orthobiologicPrevValidationError, setOrthobiologicPrevValidationError] = useState<string | null>(null);
+  const [orthobiologicPrevOtherValidationError, setOrthobiologicPrevOtherValidationError] = useState<string | null>(null);
   const [previousTreatments, setPreviousTreatments] = useState<PreviousTreatmentsState>({
     treatments: [],
     lastTreatmentTimeBucket: "",
     otherText: "",
     shockwaveType: "",
     laserIntensity: "",
+    orthobiologicPrevType: "",
+    orthobiologicPrevOtherText: "",
   });
 
   // Plan step modals
@@ -117,12 +121,15 @@ const AtendimentoDetail = () => {
       const details = dbPreviousTreatments.details as Record<string, unknown> | null;
       const shockwave = details?.shockwave as Record<string, unknown> | null;
       const laser = details?.laser as Record<string, unknown> | null;
+      const orthobiologicPrev = details?.orthobiologic_prev as Record<string, unknown> | null;
       setPreviousTreatments({
         treatments: dbPreviousTreatments.treatments ?? [],
         lastTreatmentTimeBucket: dbPreviousTreatments.last_treatment_time_bucket ?? "",
         otherText: (details?.other_text as string) ?? "",
         shockwaveType: (shockwave?.type as string) ?? "",
         laserIntensity: (laser?.intensity as string) ?? "",
+        orthobiologicPrevType: (orthobiologicPrev?.type as string) ?? "",
+        orthobiologicPrevOtherText: (orthobiologicPrev?.other_text as string) ?? "",
       });
     }
   }, [dbPreviousTreatments]);
@@ -240,6 +247,20 @@ const AtendimentoDetail = () => {
     }
     setLaserValidationError(null);
 
+    // Validation: if ORTHOBIOLOGIC_PREV is selected, orthobiologicPrevType is required
+    if (previousTreatments.treatments.includes("ORTHOBIOLOGIC_PREV") && !previousTreatments.orthobiologicPrevType) {
+      setOrthobiologicPrevValidationError("Selecione o tipo de ortobiológico prévio.");
+      return;
+    }
+    setOrthobiologicPrevValidationError(null);
+
+    // Validation: if ORTHOBIOLOGIC_PREV type is OTHER, other text is required
+    if (previousTreatments.treatments.includes("ORTHOBIOLOGIC_PREV") && previousTreatments.orthobiologicPrevType === "OTHER" && !previousTreatments.orthobiologicPrevOtherText.trim()) {
+      setOrthobiologicPrevOtherValidationError("Especifique qual ortobiológico.");
+      return;
+    }
+    setOrthobiologicPrevOtherValidationError(null);
+
     // Build details JSONB
     const details: Record<string, unknown> = {};
     if (previousTreatments.treatments.includes("OTHER") && previousTreatments.otherText.trim()) {
@@ -250,6 +271,13 @@ const AtendimentoDetail = () => {
     }
     if (previousTreatments.treatments.includes("LASER") && previousTreatments.laserIntensity) {
       details.laser = { intensity: previousTreatments.laserIntensity };
+    }
+    if (previousTreatments.treatments.includes("ORTHOBIOLOGIC_PREV") && previousTreatments.orthobiologicPrevType) {
+      const orthobioPrev: Record<string, string> = { type: previousTreatments.orthobiologicPrevType };
+      if (previousTreatments.orthobiologicPrevType === "OTHER" && previousTreatments.orthobiologicPrevOtherText.trim()) {
+        orthobioPrev.other_text = previousTreatments.orthobiologicPrevOtherText.trim();
+      }
+      details.orthobiologic_prev = orthobioPrev;
     }
 
     // NONE enforcement
@@ -543,6 +571,8 @@ const AtendimentoDetail = () => {
                 setTreatmentsValidationError(null);
                 setShockwaveValidationError(null);
                 setLaserValidationError(null);
+                setOrthobiologicPrevValidationError(null);
+                setOrthobiologicPrevOtherValidationError(null);
               }}
               onSave={handleSavePreviousTreatments}
               disabled={isClosed}
@@ -550,6 +580,8 @@ const AtendimentoDetail = () => {
               validationError={treatmentsValidationError}
               shockwaveValidationError={shockwaveValidationError}
               laserValidationError={laserValidationError}
+              orthobiologicPrevValidationError={orthobiologicPrevValidationError}
+              orthobiologicPrevOtherValidationError={orthobiologicPrevOtherValidationError}
             />
           </div>
         );
