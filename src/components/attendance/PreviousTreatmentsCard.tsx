@@ -47,12 +47,24 @@ const LASER_INTENSITY_OPTIONS = [
   { value: "HIGH", label: "Alta intensidade" },
 ] as const;
 
+const ORTHOBIOLOGIC_TYPE_OPTIONS = [
+  { value: "PRP", label: "PRP" },
+  { value: "PRF", label: "PRF" },
+  { value: "BMAC", label: "BMAC" },
+  { value: "SVF", label: "SVF" },
+  { value: "EXOSOMES", label: "Exossomos" },
+  { value: "COMBINATION", label: "Combinação" },
+  { value: "OTHER", label: "Outro" },
+] as const;
+
 export interface PreviousTreatmentsState {
   treatments: string[];
   lastTreatmentTimeBucket: string;
   otherText: string;
   shockwaveType: string;
   laserIntensity: string;
+  orthobiologicPrevType: string;
+  orthobiologicPrevOtherText: string;
 }
 
 interface PreviousTreatmentsCardProps {
@@ -64,6 +76,8 @@ interface PreviousTreatmentsCardProps {
   validationError?: string | null;
   shockwaveValidationError?: string | null;
   laserValidationError?: string | null;
+  orthobiologicPrevValidationError?: string | null;
+  orthobiologicPrevOtherValidationError?: string | null;
 }
 
 export function PreviousTreatmentsCard({
@@ -75,8 +89,10 @@ export function PreviousTreatmentsCard({
   validationError = null,
   shockwaveValidationError = null,
   laserValidationError = null,
+  orthobiologicPrevValidationError = null,
+  orthobiologicPrevOtherValidationError = null,
 }: PreviousTreatmentsCardProps) {
-  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity } = value;
+  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText } = value;
 
   const handleTreatmentToggle = useCallback(
     (treatmentValue: string, checked: boolean) => {
@@ -95,10 +111,12 @@ export function PreviousTreatmentsCard({
       const newOtherText = next.includes("OTHER") ? otherText : "";
       const newShockwaveType = next.includes("SHOCKWAVE") ? shockwaveType : "";
       const newLaserIntensity = next.includes("LASER") ? laserIntensity : "";
+      const newOrthobiologicPrevType = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevType : "";
+      const newOrthobiologicPrevOtherText = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevOtherText : "";
 
-      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity });
+      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity, orthobiologicPrevType: newOrthobiologicPrevType, orthobiologicPrevOtherText: newOrthobiologicPrevOtherText });
     },
-    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, onChange]
+    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, onChange]
   );
 
   return (
@@ -181,6 +199,57 @@ export function PreviousTreatmentsCard({
             </Select>
             {laserValidationError && (
               <p className="text-sm text-destructive">{laserValidationError}</p>
+            )}
+          </div>
+        )}
+
+        {/* ORTHOBIOLOGIC_PREV type dropdown */}
+        {treatments.includes("ORTHOBIOLOGIC_PREV") && (
+          <div className="space-y-1.5 pl-6">
+            <Label className="text-sm">Tipo de ortobiológico prévio</Label>
+            <Select
+              value={orthobiologicPrevType}
+              onValueChange={(v) =>
+                onChange({ ...value, orthobiologicPrevType: v, orthobiologicPrevOtherText: v !== "OTHER" ? "" : orthobiologicPrevOtherText })
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger className={orthobiologicPrevValidationError ? "border-destructive" : ""}>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {ORTHOBIOLOGIC_TYPE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {orthobiologicPrevValidationError && (
+              <p className="text-sm text-destructive">{orthobiologicPrevValidationError}</p>
+            )}
+
+            {/* ORTHOBIOLOGIC_PREV OTHER text input */}
+            {orthobiologicPrevType === "OTHER" && (
+              <div className="space-y-1.5 mt-2">
+                <Label htmlFor="orthobio-prev-other-text" className="text-sm">
+                  Qual ortobiológico?
+                </Label>
+                <Input
+                  id="orthobio-prev-other-text"
+                  value={orthobiologicPrevOtherText}
+                  onChange={(e) =>
+                    onChange({ ...value, orthobiologicPrevOtherText: e.target.value.slice(0, 80) })
+                  }
+                  maxLength={80}
+                  placeholder="Ex: Enxerto X, produto Y…"
+                  disabled={disabled}
+                  className={orthobiologicPrevOtherValidationError ? "border-destructive" : ""}
+                />
+                {orthobiologicPrevOtherValidationError && (
+                  <p className="text-sm text-destructive">{orthobiologicPrevOtherValidationError}</p>
+                )}
+              </div>
             )}
           </div>
         )}
