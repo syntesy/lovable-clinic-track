@@ -11,32 +11,142 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
-import { Stethoscope, Info, Loader2, Save } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Stethoscope, Loader2, Save } from "lucide-react";
+
+// ── Types ──────────────────────────────────────────────────────────
+
+export type StructuralModel =
+  | "NONE"
+  | "KELLGREN_LAWRENCE"
+  | "TENDON_STRUCTURAL_INTEGRITY"
+  | "MUSCLE_INJURY_GRADE"
+  | "DISC_HERNIATION_TYPE";
 
 export interface PathologyState {
   categoryId: string | null;
   pathologyId: string | null;
   customLabel: string;
-  severityModel: "CLINICAL_SIMPLE" | "SPECIFIC_SCALE" | "UNKNOWN";
-  severityScaleId: string | null;
-  severityValue: string | null;
+  structuralModel: StructuralModel;
+  structuralGrade: string | null;
+  structuralGroup: string | null;
+  imagingMethod: string | null;
+  tearPercentage: number | null;
+  discLevelEnum: string | null;
+  discLocationEnum: string | null;
+  evaPain: number | null;
+  ifnFunction: number | null;
 }
 
-const INITIAL_STATE: PathologyState = {
+export const INITIAL_PATHOLOGY_STATE: PathologyState = {
   categoryId: null,
   pathologyId: null,
   customLabel: "",
-  severityModel: "UNKNOWN",
-  severityScaleId: null,
-  severityValue: null,
+  structuralModel: "NONE",
+  structuralGrade: null,
+  structuralGroup: null,
+  imagingMethod: null,
+  tearPercentage: null,
+  discLevelEnum: null,
+  discLocationEnum: null,
+  evaPain: null,
+  ifnFunction: null,
 };
+
+// ── Structural options ─────────────────────────────────────────────
+
+const KL_GRADES = [
+  { value: "KL0", label: "KL 0 – Normal" },
+  { value: "KL1", label: "KL 1 – Duvidoso" },
+  { value: "KL2", label: "KL 2 – Mínimo" },
+  { value: "KL3", label: "KL 3 – Moderado" },
+  { value: "KL4", label: "KL 4 – Grave" },
+];
+
+const TENDON_GRADES = [
+  { value: "GRADE_0", label: "Grau 0 – Normal" },
+  { value: "GRADE_I", label: "Grau I – Sem ruptura" },
+  { value: "GRADE_II", label: "Grau II – Ruptura <50%" },
+  { value: "GRADE_III", label: "Grau III – Ruptura ≥50%" },
+  { value: "GRADE_IV", label: "Grau IV – Ruptura completa" },
+];
+
+const MUSCLE_GRADES = [
+  { value: "GRADE_I", label: "Grau I" },
+  { value: "GRADE_II", label: "Grau II" },
+  { value: "GRADE_III", label: "Grau III" },
+];
+
+const DISC_GRADES = [
+  { value: "PROTRUSAO", label: "Protrusão" },
+  { value: "EXTRUSAO", label: "Extrusão" },
+  { value: "SEQUESTRO", label: "Sequestro" },
+];
+
+const DISC_LEVELS_LUMBAR = [
+  { value: "L1_L2", label: "L1-L2" },
+  { value: "L2_L3", label: "L2-L3" },
+  { value: "L3_L4", label: "L3-L4" },
+  { value: "L4_L5", label: "L4-L5" },
+  { value: "L5_S1", label: "L5-S1" },
+];
+
+const DISC_LEVELS_CERVICAL = [
+  { value: "C3_C4", label: "C3-C4" },
+  { value: "C4_C5", label: "C4-C5" },
+  { value: "C5_C6", label: "C5-C6" },
+  { value: "C6_C7", label: "C6-C7" },
+];
+
+const DISC_LOCATIONS = [
+  { value: "CENTRAL", label: "Central" },
+  { value: "PARAMEDIANA", label: "Paramediana" },
+  { value: "FORAMINAL", label: "Foraminal" },
+  { value: "EXTRAFORAMINAL", label: "Extraforaminal" },
+];
+
+function getImagingOptions(model: StructuralModel) {
+  switch (model) {
+    case "KELLGREN_LAWRENCE":
+      return [
+        { value: "XR", label: "Radiografia (XR)" },
+        { value: "MRI", label: "Ressonância (MRI)" },
+      ];
+    case "TENDON_STRUCTURAL_INTEGRITY":
+    case "MUSCLE_INJURY_GRADE":
+      return [
+        { value: "US", label: "Ultrassonografia (US)" },
+        { value: "MRI", label: "Ressonância (MRI)" },
+      ];
+    case "DISC_HERNIATION_TYPE":
+      return [{ value: "MRI", label: "Ressonância (MRI)" }];
+    default:
+      return [];
+  }
+}
+
+function getGradeOptions(model: StructuralModel) {
+  switch (model) {
+    case "KELLGREN_LAWRENCE": return KL_GRADES;
+    case "TENDON_STRUCTURAL_INTEGRITY": return TENDON_GRADES;
+    case "MUSCLE_INJURY_GRADE": return MUSCLE_GRADES;
+    case "DISC_HERNIATION_TYPE": return DISC_GRADES;
+    default: return [];
+  }
+}
+
+function deriveKLGroup(grade: string): string | null {
+  switch (grade) {
+    case "KL0": case "KL1": return "LEVE";
+    case "KL2": return "MODERADA";
+    case "KL3": return "GRAVE";
+    case "KL4": return "GRAVE_PLUS";
+    default: return null;
+  }
+}
+
+// ── Component ──────────────────────────────────────────────────────
 
 interface PathologyCardProps {
   value: PathologyState;
@@ -47,7 +157,6 @@ interface PathologyCardProps {
 }
 
 export function PathologyCard({ value, onChange, onSave, disabled = false, isSaving = false }: PathologyCardProps) {
-  // Fetch categories
   const { data: categories = [] } = useQuery({
     queryKey: ["pathology-categories"],
     queryFn: async () => {
@@ -62,14 +171,13 @@ export function PathologyCard({ value, onChange, onSave, disabled = false, isSav
     },
   });
 
-  // Fetch pathologies for selected category
   const { data: pathologies = [] } = useQuery({
     queryKey: ["pathologies", value.categoryId],
     queryFn: async () => {
       if (!value.categoryId) return [];
       const { data, error } = await supabase
         .from("pathologies")
-        .select("id, code, label, sort_order")
+        .select("id, code, label, sort_order, structural_model")
         .eq("category_id", value.categoryId)
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
@@ -80,94 +188,28 @@ export function PathologyCard({ value, onChange, onSave, disabled = false, isSav
     enabled: !!value.categoryId,
   });
 
-  // Fetch severity scales for selected category/pathology
-  const { data: scales = [] } = useQuery({
-    queryKey: ["pathology-severity-scales", value.categoryId, value.pathologyId],
-    queryFn: async () => {
-      if (!value.categoryId) return [];
-      let query = supabase
-        .from("pathology_severity_scales")
-        .select("id, scale_code, scale_label, is_default, sort_order, options, category_id, pathology_id")
-        .eq("is_active", true);
-
-      if (value.pathologyId) {
-        query = query.or(
-          `category_id.eq.${value.categoryId},pathology_id.eq.${value.pathologyId}`
-        );
-      } else {
-        query = query.eq("category_id", value.categoryId);
-      }
-
-      const { data, error } = await query
-        .order("is_default", { ascending: false })
-        .order("sort_order", { ascending: true })
-        .order("scale_label", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!value.categoryId && value.severityModel === "SPECIFIC_SCALE",
-  });
-
-  // Get options for selected scale
-  const scaleOptions = useMemo(() => {
-    if (!value.severityScaleId) return [];
-    const scale = scales.find((s) => s.id === value.severityScaleId);
-    if (!scale || !Array.isArray(scale.options)) return [];
-    return scale.options as Array<{ value: string; label: string; help?: string }>;
-  }, [scales, value.severityScaleId]);
-
-  const isCustomPathology = value.pathologyId === null && value.categoryId !== null && value.customLabel !== undefined;
-  const showCustomInput = value.categoryId !== null && value.pathologyId === null && categories.length > 0;
-
-  // Helpers to find labels for summary
-  const categoryLabel = categories.find((c) => c.id === value.categoryId)?.label;
-  const pathologyLabel = pathologies.find((p) => p.id === value.pathologyId)?.label;
-  const scaleLabel = scales.find((s) => s.id === value.severityScaleId)?.scale_label;
-
-  const severityDisplayValue = useMemo(() => {
-    if (value.severityModel === "UNKNOWN") return "Não informado";
-    if (!value.severityValue) return null;
-    if (value.severityModel === "CLINICAL_SIMPLE") {
-      const map: Record<string, string> = { MILD: "Leve", MODERATE: "Moderada", SEVERE: "Grave" };
-      return map[value.severityValue] || value.severityValue;
-    }
-    if (value.severityModel === "SPECIFIC_SCALE") {
-      const opt = scaleOptions.find((o) => o.value === value.severityValue);
-      return opt?.label || value.severityValue;
-    }
-    return null;
-  }, [value.severityModel, value.severityValue, scaleOptions]);
-
-  const summaryText = useMemo(() => {
-    const name = pathologyLabel || value.customLabel;
-    if (!name) return null;
-
-    if (value.severityModel === "UNKNOWN") {
-      return `${name} — Não informado`;
-    }
-    if (value.severityModel === "CLINICAL_SIMPLE" && severityDisplayValue) {
-      return `${name} — ${severityDisplayValue} (Clínica)`;
-    }
-    if (value.severityModel === "SPECIFIC_SCALE" && severityDisplayValue && scaleLabel) {
-      return `${name} — ${severityDisplayValue} (${scaleLabel})`;
-    }
-    return name;
-  }, [pathologyLabel, value.customLabel, value.severityModel, severityDisplayValue, scaleLabel]);
-
-  // Track whether user explicitly picked __CUSTOM__
   const [isCustomMode, setIsCustomMode] = useState(false);
 
-  // Sync custom mode from external value
   useEffect(() => {
     if (value.pathologyId === null && value.customLabel.length > 0) {
       setIsCustomMode(true);
     }
   }, []);
 
+  // Get structural model from selected pathology
+  const selectedPathology = pathologies.find((p) => p.id === value.pathologyId);
+  const activeModel: StructuralModel = isCustomMode
+    ? "NONE"
+    : (selectedPathology?.structural_model as StructuralModel) ?? "NONE";
+
+  // Detect if it's a cervical disc herniation
+  const isCervical = selectedPathology?.code === "DISC_HERNIATION_CERVICAL";
+  const discLevels = isCervical ? DISC_LEVELS_CERVICAL : DISC_LEVELS_LUMBAR;
+
   const handleCategoryChange = (catId: string) => {
     setIsCustomMode(false);
     onChange({
-      ...INITIAL_STATE,
+      ...INITIAL_PATHOLOGY_STATE,
       categoryId: catId,
     });
   };
@@ -176,51 +218,68 @@ export function PathologyCard({ value, onChange, onSave, disabled = false, isSav
     if (val === "__CUSTOM__") {
       setIsCustomMode(true);
       onChange({
-        ...value,
-        pathologyId: null,
+        ...INITIAL_PATHOLOGY_STATE,
+        categoryId: value.categoryId,
         customLabel: "",
-        severityModel: value.severityModel,
-        severityScaleId: value.severityModel === "SPECIFIC_SCALE" ? value.severityScaleId : null,
-        severityValue: null,
+        evaPain: value.evaPain,
+        ifnFunction: value.ifnFunction,
       });
     } else {
       setIsCustomMode(false);
+      const path = pathologies.find((p) => p.id === val);
+      const model = (path?.structural_model as StructuralModel) ?? "NONE";
       onChange({
-        ...value,
+        ...INITIAL_PATHOLOGY_STATE,
+        categoryId: value.categoryId,
         pathologyId: val,
-        customLabel: "",
+        structuralModel: model,
+        evaPain: value.evaPain,
+        ifnFunction: value.ifnFunction,
+        // For disc herniation with only MRI, auto-set it
+        imagingMethod: model === "DISC_HERNIATION_TYPE" ? "MRI" : null,
       });
     }
   };
 
-  const handleSeverityModelChange = (model: string) => {
-    const m = model as PathologyState["severityModel"];
+  const handleGradeChange = (grade: string) => {
+    const group = activeModel === "KELLGREN_LAWRENCE" ? deriveKLGroup(grade) : null;
     onChange({
       ...value,
-      severityModel: m,
-      severityScaleId: null,
-      severityValue: null,
+      structuralGrade: grade,
+      structuralGroup: group,
+      // Clear tear_percentage if not applicable
+      tearPercentage: (activeModel === "TENDON_STRUCTURAL_INTEGRITY" && (grade === "GRADE_II" || grade === "GRADE_III"))
+        ? value.tearPercentage
+        : null,
     });
   };
 
-  const handleScaleChange = (scaleId: string) => {
-    onChange({
-      ...value,
-      severityScaleId: scaleId,
-      severityValue: null,
-    });
-  };
+  // Summary
+  const summaryParts = useMemo(() => {
+    const parts: string[] = [];
+    const catLabel = categories.find((c) => c.id === value.categoryId)?.label;
+    const pathLabel = selectedPathology?.label || value.customLabel;
+    if (catLabel) parts.push(`Categoria: ${catLabel}`);
+    if (pathLabel) parts.push(`Patologia: ${pathLabel}`);
+    if (value.structuralGrade && activeModel !== "NONE") {
+      const gradeOpt = getGradeOptions(activeModel).find((g) => g.value === value.structuralGrade);
+      parts.push(`Classificação: ${gradeOpt?.label || value.structuralGrade}`);
+    }
+    if (value.structuralGroup) {
+      parts.push(`Grupo: ${value.structuralGroup}`);
+    }
+    if (value.discLevelEnum) parts.push(`Nível: ${value.discLevelEnum}`);
+    if (value.discLocationEnum) parts.push(`Localização: ${value.discLocationEnum}`);
+    if (value.tearPercentage != null) parts.push(`Ruptura: ${value.tearPercentage}%`);
+    if (value.evaPain != null) parts.push(`EVA: ${value.evaPain}/10`);
+    if (value.ifnFunction != null) parts.push(`IFN: ${value.ifnFunction}/10`);
+    return parts;
+  }, [value, categories, selectedPathology, activeModel]);
 
-  const handleSeverityValueChange = (val: string) => {
-    onChange({ ...value, severityValue: val });
-  };
-
-  const handleCustomLabelChange = (text: string) => {
-    onChange({ ...value, customLabel: text });
-  };
-
-  // Determine the pathology select value
   const pathologySelectValue = isCustomMode ? "__CUSTOM__" : (value.pathologyId || "");
+
+  const showTearPercentage = activeModel === "TENDON_STRUCTURAL_INTEGRITY" &&
+    (value.structuralGrade === "GRADE_II" || value.structuralGrade === "GRADE_III");
 
   return (
     <Card>
@@ -234,19 +293,11 @@ export function PathologyCard({ value, onChange, onSave, disabled = false, isSav
         {/* 1. Categoria */}
         <div className="space-y-1.5">
           <Label className="text-sm font-medium">Categoria *</Label>
-          <Select
-            value={value.categoryId || ""}
-            onValueChange={handleCategoryChange}
-            disabled={disabled}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a categoria..." />
-            </SelectTrigger>
+          <Select value={value.categoryId || ""} onValueChange={handleCategoryChange} disabled={disabled}>
+            <SelectTrigger><SelectValue placeholder="Selecione a categoria..." /></SelectTrigger>
             <SelectContent>
               {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.label}
-                </SelectItem>
+                <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -255,20 +306,12 @@ export function PathologyCard({ value, onChange, onSave, disabled = false, isSav
         {/* 2. Patologia */}
         {value.categoryId && (
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Patologia</Label>
-            <Select
-              value={pathologySelectValue}
-              onValueChange={handlePathologyChange}
-              disabled={disabled}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a patologia..." />
-              </SelectTrigger>
+            <Label className="text-sm font-medium">Patologia *</Label>
+            <Select value={pathologySelectValue} onValueChange={handlePathologyChange} disabled={disabled}>
+              <SelectTrigger><SelectValue placeholder="Selecione a patologia..." /></SelectTrigger>
               <SelectContent>
                 {pathologies.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.label}
-                  </SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
                 ))}
                 <SelectItem value="__CUSTOM__" className="text-primary font-medium">
                   Adicionar patologia...
@@ -278,164 +321,190 @@ export function PathologyCard({ value, onChange, onSave, disabled = false, isSav
           </div>
         )}
 
-        {/* 3. Custom label input */}
+        {/* 3. Custom label */}
         {value.categoryId && isCustomMode && (
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Qual patologia? *</Label>
             <Input
               value={value.customLabel}
-              onChange={(e) => handleCustomLabelChange(e.target.value)}
+              onChange={(e) => onChange({ ...value, customLabel: e.target.value })}
               maxLength={120}
               placeholder="Informe a patologia..."
               disabled={disabled}
             />
-            <p className="text-xs text-muted-foreground text-right">
-              {value.customLabel.length}/120
-            </p>
+            <p className="text-xs text-muted-foreground text-right">{value.customLabel.length}/120</p>
           </div>
         )}
 
-        {/* 4. Classificação (segmented control) */}
-        {value.categoryId && (
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Classificação</Label>
-            <div className="flex rounded-lg border border-border overflow-hidden">
-              {[
-                { value: "CLINICAL_SIMPLE", label: "Clínica (simples)" },
-                { value: "SPECIFIC_SCALE", label: "Escala específica" },
-                { value: "UNKNOWN", label: "Não informado" },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => handleSeverityModelChange(opt.value)}
-                  className={`flex-1 px-3 py-2 text-xs font-medium transition-colors
-                    ${value.severityModel === opt.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-background text-muted-foreground hover:bg-muted"
-                    }
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                  `}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 5. Gravidade clínica (CLINICAL_SIMPLE) */}
-        {value.categoryId && value.severityModel === "CLINICAL_SIMPLE" && (
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Gravidade clínica</Label>
-            <Select
-              value={value.severityValue || ""}
-              onValueChange={handleSeverityValueChange}
-              disabled={disabled}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a gravidade..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MILD">Leve</SelectItem>
-                <SelectItem value="MODERATE">Moderada</SelectItem>
-                <SelectItem value="SEVERE">Grave</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* 6. Escala específica (SPECIFIC_SCALE) */}
-        {value.categoryId && value.severityModel === "SPECIFIC_SCALE" && (
+        {/* 4. Classificação Estrutural (condicional) */}
+        {value.categoryId && (value.pathologyId || isCustomMode) && activeModel !== "NONE" && (
           <>
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Escala</Label>
-              <Select
-                value={value.severityScaleId || ""}
-                onValueChange={handleScaleChange}
-                disabled={disabled}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a escala..." />
-                </SelectTrigger>
+              <Label className="text-sm font-medium">Classificação Estrutural *</Label>
+              <Select value={value.structuralGrade || ""} onValueChange={handleGradeChange} disabled={disabled}>
+                <SelectTrigger><SelectValue placeholder="Selecione o grau..." /></SelectTrigger>
                 <SelectContent>
-                  {scales.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.scale_label}
-                      {s.is_default && " (padrão)"}
-                    </SelectItem>
+                  {getGradeOptions(activeModel).map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {value.structuralGroup && (
+                <p className="text-xs text-muted-foreground">
+                  Grupo derivado: <span className="font-medium">{value.structuralGroup}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Imaging method */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Método de Imagem *</Label>
+              <Select
+                value={value.imagingMethod || ""}
+                onValueChange={(v) => onChange({ ...value, imagingMethod: v })}
+                disabled={disabled || activeModel === "DISC_HERNIATION_TYPE"}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {getImagingOptions(activeModel).map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {value.severityScaleId && scaleOptions.length > 0 && (
+            {/* Tear percentage (tendon GRADE_II/III) */}
+            {showTearPercentage && (
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Grau / Gravidade</Label>
-                <Select
-                  value={value.severityValue || ""}
-                  onValueChange={handleSeverityValueChange}
+                <Label className="text-sm font-medium">Percentual de Ruptura (%)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={value.tearPercentage ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value ? parseInt(e.target.value, 10) : null;
+                    onChange({ ...value, tearPercentage: v });
+                  }}
+                  placeholder="1-99 (opcional)"
                   disabled={disabled}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o grau..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <TooltipProvider>
-                      {scaleOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          <div className="flex items-center gap-2">
-                            {opt.label}
-                            {opt.help && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-3 w-3 text-muted-foreground" />
-                                </TooltipTrigger>
-                                <TooltipContent side="right" className="max-w-[240px]">
-                                  <p className="text-xs">{opt.help}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </TooltipProvider>
-                  </SelectContent>
-                </Select>
+                />
               </div>
             )}
+
+            {/* Disc level & location */}
+            {activeModel === "DISC_HERNIATION_TYPE" && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Nível do Disco *</Label>
+                  <Select
+                    value={value.discLevelEnum || ""}
+                    onValueChange={(v) => onChange({ ...value, discLevelEnum: v })}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione o nível..." /></SelectTrigger>
+                    <SelectContent>
+                      {discLevels.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Localização *</Label>
+                  <Select
+                    value={value.discLocationEnum || ""}
+                    onValueChange={(v) => onChange({ ...value, discLocationEnum: v })}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione a localização..." /></SelectTrigger>
+                    <SelectContent>
+                      {DISC_LOCATIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </>
+        )}
+
+        {/* 5. EVA (Dor) */}
+        {value.categoryId && (value.pathologyId || isCustomMode) && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Dor – EVA (0–10) *
+              <span className="text-muted-foreground font-normal ml-2">
+                {value.evaPain != null ? value.evaPain : "—"}
+              </span>
+            </Label>
+            <Slider
+              min={0}
+              max={10}
+              step={1}
+              value={[value.evaPain ?? 0]}
+              onValueChange={([v]) => onChange({ ...value, evaPain: v })}
+              disabled={disabled}
+              className="py-2"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0 – Sem dor</span>
+              <span>10 – Pior dor</span>
+            </div>
+          </div>
+        )}
+
+        {/* 6. IFN (Função) */}
+        {value.categoryId && (value.pathologyId || isCustomMode) && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Função – IFN (0–10) *
+              <span className="text-muted-foreground font-normal ml-2">
+                {value.ifnFunction != null ? value.ifnFunction : "—"}
+              </span>
+            </Label>
+            <p className="text-xs text-muted-foreground italic">
+              Em uma escala de 0 a 10, quanto essa condição limita sua função nas atividades do dia a dia?
+            </p>
+            <Slider
+              min={0}
+              max={10}
+              step={1}
+              value={[value.ifnFunction ?? 0]}
+              onValueChange={([v]) => onChange({ ...value, ifnFunction: v })}
+              disabled={disabled}
+              className="py-2"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0 – Sem limitação</span>
+              <span>10 – Limitação total</span>
+            </div>
+          </div>
         )}
 
         {/* 7. Resumo */}
         <div className="rounded-lg border border-border bg-muted/30 p-3">
           <p className="text-xs font-medium text-muted-foreground mb-1">Resumo</p>
-          {summaryText ? (
-            <p className="text-sm font-medium text-foreground">{summaryText}</p>
+          {summaryParts.length > 0 ? (
+            <div className="space-y-0.5">
+              {summaryParts.map((part, i) => (
+                <p key={i} className="text-sm text-foreground">{part}</p>
+              ))}
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground italic">Nenhuma patologia selecionada.</p>
           )}
         </div>
 
-        {/* 8. Botão Salvar */}
+        {/* 8. Salvar */}
         {onSave && !disabled && (
           <div className="flex justify-end pt-2">
-            <Button
-              onClick={onSave}
-              disabled={isSaving}
-              className="gap-2"
-            >
+            <Button onClick={onSave} disabled={isSaving} className="gap-2">
               {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
+                <><Loader2 className="h-4 w-4 animate-spin" />Salvando...</>
               ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Salvar Patologia
-                </>
+                <><Save className="h-4 w-4" />Salvar Patologia</>
               )}
             </Button>
           </div>

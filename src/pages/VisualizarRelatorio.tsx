@@ -103,12 +103,17 @@ const VisualizarRelatorio = () => {
         pathology_id: string | null;
         custom_pathology_label: string | null;
         severity_model: string | null;
-        severity_scale_id: string | null;
-        severity_value: string | null;
+        structural_model: string | null;
+        structural_grade: string | null;
+        structural_group: string | null;
+        imaging_method: string | null;
+        tear_percentage: number | null;
+        disc_level_enum: string | null;
+        disc_location_enum: string | null;
+        eva_pain: number | null;
+        ifn_function: number | null;
         pathology_label?: string | null;
         category_label?: string | null;
-        scale_label?: string | null;
-        scale_options?: { value: string; label: string; help?: string }[] | null;
       } | null = null;
       
       const { data: crRaw } = await supabase
@@ -127,12 +132,12 @@ const VisualizarRelatorio = () => {
         // Fetch pathology data
         const { data: apData } = await supabase
           .from("attendance_pathology")
-          .select("category_id, pathology_id, custom_pathology_label, severity_model, severity_scale_id, severity_value")
+          .select("category_id, pathology_id, custom_pathology_label, severity_model, structural_model, structural_grade, structural_group, imaging_method, tear_percentage, disc_level_enum, disc_location_enum, eva_pain, ifn_function")
           .eq("attendance_id", crRaw.attendance_id)
           .maybeSingle();
         
         if (apData) {
-          pathologyData = { ...apData, pathology_label: null, category_label: null, scale_label: null, scale_options: null };
+          pathologyData = { ...apData, pathology_label: null, category_label: null };
           
           // Fetch pathology label
           if (apData.pathology_id) {
@@ -151,19 +156,6 @@ const VisualizarRelatorio = () => {
             .eq("id", apData.category_id)
             .maybeSingle();
           if (cData) pathologyData.category_label = cData.label;
-          
-          // Fetch scale label and options (no is_active filter — show historical data)
-          if (apData.severity_scale_id) {
-            const { data: sData } = await supabase
-              .from("pathology_severity_scales")
-              .select("scale_label, options")
-              .eq("id", apData.severity_scale_id)
-              .maybeSingle();
-            if (sData) {
-              pathologyData.scale_label = sData.scale_label;
-              pathologyData.scale_options = Array.isArray(sData.options) ? sData.options as { value: string; label: string; help?: string }[] : null;
-            }
-          }
         }
       }
 
@@ -505,65 +497,57 @@ const VisualizarRelatorio = () => {
                   )}
                 </div>
 
-                {/* Classificação / Gravidade */}
-                {(() => {
-                  const model = patientReport.pathologyData.severity_model;
-                  const value = patientReport.pathologyData.severity_value;
-
-                  if (model === "CLINICAL_SIMPLE") {
-                    const clinicalMap: Record<string, string> = { MILD: "Leve", MODERATE: "Moderada", SEVERE: "Grave" };
-                    return (
-                      <div className="space-y-1">
-                        <div>
-                          <span className="text-muted-foreground font-medium">Gravidade: </span>
-                          <span className="font-medium">{(value && clinicalMap[value]) || value || "—"}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Avaliação clínica baseada em intensidade dos sintomas e impacto funcional.
-                        </p>
-                      </div>
-                    );
-                  }
-
-                  if (model === "SPECIFIC_SCALE") {
-                    const opts = patientReport.pathologyData.scale_options;
-                    const matchedOpt = opts?.find(
-                      (o) => o.value?.toUpperCase() === value?.toUpperCase()
-                    );
-                    const displayLabel = matchedOpt?.label || value || "—";
-                    const scaleLabel = patientReport.pathologyData.scale_label;
-                    const helpText = matchedOpt?.help?.trim();
-
-                    return (
-                      <div className="space-y-1">
-                        <div>
-                          <span className="text-muted-foreground font-medium">Classificação: </span>
-                          <span className="font-medium">{displayLabel}</span>
-                        </div>
-                        {scaleLabel && (
-                          <div>
-                            <span className="text-muted-foreground text-sm">Escala: </span>
-                            <span className="text-sm">{scaleLabel}</span>
-                          </div>
-                        )}
-                        {helpText && (
-                          <div>
-                            <span className="text-muted-foreground text-sm">Descrição: </span>
-                            <span className="text-sm">{helpText}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  // UNKNOWN or fallback
-                  return (
+                {/* Classificação Estrutural */}
+                {patientReport.pathologyData.structural_model && patientReport.pathologyData.structural_model !== "NONE" && (
+                  <div className="space-y-1">
                     <div>
-                      <span className="text-muted-foreground font-medium">Gravidade: </span>
-                      <span className="text-muted-foreground">Não informada</span>
+                      <span className="text-muted-foreground font-medium">Classificação Estrutural: </span>
+                      <span className="font-medium">{patientReport.pathologyData.structural_grade || "—"}</span>
                     </div>
-                  );
-                })()}
+                    {patientReport.pathologyData.structural_group && (
+                      <div>
+                        <span className="text-muted-foreground text-sm">Grupo: </span>
+                        <span className="text-sm font-medium">{patientReport.pathologyData.structural_group}</span>
+                      </div>
+                    )}
+                    {patientReport.pathologyData.imaging_method && (
+                      <div>
+                        <span className="text-muted-foreground text-sm">Método de Imagem: </span>
+                        <span className="text-sm">{patientReport.pathologyData.imaging_method}</span>
+                      </div>
+                    )}
+                    {patientReport.pathologyData.disc_level_enum && (
+                      <div>
+                        <span className="text-muted-foreground text-sm">Nível: </span>
+                        <span className="text-sm">{patientReport.pathologyData.disc_level_enum}</span>
+                      </div>
+                    )}
+                    {patientReport.pathologyData.disc_location_enum && (
+                      <div>
+                        <span className="text-muted-foreground text-sm">Localização: </span>
+                        <span className="text-sm">{patientReport.pathologyData.disc_location_enum}</span>
+                      </div>
+                    )}
+                    {patientReport.pathologyData.tear_percentage != null && (
+                      <div>
+                        <span className="text-muted-foreground text-sm">Ruptura: </span>
+                        <span className="text-sm">{patientReport.pathologyData.tear_percentage}%</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* EVA & IFN */}
+                <div className="flex gap-6">
+                  <div>
+                    <span className="text-muted-foreground font-medium">EVA (Dor): </span>
+                    <span className="font-medium">{patientReport.pathologyData.eva_pain ?? "—"}/10</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">IFN (Função): </span>
+                    <span className="font-medium">{patientReport.pathologyData.ifn_function ?? "—"}/10</span>
+                  </div>
+                </div>
               </div>
             )}
           </section>

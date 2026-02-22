@@ -128,11 +128,20 @@ export type Database = {
           category_id: string
           created_at: string
           custom_pathology_label: string | null
+          disc_level_enum: string | null
+          disc_location_enum: string | null
+          eva_pain: number | null
           id: string
+          ifn_function: number | null
+          imaging_method: string | null
           pathology_id: string | null
           severity_model: string
           severity_scale_id: string | null
           severity_value: string | null
+          structural_grade: string | null
+          structural_group: string | null
+          structural_model: string | null
+          tear_percentage: number | null
           updated_at: string
         }
         Insert: {
@@ -140,11 +149,20 @@ export type Database = {
           category_id: string
           created_at?: string
           custom_pathology_label?: string | null
+          disc_level_enum?: string | null
+          disc_location_enum?: string | null
+          eva_pain?: number | null
           id?: string
+          ifn_function?: number | null
+          imaging_method?: string | null
           pathology_id?: string | null
           severity_model?: string
           severity_scale_id?: string | null
           severity_value?: string | null
+          structural_grade?: string | null
+          structural_group?: string | null
+          structural_model?: string | null
+          tear_percentage?: number | null
           updated_at?: string
         }
         Update: {
@@ -152,11 +170,20 @@ export type Database = {
           category_id?: string
           created_at?: string
           custom_pathology_label?: string | null
+          disc_level_enum?: string | null
+          disc_location_enum?: string | null
+          eva_pain?: number | null
           id?: string
+          ifn_function?: number | null
+          imaging_method?: string | null
           pathology_id?: string | null
           severity_model?: string
           severity_scale_id?: string | null
           severity_value?: string | null
+          structural_grade?: string | null
+          structural_group?: string | null
+          structural_model?: string | null
+          tear_percentage?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2643,6 +2670,7 @@ export type Database = {
           is_active: boolean
           label: string
           sort_order: number
+          structural_model: string
           updated_at: string
         }
         Insert: {
@@ -2654,6 +2682,7 @@ export type Database = {
           is_active?: boolean
           label: string
           sort_order?: number
+          structural_model?: string
           updated_at?: string
         }
         Update: {
@@ -2665,6 +2694,7 @@ export type Database = {
           is_active?: boolean
           label?: string
           sort_order?: number
+          structural_model?: string
           updated_at?: string
         }
         Relationships: [
