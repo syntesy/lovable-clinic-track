@@ -37,10 +37,16 @@ const TIME_BUCKET_OPTIONS = [
   { value: "UNKNOWN", label: "Não sabe/não lembra" },
 ] as const;
 
+const SHOCKWAVE_TYPE_OPTIONS = [
+  { value: "FOCAL", label: "Focal" },
+  { value: "RADIAL", label: "Radial" },
+] as const;
+
 export interface PreviousTreatmentsState {
   treatments: string[];
   lastTreatmentTimeBucket: string;
   otherText: string;
+  shockwaveType: string;
 }
 
 interface PreviousTreatmentsCardProps {
@@ -50,6 +56,7 @@ interface PreviousTreatmentsCardProps {
   disabled?: boolean;
   isSaving?: boolean;
   validationError?: string | null;
+  shockwaveValidationError?: string | null;
 }
 
 export function PreviousTreatmentsCard({
@@ -59,8 +66,9 @@ export function PreviousTreatmentsCard({
   disabled = false,
   isSaving = false,
   validationError = null,
+  shockwaveValidationError = null,
 }: PreviousTreatmentsCardProps) {
-  const { treatments, lastTreatmentTimeBucket, otherText } = value;
+  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType } = value;
 
   const handleTreatmentToggle = useCallback(
     (treatmentValue: string, checked: boolean) => {
@@ -77,10 +85,11 @@ export function PreviousTreatmentsCard({
       }
 
       const newOtherText = next.includes("OTHER") ? otherText : "";
+      const newShockwaveType = next.includes("SHOCKWAVE") ? shockwaveType : "";
 
-      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText });
+      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType });
     },
-    [treatments, lastTreatmentTimeBucket, otherText, onChange]
+    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, onChange]
   );
 
   return (
@@ -111,6 +120,34 @@ export function PreviousTreatmentsCard({
           ))}
         </div>
 
+        {/* SHOCKWAVE type dropdown */}
+        {treatments.includes("SHOCKWAVE") && (
+          <div className="space-y-1.5 pl-6">
+            <Label className="text-sm">Tipo de ondas de choque</Label>
+            <Select
+              value={shockwaveType}
+              onValueChange={(v) =>
+                onChange({ treatments, lastTreatmentTimeBucket, otherText, shockwaveType: v })
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger className={shockwaveValidationError ? "border-destructive" : ""}>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {SHOCKWAVE_TYPE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {shockwaveValidationError && (
+              <p className="text-sm text-destructive">{shockwaveValidationError}</p>
+            )}
+          </div>
+        )}
+
         {/* OTHER text input */}
         {treatments.includes("OTHER") && (
           <div className="space-y-1.5 pl-6">
@@ -121,7 +158,7 @@ export function PreviousTreatmentsCard({
               id="prev-treat-other-text"
               value={otherText}
               onChange={(e) =>
-                onChange({ treatments, lastTreatmentTimeBucket, otherText: e.target.value.slice(0, 80) })
+                onChange({ treatments, lastTreatmentTimeBucket, otherText: e.target.value.slice(0, 80), shockwaveType })
               }
               maxLength={80}
               placeholder="Especifique..."
@@ -140,7 +177,7 @@ export function PreviousTreatmentsCard({
           <Select
             value={lastTreatmentTimeBucket}
             onValueChange={(v) =>
-              onChange({ treatments, lastTreatmentTimeBucket: v, otherText })
+              onChange({ treatments, lastTreatmentTimeBucket: v, otherText, shockwaveType })
             }
             disabled={disabled}
           >
