@@ -26,6 +26,7 @@ import {
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { PreviousTreatmentsCard, type PreviousTreatmentsState } from "@/components/attendance/PreviousTreatmentsCard";
+import { PathologyCard, type PathologyState } from "@/components/attendance/PathologyCard";
 import { 
   AttendanceStatus, 
   isAttendanceClosed,
@@ -77,6 +78,15 @@ const AtendimentoDetail = () => {
     epiUsGuided: "",
     physioType: "",
     physioDuration: "",
+  });
+
+  const [pathologyState, setPathologyState] = useState<PathologyState>({
+    categoryId: null,
+    pathologyId: null,
+    customLabel: "",
+    severityModel: "UNKNOWN",
+    severityScaleId: null,
+    severityValue: null,
   });
 
   // Plan step modals
@@ -579,6 +589,13 @@ const AtendimentoDetail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Pathology Card */}
+            <PathologyCard
+              value={pathologyState}
+              onChange={setPathologyState}
+              disabled={isClosed}
+            />
 
             {/* Previous Treatments Card */}
             <PreviousTreatmentsCard
