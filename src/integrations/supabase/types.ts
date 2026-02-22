@@ -122,6 +122,44 @@ export type Database = {
           },
         ]
       }
+      attendance_previous_treatments: {
+        Row: {
+          attendance_id: string
+          created_at: string
+          details: Json
+          id: string
+          last_treatment_time_bucket: string | null
+          treatments: string[]
+          updated_at: string
+        }
+        Insert: {
+          attendance_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          last_treatment_time_bucket?: string | null
+          treatments?: string[]
+          updated_at?: string
+        }
+        Update: {
+          attendance_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          last_treatment_time_bucket?: string | null
+          treatments?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_previous_treatments_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: true
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_sessions: {
         Row: {
           closed_at: string | null
