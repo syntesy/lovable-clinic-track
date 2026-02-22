@@ -89,6 +89,34 @@ const AtendimentoDetail = () => {
   // Fetch attendance files for counter
   const { data: files = [] } = useAttendanceFiles(attendanceId ?? null);
 
+  // Fetch previous treatments from DB
+  const { data: dbPreviousTreatments } = useQuery({
+    queryKey: ["attendance-previous-treatments", attendanceId],
+    queryFn: async () => {
+      if (!attendanceId) return null;
+      const { data, error } = await supabase
+        .from("attendance_previous_treatments")
+        .select("*")
+        .eq("attendance_id", attendanceId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!attendanceId,
+  });
+
+  // Sync DB data into local state when loaded
+  useEffect(() => {
+    if (dbPreviousTreatments) {
+      const details = dbPreviousTreatments.details as Record<string, unknown> | null;
+      setPreviousTreatments({
+        treatments: dbPreviousTreatments.treatments ?? [],
+        lastTreatmentTimeBucket: dbPreviousTreatments.last_treatment_time_bucket ?? "",
+        otherText: (details?.other_text as string) ?? "",
+      });
+    }
+  }, [dbPreviousTreatments]);
+
   // Fetch patient info
   const { data: patient } = useQuery({
     queryKey: ["patient", attendance?.patient_id],
