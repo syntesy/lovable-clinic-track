@@ -11,8 +11,8 @@ All colors MUST be HSL.
     /* ===== PALETA OFICIAL REGHEN ===== */
     
     /* Base Colors */
-    /* Background: #1c2433 */
-    --background: 220 30% 16%;
+    /* Background: #080B14 */
+    --background: 225 38% 5%;
     /* Foreground: #e5e5e5 */
     --foreground: 0 0% 90%;
 
@@ -203,8 +203,8 @@ All colors MUST be HSL.
 
   /* ===== TEMA DARK REGHEN ===== */
   .dark {
-    /* Base Colors */
-    --background: 220 30% 16%;
+    /* Base Colors - #080B14 */
+    --background: 225 38% 5%;
     --foreground: 0 0% 90%;
 
     /* Card Colors */
