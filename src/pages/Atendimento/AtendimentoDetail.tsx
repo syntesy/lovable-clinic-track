@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -151,6 +151,57 @@ const AtendimentoDetail = () => {
       });
     }
   }, [dbPreviousTreatments]);
+
+  // Fetch attendance pathology from DB (READ only)
+  const { data: dbAttendancePathology, isSuccess: isPathologyQuerySuccess } = useQuery({
+    queryKey: ["attendance-pathology", attendanceId],
+    queryFn: async () => {
+      if (!attendanceId) return null;
+      const { data, error } = await supabase
+        .from("attendance_pathology")
+        .select("*")
+        .eq("attendance_id", attendanceId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!attendanceId,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // Hydrate pathologyState from DB only once per attendanceId
+  const didHydratePathologyRef = useRef(false);
+
+  useEffect(() => {
+    // Reset hydration flag when attendanceId changes
+    didHydratePathologyRef.current = false;
+    setPathologyState({
+      categoryId: null,
+      pathologyId: null,
+      customLabel: "",
+      severityModel: "UNKNOWN",
+      severityScaleId: null,
+      severityValue: null,
+    });
+  }, [attendanceId]);
+
+  useEffect(() => {
+    if (!isPathologyQuerySuccess || didHydratePathologyRef.current) return;
+
+    if (dbAttendancePathology) {
+      setPathologyState({
+        categoryId: dbAttendancePathology.category_id,
+        pathologyId: dbAttendancePathology.pathology_id,
+        customLabel: dbAttendancePathology.custom_pathology_label ?? "",
+        severityModel: (dbAttendancePathology.severity_model as PathologyState["severityModel"]) ?? "UNKNOWN",
+        severityScaleId: dbAttendancePathology.severity_scale_id,
+        severityValue: dbAttendancePathology.severity_value,
+      });
+    }
+
+    didHydratePathologyRef.current = true;
+  }, [isPathologyQuerySuccess, dbAttendancePathology]);
 
   // Fetch patient info
   const { data: patient } = useQuery({
