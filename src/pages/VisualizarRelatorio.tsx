@@ -112,6 +112,8 @@ const VisualizarRelatorio = () => {
         disc_location_enum: string | null;
         eva_pain: number | null;
         ifn_function: number | null;
+        diagnosis_stage: string | null;
+        clinical_observation: string | null;
         pathology_label?: string | null;
         category_label?: string | null;
       } | null = null;
@@ -132,7 +134,7 @@ const VisualizarRelatorio = () => {
         // Fetch pathology data
         const { data: apData } = await supabase
           .from("attendance_pathology")
-          .select("category_id, pathology_id, custom_pathology_label, severity_model, structural_model, structural_grade, structural_group, imaging_method, tear_percentage, disc_level_enum, disc_location_enum, eva_pain, ifn_function")
+          .select("category_id, pathology_id, custom_pathology_label, severity_model, structural_model, structural_grade, structural_group, imaging_method, tear_percentage, disc_level_enum, disc_location_enum, eva_pain, ifn_function, diagnosis_stage, clinical_observation")
           .eq("attendance_id", crRaw.attendance_id)
           .maybeSingle();
         
@@ -480,76 +482,112 @@ const VisualizarRelatorio = () => {
             </h2>
             {!patientReport.pathologyData ? (
               <p className="text-muted-foreground italic">Patologia não registrada.</p>
-            ) : (
-              <div className="space-y-3">
-                {/* Linha principal */}
-                <div>
-                  <span className="text-muted-foreground font-medium">Patologia: </span>
-                  <span className="font-semibold">
-                    {patientReport.pathologyData.pathology_label 
-                      || patientReport.pathologyData.custom_pathology_label 
-                      || "—"}
-                  </span>
-                  {patientReport.pathologyData.category_label && (
-                    <span className="text-muted-foreground text-sm ml-2">
-                      ({patientReport.pathologyData.category_label})
-                    </span>
+            ) : (() => {
+              const pd = patientReport.pathologyData;
+              const diagStage = (pd as any).diagnosis_stage ?? "SUSPECTED";
+              const isConfirmed = diagStage === "CONFIRMED";
+              const clinicalObs = (pd as any).clinical_observation;
+              
+              return (
+                <div className="space-y-4">
+                  {/* Hypothesis section (always shown if data exists) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        Hipótese diagnóstica
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground font-medium">Patologia: </span>
+                      <span className="font-semibold">
+                        {pd.pathology_label || pd.custom_pathology_label || "—"}
+                      </span>
+                      {pd.category_label && (
+                        <span className="text-muted-foreground text-sm ml-2">
+                          ({pd.category_label})
+                        </span>
+                      )}
+                    </div>
+                    {clinicalObs && (
+                      <div>
+                        <span className="text-muted-foreground font-medium">Observação clínica: </span>
+                        <span>{clinicalObs}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirmed section (only if CONFIRMED) */}
+                  {isConfirmed && (
+                    <div className="space-y-2 border-l-2 border-primary/40 pl-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-primary uppercase tracking-wide">
+                          Diagnóstico confirmado
+                        </span>
+                      </div>
+
+                      {/* Classificação Estrutural */}
+                      {pd.structural_model && pd.structural_model !== "NONE" && (
+                        <div className="space-y-1">
+                          <div>
+                            <span className="text-muted-foreground font-medium">Classificação Estrutural: </span>
+                            <span className="font-medium">{pd.structural_grade || "—"}</span>
+                          </div>
+                          {pd.structural_group && (
+                            <div>
+                              <span className="text-muted-foreground text-sm">Grupo: </span>
+                              <span className="text-sm font-medium">{pd.structural_group}</span>
+                            </div>
+                          )}
+                          {pd.imaging_method && (
+                            <div>
+                              <span className="text-muted-foreground text-sm">Método de Imagem: </span>
+                              <span className="text-sm">{pd.imaging_method}</span>
+                            </div>
+                          )}
+                          {pd.disc_level_enum && (
+                            <div>
+                              <span className="text-muted-foreground text-sm">Nível: </span>
+                              <span className="text-sm">{pd.disc_level_enum}</span>
+                            </div>
+                          )}
+                          {pd.disc_location_enum && (
+                            <div>
+                              <span className="text-muted-foreground text-sm">Localização: </span>
+                              <span className="text-sm">{pd.disc_location_enum}</span>
+                            </div>
+                          )}
+                          {pd.tear_percentage != null && (
+                            <div>
+                              <span className="text-muted-foreground text-sm">Ruptura: </span>
+                              <span className="text-sm">{pd.tear_percentage}%</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* EVA & IFN */}
+                      <div className="flex gap-6">
+                        <div>
+                          <span className="text-muted-foreground font-medium">EVA (Dor): </span>
+                          <span className="font-medium">{pd.eva_pain ?? "—"}/10</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground font-medium">IFN (Função): </span>
+                          <span className="font-medium">{pd.ifn_function ?? "—"}/10</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* If only SUSPECTED, show note */}
+                  {!isConfirmed && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Classificação estrutural pendente — aguardando exame complementar.
+                    </p>
                   )}
                 </div>
-
-                {/* Classificação Estrutural */}
-                {patientReport.pathologyData.structural_model && patientReport.pathologyData.structural_model !== "NONE" && (
-                  <div className="space-y-1">
-                    <div>
-                      <span className="text-muted-foreground font-medium">Classificação Estrutural: </span>
-                      <span className="font-medium">{patientReport.pathologyData.structural_grade || "—"}</span>
-                    </div>
-                    {patientReport.pathologyData.structural_group && (
-                      <div>
-                        <span className="text-muted-foreground text-sm">Grupo: </span>
-                        <span className="text-sm font-medium">{patientReport.pathologyData.structural_group}</span>
-                      </div>
-                    )}
-                    {patientReport.pathologyData.imaging_method && (
-                      <div>
-                        <span className="text-muted-foreground text-sm">Método de Imagem: </span>
-                        <span className="text-sm">{patientReport.pathologyData.imaging_method}</span>
-                      </div>
-                    )}
-                    {patientReport.pathologyData.disc_level_enum && (
-                      <div>
-                        <span className="text-muted-foreground text-sm">Nível: </span>
-                        <span className="text-sm">{patientReport.pathologyData.disc_level_enum}</span>
-                      </div>
-                    )}
-                    {patientReport.pathologyData.disc_location_enum && (
-                      <div>
-                        <span className="text-muted-foreground text-sm">Localização: </span>
-                        <span className="text-sm">{patientReport.pathologyData.disc_location_enum}</span>
-                      </div>
-                    )}
-                    {patientReport.pathologyData.tear_percentage != null && (
-                      <div>
-                        <span className="text-muted-foreground text-sm">Ruptura: </span>
-                        <span className="text-sm">{patientReport.pathologyData.tear_percentage}%</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* EVA & IFN */}
-                <div className="flex gap-6">
-                  <div>
-                    <span className="text-muted-foreground font-medium">EVA (Dor): </span>
-                    <span className="font-medium">{patientReport.pathologyData.eva_pain ?? "—"}/10</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">IFN (Função): </span>
-                    <span className="font-medium">{patientReport.pathologyData.ifn_function ?? "—"}/10</span>
-                  </div>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </section>
 
           <Separator className="mb-6" />

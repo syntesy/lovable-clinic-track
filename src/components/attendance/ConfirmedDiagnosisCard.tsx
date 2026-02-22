@@ -14,7 +14,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, Loader2, Save, ImageIcon, Info } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ShieldCheck, Loader2, Save, ImageIcon, Info, CheckCircle2 } from "lucide-react";
 import {
   type PathologyState,
   type StructuralModel,
@@ -263,6 +264,10 @@ export function ConfirmedDiagnosisCard({
         <CardTitle className="text-base flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-primary" />
           DIAGNÓSTICO CONFIRMADO (IMAGEM)
+          <Badge variant="outline" className="ml-auto text-xs gap-1 border-primary/40 text-primary">
+            <CheckCircle2 className="h-3 w-3" />
+            Confirmado por imagem
+          </Badge>
         </CardTitle>
         <p className="text-xs text-muted-foreground">
           {categoryLabel} → {pathologyLabel}
