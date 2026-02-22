@@ -96,8 +96,21 @@ const VisualizarRelatorio = () => {
         .select("*")
         .eq("patient_id", id);
 
-      // Fetch previous treatments if clinical record has an attendance_id
+      // Fetch previous treatments and pathology if clinical record has an attendance_id
       let previousTreatments = null;
+      let pathologyData: {
+        category_id: string;
+        pathology_id: string | null;
+        custom_pathology_label: string | null;
+        severity_model: string | null;
+        severity_scale_id: string | null;
+        severity_value: string | null;
+        pathology_label?: string | null;
+        category_label?: string | null;
+        scale_label?: string | null;
+        scale_options?: { value: string; label: string; help?: string }[] | null;
+      } | null = null;
+      
       const { data: crRaw } = await supabase
         .from("clinical_records")
         .select("attendance_id")
@@ -110,6 +123,48 @@ const VisualizarRelatorio = () => {
           .eq("attendance_id", crRaw.attendance_id)
           .maybeSingle();
         previousTreatments = ptData;
+
+        // Fetch pathology data
+        const { data: apData } = await supabase
+          .from("attendance_pathology")
+          .select("category_id, pathology_id, custom_pathology_label, severity_model, severity_scale_id, severity_value")
+          .eq("attendance_id", crRaw.attendance_id)
+          .maybeSingle();
+        
+        if (apData) {
+          pathologyData = { ...apData, pathology_label: null, category_label: null, scale_label: null, scale_options: null };
+          
+          // Fetch pathology label
+          if (apData.pathology_id) {
+            const { data: pData } = await supabase
+              .from("pathologies")
+              .select("label")
+              .eq("id", apData.pathology_id)
+              .maybeSingle();
+            if (pData) pathologyData.pathology_label = pData.label;
+          }
+          
+          // Fetch category label
+          const { data: cData } = await supabase
+            .from("pathology_categories")
+            .select("label")
+            .eq("id", apData.category_id)
+            .maybeSingle();
+          if (cData) pathologyData.category_label = cData.label;
+          
+          // Fetch scale label and options (no is_active filter — show historical data)
+          if (apData.severity_scale_id) {
+            const { data: sData } = await supabase
+              .from("pathology_severity_scales")
+              .select("scale_label, options")
+              .eq("id", apData.severity_scale_id)
+              .maybeSingle();
+            if (sData) {
+              pathologyData.scale_label = sData.scale_label;
+              pathologyData.scale_options = Array.isArray(sData.options) ? sData.options as { value: string; label: string; help?: string }[] : null;
+            }
+          }
+        }
       }
 
       return {
@@ -121,6 +176,7 @@ const VisualizarRelatorio = () => {
         thermographyImages: thermographyImages || [],
         bloodTests: bloodTests || [],
         previousTreatments,
+        pathologyData,
       };
     },
   });
@@ -419,6 +475,95 @@ const VisualizarRelatorio = () => {
               <div className="print:text-sm">
                 <span className="text-muted-foreground font-medium">Exame Físico:</span>
                 <p className="mt-1">{patientReport.clinicalRecord.physical_exam}</p>
+              </div>
+            )}
+          </section>
+
+          <Separator className="mb-6" />
+
+          {/* Patologia */}
+          <section className="mb-8 print:mb-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4 print:text-lg">
+              Patologia
+            </h2>
+            {!patientReport.pathologyData ? (
+              <p className="text-muted-foreground italic">Patologia não registrada.</p>
+            ) : (
+              <div className="space-y-3">
+                {/* Linha principal */}
+                <div>
+                  <span className="text-muted-foreground font-medium">Patologia: </span>
+                  <span className="font-semibold">
+                    {patientReport.pathologyData.pathology_label 
+                      || patientReport.pathologyData.custom_pathology_label 
+                      || "—"}
+                  </span>
+                  {patientReport.pathologyData.category_label && (
+                    <span className="text-muted-foreground text-sm ml-2">
+                      ({patientReport.pathologyData.category_label})
+                    </span>
+                  )}
+                </div>
+
+                {/* Classificação / Gravidade */}
+                {(() => {
+                  const model = patientReport.pathologyData.severity_model;
+                  const value = patientReport.pathologyData.severity_value;
+
+                  if (model === "CLINICAL_SIMPLE") {
+                    const clinicalMap: Record<string, string> = { MILD: "Leve", MODERATE: "Moderada", SEVERE: "Grave" };
+                    return (
+                      <div className="space-y-1">
+                        <div>
+                          <span className="text-muted-foreground font-medium">Gravidade: </span>
+                          <span className="font-medium">{(value && clinicalMap[value]) || value || "—"}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Avaliação clínica baseada em intensidade dos sintomas e impacto funcional.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  if (model === "SPECIFIC_SCALE") {
+                    const opts = patientReport.pathologyData.scale_options;
+                    const matchedOpt = opts?.find(
+                      (o) => o.value?.toUpperCase() === value?.toUpperCase()
+                    );
+                    const displayLabel = matchedOpt?.label || value || "—";
+                    const scaleLabel = patientReport.pathologyData.scale_label;
+                    const helpText = matchedOpt?.help?.trim();
+
+                    return (
+                      <div className="space-y-1">
+                        <div>
+                          <span className="text-muted-foreground font-medium">Classificação: </span>
+                          <span className="font-medium">{displayLabel}</span>
+                        </div>
+                        {scaleLabel && (
+                          <div>
+                            <span className="text-muted-foreground text-sm">Escala: </span>
+                            <span className="text-sm">{scaleLabel}</span>
+                          </div>
+                        )}
+                        {helpText && (
+                          <div>
+                            <span className="text-muted-foreground text-sm">Descrição: </span>
+                            <span className="text-sm">{helpText}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // UNKNOWN or fallback
+                  return (
+                    <div>
+                      <span className="text-muted-foreground font-medium">Gravidade: </span>
+                      <span className="text-muted-foreground">Não informada</span>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </section>
