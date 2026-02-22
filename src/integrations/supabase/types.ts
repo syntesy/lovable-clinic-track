@@ -122,6 +122,74 @@ export type Database = {
           },
         ]
       }
+      attendance_pathology: {
+        Row: {
+          attendance_id: string
+          category_id: string
+          created_at: string
+          custom_pathology_label: string | null
+          id: string
+          pathology_id: string | null
+          severity_model: string
+          severity_scale_id: string | null
+          severity_value: string | null
+          updated_at: string
+        }
+        Insert: {
+          attendance_id: string
+          category_id: string
+          created_at?: string
+          custom_pathology_label?: string | null
+          id?: string
+          pathology_id?: string | null
+          severity_model?: string
+          severity_scale_id?: string | null
+          severity_value?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attendance_id?: string
+          category_id?: string
+          created_at?: string
+          custom_pathology_label?: string | null
+          id?: string
+          pathology_id?: string | null
+          severity_model?: string
+          severity_scale_id?: string | null
+          severity_value?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_pathology_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: true
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_pathology_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "pathology_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_pathology_pathology_id_fkey"
+            columns: ["pathology_id"]
+            isOneToOne: false
+            referencedRelation: "pathologies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_pathology_severity_scale_id_fkey"
+            columns: ["severity_scale_id"]
+            isOneToOne: false
+            referencedRelation: "pathology_severity_scales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_previous_treatments: {
         Row: {
           attendance_id: string
