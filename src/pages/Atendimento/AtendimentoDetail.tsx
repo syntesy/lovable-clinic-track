@@ -62,6 +62,7 @@ const AtendimentoDetail = () => {
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isSavingTreatments, setIsSavingTreatments] = useState(false);
+  const [isSavingPathology, setIsSavingPathology] = useState(false);
   const [treatmentsValidationError, setTreatmentsValidationError] = useState<string | null>(null);
   const [shockwaveValidationError, setShockwaveValidationError] = useState<string | null>(null);
   const [laserValidationError, setLaserValidationError] = useState<string | null>(null);
@@ -290,6 +291,87 @@ const AtendimentoDetail = () => {
     }
   }, [attendance, attendanceId, queryClient]);
 
+
+  // Handler: Save pathology via UPSERT
+  const handleSavePathology = useCallback(async () => {
+    if (!attendanceId) return;
+
+    const { categoryId, pathologyId, customLabel, severityModel, severityScaleId, severityValue } = pathologyState;
+
+    // A) Category required
+    if (!categoryId) {
+      toast.error("Selecione a categoria.");
+      return;
+    }
+
+    // B) Pathology validation
+    const trimmedCustom = customLabel.trim();
+    const isCustom = pathologyId === null;
+    if (isCustom) {
+      if (!trimmedCustom || trimmedCustom.length < 2 || trimmedCustom.length > 120) {
+        toast.error("Informe a patologia (2 a 120 caracteres).");
+        return;
+      }
+    }
+
+    // C) Severity validation
+    if (!["CLINICAL_SIMPLE", "SPECIFIC_SCALE", "UNKNOWN"].includes(severityModel)) {
+      toast.error("Selecione a classificação.");
+      return;
+    }
+
+    let finalScaleId: string | null = null;
+    let finalValue: string | null = null;
+
+    if (severityModel === "CLINICAL_SIMPLE") {
+      if (!severityValue || !["MILD", "MODERATE", "SEVERE"].includes(severityValue.toUpperCase().trim())) {
+        toast.error("Selecione a gravidade clínica.");
+        return;
+      }
+      finalValue = severityValue.toUpperCase().trim();
+    } else if (severityModel === "SPECIFIC_SCALE") {
+      if (!severityScaleId) {
+        toast.error("Selecione a escala.");
+        return;
+      }
+      if (!severityValue) {
+        toast.error("Selecione o grau/gravidade.");
+        return;
+      }
+      finalScaleId = severityScaleId;
+      finalValue = severityValue.toUpperCase().trim();
+    }
+    // UNKNOWN: both stay null
+
+    const payload = {
+      attendance_id: attendanceId,
+      category_id: categoryId,
+      pathology_id: isCustom ? null : pathologyId,
+      custom_pathology_label: isCustom ? trimmedCustom : null,
+      severity_model: severityModel,
+      severity_scale_id: finalScaleId,
+      severity_value: finalValue,
+    };
+
+    setIsSavingPathology(true);
+    try {
+      const { error } = await supabase
+        .from("attendance_pathology")
+        .upsert(payload, { onConflict: "attendance_id" });
+
+      if (error) throw error;
+
+      toast.success("Patologia salva.");
+      await queryClient.invalidateQueries({
+        queryKey: ["attendance-pathology", attendanceId],
+      });
+    } catch (e) {
+      console.error("attendance_pathology.save.error", e);
+      toast.error("Não foi possível salvar. Revise os campos.");
+    } finally {
+      setIsSavingPathology(false);
+    }
+  }, [attendanceId, pathologyState, queryClient]);
 
   // Handler: Save previous treatments via UPSERT
   const handleSavePreviousTreatments = useCallback(async () => {
@@ -645,7 +727,9 @@ const AtendimentoDetail = () => {
             <PathologyCard
               value={pathologyState}
               onChange={setPathologyState}
+              onSave={handleSavePathology}
               disabled={isClosed}
+              isSaving={isSavingPathology}
             />
 
             {/* Previous Treatments Card */}

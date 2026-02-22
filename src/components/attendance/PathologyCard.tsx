@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Stethoscope, Info } from "lucide-react";
+import { Stethoscope, Info, Loader2, Save } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -40,10 +41,12 @@ const INITIAL_STATE: PathologyState = {
 interface PathologyCardProps {
   value: PathologyState;
   onChange: (state: PathologyState) => void;
+  onSave?: () => void;
   disabled?: boolean;
+  isSaving?: boolean;
 }
 
-export function PathologyCard({ value, onChange, disabled = false }: PathologyCardProps) {
+export function PathologyCard({ value, onChange, onSave, disabled = false, isSaving = false }: PathologyCardProps) {
   // Fetch categories
   const { data: categories = [] } = useQuery({
     queryKey: ["pathology-categories"],
@@ -414,6 +417,29 @@ export function PathologyCard({ value, onChange, disabled = false }: PathologyCa
             <p className="text-sm text-muted-foreground italic">Nenhuma patologia selecionada.</p>
           )}
         </div>
+
+        {/* 8. Botão Salvar */}
+        {onSave && !disabled && (
+          <div className="flex justify-end pt-2">
+            <Button
+              onClick={onSave}
+              disabled={isSaving}
+              className="gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Salvar Patologia
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
