@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -44,13 +46,19 @@ export interface PreviousTreatmentsState {
 interface PreviousTreatmentsCardProps {
   value: PreviousTreatmentsState;
   onChange: (state: PreviousTreatmentsState) => void;
+  onSave?: () => Promise<void>;
   disabled?: boolean;
+  isSaving?: boolean;
+  validationError?: string | null;
 }
 
 export function PreviousTreatmentsCard({
   value,
   onChange,
+  onSave,
   disabled = false,
+  isSaving = false,
+  validationError = null,
 }: PreviousTreatmentsCardProps) {
   const { treatments, lastTreatmentTimeBucket, otherText } = value;
 
@@ -59,10 +67,8 @@ export function PreviousTreatmentsCard({
       let next: string[];
 
       if (treatmentValue === "NONE") {
-        // NONE clears everything else
         next = checked ? ["NONE"] : [];
       } else {
-        // Any other removes NONE
         if (checked) {
           next = [...treatments.filter((t) => t !== "NONE"), treatmentValue];
         } else {
@@ -70,7 +76,6 @@ export function PreviousTreatmentsCard({
         }
       }
 
-      // If OTHER was unchecked, clear otherText
       const newOtherText = next.includes("OTHER") ? otherText : "";
 
       onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText });
@@ -121,7 +126,11 @@ export function PreviousTreatmentsCard({
               maxLength={80}
               placeholder="Especifique..."
               disabled={disabled}
+              className={validationError ? "border-destructive" : ""}
             />
+            {validationError && (
+              <p className="text-sm text-destructive">{validationError}</p>
+            )}
           </div>
         )}
 
@@ -147,6 +156,20 @@ export function PreviousTreatmentsCard({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Save button */}
+        {onSave && !disabled && (
+          <Button onClick={onSave} disabled={isSaving} className="w-full">
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Salvar Tratamentos Prévios"
+            )}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
