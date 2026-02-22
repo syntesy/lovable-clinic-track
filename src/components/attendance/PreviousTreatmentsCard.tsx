@@ -42,11 +42,17 @@ const SHOCKWAVE_TYPE_OPTIONS = [
   { value: "RADIAL", label: "Radial" },
 ] as const;
 
+const LASER_INTENSITY_OPTIONS = [
+  { value: "LOW", label: "Baixa intensidade" },
+  { value: "HIGH", label: "Alta intensidade" },
+] as const;
+
 export interface PreviousTreatmentsState {
   treatments: string[];
   lastTreatmentTimeBucket: string;
   otherText: string;
   shockwaveType: string;
+  laserIntensity: string;
 }
 
 interface PreviousTreatmentsCardProps {
@@ -57,6 +63,7 @@ interface PreviousTreatmentsCardProps {
   isSaving?: boolean;
   validationError?: string | null;
   shockwaveValidationError?: string | null;
+  laserValidationError?: string | null;
 }
 
 export function PreviousTreatmentsCard({
@@ -67,8 +74,9 @@ export function PreviousTreatmentsCard({
   isSaving = false,
   validationError = null,
   shockwaveValidationError = null,
+  laserValidationError = null,
 }: PreviousTreatmentsCardProps) {
-  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType } = value;
+  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity } = value;
 
   const handleTreatmentToggle = useCallback(
     (treatmentValue: string, checked: boolean) => {
@@ -86,10 +94,11 @@ export function PreviousTreatmentsCard({
 
       const newOtherText = next.includes("OTHER") ? otherText : "";
       const newShockwaveType = next.includes("SHOCKWAVE") ? shockwaveType : "";
+      const newLaserIntensity = next.includes("LASER") ? laserIntensity : "";
 
-      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType });
+      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity });
     },
-    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, onChange]
+    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, onChange]
   );
 
   return (
@@ -127,7 +136,7 @@ export function PreviousTreatmentsCard({
             <Select
               value={shockwaveType}
               onValueChange={(v) =>
-                onChange({ treatments, lastTreatmentTimeBucket, otherText, shockwaveType: v })
+                onChange({ ...value, shockwaveType: v })
               }
               disabled={disabled}
             >
@@ -148,6 +157,34 @@ export function PreviousTreatmentsCard({
           </div>
         )}
 
+        {/* LASER intensity dropdown */}
+        {treatments.includes("LASER") && (
+          <div className="space-y-1.5 pl-6">
+            <Label className="text-sm">Intensidade do laser</Label>
+            <Select
+              value={laserIntensity}
+              onValueChange={(v) =>
+                onChange({ ...value, laserIntensity: v })
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger className={laserValidationError ? "border-destructive" : ""}>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {LASER_INTENSITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {laserValidationError && (
+              <p className="text-sm text-destructive">{laserValidationError}</p>
+            )}
+          </div>
+        )}
+
         {/* OTHER text input */}
         {treatments.includes("OTHER") && (
           <div className="space-y-1.5 pl-6">
@@ -158,7 +195,7 @@ export function PreviousTreatmentsCard({
               id="prev-treat-other-text"
               value={otherText}
               onChange={(e) =>
-                onChange({ treatments, lastTreatmentTimeBucket, otherText: e.target.value.slice(0, 80), shockwaveType })
+                onChange({ ...value, otherText: e.target.value.slice(0, 80) })
               }
               maxLength={80}
               placeholder="Especifique..."
@@ -177,7 +214,7 @@ export function PreviousTreatmentsCard({
           <Select
             value={lastTreatmentTimeBucket}
             onValueChange={(v) =>
-              onChange({ treatments, lastTreatmentTimeBucket: v, otherText, shockwaveType })
+              onChange({ ...value, lastTreatmentTimeBucket: v })
             }
             disabled={disabled}
           >

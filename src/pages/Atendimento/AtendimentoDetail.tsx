@@ -63,11 +63,13 @@ const AtendimentoDetail = () => {
   const [isSavingTreatments, setIsSavingTreatments] = useState(false);
   const [treatmentsValidationError, setTreatmentsValidationError] = useState<string | null>(null);
   const [shockwaveValidationError, setShockwaveValidationError] = useState<string | null>(null);
+  const [laserValidationError, setLaserValidationError] = useState<string | null>(null);
   const [previousTreatments, setPreviousTreatments] = useState<PreviousTreatmentsState>({
     treatments: [],
     lastTreatmentTimeBucket: "",
     otherText: "",
     shockwaveType: "",
+    laserIntensity: "",
   });
 
   // Plan step modals
@@ -114,11 +116,13 @@ const AtendimentoDetail = () => {
     if (dbPreviousTreatments) {
       const details = dbPreviousTreatments.details as Record<string, unknown> | null;
       const shockwave = details?.shockwave as Record<string, unknown> | null;
+      const laser = details?.laser as Record<string, unknown> | null;
       setPreviousTreatments({
         treatments: dbPreviousTreatments.treatments ?? [],
         lastTreatmentTimeBucket: dbPreviousTreatments.last_treatment_time_bucket ?? "",
         otherText: (details?.other_text as string) ?? "",
         shockwaveType: (shockwave?.type as string) ?? "",
+        laserIntensity: (laser?.intensity as string) ?? "",
       });
     }
   }, [dbPreviousTreatments]);
@@ -229,6 +233,13 @@ const AtendimentoDetail = () => {
     }
     setShockwaveValidationError(null);
 
+    // Validation: if LASER is selected, laserIntensity is required
+    if (previousTreatments.treatments.includes("LASER") && !previousTreatments.laserIntensity) {
+      setLaserValidationError("Selecione a intensidade do laser.");
+      return;
+    }
+    setLaserValidationError(null);
+
     // Build details JSONB
     const details: Record<string, unknown> = {};
     if (previousTreatments.treatments.includes("OTHER") && previousTreatments.otherText.trim()) {
@@ -236,6 +247,9 @@ const AtendimentoDetail = () => {
     }
     if (previousTreatments.treatments.includes("SHOCKWAVE") && previousTreatments.shockwaveType) {
       details.shockwave = { type: previousTreatments.shockwaveType };
+    }
+    if (previousTreatments.treatments.includes("LASER") && previousTreatments.laserIntensity) {
+      details.laser = { intensity: previousTreatments.laserIntensity };
     }
 
     // NONE enforcement
@@ -528,12 +542,14 @@ const AtendimentoDetail = () => {
                 setPreviousTreatments(v);
                 setTreatmentsValidationError(null);
                 setShockwaveValidationError(null);
+                setLaserValidationError(null);
               }}
               onSave={handleSavePreviousTreatments}
               disabled={isClosed}
               isSaving={isSavingTreatments}
               validationError={treatmentsValidationError}
               shockwaveValidationError={shockwaveValidationError}
+              laserValidationError={laserValidationError}
             />
           </div>
         );
