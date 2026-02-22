@@ -39,8 +39,9 @@ import {
   DEFAULT_TIMEPOINT,
 } from '@/hooks/usePerformanceBenchmark';
 import { OutcomeTimepoint } from '@/hooks/useCollectiveOutcomes';
-import { usePrpOaKl1M3Report } from '@/hooks/usePrpOaKl1M3Report';
-import { PrpOaKl1M3ReportCard } from '@/components/insights/PrpOaKl1M3ReportCard';
+import { useProcedureOutcomeReport, type OutcomeReportParams, type ReportScope, REPORT_PRESETS } from '@/hooks/useProcedureOutcomeReport';
+import { OutcomeReportCard } from '@/components/insights/OutcomeReportCard';
+import { OutcomeReportFilterPanel } from '@/components/insights/OutcomeReportFilterPanel';
 import { FlaskConical as FlaskIcon } from 'lucide-react';
 
 const TIMEPOINT_LABELS: Record<OutcomeTimepoint, string> = {
@@ -418,7 +419,8 @@ function LoadingState() {
 export default function PerformanceDashboard() {
   const [selectedTimepoint, setSelectedTimepoint] = useState<OutcomeTimepoint>(DEFAULT_TIMEPOINT);
   const { data, isLoading, error } = usePerformanceBenchmark(selectedTimepoint);
-  const { data: prpReport, isLoading: prpLoading, error: prpError } = usePrpOaKl1M3Report('CLINIC');
+  const [reportParams, setReportParams] = useState<OutcomeReportParams | null>(REPORT_PRESETS[0].params);
+  const { data: outcomeReport, isLoading: outcomeLoading, error: outcomeError } = useProcedureOutcomeReport('CLINIC', reportParams);
 
   return (
     <div className="space-y-6">
@@ -446,9 +448,9 @@ export default function PerformanceDashboard() {
       <Tabs defaultValue="seal" className="space-y-4">
         <TabsList>
           <TabsTrigger value="seal">Selo de Performance</TabsTrigger>
-          <TabsTrigger value="prp-oa-kl1" className="flex items-center gap-1">
+          <TabsTrigger value="outcome-report" className="flex items-center gap-1">
             <FlaskIcon className="h-4 w-4" />
-            PRP · Artrose KL1 · M3
+            Relatório de Resultados
           </TabsTrigger>
         </TabsList>
 
@@ -521,20 +523,25 @@ export default function PerformanceDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="prp-oa-kl1" className="space-y-4">
+        <TabsContent value="outcome-report" className="space-y-4">
           <Alert variant="default" className="bg-muted/30 border-muted">
             <FlaskIcon className="h-4 w-4" />
             <AlertDescription>
-              <strong>Relatório: PRP em Artrose KL1 – Follow-up 3 meses.</strong>{' '}
-              Coorte restrito a diagnósticos confirmados (Kellgren-Lawrence 1) com baseline e M3 completos.
+              <strong>Relatório de Resultados.</strong>{' '}
+              Coorte restrito a diagnósticos confirmados com baseline e follow-up completos.
               Dados exclusivos da sua clínica.
             </AlertDescription>
           </Alert>
-          <PrpOaKl1M3ReportCard
-            data={prpReport}
-            isLoading={prpLoading}
-            error={prpError}
+          <OutcomeReportFilterPanel
+            onGenerate={setReportParams}
+            currentParams={reportParams}
+          />
+          <OutcomeReportCard
+            data={outcomeReport}
+            isLoading={outcomeLoading}
+            error={outcomeError}
             scope="CLINIC"
+            params={reportParams}
           />
         </TabsContent>
       </Tabs>
