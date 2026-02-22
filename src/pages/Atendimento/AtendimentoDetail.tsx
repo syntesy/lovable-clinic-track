@@ -25,6 +25,7 @@ import {
   AttendanceDocumentsStep,
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
+import { PreviousTreatmentsCard, type PreviousTreatmentsState } from "@/components/attendance/PreviousTreatmentsCard";
 import { 
   AttendanceStatus, 
   isAttendanceClosed,
@@ -59,6 +60,11 @@ const AtendimentoDetail = () => {
   const [completedSteps] = useState<AttendanceStepId[]>([]);
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [previousTreatments, setPreviousTreatments] = useState<PreviousTreatmentsState>({
+    treatments: [],
+    lastTreatmentTimeBucket: "",
+    otherText: "",
+  });
 
   // Plan step modals
   const [isAddProcedureOpen, setIsAddProcedureOpen] = useState(false);
@@ -423,6 +429,13 @@ const AtendimentoDetail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Previous Treatments Card */}
+            <PreviousTreatmentsCard
+              value={previousTreatments}
+              onChange={setPreviousTreatments}
+              disabled={isClosed}
+            />
           </div>
         );
 
