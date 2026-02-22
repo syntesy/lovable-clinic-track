@@ -57,6 +57,12 @@ const ORTHOBIOLOGIC_TYPE_OPTIONS = [
   { value: "OTHER", label: "Outro" },
 ] as const;
 
+const EPI_US_GUIDED_OPTIONS = [
+  { value: "YES", label: "Sim" },
+  { value: "NO", label: "Não" },
+  { value: "UNKNOWN", label: "Não informado" },
+] as const;
+
 export interface PreviousTreatmentsState {
   treatments: string[];
   lastTreatmentTimeBucket: string;
@@ -65,6 +71,7 @@ export interface PreviousTreatmentsState {
   laserIntensity: string;
   orthobiologicPrevType: string;
   orthobiologicPrevOtherText: string;
+  epiUsGuided: string;
 }
 
 interface PreviousTreatmentsCardProps {
@@ -92,7 +99,7 @@ export function PreviousTreatmentsCard({
   orthobiologicPrevValidationError = null,
   orthobiologicPrevOtherValidationError = null,
 }: PreviousTreatmentsCardProps) {
-  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText } = value;
+  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided } = value;
 
   const handleTreatmentToggle = useCallback(
     (treatmentValue: string, checked: boolean) => {
@@ -113,10 +120,11 @@ export function PreviousTreatmentsCard({
       const newLaserIntensity = next.includes("LASER") ? laserIntensity : "";
       const newOrthobiologicPrevType = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevType : "";
       const newOrthobiologicPrevOtherText = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevOtherText : "";
+      const newEpiUsGuided = next.includes("EPI") ? epiUsGuided : "";
 
-      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity, orthobiologicPrevType: newOrthobiologicPrevType, orthobiologicPrevOtherText: newOrthobiologicPrevOtherText });
+      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity, orthobiologicPrevType: newOrthobiologicPrevType, orthobiologicPrevOtherText: newOrthobiologicPrevOtherText, epiUsGuided: newEpiUsGuided });
     },
-    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, onChange]
+    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided, onChange]
   );
 
   return (
@@ -200,6 +208,31 @@ export function PreviousTreatmentsCard({
             {laserValidationError && (
               <p className="text-sm text-destructive">{laserValidationError}</p>
             )}
+          </div>
+        )}
+
+        {/* EPI us_guided dropdown (optional) */}
+        {treatments.includes("EPI") && (
+          <div className="space-y-1.5 pl-6">
+            <Label className="text-sm">EPI guiada por ultrassom?</Label>
+            <Select
+              value={epiUsGuided}
+              onValueChange={(v) =>
+                onChange({ ...value, epiUsGuided: v })
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {EPI_US_GUIDED_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
 
