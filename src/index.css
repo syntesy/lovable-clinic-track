@@ -17,14 +17,14 @@ All colors MUST be HSL.
     --foreground: 0 0% 90%;
 
     /* Card Colors */
-    /* Card Background: #2a3040 */
-    --card: 224 22% 21%;
+    /* Card Background: #12151E */
+    --card: 228 25% 9%;
     /* Card Foreground: #e5e5e5 */
     --card-foreground: 0 0% 90%;
 
     /* Popover Colors */
-    /* Popover Background: #262b38 */
-    --popover: 222 20% 18%;
+    /* Popover Background: #0F1219 */
+    --popover: 228 28% 8%;
     /* Popover Foreground: #e5e5e5 */
     --popover-foreground: 0 0% 90%;
 
@@ -35,20 +35,20 @@ All colors MUST be HSL.
     --primary-foreground: 0 0% 100%;
 
     /* Secondary Colors */
-    /* Secondary: #2a303e */
-    --secondary: 220 20% 20%;
+    /* Secondary: #10131B */
+    --secondary: 228 27% 8%;
     /* Secondary Foreground: #e5e5e5 */
     --secondary-foreground: 0 0% 90%;
 
     /* Muted Colors */
-    /* Muted: #2a303e */
-    --muted: 220 20% 20%;
+    /* Muted: #151828 */
+    --muted: 228 25% 10%;
     /* Muted Foreground: #a3a3a3 */
     --muted-foreground: 0 0% 64%;
 
     /* Accent Colors */
-    /* Accent: #2a3656 */
-    --accent: 220 35% 25%;
+    /* Accent: #151929 */
+    --accent: 230 32% 12%;
     /* Accent Foreground: #bfdbfe */
     --accent-foreground: 213 97% 87%;
 
@@ -75,10 +75,10 @@ All colors MUST be HSL.
     --teal-foreground: 220 30% 16%;
 
     /* Border & Input Colors */
-    /* Border: #3d4354 */
-    --border: 225 16% 28%;
-    /* Input: #3d4354 */
-    --input: 225 16% 28%;
+    /* Border: #1C2030 */
+    --border: 230 25% 15%;
+    /* Input: #1C2030 */
+    --input: 230 25% 15%;
     /* Ring: #e05d38 */
     --ring: 13 74% 55%;
 
@@ -91,21 +91,14 @@ All colors MUST be HSL.
     --clinical-neutral: 0 0% 64%;
 
     /* Sidebar Colors */
-    /* Sidebar Background: #2a303f */
-    --sidebar-background: 220 21% 20%;
-    /* Sidebar Foreground: #e5e5e5 */
+    /* Sidebar Background: #0E1118 */
+    --sidebar-background: 228 28% 7%;
     --sidebar-foreground: 0 0% 90%;
-    /* Sidebar Primary: #e05d38 */
     --sidebar-primary: 13 74% 55%;
-    /* Sidebar Primary Foreground: #ffffff */
     --sidebar-primary-foreground: 0 0% 100%;
-    /* Sidebar Accent: #2a3656 */
-    --sidebar-accent: 220 35% 25%;
-    /* Sidebar Accent Foreground: #bfdbfe */
+    --sidebar-accent: 230 32% 12%;
     --sidebar-accent-foreground: 213 97% 87%;
-    /* Sidebar Border: #3d4354 */
-    --sidebar-border: 225 16% 28%;
-    /* Sidebar Ring: #e05d38 */
+    --sidebar-border: 230 25% 15%;
     --sidebar-ring: 13 74% 55%;
 
     /* Chart Colors */
@@ -207,28 +200,28 @@ All colors MUST be HSL.
     --background: 225 38% 5%;
     --foreground: 0 0% 90%;
 
-    /* Card Colors */
-    --card: 224 22% 21%;
+    /* Card Colors - #12151E */
+    --card: 228 25% 9%;
     --card-foreground: 0 0% 90%;
 
-    /* Popover Colors */
-    --popover: 222 20% 18%;
+    /* Popover Colors - #0F1219 */
+    --popover: 228 28% 8%;
     --popover-foreground: 0 0% 90%;
 
     /* Primary Colors */
     --primary: 13 74% 55%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary Colors */
-    --secondary: 220 20% 20%;
+    /* Secondary Colors - #10131B */
+    --secondary: 228 27% 8%;
     --secondary-foreground: 0 0% 90%;
 
     /* Muted Colors */
-    --muted: 220 20% 20%;
+    --muted: 228 25% 10%;
     --muted-foreground: 0 0% 64%;
 
-    /* Accent Colors */
-    --accent: 220 35% 25%;
+    /* Accent Colors - #151929 */
+    --accent: 230 32% 12%;
     --accent-foreground: 213 97% 87%;
 
     /* Destructive Colors */
@@ -251,9 +244,9 @@ All colors MUST be HSL.
     --teal: 213 97% 87%;
     --teal-foreground: 220 30% 16%;
 
-    /* Border & Input */
-    --border: 225 16% 28%;
-    --input: 225 16% 28%;
+    /* Border & Input - #1C2030 */
+    --border: 230 25% 15%;
+    --input: 230 25% 15%;
     --ring: 13 74% 55%;
 
     /* Clinical */
@@ -262,14 +255,14 @@ All colors MUST be HSL.
     --clinical-danger: 0 84% 60%;
     --clinical-neutral: 0 0% 64%;
 
-    /* Sidebar */
-    --sidebar-background: 220 21% 20%;
+    /* Sidebar - #0E1118 */
+    --sidebar-background: 228 28% 7%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 13 74% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 35% 25%;
+    --sidebar-accent: 230 32% 12%;
     --sidebar-accent-foreground: 213 97% 87%;
-    --sidebar-border: 225 16% 28%;
+    --sidebar-border: 230 25% 15%;
     --sidebar-ring: 13 74% 55%;
 
     /* Chart Colors */
