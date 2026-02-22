@@ -16,6 +16,8 @@ import { Info, Users, TrendingUp, Shield, FlaskConical, Activity, HeartPulse, Ta
 import { useCollectiveInsights, DashboardFilters, getMostFrequent } from '@/hooks/useCollectiveInsights';
 import { useCollectiveOutcomes, OutcomeTimepoint, ResponseThreshold, ClusterOutcomeAggregation, TrendInfo } from '@/hooks/useCollectiveOutcomes';
 import { humanReadableClusterKey } from '@/lib/cluster-signature-generator';
+import { usePrpOaKl1M3Report } from '@/hooks/usePrpOaKl1M3Report';
+import { PrpOaKl1M3ReportCard } from '@/components/insights/PrpOaKl1M3ReportCard';
 import {
   PATHOLOGY_OPTIONS,
   ANATOMIC_REGION_OPTIONS,
@@ -99,6 +101,7 @@ export default function CollectiveDashboard() {
 
   const { data: protocolData, isLoading: protocolLoading } = useCollectiveInsights(filters);
   const { data: outcomeData, isLoading: outcomeLoading } = useCollectiveOutcomes(filters, selectedTimepoint);
+  const { data: prpReport, isLoading: prpLoading, error: prpError } = usePrpOaKl1M3Report('COLLECTIVE');
 
   const updateFilter = (key: keyof DashboardFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -132,6 +135,10 @@ export default function CollectiveDashboard() {
             <Activity className="h-4 w-4" />
             Resultados
           </TabsTrigger>
+          <TabsTrigger value="prp-oa-kl1" className="flex items-center gap-1">
+            <FlaskConical className="h-4 w-4" />
+            PRP · Artrose KL1
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -158,6 +165,22 @@ export default function CollectiveDashboard() {
             onTimepointChange={setSelectedTimepoint}
             responseThreshold={responseThreshold}
             onResponseThresholdChange={setResponseThreshold}
+          />
+        </TabsContent>
+
+        <TabsContent value="prp-oa-kl1" className="space-y-4">
+          <Alert variant="default" className="bg-muted/30 border-muted">
+            <FlaskConical className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Relatório agregado: PRP em Artrose KL1 – Follow-up 3 meses.</strong>{' '}
+              Dados anônimos de todas as clínicas. Mínimo 5 casos para exibição.
+            </AlertDescription>
+          </Alert>
+          <PrpOaKl1M3ReportCard
+            data={prpReport}
+            isLoading={prpLoading}
+            error={prpError}
+            scope="COLLECTIVE"
           />
         </TabsContent>
       </Tabs>
