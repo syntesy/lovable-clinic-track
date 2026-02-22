@@ -399,8 +399,22 @@ const AtendimentoDetail = () => {
       if (structuralModel === "DISC_HERNIATION_TYPE") {
         if (!discLevelEnum) { toast.error("Selecione o nível do disco."); return; }
         if (!discLocationEnum) { toast.error("Selecione a localização."); return; }
+        if (imagingMethod !== "MRI") { toast.error("Hérnia discal requer MRI."); return; }
       }
     }
+
+    // EVA and IFN are always required for CONFIRMED
+    if (evaPain == null) {
+      toast.error("Informe a dor (EVA 0–10).");
+      return;
+    }
+    if (ifnFunction == null) {
+      toast.error("Informe a função (IFN 0–10).");
+      return;
+    }
+
+    // When structural_model is NONE, ensure all structural fields are null
+    const isStructural = structuralModel && structuralModel !== "NONE";
 
     const payload = {
       attendance_id: attendanceId,
@@ -411,14 +425,14 @@ const AtendimentoDetail = () => {
       diagnosis_stage: "CONFIRMED",
       severity_model: structuralModel || "NONE",
       severity_scale_id: null as string | null,
-      severity_value: structuralGrade,
+      severity_value: isStructural ? structuralGrade : null,
       structural_model: structuralModel || "NONE",
-      structural_grade: (structuralModel && structuralModel !== "NONE") ? structuralGrade : null,
-      structural_group: structuralGroup,
-      imaging_method: (structuralModel && structuralModel !== "NONE") ? imagingMethod : null,
-      tear_percentage: tearPercentage,
-      disc_level_enum: discLevelEnum,
-      disc_location_enum: discLocationEnum,
+      structural_grade: isStructural ? structuralGrade : null,
+      structural_group: isStructural ? structuralGroup : null,
+      imaging_method: isStructural ? imagingMethod : null,
+      tear_percentage: isStructural ? tearPercentage : null,
+      disc_level_enum: isStructural && structuralModel === "DISC_HERNIATION_TYPE" ? discLevelEnum : null,
+      disc_location_enum: isStructural && structuralModel === "DISC_HERNIATION_TYPE" ? discLocationEnum : null,
       eva_pain: evaPain,
       ifn_function: ifnFunction,
     };

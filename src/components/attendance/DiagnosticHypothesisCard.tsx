@@ -186,6 +186,15 @@ export function DiagnosticHypothesisCard({ value, onChange, onSave, disabled = f
           />
         </div>
 
+        {/* Info about confirmed diagnosis */}
+        <div className="rounded-lg border border-border bg-muted/20 p-3 flex items-start gap-2">
+          <Lightbulb className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Classificação estrutural será registrada após exame complementar (US, RM, RX).
+            Use o botão <span className="font-medium">"Registrar diagnóstico confirmado"</span> quando disponível.
+          </p>
+        </div>
+
         {/* Resumo */}
         <div className="rounded-lg border border-border bg-muted/30 p-3">
           <p className="text-xs font-medium text-muted-foreground mb-1">Resumo</p>
