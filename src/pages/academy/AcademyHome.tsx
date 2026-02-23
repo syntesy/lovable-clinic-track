@@ -37,18 +37,18 @@ const AcademyHome = () => {
       color: "bg-primary/10 text-primary",
     },
     {
+      title: "Biblioteca Científica",
+      description: "Artigos curados com evidência e resumos clínicos",
+      icon: Library,
+      href: "/academy/biblioteca",
+      color: "bg-teal-500/10 text-teal-600",
+    },
+    {
       title: "Quero estudar ciência aplicada",
       description: "Artigos científicos com comentários clínicos",
       icon: Microscope,
       href: "/academy/ciencia-aplicada",
       color: "bg-emerald-500/10 text-emerald-600",
-    },
-    {
-      title: "Quero aprender com casos reais",
-      description: "Casos clínicos discutidos por especialistas",
-      icon: BookOpen,
-      href: "/edu/cohorts",
-      color: "bg-amber-500/10 text-amber-600",
     },
     {
       title: "Minha jornada profissional",
