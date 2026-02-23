@@ -108,6 +108,7 @@ import {
   MarketplacePage, MarketplaceDetailPage,
   MyPurchasesPage, CoursePlayerPage,
   AcademyFinancialAdmin, AcademyTermsPage, AcademyPrivacyPage, AcademyRefundPolicyPage,
+  AcademyLibraryPage, AcademyLibraryAdminPage,
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
