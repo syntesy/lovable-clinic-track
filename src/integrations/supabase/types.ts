@@ -87,6 +87,41 @@ export type Database = {
           },
         ]
       }
+      academy_enrollments: {
+        Row: {
+          access_expires_at: string | null
+          access_status: string
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          access_expires_at?: string | null
+          access_status?: string
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          access_expires_at?: string | null
+          access_status?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_enrollments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_lesson_assets: {
         Row: {
           created_at: string | null
@@ -115,6 +150,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "academy_lesson_assets_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_lesson_progress: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          lesson_id: string
+          progress_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id: string
+          progress_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          progress_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lesson_progress_lesson_id_fkey"
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "academy_course_lessons"
@@ -6277,6 +6350,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_grant_enrollment: {
+        Args: { p_product_id: string; p_user_id: string }
+        Returns: string
+      }
       authenticate_patient: {
         Args: { p_cpf: string; p_surname: string }
         Returns: {
