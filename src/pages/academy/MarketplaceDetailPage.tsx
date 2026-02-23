@@ -21,6 +21,10 @@ const MarketplaceDetailPage = () => {
   const { data: modules = [] } = useCourseModules(product?.type === 'course' ? id : undefined);
   const { data: cohorts = [] } = useMentorshipCohorts(product?.type === 'mentorship' ? id : undefined);
   const { data: posts = [] } = useSubscriptionPosts(product?.type === 'subscription' ? id : undefined);
+  const { data: enrollment } = useEnrollmentForProduct(id);
+  const { isAdmin } = useAcademyRole();
+  const grantEnrollment = useAdminGrantEnrollment();
+  const [grantUserId, setGrantUserId] = useState('');
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando...</div>;
   if (!product) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Produto não encontrado</div>;
