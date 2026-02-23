@@ -22,6 +22,11 @@ const MarketplacePage = () => {
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary/5 via-background to-primary/10 py-12">
         <div className="container mx-auto px-4 text-center">
+          <div className="text-left">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/academy/home')} className="mb-4 -ml-2 gap-2 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-4 h-4" /> Voltar
+            </Button>
+          </div>
           <Badge variant="secondary" className="mb-3">
             <ShoppingBag className="w-3 h-3 mr-1" /> Marketplace
           </Badge>

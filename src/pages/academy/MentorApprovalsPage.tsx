@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   Pause,
   ChevronDown,
-  FileSearch
+  FileSearch,
+  ArrowLeft
 } from "lucide-react";
 import { 
   usePendingMentorApplications,

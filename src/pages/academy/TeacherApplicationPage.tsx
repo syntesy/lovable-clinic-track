@@ -11,6 +11,7 @@ import {
   GraduationCap,
   CheckCircle2,
   ArrowRight,
+  ArrowLeft,
   User,
   Mail,
   Stethoscope,

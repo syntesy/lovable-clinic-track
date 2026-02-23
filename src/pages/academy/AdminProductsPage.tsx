@@ -40,6 +40,9 @@ const AdminProductsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/academy/home')} className="mb-4 -ml-2 gap-2 text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <h1 className="text-3xl font-bold text-foreground mb-6">Gestão de Produtos — Academy</h1>
 
         <Tabs value={tab} onValueChange={setTab}>

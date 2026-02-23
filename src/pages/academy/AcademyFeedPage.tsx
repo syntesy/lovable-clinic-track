@@ -74,6 +74,9 @@ export default function AcademyFeedPage() {
     <div className="min-h-screen bg-background">
       <section className="bg-gradient-to-br from-primary/5 via-background to-primary/10 py-12">
         <div className="container mx-auto px-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/academy/home')} className="mb-4 -ml-2 gap-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </Button>
           <Badge variant="secondary" className="mb-4"><Sparkles className="w-3 h-3 mr-1" />Feed Científico</Badge>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Seu Feed</h1>
           <p className="text-lg text-muted-foreground">Novidades e artigos relevantes para você.</p>
