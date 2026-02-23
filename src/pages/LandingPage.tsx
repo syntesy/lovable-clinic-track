@@ -107,6 +107,11 @@ export default function LandingPage() {
   const [direction, setDirection] = useState(0);
   const touchStartX = useRef(0);
   const isTransitioning = useRef(false);
+  const [progress, setProgress] = useState(0);
+  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const AUTO_PLAY_INTERVAL = 8000; // 8 seconds per slide
+  const PROGRESS_STEP = 50; // update every 50ms
 
   const getRedirectPath = useCallback(() => {
     const params = new URLSearchParams(location.search);
@@ -121,21 +126,53 @@ export default function LandingPage() {
     navigate(`/auth?mode=signup&redirect=${encodeURIComponent(getRedirectPath())}`);
   }, [navigate, getRedirectPath]);
 
+  const resetAutoPlay = useCallback(() => {
+    setProgress(0);
+    if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
+    if (progressRef.current) clearInterval(progressRef.current);
+  }, []);
+
   const goTo = useCallback((index: number) => {
     if (isTransitioning.current || index === current) return;
     isTransitioning.current = true;
     setDirection(index > current ? 1 : -1);
     setCurrent(index);
+    resetAutoPlay();
     setTimeout(() => { isTransitioning.current = false; }, 600);
-  }, [current]);
+  }, [current, resetAutoPlay]);
 
   const goNext = useCallback(() => {
     if (current < slides.length - 1) goTo(current + 1);
+    else goTo(0); // loop back to first
   }, [current, goTo]);
 
   const goPrev = useCallback(() => {
     if (current > 0) goTo(current - 1);
   }, [current, goTo]);
+
+  // Auto-play with progress
+  useEffect(() => {
+    setProgress(0);
+    let elapsed = 0;
+    progressRef.current = setInterval(() => {
+      elapsed += PROGRESS_STEP;
+      setProgress(Math.min((elapsed / AUTO_PLAY_INTERVAL) * 100, 100));
+    }, PROGRESS_STEP);
+
+    autoPlayRef.current = setTimeout(() => {
+      if (current < slides.length - 1) {
+        goTo(current + 1);
+      } else {
+        goTo(0);
+      }
+    }, AUTO_PLAY_INTERVAL);
+
+    return () => {
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   // Keyboard navigation
   useEffect(() => {
@@ -377,12 +414,13 @@ export default function LandingPage() {
               {/* Progress bar */}
               <div className="w-full h-[2px] mb-3 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full rounded-full"
                   style={{
-                    width: i === current ? "100%" : "0%",
-                    background: i === current
+                    width: i === current ? `${progress}%` : i < current ? "100%" : "0%",
+                    background: i === current || i < current
                       ? "hsl(var(--primary))"
                       : "transparent",
+                    transition: i === current ? "width 50ms linear" : "width 0.4s ease",
                   }}
                 />
               </div>
