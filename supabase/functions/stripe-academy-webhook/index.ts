@@ -200,26 +200,60 @@ serve(async (req) => {
             : null;
 
           // Upsert subscription record
-          await supabase
+          const { data: existingSub2 } = await supabase
             .from("academy_subscriptions")
-            .upsert({
-              user_id: resolvedUserId,
-              product_id: resolvedProductId,
-              stripe_customer_id: invoice.customer as string,
-              stripe_subscription_id: subscriptionId,
-              status: "active",
-              current_period_end: periodEnd,
-            }, { onConflict: "user_id,product_id" });
+            .select("id")
+            .eq("user_id", resolvedUserId)
+            .eq("product_id", resolvedProductId)
+            .maybeSingle();
+
+          if (existingSub2) {
+            await supabase
+              .from("academy_subscriptions")
+              .update({
+                stripe_customer_id: invoice.customer as string,
+                stripe_subscription_id: subscriptionId,
+                status: "active",
+                current_period_end: periodEnd,
+              })
+              .eq("id", existingSub2.id);
+          } else {
+            await supabase
+              .from("academy_subscriptions")
+              .insert({
+                user_id: resolvedUserId,
+                product_id: resolvedProductId,
+                stripe_customer_id: invoice.customer as string,
+                stripe_subscription_id: subscriptionId,
+                status: "active",
+                current_period_end: periodEnd,
+              });
+          }
 
           // Create/update enrollment
-          await supabase
+          const { data: existingEnroll } = await supabase
             .from("academy_enrollments")
-            .upsert({
-              user_id: resolvedUserId,
-              product_id: resolvedProductId,
-              access_status: "active",
-              access_expires_at: periodEnd,
-            }, { onConflict: "user_id,product_id" });
+            .select("id")
+            .eq("user_id", resolvedUserId)
+            .eq("product_id", resolvedProductId)
+            .eq("access_status", "active")
+            .maybeSingle();
+
+          if (existingEnroll) {
+            await supabase
+              .from("academy_enrollments")
+              .update({ access_expires_at: periodEnd })
+              .eq("id", existingEnroll.id);
+          } else {
+            await supabase
+              .from("academy_enrollments")
+              .insert({
+                user_id: resolvedUserId,
+                product_id: resolvedProductId,
+                access_status: "active",
+                access_expires_at: periodEnd,
+              });
+          }
 
           console.log(`Subscription ${subscriptionId} active for product ${resolvedProductId}`);
         }
