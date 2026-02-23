@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMyProducts } from "@/hooks/useAcademyProducts";
 import { useMyAcademyRoles } from "@/hooks/useAcademyRoles";
 import { useTeacherStripeProfile, useConnectStripe } from "@/hooks/useAcademyPayments";
-import { Plus, Package, BookOpen, Users, Repeat, ArrowRight, CreditCard, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Plus, Package, BookOpen, Users, Repeat, ArrowRight, ArrowLeft, CreditCard, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   draft: 'Rascunho',
