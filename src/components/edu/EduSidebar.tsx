@@ -37,6 +37,7 @@ const directorMenuItems = [
 const adminMenuItems = [
   { title: "Membros", url: "/edu/admin/members", icon: Users },
   { title: "Matrículas", url: "/edu/admin/enrollments", icon: UserCog },
+  { title: "Biblioteca Científica", url: "/academy/admin/biblioteca", icon: BookOpen },
   { title: "Configurações", url: "/edu/admin/settings", icon: Settings },
 ];
 
