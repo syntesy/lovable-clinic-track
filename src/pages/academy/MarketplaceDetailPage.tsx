@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   useAcademyProduct, useCourseModules, useMentorshipCohorts, useSubscriptionPosts,
 } from "@/hooks/useAcademyProducts";
-import { ArrowLeft, BookOpen, Users, Repeat, ShoppingCart, Clock, Lock } from "lucide-react";
+import { useEnrollmentForProduct, useAdminGrantEnrollment } from "@/hooks/useAcademyEnrollments";
+import { useAcademyRole } from "@/hooks/useAcademyRoles";
+import { ArrowLeft, BookOpen, Users, Repeat, ShoppingCart, Clock, Lock, Shield, CheckCircle } from "lucide-react";
 
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
 
