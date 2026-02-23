@@ -30,11 +30,11 @@ const AcademyHome = () => {
 
   const actionCards = [
     {
-      title: "Feed Científico",
-      description: "Novidades e artigos relevantes para você",
-      icon: TrendingUp,
-      href: "/academy/feed",
-      color: "bg-orange-500/10 text-orange-600",
+      title: "Central de Evidência Clínica",
+      description: "Explore, aplique e acompanhe a evolução científica da medicina regenerativa.",
+      icon: Microscope,
+      href: "/academy/evidencia",
+      color: "bg-teal-500/10 text-teal-600",
     },
     {
       title: "Quero mentoria clínica",
@@ -42,20 +42,6 @@ const AcademyHome = () => {
       icon: Users,
       href: "/academy/mentorias",
       color: "bg-primary/10 text-primary",
-    },
-    {
-      title: "Biblioteca Científica",
-      description: "Artigos curados com evidência e resumos clínicos",
-      icon: Library,
-      href: "/academy/biblioteca",
-      color: "bg-teal-500/10 text-teal-600",
-    },
-    {
-      title: "Quero estudar ciência aplicada",
-      description: "Artigos científicos com comentários clínicos",
-      icon: Microscope,
-      href: "/academy/ciencia-aplicada",
-      color: "bg-emerald-500/10 text-emerald-600",
     },
   ];
 
@@ -113,7 +99,7 @@ const AcademyHome = () => {
               Escolha sua jornada de aprendizado
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {actionCards.map((card) => (
               <Card 
                 key={card.href}
@@ -279,7 +265,7 @@ const AcademyHome = () => {
         </section>
       )}
 
-      {/* Applied Science */}
+      {/* Applied Science CTA - now points to Evidence Central */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
@@ -289,7 +275,7 @@ const AcademyHome = () => {
                   <div className="flex items-center gap-2 text-primary mb-4">
                     <FileText className="w-5 h-5" />
                     <span className="text-sm font-medium uppercase tracking-wide">
-                      Ciência Aplicada
+                      Evidência Clínica
                     </span>
                   </div>
                   <h3 className="text-2xl font-bold text-foreground mb-4">
@@ -299,8 +285,8 @@ const AcademyHome = () => {
                     Artigos comentados, aulas baseadas em evidência e discussões 
                     que conectam a ciência ao dia a dia do consultório.
                   </p>
-                  <Button onClick={() => navigate("/academy/ciencia-aplicada")}>
-                    Explorar Biblioteca
+                  <Button onClick={() => navigate("/academy/evidencia")}>
+                    Entrar na Central
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -331,7 +317,7 @@ const AcademyHome = () => {
                   Evidência científica recente curada pela equipe
                 </p>
               </div>
-              <Button variant="outline" onClick={() => navigate("/academy/biblioteca")}>
+              <Button variant="outline" onClick={() => navigate("/academy/evidencia")}>
                 Ver biblioteca
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -341,7 +327,7 @@ const AcademyHome = () => {
                 <Card
                   key={article.id}
                   className="cursor-pointer hover:shadow-lg transition-all group"
-                  onClick={() => navigate("/academy/biblioteca")}
+                  onClick={() => navigate("/academy/evidencia")}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex flex-wrap gap-1.5 mb-2">

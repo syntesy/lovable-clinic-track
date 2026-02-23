@@ -110,6 +110,7 @@ import {
   AcademyFinancialAdmin, AcademyTermsPage, AcademyPrivacyPage, AcademyRefundPolicyPage,
   AcademyLibraryPage, AcademyLibraryAdminPage,
   AcademyFeedPage, AcademyCollectionsPage, AcademyCollectionDetailPage, AcademyNotificationsPage,
+  EvidenceCentralPage,
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
@@ -671,7 +672,7 @@ const App = () => (
           <Route path="/academy/mentores/:slug" element={<ProtectedRoute><MentorOnboardingGate><MentorDetailPage /></MentorOnboardingGate></ProtectedRoute>} />
           <Route path="/academy/minhas-mentorias" element={<ProtectedRoute><MentorOnboardingGate><MyMentorshipsPage /></MentorOnboardingGate></ProtectedRoute>} />
           <Route path="/academy/minha-jornada" element={<ProtectedRoute><MentorOnboardingGate><MyJourneyPage /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/ciencia-aplicada" element={<ProtectedRoute><MentorOnboardingGate><AppliedSciencePage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/ciencia-aplicada" element={<Navigate to="/academy/evidencia?tab=aplicar" replace />} />
           <Route path="/academy/modo-avancado" element={<ProtectedRoute><MentorOnboardingGate><ModoAvancado /></MentorOnboardingGate></ProtectedRoute>} />
           <Route path="/academy/aprovacoes" element={<ProtectedRoute><MentorOnboardingGate><ApprovalsPage /></MentorOnboardingGate></ProtectedRoute>} />
           {/* Mentor Onboarding Routes - NOT wrapped by gate */}
@@ -700,12 +701,14 @@ const App = () => (
           <Route path="/academy/termos" element={<AcademyTermsPage />} />
           <Route path="/academy/privacidade" element={<AcademyPrivacyPage />} />
           <Route path="/academy/reembolso" element={<AcademyRefundPolicyPage />} />
-          {/* Library */}
-          <Route path="/academy/biblioteca" element={<ProtectedRoute><AcademyLibraryPage /></ProtectedRoute>} />
+          {/* Evidence Central (unified) */}
+          <Route path="/academy/evidencia" element={<ProtectedRoute><EvidenceCentralPage /></ProtectedRoute>} />
+          {/* Legacy redirects */}
+          <Route path="/academy/biblioteca" element={<Navigate to="/academy/evidencia?tab=explorar" replace />} />
+          <Route path="/academy/feed" element={<Navigate to="/academy/evidencia?tab=feed" replace />} />
+          <Route path="/academy/colecoes" element={<Navigate to="/academy/evidencia?tab=colecoes" replace />} />
+          {/* Keep these as standalone */}
           <Route path="/academy/admin/biblioteca" element={<ProtectedRoute><AcademyLibraryAdminPage /></ProtectedRoute>} />
-          {/* Feed, Collections, Notifications */}
-          <Route path="/academy/feed" element={<ProtectedRoute><AcademyFeedPage /></ProtectedRoute>} />
-          <Route path="/academy/colecoes" element={<ProtectedRoute><AcademyCollectionsPage /></ProtectedRoute>} />
           <Route path="/academy/colecoes/:id" element={<ProtectedRoute><AcademyCollectionDetailPage /></ProtectedRoute>} />
           <Route path="/academy/notificacoes" element={<ProtectedRoute><AcademyNotificationsPage /></ProtectedRoute>} />
 

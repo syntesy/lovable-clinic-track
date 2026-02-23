@@ -39,3 +39,5 @@ export { default as AcademyFeedPage } from './AcademyFeedPage';
 export { default as AcademyCollectionsPage } from './AcademyCollectionsPage';
 export { default as AcademyCollectionDetailPage } from './AcademyCollectionDetailPage';
 export { default as AcademyNotificationsPage } from './AcademyNotificationsPage';
+// Stage 8: Evidence Central
+export { default as EvidenceCentralPage } from './EvidenceCentralPage';
