@@ -20,6 +20,7 @@ import {
   AlertCircle,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   Layers
 } from "lucide-react";
 import { 
