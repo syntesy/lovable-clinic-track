@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,9 @@ import {
   useSubscriptionPosts, useCreateSubscriptionPost,
   useProductReviewNotes,
 } from "@/hooks/useAcademyProducts";
-import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare, Upload, Video, FileUp } from "lucide-react";
+import { toast } from "sonner";
 
 const statusLabels: Record<string, string> = { draft: 'Rascunho', in_review: 'Em Revisão', published: 'Publicado', archived: 'Arquivado' };
 
