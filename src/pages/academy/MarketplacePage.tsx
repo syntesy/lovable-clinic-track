@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePublishedProducts } from "@/hooks/useAcademyProducts";
-import { Search, BookOpen, Users, Repeat, ShoppingBag, ArrowRight } from "lucide-react";
+import { Search, BookOpen, Users, Repeat, ShoppingBag, ArrowRight, ArrowLeft } from "lucide-react";
 
 const typeIcons: Record<string, any> = { course: BookOpen, mentorship: Users, subscription: Repeat };
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
