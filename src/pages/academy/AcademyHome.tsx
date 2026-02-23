@@ -12,7 +12,8 @@ import {
   ArrowRight,
   GraduationCap,
   Stethoscope,
-  FileText
+  FileText,
+  ShoppingBag
 } from "lucide-react";
 import { useMentors } from "@/hooks/useMentors";
 import { useMentorships } from "@/hooks/useMentorships";
