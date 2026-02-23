@@ -255,25 +255,30 @@ const ProductEditPage = () => {
                       <CollapsibleContent>
                         <CardContent className="pt-0 space-y-2">
                           {mod.lessons?.map(lesson => (
-                            <div key={lesson.id} className="flex items-center gap-2 text-sm p-2 bg-muted/50 rounded">
-                              <span className="text-muted-foreground w-6">{lesson.order_index + 1}.</span>
-                              <span className="text-foreground flex-1">{lesson.title}</span>
-                              {lesson.video_url && <Badge variant="outline" className="text-xs"><Video className="w-3 h-3 mr-1" /> Vídeo</Badge>}
-                              {lesson.is_free_preview && <Badge variant="outline" className="text-xs">Preview</Badge>}
-                              {canEdit && (
-                                <label className="cursor-pointer">
-                                  <input
-                                    type="file"
-                                    accept="video/mp4,video/webm,video/quicktime"
-                                    className="hidden"
-                                    onChange={e => {
-                                      const file = e.target.files?.[0];
-                                      if (file) handleVideoUpload(lesson.id, file);
-                                      e.target.value = '';
-                                    }}
-                                  />
-                                  <Upload className="w-4 h-4 text-muted-foreground hover:text-primary cursor-pointer" />
-                                </label>
+                            <div key={lesson.id}>
+                              <div className="flex items-center gap-2 text-sm p-2 bg-muted/50 rounded">
+                                <span className="text-muted-foreground w-6">{lesson.order_index + 1}.</span>
+                                <span className="text-foreground flex-1">{lesson.title}</span>
+                                {lesson.video_url && <Badge variant="outline" className="text-xs"><Video className="w-3 h-3 mr-1" /> Vídeo</Badge>}
+                                {lesson.is_free_preview && <Badge variant="outline" className="text-xs">Preview</Badge>}
+                                {canEdit && (
+                                  <label className="cursor-pointer">
+                                    <input
+                                      type="file"
+                                      accept="video/mp4,video/webm,video/quicktime"
+                                      className="hidden"
+                                      onChange={e => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleVideoUpload(lesson.id, file);
+                                        e.target.value = '';
+                                      }}
+                                    />
+                                    <Upload className="w-4 h-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                                  </label>
+                                )}
+                              </div>
+                              {canEdit && id && (
+                                <LessonEvidenceEditor lessonId={lesson.id} productId={id} />
                               )}
                             </div>
                           ))}
