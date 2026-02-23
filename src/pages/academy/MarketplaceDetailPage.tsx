@@ -184,17 +184,52 @@ const MarketplaceDetailPage = () => {
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Acessar Conteúdo
                   </Button>
-                ) : (
-                  <>
-                    <Button className="w-full" size="lg" disabled>
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Checkout em breve
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground">
-                      O sistema de pagamento será ativado em breve.
-                    </p>
-                  </>
-                )}
+                ) : (() => {
+                  const teacherReady = teacherProfile?.stripe_onboarding_status === 'complete' && teacherProfile?.stripe_payouts_enabled;
+                  const isLoading = checkout.isPending || subscriptionCheckout.isPending;
+
+                  if (!teacherReady) {
+                    return (
+                      <>
+                        <Button className="w-full" size="lg" disabled>
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          Indisponível no momento
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground">
+                          Este produto ainda não está disponível para compra.
+                        </p>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <Button
+                        className="w-full"
+                        size="lg"
+                        disabled={isLoading}
+                        onClick={() => {
+                          if (!id) return;
+                          if (product.type === 'subscription') {
+                            subscriptionCheckout.mutate(id);
+                          } else {
+                            checkout.mutate(id);
+                          }
+                        }}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                        )}
+                        {product.type === 'subscription' ? 'Assinar' : 'Comprar'}
+                      </Button>
+                      <p className="text-xs text-center text-muted-foreground">
+                        Pagamento seguro via Stripe
+                      </p>
+                    </>
+                  );
+                })()}
 
                 {/* Admin: Grant test access */}
                 {isAdmin && (
