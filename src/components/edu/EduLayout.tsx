@@ -21,7 +21,6 @@ export function EduLayout({ children }: EduLayoutProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { institution, role } = useCurrentInstitution();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -32,19 +31,6 @@ export function EduLayout({ children }: EduLayoutProps) {
     navigate("/auth");
   };
 
-  const getRoleBadge = () => {
-    switch (role) {
-      case 'institution_admin':
-        return <Badge variant="default" className="text-xs">Admin</Badge>;
-      case 'director':
-        return <Badge variant="secondary" className="text-xs">Diretor</Badge>;
-      case 'teacher':
-        return <Badge variant="outline" className="text-xs">Professor</Badge>;
-      default:
-        return <Badge variant="outline" className="text-xs">Estudante</Badge>;
-    }
-  };
-
   return (
     <SessionTimeout timeoutMinutes={30} warningMinutes={5}>
       <SidebarProvider defaultOpen={!isMobile}>
@@ -52,22 +38,16 @@ export function EduLayout({ children }: EduLayoutProps) {
           <EduSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <header className="h-14 md:h-16 border-b border-border bg-card flex items-center justify-between px-3 md:px-6 sticky top-0 z-10">
-              <div className="flex items-center min-w-0 gap-3">
-                <SidebarTrigger className="flex-shrink-0" />
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-6 w-6 text-primary" />
-                  <div className="hidden sm:flex flex-col">
-                    <span className="text-sm font-semibold text-foreground">rhegen Academy</span>
-                    {institution && (
-                      <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                        {institution.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {role && getRoleBadge()}
+              <div className="flex items-center min-w-0">
+                <SidebarTrigger className="mr-2 md:mr-4 flex-shrink-0" />
+                <img 
+                  src={logoReghen} 
+                  alt="rhegen" 
+                  className="h-12 md:h-[60px] w-auto"
+                />
               </div>
               <div className="flex items-center gap-2">
+                <AcademyNotificationBell />
                 <ModeSwitch />
                 <ThemeToggle />
                 <Button
