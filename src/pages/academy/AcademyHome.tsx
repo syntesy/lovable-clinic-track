@@ -13,10 +13,12 @@ import {
   GraduationCap,
   Stethoscope,
   FileText,
-  ShoppingBag
+  ShoppingBag,
+  Library
 } from "lucide-react";
 import { useMentors } from "@/hooks/useMentors";
 import { useMentorships } from "@/hooks/useMentorships";
+import { useLatestAcademyArticles } from "@/hooks/useAcademyArticles";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
