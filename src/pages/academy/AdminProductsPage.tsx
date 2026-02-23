@@ -17,6 +17,7 @@ const typeIcons: Record<string, any> = { course: BookOpen, mentorship: Users, su
 const statusLabels: Record<string, string> = { draft: 'Rascunho', in_review: 'Em Revisão', published: 'Publicado', archived: 'Arquivado' };
 
 const AdminProductsPage = () => {
+  const navigate = useNavigate();
   const { data: isAdmin, isLoading: adminLoading } = useIsAcademyAdmin();
   const [tab, setTab] = useState('in_review');
   const { data: products = [], isLoading } = useAllProductsAdmin(tab);
