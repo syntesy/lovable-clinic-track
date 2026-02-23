@@ -10,7 +10,8 @@ import {
 } from "@/hooks/useAcademyProducts";
 import { useEnrollmentForProduct, useAdminGrantEnrollment } from "@/hooks/useAcademyEnrollments";
 import { useAcademyRole } from "@/hooks/useAcademyRoles";
-import { ArrowLeft, BookOpen, Users, Repeat, ShoppingCart, Clock, Lock, Shield, CheckCircle } from "lucide-react";
+import { useAcademyCheckout, useSubscriptionCheckout, useTeacherStripeProfileForProduct } from "@/hooks/useAcademyPayments";
+import { ArrowLeft, BookOpen, Users, Repeat, ShoppingCart, Clock, Lock, Shield, CheckCircle, Loader2 } from "lucide-react";
 
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
 
@@ -25,6 +26,9 @@ const MarketplaceDetailPage = () => {
   const { isAdmin } = useAcademyRole();
   const grantEnrollment = useAdminGrantEnrollment();
   const [grantUserId, setGrantUserId] = useState('');
+  const checkout = useAcademyCheckout();
+  const subscriptionCheckout = useSubscriptionCheckout();
+  const { data: teacherProfile } = useTeacherStripeProfileForProduct(product?.teacher_id);
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando...</div>;
   if (!product) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Produto não encontrado</div>;
@@ -180,17 +184,52 @@ const MarketplaceDetailPage = () => {
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Acessar Conteúdo
                   </Button>
-                ) : (
-                  <>
-                    <Button className="w-full" size="lg" disabled>
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Checkout em breve
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground">
-                      O sistema de pagamento será ativado em breve.
-                    </p>
-                  </>
-                )}
+                ) : (() => {
+                  const teacherReady = teacherProfile?.stripe_onboarding_status === 'complete' && teacherProfile?.stripe_payouts_enabled;
+                  const isLoading = checkout.isPending || subscriptionCheckout.isPending;
+
+                  if (!teacherReady) {
+                    return (
+                      <>
+                        <Button className="w-full" size="lg" disabled>
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          Indisponível no momento
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground">
+                          Este produto ainda não está disponível para compra.
+                        </p>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <Button
+                        className="w-full"
+                        size="lg"
+                        disabled={isLoading}
+                        onClick={() => {
+                          if (!id) return;
+                          if (product.type === 'subscription') {
+                            subscriptionCheckout.mutate(id);
+                          } else {
+                            checkout.mutate(id);
+                          }
+                        }}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                        )}
+                        {product.type === 'subscription' ? 'Assinar' : 'Comprar'}
+                      </Button>
+                      <p className="text-xs text-center text-muted-foreground">
+                        Pagamento seguro via Stripe
+                      </p>
+                    </>
+                  );
+                })()}
 
                 {/* Admin: Grant test access */}
                 {isAdmin && (

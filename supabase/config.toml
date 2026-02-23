@@ -35,3 +35,18 @@ verify_jwt = false
 
 [functions.stripe-mentorship-webhook]
 verify_jwt = false
+
+[functions.create-academy-checkout]
+verify_jwt = false
+
+[functions.create-academy-subscription-checkout]
+verify_jwt = false
+
+[functions.create-connect-account]
+verify_jwt = false
+
+[functions.stripe-academy-webhook]
+verify_jwt = false
+
+[functions.request-academy-refund]
+verify_jwt = false

@@ -1,10 +1,12 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMyProducts } from "@/hooks/useAcademyProducts";
 import { useMyAcademyRoles } from "@/hooks/useAcademyRoles";
-import { Plus, Package, BookOpen, Users, Repeat, ArrowRight } from "lucide-react";
+import { useTeacherStripeProfile, useConnectStripe } from "@/hooks/useAcademyPayments";
+import { Plus, Package, BookOpen, Users, Repeat, ArrowRight, CreditCard, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   draft: 'Rascunho',
@@ -34,10 +36,28 @@ const typeLabels: Record<string, string> = {
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: products = [], isLoading } = useMyProducts();
   const { data: roles = [] } = useMyAcademyRoles();
+  const { data: stripeProfile, refetch: refetchStripe } = useTeacherStripeProfile();
+  const connectStripe = useConnectStripe();
 
   const isTeacher = roles.includes('teacher_approved') || roles.includes('admin_academy');
+
+  // Handle Stripe return
+  useEffect(() => {
+    const stripeStatus = searchParams.get('stripe');
+    if (stripeStatus === 'complete' || stripeStatus === 'refresh') {
+      // Refresh stripe status
+      const checkStatus = async () => {
+        const { data } = await (await import('@/integrations/supabase/client')).supabase.functions.invoke('create-connect-account', {
+          body: { action: 'status' },
+        });
+        refetchStripe();
+      };
+      checkStatus();
+    }
+  }, [searchParams, refetchStripe]);
 
   if (!isTeacher) {
     return (
@@ -102,6 +122,57 @@ const TeacherDashboard = () => {
           ))}
         </div>
 
+        {/* Stripe Connect Card */}
+        <Card className="mb-8">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-6 h-6 text-primary" />
+                <div>
+                  <h3 className="font-semibold text-foreground">Pagamentos via Stripe</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {!stripeProfile || stripeProfile.stripe_onboarding_status === 'not_started'
+                      ? 'Conecte sua conta Stripe para receber pagamentos.'
+                      : stripeProfile.stripe_onboarding_status === 'complete' && stripeProfile.stripe_payouts_enabled
+                      ? 'Conta conectada e recebendo pagamentos.'
+                      : stripeProfile.stripe_onboarding_status === 'pending'
+                      ? 'Onboarding iniciado. Clique para continuar.'
+                      : 'Conta com restrições. Clique para resolver.'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {stripeProfile?.stripe_onboarding_status === 'complete' && stripeProfile.stripe_payouts_enabled ? (
+                  <Badge variant="default" className="gap-1">
+                    <CheckCircle className="w-3 h-3" /> Conectado
+                  </Badge>
+                ) : stripeProfile?.stripe_onboarding_status === 'pending' ? (
+                  <>
+                    <Badge variant="outline" className="gap-1">
+                      <AlertCircle className="w-3 h-3" /> Pendente
+                    </Badge>
+                    <Button
+                      size="sm"
+                      onClick={() => connectStripe.mutate('refresh')}
+                      disabled={connectStripe.isPending}
+                    >
+                      {connectStripe.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continuar'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => connectStripe.mutate('create')}
+                    disabled={connectStripe.isPending}
+                  >
+                    {connectStripe.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                    Conectar Stripe
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         {/* Products List */}
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">Carregando...</div>

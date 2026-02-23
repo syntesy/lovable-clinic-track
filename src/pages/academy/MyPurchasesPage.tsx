@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMyEnrollments } from "@/hooks/useAcademyEnrollments";
-import { ArrowLeft, BookOpen, Users, Repeat, ShoppingBag, AlertCircle } from "lucide-react";
+import { useMyOrders, useRequestRefund } from "@/hooks/useAcademyPayments";
+import { ArrowLeft, BookOpen, Users, Repeat, ShoppingBag, AlertCircle, Undo2, Loader2 } from "lucide-react";
 
 const typeIcons: Record<string, any> = { course: BookOpen, mentorship: Users, subscription: Repeat };
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
@@ -12,6 +13,8 @@ const statusLabels: Record<string, string> = { active: 'Ativo', expired: 'Expira
 const MyPurchasesPage = () => {
   const navigate = useNavigate();
   const { data: enrollments = [], isLoading } = useMyEnrollments();
+  const { data: orders = [] } = useMyOrders();
+  const requestRefund = useRequestRefund();
 
   const activeEnrollments = enrollments.filter(e => e.access_status === 'active');
   const inactiveEnrollments = enrollments.filter(e => e.access_status !== 'active');
@@ -54,6 +57,11 @@ const MyPurchasesPage = () => {
             <h2 className="text-lg font-semibold text-foreground">Acessos Ativos</h2>
             {activeEnrollments.map(enrollment => {
               const Icon = typeIcons[enrollment.product?.type || 'course'] || BookOpen;
+              // Find matching paid order for refund
+              const order = orders.find(o => o.product_id === enrollment.product_id && o.status === 'paid');
+              const canRefund = order && (new Date().getTime() - new Date(order.created_at).getTime()) <= 7 * 24 * 60 * 60 * 1000;
+              const refundDeadline = order ? new Date(new Date(order.created_at).getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+
               return (
                 <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="flex items-center gap-4 py-4">
@@ -76,7 +84,25 @@ const MyPurchasesPage = () => {
                         )}
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => navigate(getAccessUrl(enrollment))}>Acessar</Button>
+                    <div className="flex items-center gap-2">
+                      {canRefund && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={requestRefund.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (order && confirm('Tem certeza que deseja solicitar o reembolso? Seu acesso será revogado.')) {
+                              requestRefund.mutate(order.id);
+                            }
+                          }}
+                        >
+                          {requestRefund.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Undo2 className="w-3 h-3 mr-1" />}
+                          Reembolso {refundDeadline && `(até ${refundDeadline.toLocaleDateString('pt-BR')})`}
+                        </Button>
+                      )}
+                      <Button size="sm" onClick={() => navigate(getAccessUrl(enrollment))}>Acessar</Button>
+                    </div>
                   </CardContent>
                 </Card>
               );
