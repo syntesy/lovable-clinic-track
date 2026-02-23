@@ -29,6 +29,7 @@ import {
   Loader2,
   X,
   Library,
+  Heart,
 } from "lucide-react";
 import {
   useAcademyArticles,
@@ -36,6 +37,7 @@ import {
   useArticleFilterOptions,
   type ArticleFilters,
 } from "@/hooks/useAcademyArticles";
+import { useAcademyFavorites, useToggleFavorite } from "@/hooks/useAcademyFavorites";
 
 const STUDY_TYPE_COLORS: Record<string, string> = {
   "Revisão Sistemática": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
