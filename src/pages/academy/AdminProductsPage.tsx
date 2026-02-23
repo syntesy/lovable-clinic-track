@@ -9,7 +9,8 @@ import {
   useAllProductsAdmin, useAdminPublishProduct, useAdminArchiveProduct, useAdminRequestChanges,
 } from "@/hooks/useAcademyProducts";
 import { useIsAcademyAdmin } from "@/hooks/useAcademyRoles";
-import { Check, X, MessageSquare, Archive, BookOpen, Users, Repeat, Package } from "lucide-react";
+import { Check, X, MessageSquare, Archive, BookOpen, Users, Repeat, Package, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
 const typeIcons: Record<string, any> = { course: BookOpen, mentorship: Users, subscription: Repeat };
