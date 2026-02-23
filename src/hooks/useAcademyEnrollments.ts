@@ -164,7 +164,7 @@ export async function getSignedVideoUrl(storagePath: string): Promise<string | n
   if (!storagePath) return null;
   const { data, error } = await supabase.storage
     .from('academy-videos')
-    .createSignedUrl(storagePath, 300); // 5 min
+    .createSignedUrl(storagePath, 120); // 2 min
   if (error) {
     console.error('Error generating signed URL:', error);
     return null;
