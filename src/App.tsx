@@ -64,6 +64,7 @@ import NotFound from "./pages/NotFound";
 import ProblemaPage from "./pages/landing/ProblemaPage";
 import ArquiteturaPage from "./pages/landing/ArquiteturaPage";
 import CienciaPage from "./pages/landing/CienciaPage";
+import GovernancaLandingPage from "./pages/landing/GovernancaLandingPage";
 import EstruturaClinicaPage from "./pages/landing/EstruturaClinicaPage";
 import ScorePage from "./pages/landing/ScorePage";
 import ResultadosPage from "./pages/landing/ResultadosPage";
@@ -127,6 +128,7 @@ const App = () => (
             <Route path="/arquitetura" element={<ArquiteturaPage />} />
             <Route path="/ciencia" element={<CienciaPage />} />
             <Route path="/estrutura-cientifica" element={<CienciaPage />} />
+            <Route path="/governanca-info" element={<GovernancaLandingPage />} />
             <Route path="/estrutura-clinica" element={<EstruturaClinicaPage />} />
             <Route path="/score" element={<ScorePage />} />
             <Route path="/resultados" element={<ResultadosPage />} />
