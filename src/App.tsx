@@ -62,6 +62,7 @@ import LandingPage from "./pages/LandingPage";
 import LandingPreview from "./pages/LandingPreview";
 import NotFound from "./pages/NotFound";
 import ProblemaPage from "./pages/landing/ProblemaPage";
+import ArquiteturaPage from "./pages/landing/ArquiteturaPage";
 import EstruturaClinicaPage from "./pages/landing/EstruturaClinicaPage";
 import ScorePage from "./pages/landing/ScorePage";
 import ResultadosPage from "./pages/landing/ResultadosPage";
@@ -122,6 +123,7 @@ const App = () => (
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/" element={<LandingPage />} />
             <Route path="/problema" element={<ProblemaPage />} />
+            <Route path="/arquitetura" element={<ArquiteturaPage />} />
             <Route path="/estrutura-clinica" element={<EstruturaClinicaPage />} />
             <Route path="/score" element={<ScorePage />} />
             <Route path="/resultados" element={<ResultadosPage />} />
