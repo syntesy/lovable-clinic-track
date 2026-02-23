@@ -317,7 +317,7 @@ const AcademyHome = () => {
                   Evidência científica recente curada pela equipe
                 </p>
               </div>
-              <Button variant="outline" onClick={() => navigate("/academy/biblioteca")}>
+              <Button variant="outline" onClick={() => navigate("/academy/evidencia")}>
                 Ver biblioteca
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
