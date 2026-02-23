@@ -263,11 +263,11 @@ export default function LandingPage() {
               backgroundImage: `url(${slide.bg})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              opacity: 0.7,
+              opacity: 0.88,
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#080b14]/60 via-[#080b14]/30 to-[#080b14]/80" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#080b14]/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#080b14]/40 via-[#080b14]/15 to-[#080b14]/55" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#080b14]/25 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
