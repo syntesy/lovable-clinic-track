@@ -131,7 +131,7 @@ const AcademyFinancialAdmin = () => {
           </div>
           <Button
             variant="outline"
-            onClick={() => reconcile.mutate()}
+            onClick={() => reconcile.mutate(undefined)}
             disabled={reconcile.isPending}
           >
             {reconcile.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
