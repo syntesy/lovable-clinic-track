@@ -10,7 +10,8 @@ import {
 } from "@/hooks/useAcademyProducts";
 import { useEnrollmentForProduct, useAdminGrantEnrollment } from "@/hooks/useAcademyEnrollments";
 import { useAcademyRole } from "@/hooks/useAcademyRoles";
-import { ArrowLeft, BookOpen, Users, Repeat, ShoppingCart, Clock, Lock, Shield, CheckCircle } from "lucide-react";
+import { useAcademyCheckout, useSubscriptionCheckout, useTeacherStripeProfileForProduct } from "@/hooks/useAcademyPayments";
+import { ArrowLeft, BookOpen, Users, Repeat, ShoppingCart, Clock, Lock, Shield, CheckCircle, Loader2 } from "lucide-react";
 
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
 
