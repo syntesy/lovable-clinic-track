@@ -224,23 +224,33 @@ export default function AcademyLibraryPage() {
                 {total} artigo{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {articles.map((article) => (
+                {articles.map((article) => {
+                  const isFav = favorites.includes(article.id);
+                  return (
                   <Card
                     key={article.id}
                     className="group hover:shadow-lg transition-all cursor-pointer flex flex-col"
                     onClick={() => setSelectedArticleId(article.id)}
                   >
                     <CardContent className="py-5 flex flex-col flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-3">
-                        <Badge className={getStudyBadgeClass(article.study_type)}>
-                          {article.study_type}
-                        </Badge>
-                        {article.interventions.slice(0, 2).map((i) => (
-                          <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
-                        ))}
-                        {article.pathologies.slice(0, 1).map((p) => (
-                          <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>
-                        ))}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge className={getStudyBadgeClass(article.study_type)}>
+                            {article.study_type}
+                          </Badge>
+                          {article.interventions.slice(0, 2).map((i) => (
+                            <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
+                          ))}
+                          {article.pathologies.slice(0, 1).map((p) => (
+                            <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>
+                          ))}
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleFav.mutate({ articleId: article.id, isFavorited: isFav }); }}
+                          className="ml-2 flex-shrink-0"
+                        >
+                          <Heart className={`w-4 h-4 transition-colors ${isFav ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-red-400"}`} />
+                        </button>
                       </div>
                       <h3 className="text-base font-semibold text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors">
                         {article.title}
