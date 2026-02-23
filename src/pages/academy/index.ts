@@ -31,3 +31,6 @@ export { default as AcademyFinancialAdmin } from './AcademyFinancialAdmin';
 export { default as AcademyTermsPage } from './AcademyTermsPage';
 export { default as AcademyPrivacyPage } from './AcademyPrivacyPage';
 export { default as AcademyRefundPolicyPage } from './AcademyRefundPolicyPage';
+// Library
+export { default as AcademyLibraryPage } from './AcademyLibraryPage';
+export { default as AcademyLibraryAdminPage } from './AcademyLibraryAdminPage';
