@@ -26,7 +26,7 @@ const slides: Slide[] = [
   {
     label: "INFRAESTRUTURA NACIONAL",
     navLabel: "REGHEN",
-    headline: "REGHEN\nInfraestrutura Nacional para Prática em Medicina Regenerativa",
+    headline: "REGHEN\nInfraestrutura Nacional de Padronização da Medicina Regenerativa",
     subtitle: "Organizando, mensurando e estruturando a Medicina Regenerativa com método, evidência e governança.",
     cta: "Conhecer o REGHEN",
     ctaLink: "/reghen",
