@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       academy_course_lessons: {
         Row: {
           created_at: string | null
@@ -83,6 +113,47 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_disputes: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          order_id: string | null
+          status: string
+          stripe_dispute_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          order_id?: string | null
+          status?: string
+          stripe_dispute_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          order_id?: string | null
+          status?: string
+          stripe_dispute_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_disputes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "academy_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -596,6 +667,39 @@ export type Database = {
           role?: Database["public"]["Enums"]["academy_role"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      academy_webhook_failures: {
+        Row: {
+          error_message: string | null
+          event_type: string
+          failed_at: string
+          id: string
+          payload: Json | null
+          retry_count: number
+          status: string
+          stripe_event_id: string
+        }
+        Insert: {
+          error_message?: string | null
+          event_type: string
+          failed_at?: string
+          id?: string
+          payload?: Json | null
+          retry_count?: number
+          status?: string
+          stripe_event_id: string
+        }
+        Update: {
+          error_message?: string | null
+          event_type?: string
+          failed_at?: string
+          id?: string
+          payload?: Json | null
+          retry_count?: number
+          status?: string
+          stripe_event_id?: string
         }
         Relationships: []
       }

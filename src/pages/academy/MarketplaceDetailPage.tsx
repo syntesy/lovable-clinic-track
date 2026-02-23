@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   useAcademyProduct, useCourseModules, useMentorshipCohorts, useSubscriptionPosts,
 } from "@/hooks/useAcademyProducts";
@@ -26,6 +27,7 @@ const MarketplaceDetailPage = () => {
   const { isAdmin } = useAcademyRole();
   const grantEnrollment = useAdminGrantEnrollment();
   const [grantUserId, setGrantUserId] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const checkout = useAcademyCheckout();
   const subscriptionCheckout = useSubscriptionCheckout();
   const { data: teacherProfile } = useTeacherStripeProfileForProduct(product?.teacher_id);
@@ -204,10 +206,23 @@ const MarketplaceDetailPage = () => {
 
                   return (
                     <>
+                      <div className="flex items-start gap-2 mb-2">
+                        <Checkbox
+                          id="accept-terms"
+                          checked={acceptedTerms}
+                          onCheckedChange={(v) => setAcceptedTerms(!!v)}
+                        />
+                        <label htmlFor="accept-terms" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+                          Li e aceito os{' '}
+                          <Link to="/academy/termos" className="text-primary hover:underline" target="_blank">termos de uso</Link>,{' '}
+                          <Link to="/academy/privacidade" className="text-primary hover:underline" target="_blank">política de privacidade</Link> e{' '}
+                          <Link to="/academy/reembolso" className="text-primary hover:underline" target="_blank">política de reembolso</Link>.
+                        </label>
+                      </div>
                       <Button
                         className="w-full"
                         size="lg"
-                        disabled={isLoading}
+                        disabled={isLoading || !acceptedTerms}
                         onClick={() => {
                           if (!id) return;
                           if (product.type === 'subscription') {

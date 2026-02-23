@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.request-academy-refund]
 verify_jwt = false
+
+[functions.reprocess-stripe-event]
+verify_jwt = false
+
+[functions.reconcile-academy-access]
+verify_jwt = false

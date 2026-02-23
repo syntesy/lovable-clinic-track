@@ -164,7 +164,7 @@ export async function getSignedVideoUrl(storagePath: string): Promise<string | n
   if (!storagePath) return null;
   const { data, error } = await supabase.storage
     .from('academy-videos')
-    .createSignedUrl(storagePath, 300); // 5 min
+    .createSignedUrl(storagePath, 120); // 2 min
   if (error) {
     console.error('Error generating signed URL:', error);
     return null;
@@ -176,7 +176,7 @@ export async function getSignedFileUrl(storagePath: string): Promise<string | nu
   if (!storagePath) return null;
   const { data, error } = await supabase.storage
     .from('academy-files')
-    .createSignedUrl(storagePath, 300);
+    .createSignedUrl(storagePath, 120); // 2 min
   if (error) return null;
   return data.signedUrl;
 }

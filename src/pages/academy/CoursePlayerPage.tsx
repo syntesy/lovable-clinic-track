@@ -12,6 +12,8 @@ import {
 import { ArrowLeft, BookOpen, Check, CheckCircle, Lock, Play, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
+const VIDEO_URL_REFRESH_INTERVAL = 90_000; // Refresh signed URL every 90s (before 2min expiry)
+
 const CoursePlayerPage = () => {
   const { productId, lessonId } = useParams<{ productId: string; lessonId?: string }>();
   const navigate = useNavigate();
@@ -25,6 +27,7 @@ const CoursePlayerPage = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Flatten lessons
   const allLessons = modules.flatMap(m =>
@@ -60,6 +63,30 @@ const CoursePlayerPage = () => {
   }, [currentLesson?.id, currentLesson?.video_url, hasAccess]);
 
   useEffect(() => { loadVideo(); }, [loadVideo]);
+
+  // Auto-refresh signed URL before expiry
+  useEffect(() => {
+    if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
+    if (!currentLesson?.video_url || !hasAccess) return;
+
+    refreshTimerRef.current = setInterval(async () => {
+      // Only refresh if video is playing (not paused/ended)
+      if (videoRef.current && !videoRef.current.paused && !videoRef.current.ended) {
+        const currentTime = videoRef.current.currentTime;
+        const url = await getSignedVideoUrl(currentLesson.video_url);
+        if (url && videoRef.current) {
+          setVideoUrl(url);
+          // Restore playback position after src change
+          videoRef.current.currentTime = currentTime;
+          videoRef.current.play().catch(() => {});
+        }
+      }
+    }, VIDEO_URL_REFRESH_INTERVAL);
+
+    return () => {
+      if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
+    };
+  }, [currentLesson?.id, currentLesson?.video_url, hasAccess]);
 
   const handleMarkComplete = () => {
     if (!currentLesson || !productId) return;
