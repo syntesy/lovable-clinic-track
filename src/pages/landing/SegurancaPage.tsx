@@ -17,7 +17,7 @@ export default function SegurancaPage() {
       {/* SEÇÃO 1 – HERO */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0" style={{ backgroundImage: `url(${slideBg06})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-        <div className="absolute inset-0 bg-black/10" />
+        <div className="absolute inset-0 bg-black/[0.03]" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Segurança clínica</span>
           <h1 className="text-3xl md:text-5xl font-light text-white mb-6">
