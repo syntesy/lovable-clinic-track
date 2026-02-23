@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Info, Users, TrendingUp, Shield, FlaskConical, Activity, HeartPulse, Target, TrendingDown, Minus } from 'lucide-react';
+import { Info, Users, TrendingUp, Shield, FlaskConical, Activity, HeartPulse, Target, TrendingDown, Minus, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCollectiveInsights, DashboardFilters, getMostFrequent } from '@/hooks/useCollectiveInsights';
 import { useCollectiveOutcomes, OutcomeTimepoint, ResponseThreshold, ClusterOutcomeAggregation, TrendInfo } from '@/hooks/useCollectiveOutcomes';
 import { humanReadableClusterKey } from '@/lib/cluster-signature-generator';
@@ -201,47 +202,73 @@ function OverviewTab({ data, isLoading }: TabProps) {
   return (
     <div className="space-y-4">
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Total de Casos</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{totalCases}</p>
-          </CardContent>
-        </Card>
+      <TooltipProvider delayDuration={200}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Total de Casos</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" aria-label="Definição: Total de Casos" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px] text-xs">
+                    Casos que atendem aos filtros selecionados e compõem o coorte inicial, antes da aplicação dos critérios de follow-up.
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <p className="text-2xl font-bold mt-2">{totalCases}</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🟢</span>
-              <span className="text-sm text-muted-foreground">Casos com Follow-up Válido</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{overview?.total_eligible || 0}</p>
-            {totalCases > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {Math.round((overview?.total_eligible || 0) / totalCases * 100)}%
-              </p>
-            )}
-          </CardContent>
-        </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🟢</span>
+                <span className="text-sm text-muted-foreground">Casos com Follow-up Válido</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" aria-label="Definição: Casos com Follow-up Válido" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px] text-xs">
+                    Casos com baseline e follow-up completos no período selecionado, aptos a entrar na análise de desfecho clínico.
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <p className="text-2xl font-bold mt-2">{overview?.total_eligible || 0}</p>
+              {totalCases > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {Math.round((overview?.total_eligible || 0) / totalCases * 100)}%
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🟡</span>
-              <span className="text-sm text-muted-foreground">Casos com Penalidade Metodológica</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{overview?.total_with_penalty || 0}</p>
-            {totalCases > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {Math.round((overview?.total_with_penalty || 0) / totalCases * 100)}%
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🟡</span>
+                <span className="text-sm text-muted-foreground">Casos com Penalidade Metodológica</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" aria-label="Definição: Casos com Penalidade Metodológica" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px] text-xs">
+                    Casos marcados por critérios metodológicos que podem impactar a análise (ex.: uso recente de AINE, inconsistência de dados ou violação de protocolo).
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <p className="text-2xl font-bold mt-2">{overview?.total_with_penalty || 0}</p>
+              {totalCases > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {Math.round((overview?.total_with_penalty || 0) / totalCases * 100)}%
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </TooltipProvider>
 
       {/* Privacy note - only in COLLECTIVE scope */}
       <p className="text-xs text-muted-foreground italic">
