@@ -265,7 +265,7 @@ const AcademyHome = () => {
         </section>
       )}
 
-      {/* Applied Science */}
+      {/* Applied Science CTA - now points to Evidence Central */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
@@ -275,7 +275,7 @@ const AcademyHome = () => {
                   <div className="flex items-center gap-2 text-primary mb-4">
                     <FileText className="w-5 h-5" />
                     <span className="text-sm font-medium uppercase tracking-wide">
-                      Ciência Aplicada
+                      Evidência Clínica
                     </span>
                   </div>
                   <h3 className="text-2xl font-bold text-foreground mb-4">
@@ -285,8 +285,8 @@ const AcademyHome = () => {
                     Artigos comentados, aulas baseadas em evidência e discussões 
                     que conectam a ciência ao dia a dia do consultório.
                   </p>
-                  <Button onClick={() => navigate("/academy/ciencia-aplicada")}>
-                    Explorar Biblioteca
+                  <Button onClick={() => navigate("/academy/evidencia")}>
+                    Entrar na Central
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
