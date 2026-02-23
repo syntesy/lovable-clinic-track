@@ -288,7 +288,8 @@ export default function AcademyLibraryPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Pagination */}
