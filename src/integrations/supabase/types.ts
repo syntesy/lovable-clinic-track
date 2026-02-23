@@ -346,6 +346,54 @@ export type Database = {
           },
         ]
       }
+      academy_lesson_articles: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          created_by: string
+          id: string
+          lesson_id: string
+          note: string | null
+          order_index: number | null
+          relation_type: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          lesson_id: string
+          note?: string | null
+          order_index?: number | null
+          relation_type?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          lesson_id?: string
+          note?: string | null
+          order_index?: number | null
+          relation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lesson_articles_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "academy_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lesson_articles_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_lesson_assets: {
         Row: {
           created_at: string | null
@@ -615,6 +663,96 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "academy_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_product_articles: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          created_by: string
+          id: string
+          note: string | null
+          order_index: number | null
+          product_id: string
+          relation_type: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          note?: string | null
+          order_index?: number | null
+          product_id: string
+          relation_type?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          note?: string | null
+          order_index?: number | null
+          product_id?: string
+          relation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_product_articles_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "academy_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_product_articles_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_product_collections: {
+        Row: {
+          collection_id: string
+          created_at: string | null
+          created_by: string
+          id: string
+          order_index: number | null
+          product_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          order_index?: number | null
+          product_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          order_index?: number | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_product_collections_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "academy_article_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_product_collections_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
             referencedColumns: ["id"]
           },
         ]
