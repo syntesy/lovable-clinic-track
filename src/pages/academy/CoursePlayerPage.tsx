@@ -10,6 +10,7 @@ import {
   useUpdateLessonProgress, getSignedVideoUrl, getSignedFileUrl,
 } from "@/hooks/useAcademyEnrollments";
 import { ArrowLeft, BookOpen, Check, CheckCircle, Lock, Play, FileDown } from "lucide-react";
+import { LessonEvidenceSection } from "@/components/academy/LessonEvidenceSection";
 import { toast } from "sonner";
 
 const VIDEO_URL_REFRESH_INTERVAL = 90_000; // Refresh signed URL every 90s (before 2min expiry)
