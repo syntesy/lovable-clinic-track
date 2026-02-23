@@ -504,6 +504,39 @@ export type Database = {
           },
         ]
       }
+      academy_notifications: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean
+          link_url: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean
+          link_url?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean
+          link_url?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       academy_orders: {
         Row: {
           amount_cents: number
@@ -792,6 +825,30 @@ export type Database = {
           stripe_onboarding_status?: string
           stripe_payouts_enabled?: boolean
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_topic_follows: {
+        Row: {
+          created_at: string | null
+          id: string
+          topic_type: string
+          topic_value: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          topic_type: string
+          topic_value: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          topic_type?: string
+          topic_value?: string
           user_id?: string
         }
         Relationships: []

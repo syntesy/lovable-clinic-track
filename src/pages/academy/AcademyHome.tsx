@@ -30,6 +30,13 @@ const AcademyHome = () => {
 
   const actionCards = [
     {
+      title: "Feed Científico",
+      description: "Novidades e artigos relevantes para você",
+      icon: TrendingUp,
+      href: "/academy/feed",
+      color: "bg-orange-500/10 text-orange-600",
+    },
+    {
       title: "Quero mentoria clínica",
       description: "Conecte-se com especialistas para discutir seus casos",
       icon: Users,
@@ -49,13 +56,6 @@ const AcademyHome = () => {
       icon: Microscope,
       href: "/academy/ciencia-aplicada",
       color: "bg-emerald-500/10 text-emerald-600",
-    },
-    {
-      title: "Minha jornada profissional",
-      description: "Acompanhe seu desenvolvimento e conquistas",
-      icon: TrendingUp,
-      href: "/academy/minha-jornada",
-      color: "bg-purple-500/10 text-purple-600",
     },
   ];
 

@@ -29,6 +29,7 @@ import {
   Loader2,
   X,
   Library,
+  Heart,
 } from "lucide-react";
 import {
   useAcademyArticles,
@@ -36,6 +37,7 @@ import {
   useArticleFilterOptions,
   type ArticleFilters,
 } from "@/hooks/useAcademyArticles";
+import { useAcademyFavorites, useToggleFavorite } from "@/hooks/useAcademyFavorites";
 
 const STUDY_TYPE_COLORS: Record<string, string> = {
   "Revisão Sistemática": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
@@ -70,16 +72,19 @@ export default function AcademyLibraryPage() {
     page: Number(searchParams.get("page") ?? 1),
   }), [searchParams]);
 
+  const onlySaved = searchParams.get("saved") === "1";
   const { data, isLoading } = useAcademyArticles(filters);
   const { data: filterOptions } = useArticleFilterOptions();
   const { data: articleDetail, isLoading: isLoadingDetail } = useAcademyArticleDetail(selectedArticleId);
+  const { data: favorites = [] } = useAcademyFavorites();
+  const toggleFav = useToggleFavorite();
 
   const updateParam = useCallback((key: string, value: string | null) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       if (value) next.set(key, value);
       else next.delete(key);
-      if (key !== "page") next.delete("page"); // reset page on filter change
+      if (key !== "page") next.delete("page");
       return next;
     });
   }, [setSearchParams]);
@@ -94,10 +99,11 @@ export default function AcademyLibraryPage() {
   }, [setSearchParams]);
 
   const hasFilters = searchParams.toString() !== "";
-  const articles = data?.articles ?? [];
+  const allArticles = data?.articles ?? [];
+  const articles = onlySaved ? allArticles.filter(a => favorites.includes(a.id)) : allArticles;
   const totalPages = data?.totalPages ?? 1;
   const currentPage = data?.page ?? 1;
-  const total = data?.total ?? 0;
+  const total = onlySaved ? articles.length : (data?.total ?? 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -176,6 +182,16 @@ export default function AcademyLibraryPage() {
                 </SelectContent>
               </Select>
 
+              <Button
+                variant={onlySaved ? "default" : "outline"}
+                size="sm"
+                className="gap-1"
+                onClick={() => updateParam("saved", onlySaved ? null : "1")}
+              >
+                <Heart className={`w-3 h-3 ${onlySaved ? "fill-current" : ""}`} />
+                Salvos
+              </Button>
+
               {hasFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
                   <X className="w-3 h-3" /> Limpar
@@ -208,23 +224,33 @@ export default function AcademyLibraryPage() {
                 {total} artigo{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {articles.map((article) => (
+                {articles.map((article) => {
+                  const isFav = favorites.includes(article.id);
+                  return (
                   <Card
                     key={article.id}
                     className="group hover:shadow-lg transition-all cursor-pointer flex flex-col"
                     onClick={() => setSelectedArticleId(article.id)}
                   >
                     <CardContent className="py-5 flex flex-col flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-3">
-                        <Badge className={getStudyBadgeClass(article.study_type)}>
-                          {article.study_type}
-                        </Badge>
-                        {article.interventions.slice(0, 2).map((i) => (
-                          <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
-                        ))}
-                        {article.pathologies.slice(0, 1).map((p) => (
-                          <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>
-                        ))}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge className={getStudyBadgeClass(article.study_type)}>
+                            {article.study_type}
+                          </Badge>
+                          {article.interventions.slice(0, 2).map((i) => (
+                            <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
+                          ))}
+                          {article.pathologies.slice(0, 1).map((p) => (
+                            <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>
+                          ))}
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleFav.mutate({ articleId: article.id, isFavorited: isFav }); }}
+                          className="ml-2 flex-shrink-0"
+                        >
+                          <Heart className={`w-4 h-4 transition-colors ${isFav ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-red-400"}`} />
+                        </button>
                       </div>
                       <h3 className="text-base font-semibold text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors">
                         {article.title}
@@ -262,7 +288,8 @@ export default function AcademyLibraryPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Pagination */}
