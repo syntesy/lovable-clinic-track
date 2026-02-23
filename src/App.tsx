@@ -103,7 +103,9 @@ import {
   AcademyHome, ApprovalsPage, MentorshipsPage, MentorshipDetailPage, MentorsPage, MentorDetailPage,
   MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado,
   MentorApplicationPage, MentorOnboardingPage, MentorApprovalsPage,
-  TeacherApplicationPage, TeacherApprovalsPage
+  TeacherApplicationPage, TeacherApprovalsPage,
+  TeacherDashboard, ProductCreatePage, ProductEditPage, AdminProductsPage,
+  MarketplacePage, MarketplaceDetailPage,
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
