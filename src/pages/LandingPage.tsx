@@ -416,11 +416,11 @@ export default function LandingPage() {
                 <div
                   className="h-full rounded-full"
                   style={{
-                    width: i === current ? `${progress}%` : i < current ? "100%" : "0%",
-                    background: i === current || i < current
+                    width: i === current ? `${progress}%` : "0%",
+                    background: i === current
                       ? "hsl(var(--primary))"
                       : "transparent",
-                    transition: i === current ? "width 50ms linear" : "width 0.4s ease",
+                    transition: i === current ? "width 50ms linear" : "none",
                   }}
                 />
               </div>
