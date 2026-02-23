@@ -16,7 +16,8 @@ import {
   useProductReviewNotes,
 } from "@/hooks/useAcademyProducts";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare, Upload, Video, FileUp } from "lucide-react";
+import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare, Upload, Video, FileUp, FlaskConical } from "lucide-react";
+import { ProductEvidenceEditor, LessonEvidenceEditor } from "@/components/academy/EvidenceEditor";
 import { toast } from "sonner";
 
 const statusLabels: Record<string, string> = { draft: 'Rascunho', in_review: 'Em Revisão', published: 'Publicado', archived: 'Arquivado' };
