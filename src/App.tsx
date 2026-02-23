@@ -106,6 +106,7 @@ import {
   TeacherApplicationPage, TeacherApprovalsPage,
   TeacherDashboard, ProductCreatePage, ProductEditPage, AdminProductsPage,
   MarketplacePage, MarketplaceDetailPage,
+  MyPurchasesPage, CoursePlayerPage,
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
