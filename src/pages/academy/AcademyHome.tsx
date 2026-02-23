@@ -327,7 +327,7 @@ const AcademyHome = () => {
                 <Card
                   key={article.id}
                   className="cursor-pointer hover:shadow-lg transition-all group"
-                  onClick={() => navigate("/academy/biblioteca")}
+                  onClick={() => navigate("/academy/evidencia")}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex flex-wrap gap-1.5 mb-2">
