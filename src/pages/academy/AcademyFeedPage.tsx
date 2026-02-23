@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Clock, FolderOpen, ArrowRight, BookOpen } from "lucide-react";
+import { Loader2, Sparkles, Clock, FolderOpen, ArrowRight, BookOpen, ArrowLeft } from "lucide-react";
 import { useFeedNewArticles, useFeedForYou, useFeedOfficialCollections } from "@/hooks/useAcademyFeed";
 import { useAcademyFavorites, useToggleFavorite } from "@/hooks/useAcademyFavorites";
 import { Heart } from "lucide-react";
