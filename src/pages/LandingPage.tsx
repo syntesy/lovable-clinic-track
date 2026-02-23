@@ -66,7 +66,7 @@ const slides: Slide[] = [
     headline: "Governança e Segurança Metodológica",
     subtitle: "Rastreabilidade, documentação estruturada e padronização técnica integradas à prática clínica.",
     cta: "Ver estrutura de governança",
-    ctaLink: "/governanca",
+    ctaLink: "/governanca-info",
     bg: slideBg04,
   },
   {
