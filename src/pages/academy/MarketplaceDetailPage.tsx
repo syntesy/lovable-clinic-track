@@ -205,10 +205,23 @@ const MarketplaceDetailPage = () => {
 
                   return (
                     <>
+                      <div className="flex items-start gap-2 mb-2">
+                        <Checkbox
+                          id="accept-terms"
+                          checked={acceptedTerms}
+                          onCheckedChange={(v) => setAcceptedTerms(!!v)}
+                        />
+                        <label htmlFor="accept-terms" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+                          Li e aceito os{' '}
+                          <Link to="/academy/termos" className="text-primary hover:underline" target="_blank">termos de uso</Link>,{' '}
+                          <Link to="/academy/privacidade" className="text-primary hover:underline" target="_blank">política de privacidade</Link> e{' '}
+                          <Link to="/academy/reembolso" className="text-primary hover:underline" target="_blank">política de reembolso</Link>.
+                        </label>
+                      </div>
                       <Button
                         className="w-full"
                         size="lg"
-                        disabled={isLoading}
+                        disabled={isLoading || !acceptedTerms}
                         onClick={() => {
                           if (!id) return;
                           if (product.type === 'subscription') {
