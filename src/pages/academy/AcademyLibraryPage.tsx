@@ -182,6 +182,16 @@ export default function AcademyLibraryPage() {
                 </SelectContent>
               </Select>
 
+              <Button
+                variant={onlySaved ? "default" : "outline"}
+                size="sm"
+                className="gap-1"
+                onClick={() => updateParam("saved", onlySaved ? null : "1")}
+              >
+                <Heart className={`w-3 h-3 ${onlySaved ? "fill-current" : ""}`} />
+                Salvos
+              </Button>
+
               {hasFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
                   <X className="w-3 h-3" /> Limpar
