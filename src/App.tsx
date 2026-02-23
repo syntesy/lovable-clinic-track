@@ -677,6 +677,15 @@ const App = () => (
           {/* Teacher Routes */}
           <Route path="/academy/professor/candidatar" element={<ProtectedRoute><TeacherApplicationPage /></ProtectedRoute>} />
           <Route path="/academy/admin/professores" element={<ProtectedRoute><TeacherApprovalsPage /></ProtectedRoute>} />
+          {/* Teacher Dashboard & Products */}
+          <Route path="/academy/professor/dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
+          <Route path="/academy/professor/produtos/novo" element={<ProtectedRoute><ProductCreatePage /></ProtectedRoute>} />
+          <Route path="/academy/professor/produtos/:id/editar" element={<ProtectedRoute><ProductEditPage /></ProtectedRoute>} />
+          {/* Admin Products */}
+          <Route path="/academy/admin/produtos" element={<ProtectedRoute><AdminProductsPage /></ProtectedRoute>} />
+          {/* Marketplace */}
+          <Route path="/academy/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
+          <Route path="/academy/marketplace/:id" element={<ProtectedRoute><MarketplaceDetailPage /></ProtectedRoute>} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />
