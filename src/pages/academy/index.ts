@@ -15,3 +15,10 @@ export { default as MentorApprovalsPage } from './MentorApprovalsPage';
 // Teacher
 export { default as TeacherApplicationPage } from './TeacherApplicationPage';
 export { default as TeacherApprovalsPage } from './TeacherApprovalsPage';
+// Products & Marketplace
+export { default as TeacherDashboard } from './TeacherDashboard';
+export { default as ProductCreatePage } from './ProductCreatePage';
+export { default as ProductEditPage } from './ProductEditPage';
+export { default as AdminProductsPage } from './AdminProductsPage';
+export { default as MarketplacePage } from './MarketplacePage';
+export { default as MarketplaceDetailPage } from './MarketplaceDetailPage';
