@@ -318,6 +318,57 @@ const AcademyHome = () => {
         </div>
       </section>
 
+      {/* Latest Articles from Library */}
+      {latestArticles.length > 0 && (
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                  Últimos Artigos
+                </h2>
+                <p className="text-muted-foreground">
+                  Evidência científica recente curada pela equipe
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => navigate("/academy/biblioteca")}>
+                Ver biblioteca
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {latestArticles.map((article) => (
+                <Card
+                  key={article.id}
+                  className="cursor-pointer hover:shadow-lg transition-all group"
+                  onClick={() => navigate("/academy/biblioteca")}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      <Badge variant="secondary" className="text-xs">{article.study_type}</Badge>
+                      {article.interventions.slice(0, 2).map((i) => (
+                        <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
+                      ))}
+                    </div>
+                    <CardTitle className="text-base group-hover:text-primary transition-colors line-clamp-2">
+                      {article.title}
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      {article.year} • {article.journal}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {article.summary_short}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA Section */}
       <section className="py-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
