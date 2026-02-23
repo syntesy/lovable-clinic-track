@@ -172,13 +172,56 @@ const MarketplaceDetailPage = () => {
                     <p className="text-sm text-muted-foreground">Acesso vitalício</p>
                   )}
                 </div>
-                <Button className="w-full" size="lg" disabled>
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Checkout em breve
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  O sistema de pagamento será ativado em breve.
-                </p>
+                {enrollment?.access_status === 'active' ? (
+                  <Button className="w-full" size="lg" onClick={() => {
+                    if (product.type === 'course') navigate(`/academy/curso/${id}`);
+                    else navigate('/academy/minhas-compras');
+                  }}>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Acessar Conteúdo
+                  </Button>
+                ) : (
+                  <>
+                    <Button className="w-full" size="lg" disabled>
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Checkout em breve
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      O sistema de pagamento será ativado em breve.
+                    </p>
+                  </>
+                )}
+
+                {/* Admin: Grant test access */}
+                {isAdmin && (
+                  <div className="pt-4 border-t space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Shield className="w-3 h-3" /> Admin: Conceder acesso
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">User ID</Label>
+                      <Input
+                        placeholder="UUID do usuário"
+                        value={grantUserId}
+                        onChange={e => setGrantUserId(e.target.value)}
+                        className="text-xs"
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      disabled={!grantUserId.trim() || grantEnrollment.isPending}
+                      onClick={() => {
+                        if (!id || !grantUserId.trim()) return;
+                        grantEnrollment.mutate({ userId: grantUserId.trim(), productId: id });
+                        setGrantUserId('');
+                      }}
+                    >
+                      Conceder acesso teste
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
