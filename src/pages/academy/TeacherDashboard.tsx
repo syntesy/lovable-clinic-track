@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMyProducts } from "@/hooks/useAcademyProducts";
 import { useMyAcademyRoles } from "@/hooks/useAcademyRoles";
 import { useTeacherStripeProfile, useConnectStripe } from "@/hooks/useAcademyPayments";
-import { Plus, Package, BookOpen, Users, Repeat, ArrowRight, CreditCard, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Plus, Package, BookOpen, Users, Repeat, ArrowRight, ArrowLeft, CreditCard, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   draft: 'Rascunho',
@@ -89,6 +89,9 @@ const TeacherDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/academy/home')} className="mb-4 -ml-2 gap-2 text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Painel do Professor</h1>

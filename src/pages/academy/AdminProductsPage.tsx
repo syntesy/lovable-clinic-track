@@ -9,13 +9,15 @@ import {
   useAllProductsAdmin, useAdminPublishProduct, useAdminArchiveProduct, useAdminRequestChanges,
 } from "@/hooks/useAcademyProducts";
 import { useIsAcademyAdmin } from "@/hooks/useAcademyRoles";
-import { Check, X, MessageSquare, Archive, BookOpen, Users, Repeat, Package } from "lucide-react";
+import { Check, X, MessageSquare, Archive, BookOpen, Users, Repeat, Package, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
 const typeIcons: Record<string, any> = { course: BookOpen, mentorship: Users, subscription: Repeat };
 const statusLabels: Record<string, string> = { draft: 'Rascunho', in_review: 'Em Revisão', published: 'Publicado', archived: 'Arquivado' };
 
 const AdminProductsPage = () => {
+  const navigate = useNavigate();
   const { data: isAdmin, isLoading: adminLoading } = useIsAcademyAdmin();
   const [tab, setTab] = useState('in_review');
   const { data: products = [], isLoading } = useAllProductsAdmin(tab);
@@ -38,6 +40,9 @@ const AdminProductsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/academy/home')} className="mb-4 -ml-2 gap-2 text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <h1 className="text-3xl font-bold text-foreground mb-6">Gestão de Produtos — Academy</h1>
 
         <Tabs value={tab} onValueChange={setTab}>

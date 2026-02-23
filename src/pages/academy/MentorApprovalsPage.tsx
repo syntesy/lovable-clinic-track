@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   Pause,
   ChevronDown,
-  FileSearch
+  FileSearch,
+  ArrowLeft
 } from "lucide-react";
 import { 
   usePendingMentorApplications,
@@ -79,6 +80,9 @@ const MentorApprovalsPage = () => {
       <section className="bg-gradient-to-br from-primary/5 via-background to-primary/10 py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/academy/home')} className="mb-4 -ml-2 gap-2 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-4 h-4" /> Voltar
+            </Button>
             <Badge variant="secondary" className="mb-4">
               <Users className="w-3 h-3 mr-1" />
               Aprovação de Mentores

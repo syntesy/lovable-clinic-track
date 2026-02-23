@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Loader2,
   X,
+  ArrowLeft,
   Library,
   Heart,
 } from "lucide-react";
@@ -56,6 +57,7 @@ function getExternalUrl(article: { pubmed_url?: string | null; doi_url?: string 
 }
 
 export default function AcademyLibraryPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
@@ -111,6 +113,9 @@ export default function AcademyLibraryPage() {
       <section className="bg-gradient-to-br from-primary/5 via-background to-primary/10 py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/academy/home')} className="mb-4 -ml-2 gap-2 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-4 h-4" /> Voltar
+            </Button>
             <Badge variant="secondary" className="mb-4">
               <Library className="w-3 h-3 mr-1" />
               Biblioteca Científica
