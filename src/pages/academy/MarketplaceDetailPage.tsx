@@ -27,6 +27,7 @@ const MarketplaceDetailPage = () => {
   const { isAdmin } = useAcademyRole();
   const grantEnrollment = useAdminGrantEnrollment();
   const [grantUserId, setGrantUserId] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const checkout = useAcademyCheckout();
   const subscriptionCheckout = useSubscriptionCheckout();
   const { data: teacherProfile } = useTeacherStripeProfileForProduct(product?.teacher_id);
