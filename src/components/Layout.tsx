@@ -53,6 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 />
               </div>
               <div className="flex items-center gap-2">
+                <AcademyNotificationBell />
                 <ModeSwitch />
                 <ThemeToggle />
                 <Button
