@@ -66,6 +66,7 @@ import ArquiteturaPage from "./pages/landing/ArquiteturaPage";
 import CienciaPage from "./pages/landing/CienciaPage";
 import GovernancaLandingPage from "./pages/landing/GovernancaLandingPage";
 import EcossistemaPage from "./pages/landing/EcossistemaPage";
+import IntegracaoPage from "./pages/landing/IntegracaoPage";
 import EstruturaClinicaPage from "./pages/landing/EstruturaClinicaPage";
 import ScorePage from "./pages/landing/ScorePage";
 import ResultadosPage from "./pages/landing/ResultadosPage";
@@ -131,6 +132,7 @@ const App = () => (
             <Route path="/estrutura-cientifica" element={<CienciaPage />} />
             <Route path="/governanca-info" element={<GovernancaLandingPage />} />
             <Route path="/ecossistema" element={<EcossistemaPage />} />
+            <Route path="/integracao" element={<IntegracaoPage />} />
             <Route path="/estrutura-clinica" element={<EstruturaClinicaPage />} />
             <Route path="/score" element={<ScorePage />} />
             <Route path="/resultados" element={<ResultadosPage />} />
