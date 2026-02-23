@@ -34,3 +34,8 @@ export { default as AcademyRefundPolicyPage } from './AcademyRefundPolicyPage';
 // Library
 export { default as AcademyLibraryPage } from './AcademyLibraryPage';
 export { default as AcademyLibraryAdminPage } from './AcademyLibraryAdminPage';
+// Stage 7: Feed, Collections, Notifications
+export { default as AcademyFeedPage } from './AcademyFeedPage';
+export { default as AcademyCollectionsPage } from './AcademyCollectionsPage';
+export { default as AcademyCollectionDetailPage } from './AcademyCollectionDetailPage';
+export { default as AcademyNotificationsPage } from './AcademyNotificationsPage';
