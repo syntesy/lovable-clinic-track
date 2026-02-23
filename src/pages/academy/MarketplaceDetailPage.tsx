@@ -155,6 +155,9 @@ const MarketplaceDetailPage = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Base Científica */}
+            {id && <ProductEvidenceSection productId={id} />}
           </div>
 
           {/* Sidebar */}

@@ -380,6 +380,10 @@ const ProductEditPage = () => {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="evidence">
+            {id && <ProductEvidenceEditor productId={id} />}
+          </TabsContent>
         </Tabs>
       </div>
     </div>

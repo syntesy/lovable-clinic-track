@@ -251,6 +251,13 @@ const CoursePlayerPage = () => {
                 </Card>
               )}
 
+              {/* Evidence Section */}
+              {productId && currentLesson && (
+                <div className="mb-6">
+                  <LessonEvidenceSection lessonId={currentLesson.id} productId={productId} />
+                </div>
+              )}
+
               {/* Navigation */}
               <div className="flex justify-between mt-8">
                 {(() => {
