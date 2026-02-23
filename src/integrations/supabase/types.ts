@@ -280,6 +280,88 @@ export type Database = {
           },
         ]
       }
+      academy_orders: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          product_id: string
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          product_id: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          product_id?: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_payment_events: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string | null
+          payload: Json | null
+          stripe_event_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          payload?: Json | null
+          stripe_event_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          payload?: Json | null
+          stripe_event_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_payment_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "academy_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_product_review_notes: {
         Row: {
           admin_id: string
@@ -325,6 +407,8 @@ export type Database = {
           language: string | null
           price_cents: number | null
           status: string
+          stripe_price_id: string | null
+          stripe_product_id: string | null
           subtitle: string | null
           teacher_id: string
           title: string
@@ -343,6 +427,8 @@ export type Database = {
           language?: string | null
           price_cents?: number | null
           status?: string
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           subtitle?: string | null
           teacher_id: string
           title: string
@@ -361,6 +447,8 @@ export type Database = {
           language?: string | null
           price_cents?: number | null
           status?: string
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           subtitle?: string | null
           teacher_id?: string
           title?: string
@@ -412,6 +500,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      academy_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          product_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          product_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          product_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_teacher_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          stripe_account_id: string | null
+          stripe_onboarding_status: string
+          stripe_payouts_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stripe_account_id?: string | null
+          stripe_onboarding_status?: string
+          stripe_payouts_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stripe_account_id?: string | null
+          stripe_onboarding_status?: string
+          stripe_payouts_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       academy_user_roles: {
         Row: {
