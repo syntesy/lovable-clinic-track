@@ -176,7 +176,7 @@ export async function getSignedFileUrl(storagePath: string): Promise<string | nu
   if (!storagePath) return null;
   const { data, error } = await supabase.storage
     .from('academy-files')
-    .createSignedUrl(storagePath, 300);
+    .createSignedUrl(storagePath, 120); // 2 min
   if (error) return null;
   return data.signedUrl;
 }
