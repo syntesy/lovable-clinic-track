@@ -89,7 +89,7 @@ const AcademyFinancialAdmin = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       qc.invalidateQueries({ queryKey: ["admin-academy-orders"] });
       qc.invalidateQueries({ queryKey: ["admin-academy-subscriptions"] });
       toast.success(`Reconciliação concluída: ${data?.fixes_count || 0} correções`);

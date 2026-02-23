@@ -25,3 +25,9 @@ export { default as MarketplaceDetailPage } from './MarketplaceDetailPage';
 // Student
 export { default as MyPurchasesPage } from './MyPurchasesPage';
 export { default as CoursePlayerPage } from './CoursePlayerPage';
+// Admin Financial
+export { default as AcademyFinancialAdmin } from './AcademyFinancialAdmin';
+// Legal Pages
+export { default as AcademyTermsPage } from './AcademyTermsPage';
+export { default as AcademyPrivacyPage } from './AcademyPrivacyPage';
+export { default as AcademyRefundPolicyPage } from './AcademyRefundPolicyPage';

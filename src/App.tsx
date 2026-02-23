@@ -692,6 +692,12 @@ const App = () => (
           <Route path="/academy/minhas-compras" element={<ProtectedRoute><MyPurchasesPage /></ProtectedRoute>} />
           <Route path="/academy/curso/:productId" element={<ProtectedRoute><CoursePlayerPage /></ProtectedRoute>} />
           <Route path="/academy/curso/:productId/aula/:lessonId" element={<ProtectedRoute><CoursePlayerPage /></ProtectedRoute>} />
+          {/* Admin Financial */}
+          <Route path="/academy/admin/financeiro" element={<ProtectedRoute><AcademyFinancialAdmin /></ProtectedRoute>} />
+          {/* Legal Pages */}
+          <Route path="/academy/termos" element={<AcademyTermsPage />} />
+          <Route path="/academy/privacidade" element={<AcademyPrivacyPage />} />
+          <Route path="/academy/reembolso" element={<AcademyRefundPolicyPage />} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />
