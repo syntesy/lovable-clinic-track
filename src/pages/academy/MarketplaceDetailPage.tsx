@@ -26,6 +26,9 @@ const MarketplaceDetailPage = () => {
   const { isAdmin } = useAcademyRole();
   const grantEnrollment = useAdminGrantEnrollment();
   const [grantUserId, setGrantUserId] = useState('');
+  const checkout = useAcademyCheckout();
+  const subscriptionCheckout = useSubscriptionCheckout();
+  const { data: teacherProfile } = useTeacherStripeProfileForProduct(product?.teacher_id);
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando...</div>;
   if (!product) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Produto não encontrado</div>;
