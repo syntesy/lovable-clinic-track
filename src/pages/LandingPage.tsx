@@ -26,7 +26,7 @@ const slides: Slide[] = [
   {
     label: "INFRAESTRUTURA NACIONAL",
     navLabel: "REGHEN",
-    headline: "REGHEN\nInfraestrutura Nacional de Padronização da Medicina Regenerativa",
+    headline: "Infraestrutura Nacional de Padronização da Medicina Regenerativa",
     subtitle: "Organizando, mensurando e estruturando a Medicina Regenerativa com método, evidência e governança.",
     cta: "Conhecer o REGHEN",
     ctaLink: "/reghen",
@@ -301,7 +301,14 @@ export default function LandingPage() {
             {current === 0 ? (
               <>
                 {/* Logo centered for first slide */}
-                <img src={logoReghen} alt="REGHEN" className="h-16 md:h-24 lg:h-28 w-auto mx-auto mb-6 opacity-90" />
+                <img src={logoReghen} alt="REGHEN" className="h-16 md:h-24 lg:h-28 w-auto mx-auto mb-8 opacity-90" />
+                {/* Headline */}
+                <h1
+                  className="text-white text-3xl md:text-5xl lg:text-[3.5rem] leading-[1.1] tracking-tight mb-6"
+                  style={{ fontWeight: 300, fontFamily: "Montserrat, sans-serif" }}
+                >
+                  {slide.headline}
+                </h1>
                 <p className="text-white/50 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-10">
                   {slide.subtitle}
                 </p>
