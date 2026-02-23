@@ -36,10 +36,28 @@ const typeLabels: Record<string, string> = {
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: products = [], isLoading } = useMyProducts();
   const { data: roles = [] } = useMyAcademyRoles();
+  const { data: stripeProfile, refetch: refetchStripe } = useTeacherStripeProfile();
+  const connectStripe = useConnectStripe();
 
   const isTeacher = roles.includes('teacher_approved') || roles.includes('admin_academy');
+
+  // Handle Stripe return
+  useEffect(() => {
+    const stripeStatus = searchParams.get('stripe');
+    if (stripeStatus === 'complete' || stripeStatus === 'refresh') {
+      // Refresh stripe status
+      const checkStatus = async () => {
+        const { data } = await (await import('@/integrations/supabase/client')).supabase.functions.invoke('create-connect-account', {
+          body: { action: 'status' },
+        });
+        refetchStripe();
+      };
+      checkStatus();
+    }
+  }, [searchParams, refetchStripe]);
 
   if (!isTeacher) {
     return (
