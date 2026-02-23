@@ -14,6 +14,332 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_course_lessons: {
+        Row: {
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          is_free_preview: boolean | null
+          module_id: string
+          order_index: number
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_free_preview?: boolean | null
+          module_id: string
+          order_index?: number
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_free_preview?: boolean | null
+          module_id?: string
+          order_index?: number
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_course_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "academy_course_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_course_modules: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_index: number
+          product_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          product_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          product_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_course_modules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_lesson_assets: {
+        Row: {
+          created_at: string | null
+          file_url: string
+          id: string
+          lesson_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_url: string
+          id?: string
+          lesson_id: string
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          file_url?: string
+          id?: string
+          lesson_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lesson_assets_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_mentorship_cohorts: {
+        Row: {
+          capacity: number | null
+          created_at: string | null
+          end_at: string | null
+          id: string
+          product_id: string
+          start_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string | null
+          end_at?: string | null
+          id?: string
+          product_id: string
+          start_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string | null
+          end_at?: string | null
+          id?: string
+          product_id?: string
+          start_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_mentorship_cohorts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_mentorship_sessions: {
+        Row: {
+          cohort_id: string
+          created_at: string | null
+          id: string
+          meeting_url: string | null
+          notes: string | null
+          order_index: number
+          recording_url: string | null
+          scheduled_at: string | null
+          title: string
+        }
+        Insert: {
+          cohort_id: string
+          created_at?: string | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          order_index?: number
+          recording_url?: string | null
+          scheduled_at?: string | null
+          title: string
+        }
+        Update: {
+          cohort_id?: string
+          created_at?: string | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          order_index?: number
+          recording_url?: string | null
+          scheduled_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_mentorship_sessions_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "academy_mentorship_cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_product_review_notes: {
+        Row: {
+          admin_id: string
+          created_at: string | null
+          id: string
+          note: string
+          product_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string | null
+          id?: string
+          note: string
+          product_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string | null
+          id?: string
+          note?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_product_review_notes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_products: {
+        Row: {
+          access_days: number | null
+          access_policy: string | null
+          category: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          currency: string | null
+          description: string
+          id: string
+          language: string | null
+          price_cents: number | null
+          status: string
+          subtitle: string | null
+          teacher_id: string
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_days?: number | null
+          access_policy?: string | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description: string
+          id?: string
+          language?: string | null
+          price_cents?: number | null
+          status?: string
+          subtitle?: string | null
+          teacher_id: string
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_days?: number | null
+          access_policy?: string | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string
+          id?: string
+          language?: string | null
+          price_cents?: number | null
+          status?: string
+          subtitle?: string | null
+          teacher_id?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      academy_subscription_posts: {
+        Row: {
+          attachments: Json | null
+          content: string | null
+          created_at: string | null
+          id: string
+          product_id: string
+          published_at: string | null
+          status: string
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          product_id: string
+          published_at?: string | null
+          status?: string
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          published_at?: string | null
+          status?: string
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_subscription_posts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_user_roles: {
         Row: {
           created_at: string
@@ -6105,6 +6431,7 @@ export type Database = {
         Args: { _mentor_id: string; _user_id: string }
         Returns: boolean
       }
+      is_teacher_approved: { Args: { _user_id: string }; Returns: boolean }
       log_audit_action: {
         Args: {
           p_action: string
@@ -6120,6 +6447,10 @@ export type Database = {
       mentor_has_taxonomies: { Args: { mentor_id: string }; Returns: boolean }
       mentor_has_valid_seal: { Args: { mentor_id: string }; Returns: boolean }
       normalize_evidence_tag: { Args: { tag: string }; Returns: string }
+      owns_academy_product: {
+        Args: { _product_id: string; _user_id: string }
+        Returns: boolean
+      }
       pseudonymize_id: {
         Args: { original_id: string; salt?: string }
         Returns: string
