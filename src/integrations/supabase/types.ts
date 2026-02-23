@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_article_collection_items: {
+        Row: {
+          article_id: string
+          collection_id: string
+          order_index: number | null
+        }
+        Insert: {
+          article_id: string
+          collection_id: string
+          order_index?: number | null
+        }
+        Update: {
+          article_id?: string
+          collection_id?: string
+          order_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_article_collection_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "academy_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_article_collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "academy_article_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_article_collections: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          owner_user_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          owner_user_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          owner_user_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      academy_articles: {
+        Row: {
+          abstract_text: string | null
+          ai_summary: string | null
+          authors: string | null
+          created_at: string | null
+          created_by: string
+          deleted_at: string | null
+          doi_url: string | null
+          effect_summary: string | null
+          evidence_score: number | null
+          external_id: string | null
+          follow_up: string | null
+          id: string
+          interventions: string[] | null
+          is_published: boolean | null
+          journal: string | null
+          keywords: string[] | null
+          limitations: string[] | null
+          pathologies: string[] | null
+          pubmed_url: string | null
+          search_vector: unknown
+          study_type: string
+          summary_full: string | null
+          summary_short: string
+          title: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          abstract_text?: string | null
+          ai_summary?: string | null
+          authors?: string | null
+          created_at?: string | null
+          created_by: string
+          deleted_at?: string | null
+          doi_url?: string | null
+          effect_summary?: string | null
+          evidence_score?: number | null
+          external_id?: string | null
+          follow_up?: string | null
+          id?: string
+          interventions?: string[] | null
+          is_published?: boolean | null
+          journal?: string | null
+          keywords?: string[] | null
+          limitations?: string[] | null
+          pathologies?: string[] | null
+          pubmed_url?: string | null
+          search_vector?: unknown
+          study_type: string
+          summary_full?: string | null
+          summary_short: string
+          title: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          abstract_text?: string | null
+          ai_summary?: string | null
+          authors?: string | null
+          created_at?: string | null
+          created_by?: string
+          deleted_at?: string | null
+          doi_url?: string | null
+          effect_summary?: string | null
+          evidence_score?: number | null
+          external_id?: string | null
+          follow_up?: string | null
+          id?: string
+          interventions?: string[] | null
+          is_published?: boolean | null
+          journal?: string | null
+          keywords?: string[] | null
+          limitations?: string[] | null
+          pathologies?: string[] | null
+          pubmed_url?: string | null
+          search_vector?: unknown
+          study_type?: string
+          summary_full?: string | null
+          summary_short?: string
+          title?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       academy_audit_log: {
         Row: {
           action: string
