@@ -12,3 +12,6 @@ export { default as ModoAvancado } from './ModoAvancado';
 export { default as MentorApplicationPage } from './MentorApplicationPage';
 export { default as MentorOnboardingPage } from './MentorOnboardingPage';
 export { default as MentorApprovalsPage } from './MentorApprovalsPage';
+// Teacher
+export { default as TeacherApplicationPage } from './TeacherApplicationPage';
+export { default as TeacherApprovalsPage } from './TeacherApprovalsPage';
