@@ -30,11 +30,11 @@ const AcademyHome = () => {
 
   const actionCards = [
     {
-      title: "Feed Científico",
-      description: "Novidades e artigos relevantes para você",
-      icon: TrendingUp,
-      href: "/academy/feed",
-      color: "bg-orange-500/10 text-orange-600",
+      title: "Central de Evidência Clínica",
+      description: "Explore, aplique e acompanhe a evolução científica da medicina regenerativa.",
+      icon: Microscope,
+      href: "/academy/evidencia",
+      color: "bg-teal-500/10 text-teal-600",
     },
     {
       title: "Quero mentoria clínica",
@@ -42,20 +42,6 @@ const AcademyHome = () => {
       icon: Users,
       href: "/academy/mentorias",
       color: "bg-primary/10 text-primary",
-    },
-    {
-      title: "Biblioteca Científica",
-      description: "Artigos curados com evidência e resumos clínicos",
-      icon: Library,
-      href: "/academy/biblioteca",
-      color: "bg-teal-500/10 text-teal-600",
-    },
-    {
-      title: "Quero estudar ciência aplicada",
-      description: "Artigos científicos com comentários clínicos",
-      icon: Microscope,
-      href: "/academy/ciencia-aplicada",
-      color: "bg-emerald-500/10 text-emerald-600",
     },
   ];
 
