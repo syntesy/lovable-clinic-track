@@ -201,12 +201,12 @@ function OverviewTab({ data, isLoading }: TabProps) {
   return (
     <div className="space-y-4">
       {/* Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Total Elegíveis</span>
+              <span className="text-sm text-muted-foreground">Total de Casos</span>
             </div>
             <p className="text-2xl font-bold mt-2">{totalCases}</p>
           </CardContent>
@@ -216,7 +216,7 @@ function OverviewTab({ data, isLoading }: TabProps) {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <span className="text-lg">🟢</span>
-              <span className="text-sm text-muted-foreground">Elegíveis</span>
+              <span className="text-sm text-muted-foreground">Casos com Follow-up Válido</span>
             </div>
             <p className="text-2xl font-bold mt-2">{overview?.total_eligible || 0}</p>
             {totalCases > 0 && (
@@ -231,7 +231,7 @@ function OverviewTab({ data, isLoading }: TabProps) {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <span className="text-lg">🟡</span>
-              <span className="text-sm text-muted-foreground">Com Penalidade</span>
+              <span className="text-sm text-muted-foreground">Casos com Penalidade Metodológica</span>
             </div>
             <p className="text-2xl font-bold mt-2">{overview?.total_with_penalty || 0}</p>
             {totalCases > 0 && (
@@ -241,17 +241,12 @@ function OverviewTab({ data, isLoading }: TabProps) {
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <FlaskConical className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Clusters Válidos</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{data?.clusters?.length || 0}</p>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Privacy note - only in COLLECTIVE scope */}
+      <p className="text-xs text-muted-foreground italic">
+        Por privacidade, grupos com menos de 5 casos não são exibidos no modo coletivo.
+      </p>
 
       {/* Distribution Cards */}
       <div className="grid md:grid-cols-2 gap-4">
