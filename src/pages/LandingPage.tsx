@@ -254,19 +254,34 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* ═══ SLIDE NUMBER (LEFT) ═══ */}
+      {/* ═══ SLIDE NUMBER (BOTH SIDES) ═══ */}
       <div className="absolute left-8 md:left-12 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
         <AnimatePresence mode="wait">
           <motion.span
             key={current}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 0.08, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 0.3, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
-            className="text-white text-[120px] md:text-[160px] font-extralight leading-none"
+            className="text-white text-sm md:text-base font-light tracking-[0.2em]"
             style={{ fontFamily: "Montserrat, sans-serif" }}
           >
             {slideNumber}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+      <div className="absolute right-8 md:right-12 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={current}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 0.3, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4 }}
+            className="text-white text-sm md:text-base font-light tracking-[0.2em]"
+            style={{ fontFamily: "Montserrat, sans-serif" }}
+          >
+            {String(slides.length).padStart(2, "0")}
           </motion.span>
         </AnimatePresence>
       </div>
