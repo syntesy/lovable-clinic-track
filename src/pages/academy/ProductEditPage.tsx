@@ -49,6 +49,30 @@ const ProductEditPage = () => {
 
   const canEdit = product.status === 'draft' || product.status === 'in_review';
 
+  const handleVideoUpload = async (lessonId: string, file: File) => {
+    if (!id) return;
+    const ext = file.name.split('.').pop();
+    const path = `${id}/${lessonId}.${ext}`;
+    toast.info('Enviando vídeo...');
+    const { error: uploadError } = await supabase.storage
+      .from('academy-videos')
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      toast.error('Erro ao enviar vídeo: ' + uploadError.message);
+      return;
+    }
+    // Save path to lesson
+    const { error: updateError } = await supabase
+      .from('academy_course_lessons' as any)
+      .update({ video_url: path })
+      .eq('id', lessonId);
+    if (updateError) {
+      toast.error('Erro ao salvar referência do vídeo');
+      return;
+    }
+    toast.success('Vídeo enviado com sucesso!');
+  };
+
   const handleSave = () => {
     if (!id) return;
     const updates: any = {};
