@@ -16,22 +16,52 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import logoReghen from "@/assets/logo-reghen.png";
 
-// Menu items visible to all authenticated users (professional role)
-const menuItems = [
-  { title: "Agenda Clínica", url: "/agenda", icon: CalendarDays },
-  { title: "Pacientes", url: "/pacientes", icon: Users },
-  { title: "Atendimentos", url: "/atendimentos", icon: ClipboardList },
-  { title: "Padrões Clínicos", url: "/insights", icon: BarChart3 },
-  { title: "Minha Performance", url: "/insights/performance", icon: Target },
-  { title: "Área do Paciente", url: "/patients/manage", icon: UserCog },
-  { title: "Career Engine", url: "/career", icon: TrendingUp },
-  { title: "Diligência & Compliance", url: "/diligence", icon: Shield },
-  { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
-  { title: "Protocolos (Governança)", url: "/governanca/protocolos", icon: ScrollText },
-  { title: "Conformidade", url: "/governanca/conformidade", icon: ShieldCheck },
-  { title: "Parceiros", url: "/partners", icon: Handshake },
-  { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
-  { title: "AGENTE rhegen", url: "/agente-mac", icon: Bot, isAgent: true },
+// Menu organized by strategic domains
+const menuGroups = [
+  {
+    label: "PRÁTICA CLÍNICA",
+    items: [
+      { title: "Agenda Clínica", url: "/agenda", icon: CalendarDays },
+      { title: "Pacientes", url: "/pacientes", icon: Users },
+      { title: "Atendimentos", url: "/atendimentos", icon: ClipboardList },
+      { title: "Área do Paciente", url: "/patients/manage", icon: UserCog },
+    ],
+  },
+  {
+    label: "EVIDÊNCIA & RESULTADOS",
+    items: [
+      { title: "Minha Performance", url: "/insights/performance", icon: Target },
+      { title: "Padrões Clínicos", url: "/insights", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "CIÊNCIA REGENERATIVA",
+    items: [
+      { title: "Curadoria Clínica", url: "/curadoria", icon: BookOpen },
+      { title: "Protocolos (Governança)", url: "/governanca/protocolos", icon: ScrollText },
+      { title: "AGENTE rhegen", url: "/agente-mac", icon: Bot, isAgent: true },
+    ],
+  },
+  {
+    label: "GOVERNANÇA & SEGURANÇA",
+    items: [
+      { title: "Diligência & Compliance", url: "/diligence", icon: Shield },
+      { title: "Conformidade", url: "/governanca/conformidade", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "EVOLUÇÃO PROFISSIONAL",
+    items: [
+      { title: "Career Engine", url: "/career", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "ECOSSISTEMA REGHEN",
+    items: [
+      { title: "Parceiros", url: "/partners", icon: Handshake },
+      { title: "Plano & Assinatura", url: "/account/subscription", icon: CreditCard },
+    ],
+  },
 ];
 
 // Admin-only menu items (includes Evidence Engine access)
@@ -97,36 +127,43 @@ export function AppSidebar() {
         {/* Separator */}
         {!isCollapsed && <div className="mx-2 mb-8 h-px bg-sidebar-border" />}
 
-        {/* Navigation Menu */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-3">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="h-10 md:h-12">
-                    <NavLink
-                      to={item.url}
-                      className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    >
-                      <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
-                      {!isCollapsed && (
-                        <span className="text-[12px] md:text-[13px] tracking-wide font-normal truncate">
-                          {item.title}
-                        </span>
-                      )}
-                      {!isCollapsed && item.isAgent && (
-                        <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-sidebar-accent text-sidebar-primary rounded tracking-wider border border-sidebar-border flex-shrink-0">
-                          IA
-                        </span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Navigation Menu - Strategic Groups */}
+        {menuGroups.map((group, groupIndex) => (
+          <SidebarGroup key={group.label} className={groupIndex > 0 ? "mt-4" : ""}>
+            {!isCollapsed && (
+              <SidebarGroupLabel className="px-4 text-[10px] text-muted-foreground/70 uppercase tracking-widest mb-1">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1">
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="h-10 md:h-12">
+                      <NavLink
+                        to={item.url}
+                        className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      >
+                        <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
+                        {!isCollapsed && (
+                          <span className="text-[12px] md:text-[13px] tracking-wide font-normal truncate">
+                            {item.title}
+                          </span>
+                        )}
+                        {!isCollapsed && (item as any).isAgent && (
+                          <span className="ml-auto px-1.5 py-0.5 text-[9px] font-medium bg-sidebar-accent text-sidebar-primary rounded tracking-wider border border-sidebar-border flex-shrink-0">
+                            IA
+                          </span>
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
         {/* Admin Menu - Only visible to admins */}
         {isAdmin && (
