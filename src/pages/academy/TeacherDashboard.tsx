@@ -1,10 +1,12 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMyProducts } from "@/hooks/useAcademyProducts";
 import { useMyAcademyRoles } from "@/hooks/useAcademyRoles";
-import { Plus, Package, BookOpen, Users, Repeat, ArrowRight } from "lucide-react";
+import { useTeacherStripeProfile, useConnectStripe } from "@/hooks/useAcademyPayments";
+import { Plus, Package, BookOpen, Users, Repeat, ArrowRight, CreditCard, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   draft: 'Rascunho',
