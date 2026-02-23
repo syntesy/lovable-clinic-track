@@ -9,7 +9,6 @@ type ArticlePreview = Pick<AcademyArticle,
 
 const LISTING_FIELDS = "id, title, authors, journal, year, study_type, interventions, pathologies, summary_short, pubmed_url, doi_url, created_at";
 
-// New articles (last 30 days)
 export function useFeedNewArticles(limit = 10) {
   return useQuery({
     queryKey: ["academy-feed-new", limit],
@@ -25,39 +24,35 @@ export function useFeedNewArticles(limit = 10) {
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return data as ArticlePreview[];
+      return (data ?? []) as unknown as ArticlePreview[];
     },
   });
 }
 
-// Personalized: articles matching followed topics
 export function useFeedForYou(limit = 10) {
   return useQuery({
     queryKey: ["academy-feed-foryou", limit],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) return [] as ArticlePreview[];
 
-      // Get user's followed topics
-      const { data: follows } = await supabase
+      const { data: follows } = await (supabase as any)
         .from("academy_topic_follows")
         .select("topic_type, topic_value")
         .eq("user_id", user.id);
 
-      if (!follows?.length) return [];
+      if (!follows?.length) return [] as ArticlePreview[];
 
       const interventions = follows.filter((f: any) => f.topic_type === "intervention").map((f: any) => f.topic_value);
       const pathologies = follows.filter((f: any) => f.topic_type === "pathology").map((f: any) => f.topic_value);
       const keywords = follows.filter((f: any) => f.topic_type === "keyword").map((f: any) => f.topic_value);
 
-      // Build OR query using overlaps
       let query = supabase
         .from("academy_articles")
         .select(LISTING_FIELDS)
         .eq("is_published", true)
         .is("deleted_at", null);
 
-      // Use OR filter for any matching topic
       const orFilters: string[] = [];
       if (interventions.length) orFilters.push(`interventions.ov.{${interventions.join(",")}}`);
       if (pathologies.length) orFilters.push(`pathologies.ov.{${pathologies.join(",")}}`);
@@ -71,17 +66,16 @@ export function useFeedForYou(limit = 10) {
         .order("year", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return data as ArticlePreview[];
+      return (data ?? []) as unknown as ArticlePreview[];
     },
   });
 }
 
-// Official collections for feed
 export function useFeedOfficialCollections() {
   return useQuery({
     queryKey: ["academy-feed-official-collections"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("academy_article_collections")
         .select("id, title, description, is_featured, created_at")
         .eq("kind", "official")
@@ -91,7 +85,7 @@ export function useFeedOfficialCollections() {
         .order("created_at", { ascending: false })
         .limit(6);
       if (error) throw error;
-      return data as { id: string; title: string; description: string | null; is_featured: boolean; created_at: string }[];
+      return (data ?? []) as { id: string; title: string; description: string | null; is_featured: boolean; created_at: string }[];
     },
   });
 }

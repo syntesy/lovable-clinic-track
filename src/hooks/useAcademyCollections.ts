@@ -17,7 +17,7 @@ export function useOfficialCollections() {
   return useQuery({
     queryKey: ["academy-collections-official"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("academy_article_collections")
         .select("*")
         .eq("kind", "official")
@@ -26,7 +26,7 @@ export function useOfficialCollections() {
         .order("is_featured", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as AcademyCollection[];
+      return (data ?? []) as AcademyCollection[];
     },
   });
 }
@@ -36,8 +36,8 @@ export function useMyCollections() {
     queryKey: ["academy-collections-personal"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data, error } = await supabase
+      if (!user) return [] as AcademyCollection[];
+      const { data, error } = await (supabase as any)
         .from("academy_article_collections")
         .select("*")
         .eq("owner_user_id", user.id)
@@ -45,7 +45,7 @@ export function useMyCollections() {
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as AcademyCollection[];
+      return (data ?? []) as AcademyCollection[];
     },
   });
 }
@@ -55,7 +55,7 @@ export function useCollectionDetail(id: string | null) {
     queryKey: ["academy-collection-detail", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("academy_article_collections")
         .select("*")
         .eq("id", id!)
@@ -75,15 +75,28 @@ export function useCollectionArticles(collectionId: string | null) {
         .from("academy_article_collection_items")
         .select(`
           order_index,
-          article:academy_articles!inner(
-            id, title, authors, journal, year, study_type,
-            interventions, pathologies, summary_short, pubmed_url, doi_url, created_at
-          )
+          article_id
         `)
         .eq("collection_id", collectionId!)
         .order("order_index", { ascending: true });
       if (error) throw error;
-      return (data ?? []).map((d: any) => ({ ...d.article, order_index: d.order_index }));
+
+      if (!data?.length) return [];
+
+      const articleIds = data.map((d: any) => d.article_id);
+      const { data: articles, error: err2 } = await supabase
+        .from("academy_articles")
+        .select("id, title, authors, journal, year, study_type, interventions, pathologies, summary_short, pubmed_url, doi_url, created_at")
+        .in("id", articleIds)
+        .eq("is_published", true)
+        .is("deleted_at", null);
+      if (err2) throw err2;
+
+      // Merge order_index
+      const orderMap = new Map(data.map((d: any) => [d.article_id, d.order_index]));
+      return (articles ?? [])
+        .map((a: any) => ({ ...a, order_index: orderMap.get(a.id) ?? 0 }))
+        .sort((a: any, b: any) => a.order_index - b.order_index);
     },
   });
 }
@@ -95,13 +108,13 @@ export function useSaveCollection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (col.id) {
-        const { id, created_at, owner_user_id, ...updates } = col;
-        const { error } = await supabase.from("academy_article_collections")
-          .update(updates as any).eq("id", id);
+        const { id, created_at, owner_user_id, kind, ...updates } = col;
+        const { error } = await (supabase as any).from("academy_article_collections")
+          .update(updates).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("academy_article_collections")
-          .insert({ ...col, owner_user_id: user.id } as any);
+        const { error } = await (supabase as any).from("academy_article_collections")
+          .insert({ ...col, owner_user_id: user.id });
         if (error) throw error;
       }
     },

@@ -13,8 +13,8 @@ export function useTopicFollows() {
     queryKey: ["academy-topic-follows"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data, error } = await supabase
+      if (!user) return [] as TopicFollow[];
+      const { data, error } = await (supabase as any)
         .from("academy_topic_follows")
         .select("*")
         .eq("user_id", user.id)
@@ -34,10 +34,10 @@ export function useToggleTopicFollow() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (isFollowing) {
-        await supabase.from("academy_topic_follows").delete()
+        await (supabase as any).from("academy_topic_follows").delete()
           .eq("user_id", user.id).eq("topic_type", topicType).eq("topic_value", topicValue);
       } else {
-        await supabase.from("academy_topic_follows").insert({
+        await (supabase as any).from("academy_topic_follows").insert({
           user_id: user.id, topic_type: topicType, topic_value: topicValue,
         });
       }

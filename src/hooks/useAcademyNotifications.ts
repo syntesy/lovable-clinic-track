@@ -15,14 +15,14 @@ export function useAcademyNotifications(limit?: number) {
   return useQuery({
     queryKey: ["academy-notifications", limit],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from("academy_notifications")
         .select("*")
         .order("created_at", { ascending: false });
       if (limit) query = query.limit(limit);
       const { data, error } = await query;
       if (error) throw error;
-      return data as AcademyNotification[];
+      return (data ?? []) as AcademyNotification[];
     },
   });
 }
@@ -31,7 +31,7 @@ export function useUnreadNotificationCount() {
   return useQuery({
     queryKey: ["academy-notifications-unread-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count, error } = await (supabase as any)
         .from("academy_notifications")
         .select("id", { count: "exact", head: true })
         .eq("is_read", false);
@@ -46,7 +46,7 @@ export function useMarkNotificationRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("academy_notifications").update({ is_read: true }).eq("id", id);
+      await (supabase as any).from("academy_notifications").update({ is_read: true }).eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["academy-notifications"] });
@@ -61,7 +61,7 @@ export function useMarkAllNotificationsRead() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      await supabase.from("academy_notifications").update({ is_read: true })
+      await (supabase as any).from("academy_notifications").update({ is_read: true })
         .eq("user_id", user.id).eq("is_read", false);
     },
     onSuccess: () => {

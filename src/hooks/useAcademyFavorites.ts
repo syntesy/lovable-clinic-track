@@ -6,8 +6,8 @@ export function useAcademyFavorites() {
     queryKey: ["academy-favorites"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data, error } = await supabase
+      if (!user) return [] as string[];
+      const { data, error } = await (supabase as any)
         .from("academy_article_favorites")
         .select("article_id")
         .eq("user_id", user.id);
@@ -24,10 +24,10 @@ export function useToggleFavorite() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (isFavorited) {
-        await supabase.from("academy_article_favorites").delete()
+        await (supabase as any).from("academy_article_favorites").delete()
           .eq("user_id", user.id).eq("article_id", articleId);
       } else {
-        await supabase.from("academy_article_favorites").insert({
+        await (supabase as any).from("academy_article_favorites").insert({
           user_id: user.id, article_id: articleId,
         });
       }
