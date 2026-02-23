@@ -341,22 +341,24 @@ export default function LandingPage() {
             )}
 
             {/* CTA */}
-            <div className="flex flex-wrap justify-center gap-4">
-              <button
-                onClick={() => handleCtaClick(slide.ctaLink)}
-                className="px-8 py-3 text-sm font-medium border border-white/20 text-white/80 rounded-lg hover:border-white/40 hover:text-white hover:bg-white/[0.04] transition-all duration-300"
-              >
-                {slide.cta}
-              </button>
-              {slide.cta2 && slide.cta2Link && (
+            {current !== 0 && (
+              <div className="flex flex-wrap justify-center gap-4">
                 <button
-                  onClick={() => handleCtaClick(slide.cta2Link!)}
-                  className="px-8 py-3 text-sm font-medium text-white/60 hover:text-white transition-colors duration-300"
+                  onClick={() => handleCtaClick(slide.ctaLink)}
+                  className="px-8 py-3 text-sm font-medium border border-white/20 text-white/80 rounded-lg hover:border-white/40 hover:text-white hover:bg-white/[0.04] transition-all duration-300"
                 >
-                  {slide.cta2}
+                  {slide.cta}
                 </button>
-              )}
-            </div>
+                {slide.cta2 && slide.cta2Link && (
+                  <button
+                    onClick={() => handleCtaClick(slide.cta2Link!)}
+                    className="px-8 py-3 text-sm font-medium text-white/60 hover:text-white transition-colors duration-300"
+                  >
+                    {slide.cta2}
+                  </button>
+                )}
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
