@@ -56,6 +56,7 @@ function getExternalUrl(article: { pubmed_url?: string | null; doi_url?: string 
 }
 
 export default function AcademyLibraryPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
