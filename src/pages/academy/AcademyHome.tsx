@@ -343,6 +343,14 @@ const AcademyHome = () => {
             >
               Se tornar Mentor
             </Button>
+            <Button 
+              size="lg" 
+              variant="ghost"
+              className="border-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={() => navigate("/academy/professor/candidatar")}
+            >
+              Tornar-se Professor
+            </Button>
           </div>
         </div>
       </section>

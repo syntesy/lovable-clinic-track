@@ -102,7 +102,8 @@ import {
 import {
   AcademyHome, ApprovalsPage, MentorshipsPage, MentorshipDetailPage, MentorsPage, MentorDetailPage,
   MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado,
-  MentorApplicationPage, MentorOnboardingPage, MentorApprovalsPage
+  MentorApplicationPage, MentorOnboardingPage, MentorApprovalsPage,
+  TeacherApplicationPage, TeacherApprovalsPage
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
@@ -671,6 +672,9 @@ const App = () => (
           <Route path="/academy/mentores/candidatar" element={<MentorApplicationPage />} />
           <Route path="/academy/mentor/onboarding" element={<ProtectedRoute><MentorOnboardingPage /></ProtectedRoute>} />
           <Route path="/academy/aprovacoes/mentores" element={<RequireAdminRole><MentorApprovalsPage /></RequireAdminRole>} />
+          {/* Teacher Routes */}
+          <Route path="/academy/professor/candidatar" element={<ProtectedRoute><TeacherApplicationPage /></ProtectedRoute>} />
+          <Route path="/academy/admin/professores" element={<ProtectedRoute><TeacherApprovalsPage /></ProtectedRoute>} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />
