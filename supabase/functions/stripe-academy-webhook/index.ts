@@ -103,15 +103,30 @@ serve(async (req) => {
         accessExpiresAt = d.toISOString();
       }
 
-      // Create enrollment
-      await supabase
+      // Create or update enrollment
+      const { data: existingEnrollment } = await supabase
         .from("academy_enrollments")
-        .upsert({
-          user_id: buyerUserId,
-          product_id: productId,
-          access_status: "active",
-          access_expires_at: accessExpiresAt,
-        }, { onConflict: "user_id,product_id" });
+        .select("id")
+        .eq("user_id", buyerUserId)
+        .eq("product_id", productId)
+        .eq("access_status", "active")
+        .maybeSingle();
+
+      if (existingEnrollment) {
+        await supabase
+          .from("academy_enrollments")
+          .update({ access_expires_at: accessExpiresAt })
+          .eq("id", existingEnrollment.id);
+      } else {
+        await supabase
+          .from("academy_enrollments")
+          .insert({
+            user_id: buyerUserId,
+            product_id: productId,
+            access_status: "active",
+            access_expires_at: accessExpiresAt,
+          });
+      }
 
       await logEvent(supabase, event, orderId);
       console.log(`Order ${orderId} paid, enrollment created for product ${productId}`);
