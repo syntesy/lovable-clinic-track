@@ -79,6 +79,10 @@ const AcademyHome = () => {
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 Explorar Marketplace
               </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate("/academy/minhas-compras")}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                Minhas Compras
+              </Button>
               <Button size="lg" variant="outline" onClick={() => navigate("/academy/mentorias")}>
                 <Users className="w-4 h-4 mr-2" />
                 Mentorias

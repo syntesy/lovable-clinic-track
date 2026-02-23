@@ -106,6 +106,7 @@ import {
   TeacherApplicationPage, TeacherApprovalsPage,
   TeacherDashboard, ProductCreatePage, ProductEditPage, AdminProductsPage,
   MarketplacePage, MarketplaceDetailPage,
+  MyPurchasesPage, CoursePlayerPage,
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
@@ -686,6 +687,10 @@ const App = () => (
           {/* Marketplace */}
           <Route path="/academy/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
           <Route path="/academy/marketplace/:id" element={<ProtectedRoute><MarketplaceDetailPage /></ProtectedRoute>} />
+          {/* Student Routes */}
+          <Route path="/academy/minhas-compras" element={<ProtectedRoute><MyPurchasesPage /></ProtectedRoute>} />
+          <Route path="/academy/curso/:productId" element={<ProtectedRoute><CoursePlayerPage /></ProtectedRoute>} />
+          <Route path="/academy/curso/:productId/aula/:lessonId" element={<ProtectedRoute><CoursePlayerPage /></ProtectedRoute>} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />

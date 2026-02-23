@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,9 @@ import {
   useSubscriptionPosts, useCreateSubscriptionPost,
   useProductReviewNotes,
 } from "@/hooks/useAcademyProducts";
-import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare, Upload, Video, FileUp } from "lucide-react";
+import { toast } from "sonner";
 
 const statusLabels: Record<string, string> = { draft: 'Rascunho', in_review: 'Em Revisão', published: 'Publicado', archived: 'Arquivado' };
 
@@ -46,6 +48,30 @@ const ProductEditPage = () => {
   if (!product) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Produto não encontrado</div>;
 
   const canEdit = product.status === 'draft' || product.status === 'in_review';
+
+  const handleVideoUpload = async (lessonId: string, file: File) => {
+    if (!id) return;
+    const ext = file.name.split('.').pop();
+    const path = `${id}/${lessonId}.${ext}`;
+    toast.info('Enviando vídeo...');
+    const { error: uploadError } = await supabase.storage
+      .from('academy-videos')
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      toast.error('Erro ao enviar vídeo: ' + uploadError.message);
+      return;
+    }
+    // Save path to lesson
+    const { error: updateError } = await supabase
+      .from('academy_course_lessons' as any)
+      .update({ video_url: path })
+      .eq('id', lessonId);
+    if (updateError) {
+      toast.error('Erro ao salvar referência do vídeo');
+      return;
+    }
+    toast.success('Vídeo enviado com sucesso!');
+  };
 
   const handleSave = () => {
     if (!id) return;
@@ -227,8 +253,24 @@ const ProductEditPage = () => {
                           {mod.lessons?.map(lesson => (
                             <div key={lesson.id} className="flex items-center gap-2 text-sm p-2 bg-muted/50 rounded">
                               <span className="text-muted-foreground w-6">{lesson.order_index + 1}.</span>
-                              <span className="text-foreground">{lesson.title}</span>
+                              <span className="text-foreground flex-1">{lesson.title}</span>
+                              {lesson.video_url && <Badge variant="outline" className="text-xs"><Video className="w-3 h-3 mr-1" /> Vídeo</Badge>}
                               {lesson.is_free_preview && <Badge variant="outline" className="text-xs">Preview</Badge>}
+                              {canEdit && (
+                                <label className="cursor-pointer">
+                                  <input
+                                    type="file"
+                                    accept="video/mp4,video/webm,video/quicktime"
+                                    className="hidden"
+                                    onChange={e => {
+                                      const file = e.target.files?.[0];
+                                      if (file) handleVideoUpload(lesson.id, file);
+                                      e.target.value = '';
+                                    }}
+                                  />
+                                  <Upload className="w-4 h-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                                </label>
+                              )}
                             </div>
                           ))}
                           {canEdit && (
