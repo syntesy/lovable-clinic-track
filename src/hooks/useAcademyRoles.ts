@@ -58,6 +58,20 @@ export function useMyAcademyRoles() {
   });
 }
 
+// Convenience hook: returns role flags
+export function useAcademyRole() {
+  const { data: roles = [], isLoading } = useMyAcademyRoles();
+  const { data: isAdminResult } = useIsAcademyAdmin();
+  return {
+    roles,
+    isLoading,
+    isStudent: roles.includes('student'),
+    isTeacher: roles.includes('teacher_approved'),
+    isCandidate: roles.includes('teacher_candidate'),
+    isAdmin: !!isAdminResult,
+  };
+}
+
 // Check if user has a specific academy role
 export function useHasAcademyRole(role: AcademyRole) {
   const { data: roles = [], isLoading } = useMyAcademyRoles();

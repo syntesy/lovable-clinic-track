@@ -22,3 +22,6 @@ export { default as ProductEditPage } from './ProductEditPage';
 export { default as AdminProductsPage } from './AdminProductsPage';
 export { default as MarketplacePage } from './MarketplacePage';
 export { default as MarketplaceDetailPage } from './MarketplaceDetailPage';
+// Student
+export { default as MyPurchasesPage } from './MyPurchasesPage';
+export { default as CoursePlayerPage } from './CoursePlayerPage';
