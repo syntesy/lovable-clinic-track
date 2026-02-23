@@ -26,6 +26,7 @@ const AcademyHome = () => {
   const navigate = useNavigate();
   const { data: mentors = [] } = useMentors({ featured: true });
   const { data: mentorships = [] } = useMentorships({ featured: true });
+  const { data: latestArticles = [] } = useLatestAcademyArticles(3);
 
   const actionCards = [
     {
