@@ -74,15 +74,16 @@ const AcademyHome = () => {
               e construa uma carreira sólida em terapias regenerativas.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button size="lg" onClick={() => navigate("/academy/mentorias")}>
+              <Button size="lg" onClick={() => navigate("/academy/marketplace")}>
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Explorar Marketplace
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate("/academy/mentorias")}>
                 <Users className="w-4 h-4 mr-2" />
-                Explorar Mentorias
+                Mentorias
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/academy/mentores")}>
+              <Button size="lg" variant="ghost" onClick={() => navigate("/academy/mentores")}>
                 Conhecer Mentores
-              </Button>
-              <Button size="lg" variant="ghost" onClick={() => navigate("/edu/cohorts")}>
-                Acessar Cursos
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
