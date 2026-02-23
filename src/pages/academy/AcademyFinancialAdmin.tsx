@@ -82,7 +82,7 @@ const AcademyFinancialAdmin = () => {
 
   // Reconcile
   const reconcile = useMutation({
-    mutationFn: async (userId?: string) => {
+    mutationFn: async (userId?: string | undefined) => {
       const { data, error } = await supabase.functions.invoke("reconcile-academy-access", {
         body: { userId: userId || null },
       });
