@@ -13,6 +13,7 @@ import { useEnrollmentForProduct, useAdminGrantEnrollment } from "@/hooks/useAca
 import { useAcademyRole } from "@/hooks/useAcademyRoles";
 import { useAcademyCheckout, useSubscriptionCheckout, useTeacherStripeProfileForProduct } from "@/hooks/useAcademyPayments";
 import { ArrowLeft, BookOpen, Users, Repeat, ShoppingCart, Clock, Lock, Shield, CheckCircle, Loader2 } from "lucide-react";
+import { ProductEvidenceSection } from "@/components/academy/ProductEvidenceSection";
 
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
 
@@ -154,6 +155,9 @@ const MarketplaceDetailPage = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Base Científica */}
+            {id && <ProductEvidenceSection productId={id} />}
           </div>
 
           {/* Sidebar */}

@@ -16,7 +16,8 @@ import {
   useProductReviewNotes,
 } from "@/hooks/useAcademyProducts";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare, Upload, Video, FileUp } from "lucide-react";
+import { ArrowLeft, Plus, Send, ChevronDown, BookOpen, Users, Repeat, MessageSquare, Upload, Video, FileUp, FlaskConical } from "lucide-react";
+import { ProductEvidenceEditor, LessonEvidenceEditor } from "@/components/academy/EvidenceEditor";
 import { toast } from "sonner";
 
 const statusLabels: Record<string, string> = { draft: 'Rascunho', in_review: 'Em Revisão', published: 'Publicado', archived: 'Arquivado' };
@@ -158,6 +159,9 @@ const ProductEditPage = () => {
           <TabsList>
             <TabsTrigger value="info">Informações</TabsTrigger>
             <TabsTrigger value="content">Conteúdo</TabsTrigger>
+            <TabsTrigger value="evidence">
+              <FlaskConical className="w-4 h-4 mr-1" /> Evidências
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info">
@@ -251,25 +255,30 @@ const ProductEditPage = () => {
                       <CollapsibleContent>
                         <CardContent className="pt-0 space-y-2">
                           {mod.lessons?.map(lesson => (
-                            <div key={lesson.id} className="flex items-center gap-2 text-sm p-2 bg-muted/50 rounded">
-                              <span className="text-muted-foreground w-6">{lesson.order_index + 1}.</span>
-                              <span className="text-foreground flex-1">{lesson.title}</span>
-                              {lesson.video_url && <Badge variant="outline" className="text-xs"><Video className="w-3 h-3 mr-1" /> Vídeo</Badge>}
-                              {lesson.is_free_preview && <Badge variant="outline" className="text-xs">Preview</Badge>}
-                              {canEdit && (
-                                <label className="cursor-pointer">
-                                  <input
-                                    type="file"
-                                    accept="video/mp4,video/webm,video/quicktime"
-                                    className="hidden"
-                                    onChange={e => {
-                                      const file = e.target.files?.[0];
-                                      if (file) handleVideoUpload(lesson.id, file);
-                                      e.target.value = '';
-                                    }}
-                                  />
-                                  <Upload className="w-4 h-4 text-muted-foreground hover:text-primary cursor-pointer" />
-                                </label>
+                            <div key={lesson.id}>
+                              <div className="flex items-center gap-2 text-sm p-2 bg-muted/50 rounded">
+                                <span className="text-muted-foreground w-6">{lesson.order_index + 1}.</span>
+                                <span className="text-foreground flex-1">{lesson.title}</span>
+                                {lesson.video_url && <Badge variant="outline" className="text-xs"><Video className="w-3 h-3 mr-1" /> Vídeo</Badge>}
+                                {lesson.is_free_preview && <Badge variant="outline" className="text-xs">Preview</Badge>}
+                                {canEdit && (
+                                  <label className="cursor-pointer">
+                                    <input
+                                      type="file"
+                                      accept="video/mp4,video/webm,video/quicktime"
+                                      className="hidden"
+                                      onChange={e => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleVideoUpload(lesson.id, file);
+                                        e.target.value = '';
+                                      }}
+                                    />
+                                    <Upload className="w-4 h-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                                  </label>
+                                )}
+                              </div>
+                              {canEdit && id && (
+                                <LessonEvidenceEditor lessonId={lesson.id} productId={id} />
                               )}
                             </div>
                           ))}
@@ -375,6 +384,10 @@ const ProductEditPage = () => {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="evidence">
+            {id && <ProductEvidenceEditor productId={id} />}
           </TabsContent>
         </Tabs>
       </div>
