@@ -665,52 +665,52 @@ const App = () => (
 
           {/* Academy Routes - New REGEN Academy */}
           <Route path="/academy" element={<Navigate to="/academy/home" replace />} />
-          <Route path="/academy/home" element={<ProtectedRoute><MentorOnboardingGate><AcademyHome /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/mentorias" element={<ProtectedRoute><MentorOnboardingGate><MentorshipsPage /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/mentorias/:slug" element={<ProtectedRoute><MentorOnboardingGate><MentorshipDetailPage /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/mentores" element={<ProtectedRoute><MentorOnboardingGate><MentorsPage /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/mentores/:slug" element={<ProtectedRoute><MentorOnboardingGate><MentorDetailPage /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/minhas-mentorias" element={<ProtectedRoute><MentorOnboardingGate><MyMentorshipsPage /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/minha-jornada" element={<ProtectedRoute><MentorOnboardingGate><MyJourneyPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/home" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><AcademyHome /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentorias" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><MentorshipsPage /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentorias/:slug" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><MentorshipDetailPage /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentores" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><MentorsPage /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/mentores/:slug" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><MentorDetailPage /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/minhas-mentorias" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><MyMentorshipsPage /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/minha-jornada" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><MyJourneyPage /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
           <Route path="/academy/ciencia-aplicada" element={<Navigate to="/academy/evidencia?tab=aplicar" replace />} />
-          <Route path="/academy/modo-avancado" element={<ProtectedRoute><MentorOnboardingGate><ModoAvancado /></MentorOnboardingGate></ProtectedRoute>} />
-          <Route path="/academy/aprovacoes" element={<ProtectedRoute><MentorOnboardingGate><ApprovalsPage /></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/modo-avancado" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><ModoAvancado /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
+          <Route path="/academy/aprovacoes" element={<ProtectedRoute><MentorOnboardingGate><EduLayout><ApprovalsPage /></EduLayout></MentorOnboardingGate></ProtectedRoute>} />
           {/* Mentor Onboarding Routes - NOT wrapped by gate */}
-          <Route path="/academy/mentores/candidatar" element={<MentorApplicationPage />} />
-          <Route path="/academy/mentor/onboarding" element={<ProtectedRoute><MentorOnboardingPage /></ProtectedRoute>} />
-          <Route path="/academy/aprovacoes/mentores" element={<RequireAdminRole><MentorApprovalsPage /></RequireAdminRole>} />
+          <Route path="/academy/mentores/candidatar" element={<EduLayout><MentorApplicationPage /></EduLayout>} />
+          <Route path="/academy/mentor/onboarding" element={<ProtectedRoute><EduLayout><MentorOnboardingPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/aprovacoes/mentores" element={<RequireAdminRole><EduLayout><MentorApprovalsPage /></EduLayout></RequireAdminRole>} />
           {/* Teacher Routes */}
-          <Route path="/academy/professor/candidatar" element={<ProtectedRoute><TeacherApplicationPage /></ProtectedRoute>} />
-          <Route path="/academy/admin/professores" element={<ProtectedRoute><TeacherApprovalsPage /></ProtectedRoute>} />
+          <Route path="/academy/professor/candidatar" element={<ProtectedRoute><EduLayout><TeacherApplicationPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/admin/professores" element={<ProtectedRoute><EduLayout><TeacherApprovalsPage /></EduLayout></ProtectedRoute>} />
           {/* Teacher Dashboard & Products */}
-          <Route path="/academy/professor/dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
-          <Route path="/academy/professor/produtos/novo" element={<ProtectedRoute><ProductCreatePage /></ProtectedRoute>} />
-          <Route path="/academy/professor/produtos/:id/editar" element={<ProtectedRoute><ProductEditPage /></ProtectedRoute>} />
+          <Route path="/academy/professor/dashboard" element={<ProtectedRoute><EduLayout><TeacherDashboard /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/professor/produtos/novo" element={<ProtectedRoute><EduLayout><ProductCreatePage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/professor/produtos/:id/editar" element={<ProtectedRoute><EduLayout><ProductEditPage /></EduLayout></ProtectedRoute>} />
           {/* Admin Products */}
-          <Route path="/academy/admin/produtos" element={<ProtectedRoute><AdminProductsPage /></ProtectedRoute>} />
+          <Route path="/academy/admin/produtos" element={<ProtectedRoute><EduLayout><AdminProductsPage /></EduLayout></ProtectedRoute>} />
           {/* Marketplace */}
-          <Route path="/academy/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
-          <Route path="/academy/marketplace/:id" element={<ProtectedRoute><MarketplaceDetailPage /></ProtectedRoute>} />
+          <Route path="/academy/marketplace" element={<ProtectedRoute><EduLayout><MarketplacePage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/marketplace/:id" element={<ProtectedRoute><EduLayout><MarketplaceDetailPage /></EduLayout></ProtectedRoute>} />
           {/* Student Routes */}
-          <Route path="/academy/minhas-compras" element={<ProtectedRoute><MyPurchasesPage /></ProtectedRoute>} />
-          <Route path="/academy/curso/:productId" element={<ProtectedRoute><CoursePlayerPage /></ProtectedRoute>} />
-          <Route path="/academy/curso/:productId/aula/:lessonId" element={<ProtectedRoute><CoursePlayerPage /></ProtectedRoute>} />
+          <Route path="/academy/minhas-compras" element={<ProtectedRoute><EduLayout><MyPurchasesPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/curso/:productId" element={<ProtectedRoute><EduLayout><CoursePlayerPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/curso/:productId/aula/:lessonId" element={<ProtectedRoute><EduLayout><CoursePlayerPage /></EduLayout></ProtectedRoute>} />
           {/* Admin Financial */}
-          <Route path="/academy/admin/financeiro" element={<ProtectedRoute><AcademyFinancialAdmin /></ProtectedRoute>} />
+          <Route path="/academy/admin/financeiro" element={<ProtectedRoute><EduLayout><AcademyFinancialAdmin /></EduLayout></ProtectedRoute>} />
           {/* Legal Pages */}
-          <Route path="/academy/termos" element={<AcademyTermsPage />} />
-          <Route path="/academy/privacidade" element={<AcademyPrivacyPage />} />
-          <Route path="/academy/reembolso" element={<AcademyRefundPolicyPage />} />
+          <Route path="/academy/termos" element={<EduLayout><AcademyTermsPage /></EduLayout>} />
+          <Route path="/academy/privacidade" element={<EduLayout><AcademyPrivacyPage /></EduLayout>} />
+          <Route path="/academy/reembolso" element={<EduLayout><AcademyRefundPolicyPage /></EduLayout>} />
           {/* Evidence Central (unified) */}
-          <Route path="/academy/evidencia" element={<ProtectedRoute><EvidenceCentralPage /></ProtectedRoute>} />
+          <Route path="/academy/evidencia" element={<ProtectedRoute><EduLayout><EvidenceCentralPage /></EduLayout></ProtectedRoute>} />
           {/* Legacy redirects */}
           <Route path="/academy/biblioteca" element={<Navigate to="/academy/evidencia?tab=explorar" replace />} />
           <Route path="/academy/feed" element={<Navigate to="/academy/evidencia?tab=feed" replace />} />
           <Route path="/academy/colecoes" element={<Navigate to="/academy/evidencia?tab=colecoes" replace />} />
           {/* Keep these as standalone */}
-          <Route path="/academy/admin/biblioteca" element={<ProtectedRoute><AcademyLibraryAdminPage /></ProtectedRoute>} />
-          <Route path="/academy/colecoes/:id" element={<ProtectedRoute><AcademyCollectionDetailPage /></ProtectedRoute>} />
-          <Route path="/academy/notificacoes" element={<ProtectedRoute><AcademyNotificationsPage /></ProtectedRoute>} />
+          <Route path="/academy/admin/biblioteca" element={<ProtectedRoute><EduLayout><AcademyLibraryAdminPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/colecoes/:id" element={<ProtectedRoute><EduLayout><AcademyCollectionDetailPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/notificacoes" element={<ProtectedRoute><EduLayout><AcademyNotificationsPage /></EduLayout></ProtectedRoute>} />
 
           {/* Education Routes */}
           <Route path="/edu" element={<ProtectedRoute><RequireEduMembership><EduLayout><EduHome /></EduLayout></RequireEduMembership></ProtectedRoute>} />
