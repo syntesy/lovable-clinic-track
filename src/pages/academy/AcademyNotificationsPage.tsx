@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Bell, CheckCheck } from "lucide-react";
+import { Loader2, Bell, CheckCheck, ArrowLeft } from "lucide-react";
 import { useAcademyNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/hooks/useAcademyNotifications";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
