@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { EduSidebar } from './EduSidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, GraduationCap } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,8 +10,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import SessionTimeout from '@/components/SessionTimeout';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ModeSwitch } from './ModeSwitch';
-import { useCurrentInstitution } from '@/hooks/useEduMembership';
-import { Badge } from '@/components/ui/badge';
+import { AcademyNotificationBell } from '@/components/academy/AcademyNotificationBell';
+import logoReghen from '@/assets/logo-reghen.png';
 
 interface EduLayoutProps {
   children: ReactNode;
