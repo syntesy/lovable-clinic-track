@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_user_roles: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["academy_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["academy_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["academy_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_alerts: {
         Row: {
           alert_type: string
@@ -5297,6 +5324,72 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_applications: {
+        Row: {
+          clinical_area: string
+          course_proposal_audience: string
+          course_proposal_summary: string
+          course_proposal_title: string
+          created_at: string
+          email: string
+          experience_years: number
+          formation: string
+          full_name: string
+          id: string
+          links: Json | null
+          observations: string | null
+          professional_registration: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clinical_area: string
+          course_proposal_audience: string
+          course_proposal_summary: string
+          course_proposal_title: string
+          created_at?: string
+          email: string
+          experience_years: number
+          formation: string
+          full_name: string
+          id?: string
+          links?: Json | null
+          observations?: string | null
+          professional_registration: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clinical_area?: string
+          course_proposal_audience?: string
+          course_proposal_summary?: string
+          course_proposal_title?: string
+          created_at?: string
+          email?: string
+          experience_years?: number
+          formation?: string
+          full_name?: string
+          id?: string
+          links?: Json | null
+          observations?: string | null
+          professional_registration?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       therapy_categories: {
         Row: {
           code: string
@@ -5985,6 +6078,13 @@ export type Database = {
         }
         Returns: Json
       }
+      has_academy_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["academy_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5992,6 +6092,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_academy_admin: { Args: { _user_id: string }; Returns: boolean }
       is_approved_mentor: { Args: never; Returns: boolean }
       is_edu_admin: { Args: { _user_id: string }; Returns: boolean }
       is_healthcare_professional: {
@@ -6026,6 +6127,11 @@ export type Database = {
       user_owns_patient: { Args: { p_patient_id: string }; Returns: boolean }
     }
     Enums: {
+      academy_role:
+        | "student"
+        | "teacher_candidate"
+        | "teacher_approved"
+        | "admin_academy"
       adverse_event_status: "NONE" | "REPORTED"
       app_role:
         | "admin"
@@ -6221,6 +6327,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      academy_role: [
+        "student",
+        "teacher_candidate",
+        "teacher_approved",
+        "admin_academy",
+      ],
       adverse_event_status: ["NONE", "REPORTED"],
       app_role: [
         "admin",
