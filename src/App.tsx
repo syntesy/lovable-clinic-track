@@ -110,6 +110,7 @@ import {
   AcademyFinancialAdmin, AcademyTermsPage, AcademyPrivacyPage, AcademyRefundPolicyPage,
   AcademyLibraryPage, AcademyLibraryAdminPage,
   AcademyFeedPage, AcademyCollectionsPage, AcademyCollectionDetailPage, AcademyNotificationsPage,
+  EvidenceCentralPage,
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
