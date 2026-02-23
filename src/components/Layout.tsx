@@ -12,6 +12,7 @@ import SessionTimeout from "@/components/SessionTimeout";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ModeSwitch } from "@/components/edu/ModeSwitch";
 import { useEffect } from "react";
+import { AcademyNotificationBell } from "@/components/academy/AcademyNotificationBell";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
