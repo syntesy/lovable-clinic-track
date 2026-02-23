@@ -36,20 +36,29 @@ export default function LandingHeroInstitutional() {
           initial="hidden" animate="visible" variants={fadeUp} custom={0}
         />
 
+        <motion.p
+          initial="hidden" animate="visible" variants={fadeUp} custom={0.05}
+          className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-6"
+        >
+          Infraestrutura Nacional
+        </motion.p>
+
         <motion.h1
           initial="hidden" animate="visible" variants={fadeUp} custom={0.1}
           className="text-white text-3xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight mb-6"
           style={{ fontWeight: 400 }}
         >
-          Infraestrutura Nacional da{" "}
-          <span className="text-primary">Prática Regenerativa</span>
+          REGHEN{" "}
+          <br className="hidden md:block" />
+          <span className="text-white/60">Infraestrutura Nacional para Prática em{" "}</span>
+          <span className="text-primary">Medicina Regenerativa</span>
         </motion.h1>
 
         <motion.p
           initial="hidden" animate="visible" variants={fadeUp} custom={0.2}
           className="text-white/50 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-12"
         >
-          Organizando, mensurando e estruturando a prática regenerativa com método, evidência e governança.
+          Organizando, mensurando e estruturando a Medicina Regenerativa com método, evidência e governança.
         </motion.p>
 
         <motion.div
@@ -57,18 +66,10 @@ export default function LandingHeroInstitutional() {
           className="flex flex-wrap justify-center gap-4"
         >
           <button
-            onClick={() => {
-              document.getElementById("arquitetura")?.scrollIntoView({ behavior: "smooth" });
-            }}
+            onClick={() => navigate("/reghen")}
             className="px-8 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
           >
-            Conhecer a Arquitetura
-          </button>
-          <button
-            onClick={handleSignup}
-            className="px-8 py-3 text-sm font-medium text-white/70 border border-white/15 rounded-lg hover:text-white hover:border-white/30 hover:bg-white/[0.04] transition-all"
-          >
-            Ver como funciona na prática
+            Conhecer o REGHEN
           </button>
         </motion.div>
       </div>

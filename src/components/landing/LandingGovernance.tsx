@@ -21,9 +21,12 @@ export default function LandingGovernance() {
           className="mb-12"
         >
           <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Governança</p>
-          <h2 className="text-white text-2xl md:text-3xl lg:text-4xl tracking-tight" style={{ fontWeight: 400 }}>
+          <h2 className="text-white text-2xl md:text-3xl lg:text-4xl tracking-tight mb-3" style={{ fontWeight: 400 }}>
             Governança e Segurança Metodológica
           </h2>
+          <p className="text-white/40 text-base max-w-3xl leading-relaxed">
+            Rastreabilidade, documentação estruturada e padronização técnica integradas à prática clínica.
+          </p>
         </motion.div>
 
         <motion.ul

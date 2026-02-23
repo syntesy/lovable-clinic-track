@@ -20,11 +20,14 @@ export default function LandingProblem() {
           transition={{ duration: 0.8 }}
           className="mb-14"
         >
-          <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">O problema estrutural</p>
+          <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Cenário Atual</p>
           <h2 className="text-white text-2xl md:text-3xl lg:text-4xl leading-[1.15] tracking-tight mb-4" style={{ fontWeight: 400 }}>
             A prática regenerativa evoluiu.{" "}
-            <span className="text-white/40">A estrutura precisava evoluir junto.</span>
+            <span className="text-white/40">A estrutura científica precisa evoluir junto.</span>
           </h2>
+          <p className="text-white/40 text-base max-w-3xl leading-relaxed">
+            Sem padronização metodológica e mensuração longitudinal, a prática ocorre — mas não se consolida como sistema clínico consistente.
+          </p>
         </motion.div>
 
         <motion.ul
