@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logoReghen from "@/assets/logo-reghen.png";
 import heroBg from "@/assets/hero-bg.png";
+import heroBgReghen from "@/assets/hero-bg-reghen.png";
 import slideBg01 from "@/assets/slide-bg-01-new.png";
 import slideBg02 from "@/assets/slide-bg-02.jpg";
 import slideBg03 from "@/assets/slide-bg-03.jpg";
@@ -30,7 +31,7 @@ const slides: Slide[] = [
     subtitle: "Organizando, mensurando e estruturando a Medicina Regenerativa com método, evidência e governança.",
     cta: "Conhecer o REGHEN",
     ctaLink: "/reghen",
-    bg: heroBg,
+    bg: heroBgReghen,
   },
   {
     label: "CENÁRIO ATUAL",
