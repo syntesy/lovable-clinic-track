@@ -19,12 +19,12 @@ export default function LandingEvidenceResults() {
           transition={{ duration: 0.8 }}
           className="mb-12"
         >
-          <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Evidência & Resultados</p>
+          <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Resultados</p>
           <h2 className="text-white text-2xl md:text-3xl lg:text-4xl tracking-tight mb-3" style={{ fontWeight: 400 }}>
-            Da Prática à Evidência Estruturada
+            Da prática à evidência estruturada
           </h2>
           <p className="text-white/40 text-base max-w-2xl leading-relaxed">
-            Seus resultados clínicos estruturados.
+            Organização de dados clínicos, mensuração longitudinal e consolidação de desfechos com critérios objetivos.
           </p>
         </motion.div>
 

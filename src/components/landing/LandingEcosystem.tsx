@@ -20,9 +20,12 @@ export default function LandingEcosystem() {
           className="text-center mb-16"
         >
           <p className="text-primary text-[11px] tracking-[0.3em] uppercase font-medium mb-4">Ecossistema</p>
-          <h2 className="text-white text-2xl md:text-3xl lg:text-4xl tracking-tight" style={{ fontWeight: 400 }}>
+          <h2 className="text-white text-2xl md:text-3xl lg:text-4xl tracking-tight mb-3" style={{ fontWeight: 400 }}>
             Um Ecossistema Estruturado
           </h2>
+          <p className="text-white/40 text-base max-w-2xl mx-auto leading-relaxed">
+            Profissionais, centros e metodologia conectados por uma mesma arquitetura científica.
+          </p>
         </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">

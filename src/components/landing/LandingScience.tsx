@@ -25,7 +25,7 @@ export default function LandingScience() {
             Estrutura Científica REGHEN
           </h2>
           <p className="text-white/40 text-base md:text-lg max-w-3xl leading-relaxed">
-            A base metodológica que sustenta a prática regenerativa organizada.
+            Conversão da literatura científica em critérios clínicos aplicáveis, com mensuração objetiva e rastreabilidade metodológica.
           </p>
         </motion.div>
 
