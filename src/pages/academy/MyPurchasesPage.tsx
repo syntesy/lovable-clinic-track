@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMyEnrollments } from "@/hooks/useAcademyEnrollments";
-import { ArrowLeft, BookOpen, Users, Repeat, ShoppingBag, AlertCircle } from "lucide-react";
+import { useMyOrders, useRequestRefund } from "@/hooks/useAcademyPayments";
+import { ArrowLeft, BookOpen, Users, Repeat, ShoppingBag, AlertCircle, Undo2, Loader2 } from "lucide-react";
 
 const typeIcons: Record<string, any> = { course: BookOpen, mentorship: Users, subscription: Repeat };
 const typeLabels: Record<string, string> = { course: 'Curso', mentorship: 'Mentoria', subscription: 'Assinatura' };
