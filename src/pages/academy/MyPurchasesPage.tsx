@@ -13,6 +13,8 @@ const statusLabels: Record<string, string> = { active: 'Ativo', expired: 'Expira
 const MyPurchasesPage = () => {
   const navigate = useNavigate();
   const { data: enrollments = [], isLoading } = useMyEnrollments();
+  const { data: orders = [] } = useMyOrders();
+  const requestRefund = useRequestRefund();
 
   const activeEnrollments = enrollments.filter(e => e.access_status === 'active');
   const inactiveEnrollments = enrollments.filter(e => e.access_status !== 'active');
