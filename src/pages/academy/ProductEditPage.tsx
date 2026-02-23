@@ -159,6 +159,9 @@ const ProductEditPage = () => {
           <TabsList>
             <TabsTrigger value="info">Informações</TabsTrigger>
             <TabsTrigger value="content">Conteúdo</TabsTrigger>
+            <TabsTrigger value="evidence">
+              <FlaskConical className="w-4 h-4 mr-1" /> Evidências
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info">
