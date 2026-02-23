@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { FolderOpen, Plus, Star, Lock, Loader2 } from "lucide-react";
+import { FolderOpen, Plus, Star, Lock, Loader2, ArrowLeft } from "lucide-react";
 import { useOfficialCollections, useMyCollections, useSaveCollection } from "@/hooks/useAcademyCollections";
 import { useToast } from "@/hooks/use-toast";
 
