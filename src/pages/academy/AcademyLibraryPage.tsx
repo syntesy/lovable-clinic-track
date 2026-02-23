@@ -72,16 +72,19 @@ export default function AcademyLibraryPage() {
     page: Number(searchParams.get("page") ?? 1),
   }), [searchParams]);
 
+  const onlySaved = searchParams.get("saved") === "1";
   const { data, isLoading } = useAcademyArticles(filters);
   const { data: filterOptions } = useArticleFilterOptions();
   const { data: articleDetail, isLoading: isLoadingDetail } = useAcademyArticleDetail(selectedArticleId);
+  const { data: favorites = [] } = useAcademyFavorites();
+  const toggleFav = useToggleFavorite();
 
   const updateParam = useCallback((key: string, value: string | null) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       if (value) next.set(key, value);
       else next.delete(key);
-      if (key !== "page") next.delete("page"); // reset page on filter change
+      if (key !== "page") next.delete("page");
       return next;
     });
   }, [setSearchParams]);
@@ -96,10 +99,11 @@ export default function AcademyLibraryPage() {
   }, [setSearchParams]);
 
   const hasFilters = searchParams.toString() !== "";
-  const articles = data?.articles ?? [];
+  const allArticles = data?.articles ?? [];
+  const articles = onlySaved ? allArticles.filter(a => favorites.includes(a.id)) : allArticles;
   const totalPages = data?.totalPages ?? 1;
   const currentPage = data?.page ?? 1;
-  const total = data?.total ?? 0;
+  const total = onlySaved ? articles.length : (data?.total ?? 0);
 
   return (
     <div className="min-h-screen bg-background">
