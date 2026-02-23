@@ -298,28 +298,40 @@ export default function LandingPage() {
             exit="exit"
             className="text-center max-w-4xl mx-auto"
           >
-            {/* Label */}
-            <p className="text-primary text-[11px] md:text-[12px] tracking-[0.3em] uppercase font-medium mb-5">
-              {slide.label}
-            </p>
+            {current === 0 ? (
+              <>
+                {/* Logo centered for first slide */}
+                <img src={logoReghen} alt="REGHEN" className="h-16 md:h-24 lg:h-28 w-auto mx-auto mb-6 opacity-90" />
+                <p className="text-white/50 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-10">
+                  {slide.subtitle}
+                </p>
+              </>
+            ) : (
+              <>
+                {/* Label */}
+                <p className="text-primary text-[11px] md:text-[12px] tracking-[0.3em] uppercase font-medium mb-5">
+                  {slide.label}
+                </p>
 
-            {/* Headline */}
-            <h1
-              className="text-white text-3xl md:text-5xl lg:text-[3.5rem] leading-[1.1] tracking-tight mb-6"
-              style={{ fontWeight: 300, fontFamily: "Montserrat, sans-serif" }}
-            >
-              {slide.headline.split("\n").map((line, i) => (
-                <span key={i}>
-                  {i > 0 && <br />}
-                  {line}
-                </span>
-              ))}
-            </h1>
+                {/* Headline */}
+                <h1
+                  className="text-white text-3xl md:text-5xl lg:text-[3.5rem] leading-[1.1] tracking-tight mb-6"
+                  style={{ fontWeight: 300, fontFamily: "Montserrat, sans-serif" }}
+                >
+                  {slide.headline.split("\n").map((line, i) => (
+                    <span key={i}>
+                      {i > 0 && <br />}
+                      {line}
+                    </span>
+                  ))}
+                </h1>
 
-            {/* Subtitle */}
-            <p className="text-white/50 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-10">
-              {slide.subtitle}
-            </p>
+                {/* Subtitle */}
+                <p className="text-white/50 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-10">
+                  {slide.subtitle}
+                </p>
+              </>
+            )}
 
             {/* CTA */}
             <div className="flex flex-wrap justify-center gap-4">
