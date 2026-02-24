@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Target, Clock, ThumbsUp, AlertTriangle, Users } from "lucide-react";
+import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
 
 interface GuidedReadingSectionProps {
   article: {
@@ -123,9 +124,12 @@ export function GuidedReadingSection({ article }: GuidedReadingSectionProps) {
           </div>
         ) : null}
 
-        <p className="text-[10px] text-muted-foreground italic mt-2">
-          ⚕️ Guia gerado automaticamente com base nos metadados. Informações ausentes não foram preenchidas.
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-[10px] text-muted-foreground italic">
+            ⚕️ Guia gerado automaticamente com base nos metadados. Informações ausentes não foram preenchidas.
+          </p>
+          <EvidenceMethodSeal />
+        </div>
       </CardContent>
     </Card>
   );

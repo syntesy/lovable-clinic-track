@@ -48,6 +48,7 @@ import { useIndexPaper } from "@/hooks/useAcademyRag";
 import { useUploadPdf, useExtractPdfText } from "@/hooks/useAcademyPdfUpload";
 import { toast } from "sonner";
 import { PaperDetailModal } from "@/components/academy/PaperDetailModal";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft: { label: "Rascunho", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", icon: FileText },
@@ -276,7 +277,10 @@ export default function AcademyPapersAdminPage() {
                             </Badge>
                           )}
                         </div>
-                        <h3 className="font-semibold text-foreground line-clamp-2">{paper.title}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-foreground line-clamp-2">{paper.title}</h3>
+                          {paper.curation_status === "published" && <EvidenceMethodSeal />}
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           {paper.authors ? `${paper.authors} • ` : ""}
                           {paper.year || "Ano N/A"} • {paper.journal || "Journal N/A"}

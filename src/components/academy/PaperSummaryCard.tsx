@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, FileText, ClipboardCopy, Download } from "lucide-react";
 import { toast } from "sonner";
 import type { AcademyArticle } from "@/hooks/useAcademyArticles";
-import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
+import { EvidenceMethodSeal, EVIDENCE_METHOD_SEAL_TEXT } from "./EvidenceMethodSeal";
 
 interface PaperSummaryCardProps {
   article: AcademyArticle;
@@ -36,14 +36,15 @@ export function PaperSummaryCard({ article }: PaperSummaryCardProps) {
       article.follow_up ? `🕐 Follow-up: ${article.follow_up}` : "",
       "",
       "⚕️ Score heurístico — não substitui avaliação clínica formal.",
-      article.is_published ? "🛡️ RegHen Evidence Method™" : "",
+      article.is_published ? `🛡️ ${EVIDENCE_METHOD_SEAL_TEXT}` : "",
     ].filter(Boolean).join("\n");
     navigator.clipboard.writeText(lines);
     toast.success("Ficha copiada!");
   };
 
   const copyShort = () => {
-    const text = `${article.title} (${article.year}, ${article.study_type}): ${article.summary_short}`;
+    const suffix = article.is_published ? ` — ${EVIDENCE_METHOD_SEAL_TEXT}` : "";
+    const text = `${article.title} (${article.year}, ${article.study_type}): ${article.summary_short}${suffix}`;
     navigator.clipboard.writeText(text);
     toast.success("Versão resumida copiada!");
   };

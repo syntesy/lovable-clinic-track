@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Send, Brain, ExternalLink, AlertTriangle, RotateCcw, FileSearch } from "lucide-react";
 import { useAcademyRag, type RagCitation, type EvidenceSnippet } from "@/hooks/useAcademyRag";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 export default function PerguntarTabContent() {
   const [question, setQuestion] = useState("");
@@ -162,7 +163,10 @@ export default function PerguntarTabContent() {
       <Dialog open={!!snippetsPaperId} onOpenChange={(o) => !o && setSnippetsPaperId(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-base leading-tight">Trechos Utilizados</DialogTitle>
+            <div className="flex items-center justify-between gap-2">
+              <DialogTitle className="text-base leading-tight">Trechos Utilizados</DialogTitle>
+              <EvidenceMethodSeal />
+            </div>
             <p className="text-sm text-muted-foreground line-clamp-2">{snippetPaperTitle}</p>
           </DialogHeader>
           <div className="space-y-3 max-h-[50vh] overflow-y-auto">
@@ -223,6 +227,7 @@ function CitationCard({
             </Button>
           )}
         </div>
+        <EvidenceMethodSeal className="mt-2" />
       </CardContent>
     </Card>
   );

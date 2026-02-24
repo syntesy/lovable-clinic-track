@@ -37,6 +37,7 @@ import {
   type AcademyArticle,
 } from "@/hooks/useAcademyArticles";
 import { toast } from "sonner";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 const STUDY_TYPES = [
   "Revisão Sistemática",
@@ -230,6 +231,7 @@ export default function AcademyLibraryAdminPage() {
                           <Badge variant="secondary">Rascunho</Badge>
                         )}
                         <Badge variant="outline">{article.study_type}</Badge>
+                        {article.is_published && <EvidenceMethodSeal />}
                       </div>
                       <h3 className="font-semibold text-foreground line-clamp-1">{article.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
