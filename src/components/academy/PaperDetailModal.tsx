@@ -22,6 +22,8 @@ import {
   FileText,
   History,
   Clock,
+  FileWarning,
+  Download,
 } from "lucide-react";
 import type { AcademyPaper } from "@/hooks/useAcademyPapers";
 import { usePaperRevisions } from "@/hooks/useAcademyPapers";
