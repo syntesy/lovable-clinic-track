@@ -68,6 +68,7 @@ export default function AcademyPapersAdminPage() {
   const curationMutation = useGenerateCuration();
   const updateStatusMutation = useUpdatePaperStatus();
   const deleteMutation = useSoftDeletePaper();
+  const { indexPaper } = useIndexPaper();
 
   const filteredPapers = papers.filter((p) => {
     if (!searchTerm.trim()) return true;
