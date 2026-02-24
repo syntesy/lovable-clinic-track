@@ -24,6 +24,9 @@ export interface AcademyPaper {
   published_by: string | null;
   published_at: string | null;
   fingerprint: string | null;
+  evidence_score: number | null;
+  evidence_label: string | null;
+  evidence_notes: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

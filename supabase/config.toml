@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.academy-rag-answer]
 verify_jwt = false
+
+[functions.academy-watchlist-run]
+verify_jwt = false
