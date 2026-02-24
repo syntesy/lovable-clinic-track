@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 export default function AcademyCollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
