@@ -143,23 +143,47 @@ export function useUpdatePaperStatus() {
       const updateData: any = { curation_status: status, ...extra };
 
       if (status === "published") {
-        const { data: { user } } = await supabase.auth.getUser();
-        updateData.published_by = user?.id;
-        updateData.published_at = new Date().toISOString();
-
-        // Compute evidence score on publish
+        // Fetch paper for compliance check + score
         const { data: paperForScore } = await supabase
           .from("academy_papers")
           .select("curation_data, warnings, abstract_text, year")
           .eq("id", paperId)
           .single();
 
+        // REM Compliance check
         if (paperForScore) {
+          const remLayers = (paperForScore as any).curation_data?.reghen_evidence_method?.layers;
+          if (remLayers) {
+            const compliance = validateReghenEvidenceMethod(remLayers);
+            if (!compliance.is_valid) {
+              // Log blocked attempt
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from("academy_ai_logs" as any).insert({
+                  action: "rem_compliance_blocked",
+                  user_id: user.id,
+                  paper_id: paperId,
+                  input: { mode: "rem_compliance_blocked", errors: compliance.errors, warnings: compliance.warnings },
+                  output: { compliance_score: compliance.compliance_score },
+                  status: "fail",
+                  error_message: compliance.errors.join(" | "),
+                } as any);
+              }
+              throw new Error(
+                `REM™ Compliance falhou (${compliance.compliance_score}/100):\n${compliance.errors.join("\n")}`
+              );
+            }
+          }
+
           const scoreResult = computeEvidenceScore(paperForScore as any);
           updateData.evidence_score = scoreResult.score;
           updateData.evidence_label = scoreResult.label;
           updateData.evidence_notes = scoreResult.notes;
         }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        updateData.published_by = user?.id;
+        updateData.published_at = new Date().toISOString();
       }
 
       const { error } = await supabase
