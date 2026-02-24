@@ -328,42 +328,149 @@ export default function AcademyPapersAdminPage() {
       </div>
 
       {/* Import Modal */}
-      <Dialog open={showImport} onOpenChange={setShowImport}>
+      <Dialog open={showImport} onOpenChange={(open) => {
+        setShowImport(open);
+        if (!open) {
+          setImportInput("");
+          setPdfFile(null);
+          setPdfTitle("");
+          setPdfAssociatePaperId("");
+        }
+      }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Importar Paper Científico</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>PMID, DOI ou URL</Label>
-              <Input
-                value={importInput}
-                onChange={(e) => setImportInput(e.target.value)}
-                placeholder="Ex: 38123456, https://pubmed.ncbi.nlm.nih.gov/38123456, 10.1016/j.knee.2024.01.001"
-                onKeyDown={(e) => e.key === "Enter" && handleImport()}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Cole um PMID numérico, uma URL do PubMed, um DOI ou uma URL do DOI.
-                Os metadados serão buscados automaticamente via API oficial.
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-muted/30 p-3">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
-                <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">Fontes permitidas</p>
-                  <p>Apenas PubMed (E-utilities) e Crossref (API oficial). Nenhum scraping ou fonte secundária é utilizado.</p>
+          <Tabs defaultValue="pmid" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="pmid">PMID / DOI / URL</TabsTrigger>
+              <TabsTrigger value="pdf" className="gap-1">
+                <Upload className="w-3 h-3" /> Upload PDF
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pmid" className="space-y-4 mt-4">
+              <div>
+                <Label>PMID, DOI ou URL</Label>
+                <Input
+                  value={importInput}
+                  onChange={(e) => setImportInput(e.target.value)}
+                  placeholder="Ex: 38123456, 10.1016/j.knee.2024.01.001"
+                  onKeyDown={(e) => e.key === "Enter" && handleImport()}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cole um PMID numérico, uma URL do PubMed, um DOI ou uma URL do DOI.
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
+                  <div className="text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground mb-1">Fontes permitidas</p>
+                    <p>Apenas PubMed (E-utilities) e Crossref (API oficial).</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowImport(false)}>Cancelar</Button>
-            <Button onClick={handleImport} disabled={importMutation.isPending}>
-              {importMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Importar
-            </Button>
-          </DialogFooter>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowImport(false)}>Cancelar</Button>
+                <Button onClick={handleImport} disabled={importMutation.isPending}>
+                  {importMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Importar
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+
+            <TabsContent value="pdf" className="space-y-4 mt-4">
+              <div>
+                <Label>Arquivo PDF</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      if (f.size > 20 * 1024 * 1024) {
+                        toast.error("Arquivo deve ter no máximo 20MB.");
+                        return;
+                      }
+                      setPdfFile(f);
+                    }
+                  }}
+                />
+                <div
+                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {pdfFile ? (
+                    <div className="space-y-1">
+                      <FileText className="w-8 h-8 mx-auto text-primary" />
+                      <p className="text-sm font-medium text-foreground">{pdfFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">Clique para selecionar um PDF</p>
+                      <p className="text-xs text-muted-foreground">Máximo 20MB</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label>Associar a paper existente (opcional)</Label>
+                <Select value={pdfAssociatePaperId} onValueChange={setPdfAssociatePaperId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Criar novo paper" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Criar novo paper</SelectItem>
+                    {papers.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.title.slice(0, 60)}{p.title.length > 60 ? "…" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(!pdfAssociatePaperId || pdfAssociatePaperId === "new") && (
+                <div>
+                  <Label>Título do paper *</Label>
+                  <Input
+                    value={pdfTitle}
+                    onChange={(e) => setPdfTitle(e.target.value)}
+                    placeholder="Título do artigo científico"
+                  />
+                </div>
+              )}
+
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
+                  <div className="text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground mb-1">Upload manual</p>
+                    <p>O PDF será armazenado com segurança. O texto será extraído e indexado automaticamente para busca RAG.</p>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowImport(false)}>Cancelar</Button>
+                <Button
+                  onClick={handlePdfUpload}
+                  disabled={isUploading || isExtracting || !pdfFile}
+                >
+                  {(isUploading || isExtracting) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {isExtracting ? "Extraindo texto…" : isUploading ? "Enviando…" : "Enviar e Processar"}
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
