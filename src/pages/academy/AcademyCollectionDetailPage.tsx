@@ -102,6 +102,7 @@ export default function AcademyCollectionDetailPage() {
                     <h3 className="text-base font-semibold line-clamp-2 mb-2 group-hover:text-primary transition-colors">{article.title}</h3>
                     <p className="text-xs text-muted-foreground mb-2">{article.year} • {article.journal}</p>
                     <p className="text-sm text-muted-foreground line-clamp-3 flex-1">{article.summary_short}</p>
+                    <EvidenceMethodSeal className="mt-2" />
                     {isOwner && isPersonal && (
                       <div className="mt-3 pt-3 border-t">
                         <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={(e) => {

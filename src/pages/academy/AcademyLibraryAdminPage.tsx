@@ -230,7 +230,7 @@ export default function AcademyLibraryAdminPage() {
                           <Badge variant="secondary">Rascunho</Badge>
                         )}
                         <Badge variant="outline">{article.study_type}</Badge>
-                      </div>
+                        {article.is_published && <EvidenceMethodSeal />}
                       <h3 className="font-semibold text-foreground line-clamp-1">{article.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
                         {article.authors} • {article.year} • {article.journal}

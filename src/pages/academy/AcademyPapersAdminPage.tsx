@@ -48,6 +48,7 @@ import { useIndexPaper } from "@/hooks/useAcademyRag";
 import { useUploadPdf, useExtractPdfText } from "@/hooks/useAcademyPdfUpload";
 import { toast } from "sonner";
 import { PaperDetailModal } from "@/components/academy/PaperDetailModal";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft: { label: "Rascunho", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", icon: FileText },

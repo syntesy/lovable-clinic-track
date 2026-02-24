@@ -163,9 +163,11 @@ export default function PerguntarTabContent() {
       <Dialog open={!!snippetsPaperId} onOpenChange={(o) => !o && setSnippetsPaperId(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-base leading-tight">Trechos Utilizados</DialogTitle>
+            <div className="flex items-center justify-between gap-2">
+              <DialogTitle className="text-base leading-tight">Trechos Utilizados</DialogTitle>
+              <EvidenceMethodSeal />
+            </div>
             <p className="text-sm text-muted-foreground line-clamp-2">{snippetPaperTitle}</p>
-          </DialogHeader>
           <div className="space-y-3 max-h-[50vh] overflow-y-auto">
             {snippetsForPaper.map((s, i) => (
               <div key={i} className="rounded-lg border border-border p-3 space-y-1">

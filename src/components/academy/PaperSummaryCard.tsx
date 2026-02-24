@@ -43,7 +43,8 @@ export function PaperSummaryCard({ article }: PaperSummaryCardProps) {
   };
 
   const copyShort = () => {
-    const text = `${article.title} (${article.year}, ${article.study_type}): ${article.summary_short}`;
+    const suffix = article.is_published ? ` — ${EVIDENCE_METHOD_SEAL_TEXT}` : "";
+    const text = `${article.title} (${article.year}, ${article.study_type}): ${article.summary_short}${suffix}`;
     navigator.clipboard.writeText(text);
     toast.success("Versão resumida copiada!");
   };
