@@ -37,6 +37,7 @@ import {
   type AcademyArticle,
 } from "@/hooks/useAcademyArticles";
 import { toast } from "sonner";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 const STUDY_TYPES = [
   "Revisão Sistemática",
