@@ -153,6 +153,60 @@ export function PaperDetailModal({
           <TabsContent value="details" className="flex-1 min-h-0">
             <ScrollArea className="h-full max-h-[60vh] -mx-6 px-6">
               <div className="space-y-6 pb-4">
+                {/* Scan Warning */}
+                {hasScanWarning && (
+                  <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-3">
+                    <div className="flex items-start gap-2">
+                      <FileWarning className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-orange-300">PDF escaneado / sem texto selecionável</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          O texto extraído deste PDF é insuficiente. A busca RAG pode não funcionar adequadamente para este paper.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PDF Files */}
+                {paperFiles.length > 0 && (
+                  <section>
+                    <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4" /> Arquivos PDF
+                    </h3>
+                    <div className="space-y-2">
+                      {paperFiles.map((f: any) => (
+                        <div key={f.id} className="flex items-center justify-between p-2 rounded border border-border">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm text-foreground truncate">{f.file_name}</span>
+                            {f.size_bytes && (
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                ({(f.size_bytes / 1024 / 1024).toFixed(1)} MB)
+                              </span>
+                            )}
+                            {f.scan_suspected && (
+                              <Badge variant="outline" className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-[10px] shrink-0">
+                                Scan
+                              </Badge>
+                            )}
+                          </div>
+                          {canDownload && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="shrink-0 gap-1"
+                              onClick={() => handleDownloadPdf(f.storage_path, f.file_name)}
+                            >
+                              <Download className="w-3 h-3" /> Baixar
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 {/* Warnings */}
                 {paper.warnings?.length > 0 && (
                   <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-3 space-y-1">
