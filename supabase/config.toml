@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.academy-watchlist-run]
 verify_jwt = false
+
+[functions.academy-upload-pdf]
+verify_jwt = false
+
+[functions.academy-extract-pdf-text]
+verify_jwt = false
