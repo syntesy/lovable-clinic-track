@@ -412,7 +412,7 @@ export default function LandingPage() {
               style={{ minWidth: "140px", paddingRight: "24px" }}
             >
               {/* Progress bar */}
-              <div className="w-full h-[2px] mb-3 bg-white/10 rounded-full overflow-hidden">
+              <div className="w-full h-[2px] mb-3 bg-white/25 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -427,7 +427,7 @@ export default function LandingPage() {
               <span
                 className="text-[11px] tracking-[0.2em] uppercase font-medium transition-all duration-300"
                 style={{
-                  color: i === current ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)",
+                  color: i === current ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.55)",
                 }}
               >
                 {s.navLabel}
