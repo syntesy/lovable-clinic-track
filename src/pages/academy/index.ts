@@ -48,3 +48,4 @@ export { default as AcademyAiTestsPage } from './AcademyAiTestsPage';
 export { default as AcademyWatchlistsPage } from './AcademyWatchlistsPage';
 export { default as AcademyPdfHealthPage } from './AcademyPdfHealthPage';
 export { default as AcademyTrilhasPage } from './AcademyTrilhasPage';
+export { default as AcademyMigrationsPage } from './AcademyMigrationsPage';
