@@ -45,7 +45,7 @@ FORMATO OBRIGATÓRIO DA RESPOSTA (em markdown):
 [Limitações metodológicas observadas nos estudos e lacunas da evidência]
 
 ## Artigos Citados
-[Lista numerada com título, ano e journal de cada artigo utilizado]
+[Lista numerada com título, ano, journal, tipo de estudo, score de evidência e aplicabilidade clínica (quando disponíveis no Perfil de Evidência)]
 
 ---
 *⚕️ Esta síntese é baseada exclusivamente nos estudos disponíveis na biblioteca e não substitui avaliação clínica individual.*`;
@@ -277,19 +277,50 @@ serve(async (req) => {
       duration_ms: Date.now() - startTime,
     });
 
+    // Fetch REM layers for top results
+    const topPaperIds = topResults.map((r: any) => r.paper_id);
+    const { data: remData } = topPaperIds.length > 0
+      ? await supabaseService
+          .from("academy_papers")
+          .select("id, curation_data, evidence_score, evidence_label, evidence_score_breakdown")
+          .in("id", topPaperIds)
+      : { data: [] };
+    const remMap = new Map<string, any>();
+    for (const p of (remData || [])) {
+      remMap.set(p.id, p);
+    }
+
     // Build citations + evidence_snippets from hybrid results
     const paperMap = new Map<string, any>();
     const evidenceSnippets: any[] = [];
 
     for (const result of topResults) {
-      paperMap.set(result.paper_id, {
+      const remInfo = remMap.get(result.paper_id);
+      const remLayers = remInfo?.curation_data?.reghen_evidence_method?.layers;
+
+      const citation: any = {
         paper_id: result.paper_id,
         title: result.paper_title,
         year: result.paper_year,
         journal: result.paper_journal,
         doi: result.paper_doi,
         pmid: result.paper_pmid,
-      });
+      };
+
+      // Enrich with REM data when available
+      if (remLayers) {
+        citation.study_type = remLayers.layer_2_methodology?.study_type || null;
+        citation.applicability = remLayers.layer_4_applicability?.classification || null;
+        citation.applicability_justification = remLayers.layer_4_applicability?.justification || null;
+      }
+      if (remInfo?.evidence_score != null) {
+        citation.evidence_score = remInfo.evidence_score;
+      }
+      if (remInfo?.evidence_label) {
+        citation.evidence_label = remInfo.evidence_label;
+      }
+
+      paperMap.set(result.paper_id, citation);
 
       // Extract snippets from best_chunks (safe: max 3 per paper, max 400 chars)
       const chunks = result.best_chunks || [];
@@ -336,15 +367,29 @@ serve(async (req) => {
       });
     }
 
-    // Build context from best_chunks of top results
+    // Build context from best_chunks of top results (enriched with REM)
     const contextParts: string[] = [];
     let ctxIndex = 0;
     for (const result of topResults) {
+      const remInfo = remMap.get(result.paper_id);
+      const remLayers = remInfo?.curation_data?.reghen_evidence_method?.layers;
+
+      // Build evidence profile header when REM exists
+      let evidenceProfile = "";
+      if (remLayers) {
+        const parts: string[] = [];
+        if (remLayers.layer_2_methodology?.study_type) parts.push(`Tipo: ${remLayers.layer_2_methodology.study_type}`);
+        if (remLayers.layer_2_methodology?.is_human != null) parts.push(`Humano: ${remLayers.layer_2_methodology.is_human ? "sim" : "não"}`);
+        if (remLayers.layer_4_applicability?.classification) parts.push(`Aplicabilidade: ${remLayers.layer_4_applicability.classification}`);
+        if (remInfo?.evidence_score != null) parts.push(`Score: ${remInfo.evidence_score}/100`);
+        if (parts.length > 0) evidenceProfile = `\n[Perfil de Evidência] ${parts.join(" | ")}`;
+      }
+
       const chunks = result.best_chunks || [];
       for (const chunk of (Array.isArray(chunks) ? chunks.slice(0, 2) : [])) {
         ctxIndex++;
         contextParts.push(
-          `[Trecho ${ctxIndex}] (${result.paper_title}, ${result.paper_year || "N/A"}, ${result.paper_journal || "N/A"}, score: ${(result.score_final || 0).toFixed(3)})\n${chunk.content || ""}`
+          `[Trecho ${ctxIndex}] (${result.paper_title}, ${result.paper_year || "N/A"}, ${result.paper_journal || "N/A"}, score: ${(result.score_final || 0).toFixed(3)})${evidenceProfile}\n${chunk.content || ""}`
         );
       }
     }

@@ -111,7 +111,7 @@ import {
   AcademyLibraryPage, AcademyLibraryAdminPage, AcademyPapersAdminPage,
   AcademyFeedPage, AcademyCollectionsPage, AcademyCollectionDetailPage, AcademyNotificationsPage,
   EvidenceCentralPage, AcademyAiTestsPage, AcademyWatchlistsPage, AcademyPdfHealthPage,
-  AcademyTrilhasPage,
+  AcademyTrilhasPage, AcademyMigrationsPage,
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
@@ -714,6 +714,7 @@ const App = () => (
           <Route path="/academy/admin/ai-tests" element={<ProtectedRoute><EduLayout><AcademyAiTestsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/watchlists" element={<ProtectedRoute><EduLayout><AcademyWatchlistsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/pdf-health" element={<ProtectedRoute><EduLayout><AcademyPdfHealthPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/admin/migrations" element={<ProtectedRoute><EduLayout><AcademyMigrationsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/trilhas" element={<ProtectedRoute><EduLayout><AcademyTrilhasPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/colecoes/:id" element={<ProtectedRoute><EduLayout><AcademyCollectionDetailPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/notificacoes" element={<ProtectedRoute><EduLayout><AcademyNotificationsPage /></EduLayout></ProtectedRoute>} />

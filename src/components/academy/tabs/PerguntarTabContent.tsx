@@ -210,7 +210,21 @@ function CitationCard({
         <p className="text-xs text-muted-foreground">
           {citation.year || "N/A"} • {citation.journal || "N/A"}
         </p>
-        <div className="flex gap-1.5 mt-2 flex-wrap">
+        {/* REM fields */}
+        <div className="flex gap-1.5 mt-1.5 flex-wrap">
+          {citation.study_type && (
+            <Badge variant="secondary" className="text-[10px]">{citation.study_type}</Badge>
+          )}
+          {citation.evidence_score != null && (
+            <Badge variant="outline" className={`text-[10px] ${citation.evidence_score >= 70 ? "text-emerald-400" : citation.evidence_score >= 40 ? "text-yellow-400" : "text-red-400"}`}>
+              Score: {citation.evidence_score}
+            </Badge>
+          )}
+          {citation.applicability && (
+            <Badge variant="outline" className="text-[10px]">Aplicab.: {citation.applicability}</Badge>
+          )}
+        </div>
+        <div className="flex gap-1.5 mt-1.5 flex-wrap">
           {citation.pmid && (
             <Badge variant="outline" className="text-[10px]">PMID: {citation.pmid}</Badge>
           )}

@@ -423,6 +423,7 @@ export function PaperDetailModal({
                   summary_full: curation?.summary_full_md,
                   abstract_text: paper.abstract_text,
                   evidence_score: paper.evidence_score,
+                  curation_data: curation || null,
                 }} />
                 {!curation && (
                   <p className="text-sm text-muted-foreground text-center py-8">

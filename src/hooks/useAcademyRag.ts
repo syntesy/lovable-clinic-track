@@ -9,6 +9,11 @@ export interface RagCitation {
   journal: string | null;
   doi: string | null;
   pmid: string | null;
+  study_type?: string | null;
+  applicability?: string | null;
+  applicability_justification?: string | null;
+  evidence_score?: number | null;
+  evidence_label?: string | null;
 }
 
 export interface EvidenceSnippet {
