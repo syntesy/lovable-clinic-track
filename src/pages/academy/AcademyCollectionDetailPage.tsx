@@ -2,14 +2,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Trash2, ExternalLink, BookOpen } from "lucide-react";
-import { useCollectionDetail, useCollectionArticles, useRemoveArticleFromCollection } from "@/hooks/useAcademyCollections";
-import { useAcademyArticleDetail } from "@/hooks/useAcademyArticles";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, ArrowLeft, Trash2, ExternalLink, BookOpen, Plus, Search } from "lucide-react";
+import { useCollectionDetail, useCollectionArticles, useRemoveArticleFromCollection, useAddArticleToCollection } from "@/hooks/useAcademyCollections";
+import { useAcademyArticleDetail, useArticleFilterOptions } from "@/hooks/useAcademyArticles";
+import { useSearchPublishedArticles } from "@/hooks/useAcademyEvidence";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function AcademyCollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
