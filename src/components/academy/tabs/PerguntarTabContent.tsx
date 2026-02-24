@@ -168,6 +168,7 @@ export default function PerguntarTabContent() {
               <EvidenceMethodSeal />
             </div>
             <p className="text-sm text-muted-foreground line-clamp-2">{snippetPaperTitle}</p>
+          </DialogHeader>
           <div className="space-y-3 max-h-[50vh] overflow-y-auto">
             {snippetsForPaper.map((s, i) => (
               <div key={i} className="rounded-lg border border-border p-3 space-y-1">
