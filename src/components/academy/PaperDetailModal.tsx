@@ -34,6 +34,8 @@ import { useQuery } from "@tanstack/react-query";
 import { GuidedReadingSection } from "./GuidedReadingSection";
 import { PaperSummaryCard } from "./PaperSummaryCard";
 import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
+import { ReghenLayersDisplay } from "./ReghenLayersDisplay";
+import { hasReghenMethod, getLegacyWarning } from "@/hooks/useEvidenceScore";
 
 interface PaperDetailModalProps {
   paper: AcademyPaper;
