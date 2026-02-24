@@ -84,6 +84,22 @@ export default function AcademyPapersAdminPage() {
   const { extractPdfText, isExtracting } = useExtractPdfText();
 
   const filteredPapers = papers.filter((p) => {
+    // REM filter
+    if (remFilter === "rem_valid") {
+      const rem = hasReghenMethod(p.curation_data);
+      if (!rem) return false;
+      const c = validateReghenEvidenceMethod(p.curation_data?.reghen_evidence_method?.layers);
+      if (c.compliance_score < 85) return false;
+    } else if (remFilter === "rem_invalid") {
+      const rem = hasReghenMethod(p.curation_data);
+      if (rem) {
+        const c = validateReghenEvidenceMethod(p.curation_data?.reghen_evidence_method?.layers);
+        if (c.compliance_score >= 85) return false;
+      }
+    } else if (remFilter === "no_rem") {
+      if (hasReghenMethod(p.curation_data)) return false;
+    }
+
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
