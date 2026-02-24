@@ -21,8 +21,14 @@ export default function AcademyCollectionDetailPage() {
   const { data: collection, isLoading } = useCollectionDetail(id ?? null);
   const { data: articles = [], isLoading: loadingArticles } = useCollectionArticles(id ?? null);
   const removeArticle = useRemoveArticleFromCollection();
+  const addArticle = useAddArticleToCollection();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: detail, isLoading: loadingDetail } = useAcademyArticleDetail(selectedId);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStudyType, setFilterStudyType] = useState<string>("all");
+  const { data: searchResults = [] } = useSearchPublishedArticles(searchQuery);
+  const { data: filterOptions } = useArticleFilterOptions();
 
   const { data: currentUserId } = useQuery({
     queryKey: ["current-user-id"],
