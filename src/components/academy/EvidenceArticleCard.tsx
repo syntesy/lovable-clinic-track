@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAcademyArticleDetail } from "@/hooks/useAcademyArticles";
 import { ExternalLink, BookOpen, X } from "lucide-react";
+import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
 
 interface EvidenceArticleCardProps {
   article: {
