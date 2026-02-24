@@ -104,7 +104,10 @@ export function PaperDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-lg leading-tight pr-8">{paper.title}</DialogTitle>
+          <div className="flex items-start justify-between gap-2">
+            <DialogTitle className="text-lg leading-tight pr-8">{paper.title}</DialogTitle>
+            {paper.curation_status === "published" && <EvidenceMethodSeal />}
+          </div>
           <p className="text-sm text-muted-foreground">
             {paper.authors} • {paper.year} • {paper.journal}
           </p>
