@@ -27,6 +27,9 @@ import {
 } from "lucide-react";
 import type { AcademyPaper } from "@/hooks/useAcademyPapers";
 import { usePaperRevisions } from "@/hooks/useAcademyPapers";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 interface PaperDetailModalProps {
   paper: AcademyPaper;
