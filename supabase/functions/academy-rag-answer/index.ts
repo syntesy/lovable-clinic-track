@@ -45,7 +45,7 @@ FORMATO OBRIGATÓRIO DA RESPOSTA (em markdown):
 [Limitações metodológicas observadas nos estudos e lacunas da evidência]
 
 ## Artigos Citados
-[Lista numerada com título, ano e journal de cada artigo utilizado]
+[Lista numerada com título, ano, journal, tipo de estudo, score de evidência e aplicabilidade clínica (quando disponíveis no Perfil de Evidência)]
 
 ---
 *⚕️ Esta síntese é baseada exclusivamente nos estudos disponíveis na biblioteca e não substitui avaliação clínica individual.*`;
