@@ -201,9 +201,14 @@ export default function AcademyPapersAdminPage() {
               Importação oficial via PubMed/DOI • Curadoria assistida por IA • Auditoria completa
             </p>
           </div>
-          <Button onClick={() => setShowImport(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Importar Paper
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/academy/admin/migrations")} className="gap-2">
+              <Sparkles className="w-4 h-4" /> Migração REM™
+            </Button>
+            <Button onClick={() => setShowImport(true)} className="gap-2">
+              <Plus className="w-4 h-4" /> Importar Paper
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
