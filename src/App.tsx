@@ -113,7 +113,6 @@ import {
   EvidenceCentralPage, AcademyAiTestsPage, AcademyWatchlistsPage, AcademyPdfHealthPage,
   AcademyTrilhasPage,
 } from "./pages/academy";
-} from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
 import { ProtocolsList, ProtocolDetail, ProtocolEdit, ProtocolCreate, ConformidadeDashboard } from "./pages/governance";
