@@ -270,28 +270,49 @@ export function PaperDetailModal({
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <CurationField label="Tipo de Estudo" value={curation.study_type} />
-                      <CurationField label="Nível de Evidência" value={curation.level_inference} />
-                      <CurationField label="População" value={curation.population} />
-                      <CurationField label="Intervenção" value={curation.intervention} />
-                      <CurationField label="Comparação" value={curation.comparison} />
-                      <CurationField label="Direção do Efeito" value={curation.effect_direction} />
-                    </div>
+                    {/* Legacy warning */}
+                    {isLegacy && (
+                      <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-2 mb-3">
+                        <p className="text-xs text-yellow-400 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          {getLegacyWarning()}
+                        </p>
+                      </div>
+                    )}
 
-                    <CurationField label="Desfechos Principais" value={curation.outcomes_principais} />
-                    <CurationField label="Resumo Curto" value={curation.summary_short} />
-                    <CurationField label="Follow-up" value={curation.follow_up} />
+                    {/* Reghen Evidence Method™ 7 Layers */}
+                    {hasRem ? (
+                      <ReghenLayersDisplay
+                        layers={remLayers}
+                        breakdown={(paper as any).evidence_score_breakdown || null}
+                      />
+                    ) : (
+                      /* Legacy curation display */
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <CurationField label="Tipo de Estudo" value={curation.study_type} />
+                          <CurationField label="Nível de Evidência" value={curation.level_inference} />
+                          <CurationField label="População" value={curation.population} />
+                          <CurationField label="Intervenção" value={curation.intervention} />
+                          <CurationField label="Comparação" value={curation.comparison} />
+                          <CurationField label="Direção do Efeito" value={curation.effect_direction} />
+                        </div>
 
-                    {curation.limitations?.length > 0 && (
-                      <section>
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Limitações</h4>
-                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5">
-                          {curation.limitations.map((l: string, i: number) => (
-                            <li key={i}>{l}</li>
-                          ))}
-                        </ul>
-                      </section>
+                        <CurationField label="Desfechos Principais" value={curation.outcomes_principais} />
+                        <CurationField label="Resumo Curto" value={curation.summary_short} />
+                        <CurationField label="Follow-up" value={curation.follow_up} />
+
+                        {curation.limitations?.length > 0 && (
+                          <section>
+                            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Limitações</h4>
+                            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5">
+                              {curation.limitations.map((l: string, i: number) => (
+                                <li key={i}>{l}</li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
+                      </>
                     )}
 
                     {curation.interventions_norm?.length > 0 && (
