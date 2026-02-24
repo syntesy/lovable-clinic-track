@@ -11,9 +11,17 @@ export interface RagCitation {
   pmid: string | null;
 }
 
+export interface EvidenceSnippet {
+  paper_id: string;
+  chunk_id: string;
+  snippet: string;
+  similarity: number;
+}
+
 export interface RagResult {
   answer_md: string;
   citations: RagCitation[];
+  evidence_snippets: EvidenceSnippet[];
   suggested_terms: string[];
 }
 
