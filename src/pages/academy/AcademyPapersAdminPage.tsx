@@ -311,6 +311,20 @@ export default function AcademyPapersAdminPage() {
                               ⚡ {paper.evidence_score}
                             </Badge>
                           )}
+                          {(() => {
+                            const hasRem = hasReghenMethod(paper.curation_data);
+                            if (!hasRem) return null;
+                            const c = validateReghenEvidenceMethod(paper.curation_data?.reghen_evidence_method?.layers);
+                            return c.compliance_score >= 85 ? (
+                              <Badge variant="outline" className="gap-0.5 text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                                <ShieldCheck className="h-2.5 w-2.5" /> REM OK
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="gap-0.5 text-[10px] bg-red-500/10 text-red-400 border-red-500/30">
+                                REM {c.compliance_score}
+                              </Badge>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-foreground line-clamp-2">{paper.title}</h3>
