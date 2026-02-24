@@ -2,7 +2,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Brain, Search, Microscope, FolderOpen, Rss } from "lucide-react";
+import { ArrowLeft, Brain, Search, Microscope, FolderOpen, Rss, MessageSquare } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -11,8 +11,9 @@ import AcademyLibraryContent from "@/components/academy/tabs/ExplorarTabContent"
 import AplicarTabContent from "@/components/academy/tabs/AplicarTabContent";
 import ColecoesTabContent from "@/components/academy/tabs/ColecoesTabContent";
 import FeedTabContent from "@/components/academy/tabs/FeedTabContent";
+import PerguntarTabContent from "@/components/academy/tabs/PerguntarTabContent";
 
-const VALID_TABS = ["explorar", "aplicar", "colecoes", "feed"] as const;
+const VALID_TABS = ["explorar", "aplicar", "colecoes", "feed", "perguntar"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 export default function EvidenceCentralPage() {
