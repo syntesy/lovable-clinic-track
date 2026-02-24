@@ -49,6 +49,8 @@ import { useUploadPdf, useExtractPdfText } from "@/hooks/useAcademyPdfUpload";
 import { toast } from "sonner";
 import { PaperDetailModal } from "@/components/academy/PaperDetailModal";
 import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
+import { hasReghenMethod } from "@/hooks/useEvidenceScore";
+import { validateReghenEvidenceMethod } from "@/utils/remComplianceValidator";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft: { label: "Rascunho", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", icon: FileText },
@@ -62,6 +64,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 export default function AcademyPapersAdminPage() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [remFilter, setRemFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [importInput, setImportInput] = useState("");
@@ -81,6 +84,22 @@ export default function AcademyPapersAdminPage() {
   const { extractPdfText, isExtracting } = useExtractPdfText();
 
   const filteredPapers = papers.filter((p) => {
+    // REM filter
+    if (remFilter === "rem_valid") {
+      const rem = hasReghenMethod(p.curation_data);
+      if (!rem) return false;
+      const c = validateReghenEvidenceMethod(p.curation_data?.reghen_evidence_method?.layers);
+      if (c.compliance_score < 85) return false;
+    } else if (remFilter === "rem_invalid") {
+      const rem = hasReghenMethod(p.curation_data);
+      if (rem) {
+        const c = validateReghenEvidenceMethod(p.curation_data?.reghen_evidence_method?.layers);
+        if (c.compliance_score >= 85) return false;
+      }
+    } else if (remFilter === "no_rem") {
+      if (hasReghenMethod(p.curation_data)) return false;
+    }
+
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
@@ -235,6 +254,17 @@ export default function AcademyPapersAdminPage() {
               <SelectItem value="archived">Arquivados</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={remFilter} onValueChange={setRemFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="REM™ Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">REM: Todos</SelectItem>
+              <SelectItem value="rem_valid">REM OK (≥85)</SelectItem>
+              <SelectItem value="rem_invalid">REM Inválido</SelectItem>
+              <SelectItem value="no_rem">Sem REM</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* List */}
@@ -281,6 +311,20 @@ export default function AcademyPapersAdminPage() {
                               ⚡ {paper.evidence_score}
                             </Badge>
                           )}
+                          {(() => {
+                            const hasRem = hasReghenMethod(paper.curation_data);
+                            if (!hasRem) return null;
+                            const c = validateReghenEvidenceMethod(paper.curation_data?.reghen_evidence_method?.layers);
+                            return c.compliance_score >= 85 ? (
+                              <Badge variant="outline" className="gap-0.5 text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                                <ShieldCheck className="h-2.5 w-2.5" /> REM OK
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="gap-0.5 text-[10px] bg-red-500/10 text-red-400 border-red-500/30">
+                                REM {c.compliance_score}
+                              </Badge>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-foreground line-clamp-2">{paper.title}</h3>

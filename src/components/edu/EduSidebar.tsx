@@ -1,4 +1,4 @@
-import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList, Microscope } from 'lucide-react';
+import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList, Microscope, ShieldCheck } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useCurrentInstitution } from '@/hooks/useEduMembership';
 import {
@@ -17,6 +17,7 @@ const studentMenuItems = [
   { title: "Dashboard", url: "/edu", icon: LayoutDashboard },
   { title: "Minhas Turmas", url: "/edu/cohorts", icon: BookOpen },
   { title: "Meu Progresso", url: "/edu/progress", icon: BarChart3 },
+  { title: "Reghen Evidence Method™", url: "/academy/about/reghen-evidence-method", icon: ShieldCheck },
 ];
 
 const teacherMenuItems = [
