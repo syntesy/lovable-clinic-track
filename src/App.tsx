@@ -709,6 +709,7 @@ const App = () => (
           <Route path="/academy/colecoes" element={<Navigate to="/academy/evidencia?tab=colecoes" replace />} />
           {/* Keep these as standalone */}
           <Route path="/academy/admin/biblioteca" element={<ProtectedRoute><EduLayout><AcademyLibraryAdminPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/admin/papers" element={<ProtectedRoute><EduLayout><AcademyPapersAdminPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/colecoes/:id" element={<ProtectedRoute><EduLayout><AcademyCollectionDetailPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/notificacoes" element={<ProtectedRoute><EduLayout><AcademyNotificationsPage /></EduLayout></ProtectedRoute>} />
 
