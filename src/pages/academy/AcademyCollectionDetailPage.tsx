@@ -60,7 +60,14 @@ export default function AcademyCollectionDetailPage() {
             <Badge variant="secondary">{collection.kind === "official" ? "Oficial" : "Pessoal"}</Badge>
             {collection.is_featured && <Badge className="bg-primary text-primary-foreground">Destaque</Badge>}
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">{collection.title}</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{collection.title}</h1>
+            {isOwner && (
+              <Button size="sm" onClick={() => setShowAddDialog(true)} className="gap-1">
+                <Plus className="w-4 h-4" /> Adicionar Paper
+              </Button>
+            )}
+          </div>
           {collection.description && <p className="text-muted-foreground">{collection.description}</p>}
         </div>
       </section>
