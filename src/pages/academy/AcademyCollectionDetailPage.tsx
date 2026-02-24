@@ -147,6 +147,59 @@ export default function AcademyCollectionDetailPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {/* Add Paper Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Adicionar Paper à Coleção</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por título ou autor..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <ScrollArea className="max-h-64">
+              <div className="space-y-2">
+                {searchResults.map((r: any) => {
+                  const alreadyAdded = articles.some((a: any) => a.id === r.id);
+                  return (
+                    <div key={r.id} className="flex items-center justify-between p-2 rounded border border-border hover:bg-muted/50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
+                        <p className="text-xs text-muted-foreground">{r.year} • {r.study_type}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={alreadyAdded ? "ghost" : "outline"}
+                        disabled={alreadyAdded || addArticle.isPending}
+                        onClick={() => {
+                          addArticle.mutate({ collectionId: id!, articleId: r.id }, {
+                            onSuccess: () => toast.success("Paper adicionado!"),
+                          });
+                        }}
+                      >
+                        {alreadyAdded ? "Já adicionado" : <><Plus className="w-3 h-3 mr-1" /> Adicionar</>}
+                      </Button>
+                    </div>
+                  );
+                })}
+                {searchQuery.length >= 2 && searchResults.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum artigo encontrado.</p>
+                )}
+                {searchQuery.length < 2 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Digite pelo menos 2 caracteres para buscar.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
