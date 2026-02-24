@@ -42,6 +42,7 @@ import {
   useSoftDeletePaper,
   type AcademyPaper,
 } from "@/hooks/useAcademyPapers";
+import { useIndexPaper } from "@/hooks/useAcademyRag";
 import { toast } from "sonner";
 import { PaperDetailModal } from "@/components/academy/PaperDetailModal";
 
