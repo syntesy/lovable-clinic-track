@@ -5437,8 +5437,10 @@ export type Database = {
           created_by: string
           id: string
           intervention_code: string | null
+          is_active: boolean
           pathology_id: string | null
           patient_id: string | null
+          superseded_at: string | null
           topic_key: string
         }
         Insert: {
@@ -5447,8 +5449,10 @@ export type Database = {
           created_by: string
           id?: string
           intervention_code?: string | null
+          is_active?: boolean
           pathology_id?: string | null
           patient_id?: string | null
+          superseded_at?: string | null
           topic_key: string
         }
         Update: {
@@ -5457,8 +5461,10 @@ export type Database = {
           created_by?: string
           id?: string
           intervention_code?: string | null
+          is_active?: boolean
           pathology_id?: string | null
           patient_id?: string | null
+          superseded_at?: string | null
           topic_key?: string
         }
         Relationships: [
@@ -5496,6 +5502,7 @@ export type Database = {
           papers: Json
           query_text: string | null
           retrieval_mode: string
+          snapshot_hash: string | null
           snippets: Json | null
           topic_key: string
         }
@@ -5509,6 +5516,7 @@ export type Database = {
           papers?: Json
           query_text?: string | null
           retrieval_mode: string
+          snapshot_hash?: string | null
           snippets?: Json | null
           topic_key: string
         }
@@ -5522,6 +5530,7 @@ export type Database = {
           papers?: Json
           query_text?: string | null
           retrieval_mode?: string
+          snapshot_hash?: string | null
           snippets?: Json | null
           topic_key?: string
         }
