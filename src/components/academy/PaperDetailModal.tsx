@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +24,7 @@ import {
   Clock,
   FileWarning,
   Download,
+  BookOpen,
 } from "lucide-react";
 import type { AcademyPaper } from "@/hooks/useAcademyPapers";
 import { usePaperRevisions } from "@/hooks/useAcademyPapers";
@@ -33,10 +33,6 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { GuidedReadingSection } from "./GuidedReadingSection";
 import { PaperSummaryCard } from "./PaperSummaryCard";
-import { usePaperRevisions } from "@/hooks/useAcademyPapers";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
 
 interface PaperDetailModalProps {
   paper: AcademyPaper;
