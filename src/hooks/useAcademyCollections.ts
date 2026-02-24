@@ -86,7 +86,7 @@ export function useCollectionArticles(collectionId: string | null) {
       const articleIds = data.map((d: any) => d.article_id);
       const { data: articles, error: err2 } = await supabase
         .from("academy_articles")
-        .select("id, title, authors, journal, year, study_type, interventions, pathologies, summary_short, pubmed_url, doi_url, created_at")
+        .select("id, title, authors, journal, year, study_type, interventions, pathologies, summary_short, pubmed_url, doi_url, created_at, evidence_score")
         .in("id", articleIds)
         .eq("is_published", true)
         .is("deleted_at", null);

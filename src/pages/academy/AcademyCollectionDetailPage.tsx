@@ -2,14 +2,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Trash2, ExternalLink, BookOpen } from "lucide-react";
-import { useCollectionDetail, useCollectionArticles, useRemoveArticleFromCollection } from "@/hooks/useAcademyCollections";
-import { useAcademyArticleDetail } from "@/hooks/useAcademyArticles";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, ArrowLeft, Trash2, ExternalLink, BookOpen, Plus, Search } from "lucide-react";
+import { useCollectionDetail, useCollectionArticles, useRemoveArticleFromCollection, useAddArticleToCollection } from "@/hooks/useAcademyCollections";
+import { useAcademyArticleDetail, useArticleFilterOptions } from "@/hooks/useAcademyArticles";
+import { useSearchPublishedArticles } from "@/hooks/useAcademyEvidence";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function AcademyCollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,8 +21,14 @@ export default function AcademyCollectionDetailPage() {
   const { data: collection, isLoading } = useCollectionDetail(id ?? null);
   const { data: articles = [], isLoading: loadingArticles } = useCollectionArticles(id ?? null);
   const removeArticle = useRemoveArticleFromCollection();
+  const addArticle = useAddArticleToCollection();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: detail, isLoading: loadingDetail } = useAcademyArticleDetail(selectedId);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStudyType, setFilterStudyType] = useState<string>("all");
+  const { data: searchResults = [] } = useSearchPublishedArticles(searchQuery);
+  const { data: filterOptions } = useArticleFilterOptions();
 
   const { data: currentUserId } = useQuery({
     queryKey: ["current-user-id"],
@@ -50,7 +60,14 @@ export default function AcademyCollectionDetailPage() {
             <Badge variant="secondary">{collection.kind === "official" ? "Oficial" : "Pessoal"}</Badge>
             {collection.is_featured && <Badge className="bg-primary text-primary-foreground">Destaque</Badge>}
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">{collection.title}</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{collection.title}</h1>
+            {isOwner && (
+              <Button size="sm" onClick={() => setShowAddDialog(true)} className="gap-1">
+                <Plus className="w-4 h-4" /> Adicionar Paper
+              </Button>
+            )}
+          </div>
           {collection.description && <p className="text-muted-foreground">{collection.description}</p>}
         </div>
       </section>
@@ -70,6 +87,13 @@ export default function AcademyCollectionDetailPage() {
                   <CardContent className="py-5 flex flex-col flex-1">
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       <Badge variant="secondary" className="text-xs">{article.study_type}</Badge>
+                      {article.evidence_score != null && (
+                        <Badge variant="outline" className={`text-xs ${
+                          article.evidence_score >= 70 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                          : article.evidence_score >= 40 ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
+                          : "bg-red-500/10 text-red-400 border-red-500/30"
+                        }`}>Score: {article.evidence_score}</Badge>
+                      )}
                       {article.interventions?.slice(0, 2).map((i: string) => (
                         <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
                       ))}
@@ -121,6 +145,59 @@ export default function AcademyCollectionDetailPage() {
               </div>
             </ScrollArea>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Paper Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Adicionar Paper à Coleção</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por título ou autor..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <ScrollArea className="max-h-64">
+              <div className="space-y-2">
+                {searchResults.map((r: any) => {
+                  const alreadyAdded = articles.some((a: any) => a.id === r.id);
+                  return (
+                    <div key={r.id} className="flex items-center justify-between p-2 rounded border border-border hover:bg-muted/50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
+                        <p className="text-xs text-muted-foreground">{r.year} • {r.study_type}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={alreadyAdded ? "ghost" : "outline"}
+                        disabled={alreadyAdded || addArticle.isPending}
+                        onClick={() => {
+                          addArticle.mutate({ collectionId: id!, articleId: r.id }, {
+                            onSuccess: () => toast.success("Paper adicionado!"),
+                          });
+                        }}
+                      >
+                        {alreadyAdded ? "Já adicionado" : <><Plus className="w-3 h-3 mr-1" /> Adicionar</>}
+                      </Button>
+                    </div>
+                  );
+                })}
+                {searchQuery.length >= 2 && searchResults.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum artigo encontrado.</p>
+                )}
+                {searchQuery.length < 2 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Digite pelo menos 2 caracteres para buscar.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
