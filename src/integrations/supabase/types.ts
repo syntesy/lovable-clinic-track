@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_ai_logs: {
+        Row: {
+          action: string
+          citations: Json | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          input: Json
+          model_used: string | null
+          output: Json | null
+          paper_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          citations?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input: Json
+          model_used?: string | null
+          output?: Json | null
+          paper_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          citations?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input?: Json
+          model_used?: string | null
+          output?: Json | null
+          paper_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_ai_logs_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_article_collection_items: {
         Row: {
           article_id: string
@@ -631,6 +684,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      academy_papers: {
+        Row: {
+          abstract_text: string | null
+          authors: string | null
+          created_at: string
+          created_by: string
+          curated_by: string | null
+          curation_data: Json | null
+          curation_status: Database["public"]["Enums"]["paper_curation_status"]
+          deleted_at: string | null
+          doi: string | null
+          id: string
+          import_payload: Json | null
+          import_source: Database["public"]["Enums"]["paper_import_source"]
+          journal: string | null
+          mesh_terms: string[] | null
+          pmid: string | null
+          published_at: string | null
+          published_by: string | null
+          title: string
+          updated_at: string
+          warnings: string[] | null
+          year: number | null
+        }
+        Insert: {
+          abstract_text?: string | null
+          authors?: string | null
+          created_at?: string
+          created_by: string
+          curated_by?: string | null
+          curation_data?: Json | null
+          curation_status?: Database["public"]["Enums"]["paper_curation_status"]
+          deleted_at?: string | null
+          doi?: string | null
+          id?: string
+          import_payload?: Json | null
+          import_source?: Database["public"]["Enums"]["paper_import_source"]
+          journal?: string | null
+          mesh_terms?: string[] | null
+          pmid?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          title: string
+          updated_at?: string
+          warnings?: string[] | null
+          year?: number | null
+        }
+        Update: {
+          abstract_text?: string | null
+          authors?: string | null
+          created_at?: string
+          created_by?: string
+          curated_by?: string | null
+          curation_data?: Json | null
+          curation_status?: Database["public"]["Enums"]["paper_curation_status"]
+          deleted_at?: string | null
+          doi?: string | null
+          id?: string
+          import_payload?: Json | null
+          import_source?: Database["public"]["Enums"]["paper_import_source"]
+          journal?: string | null
+          mesh_terms?: string[] | null
+          pmid?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          title?: string
+          updated_at?: string
+          warnings?: string[] | null
+          year?: number | null
+        }
+        Relationships: []
       }
       academy_payment_events: {
         Row: {
@@ -7206,6 +7331,14 @@ export type Database = {
         | "VERSION_CREATED"
       mentor_status: "pending_review" | "approved" | "rejected" | "suspended"
       outcome_timepoint: "baseline" | "m1" | "m3" | "m6" | "m12"
+      paper_curation_status:
+        | "draft"
+        | "curating"
+        | "ready"
+        | "published"
+        | "rejected"
+        | "archived"
+      paper_import_source: "pmid" | "doi" | "manual"
       protocol_status: "draft" | "active" | "archived"
       protocol_type: "REGEN_BASE" | "DERIVED" | "INSTITUTIONAL"
       safety_checklist_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
@@ -7413,6 +7546,15 @@ export const Constants = {
       ],
       mentor_status: ["pending_review", "approved", "rejected", "suspended"],
       outcome_timepoint: ["baseline", "m1", "m3", "m6", "m12"],
+      paper_curation_status: [
+        "draft",
+        "curating",
+        "ready",
+        "published",
+        "rejected",
+        "archived",
+      ],
+      paper_import_source: ["pmid", "doi", "manual"],
       protocol_status: ["draft", "active", "archived"],
       protocol_type: ["REGEN_BASE", "DERIVED", "INSTITUTIONAL"],
       safety_checklist_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
