@@ -224,6 +224,11 @@ function CitationCard({
             </Button>
           )}
         </div>
+        <EvidenceMethodSeal className="mt-2" />
+      </CardContent>
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
