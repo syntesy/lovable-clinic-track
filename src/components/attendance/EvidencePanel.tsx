@@ -22,6 +22,25 @@ interface EvidencePanelProps {
   isClosed: boolean;
 }
 
+function CoherenceBadgeWrapper({ snapshots, panelResult }: { snapshots: any[]; panelResult: EvidencePanelResult | null }) {
+  const hasInsufficient = useMemo(() => {
+    // Check snapshots for insufficient evidence
+    const fromSnapshots = snapshots.some((s: any) =>
+      s.answer_md?.toLowerCase().includes("insuficiente")
+    );
+    // Check panel result
+    const fromPanel = panelResult?.short_summary?.toLowerCase().includes("insuficiente") ?? false;
+    return fromSnapshots || fromPanel;
+  }, [snapshots, panelResult]);
+
+  return (
+    <EvidenceCoherenceBadge
+      snapshotCount={snapshots.length}
+      hasInsufficientEvidence={hasInsufficient}
+    />
+  );
+}
+
 export function EvidencePanel({ attendanceId, topicKey, isClosed }: EvidencePanelProps) {
   const [panelResult, setPanelResult] = useState<EvidencePanelResult | null>(null);
   const [question, setQuestion] = useState("");
