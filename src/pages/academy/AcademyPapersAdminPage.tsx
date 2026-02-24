@@ -254,6 +254,17 @@ export default function AcademyPapersAdminPage() {
               <SelectItem value="archived">Arquivados</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={remFilter} onValueChange={setRemFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="REM™ Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">REM: Todos</SelectItem>
+              <SelectItem value="rem_valid">REM OK (≥85)</SelectItem>
+              <SelectItem value="rem_invalid">REM Inválido</SelectItem>
+              <SelectItem value="no_rem">Sem REM</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* List */}
