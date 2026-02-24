@@ -37,7 +37,7 @@ export function useAcademyPapers(statusFilter?: string) {
         .order("created_at", { ascending: false });
 
       if (statusFilter && statusFilter !== "all") {
-        query = query.eq("curation_status", statusFilter);
+        query = query.eq("curation_status", statusFilter as any);
       }
 
       const { data, error } = await query;
