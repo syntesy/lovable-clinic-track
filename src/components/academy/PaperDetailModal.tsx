@@ -58,10 +58,44 @@ export function PaperDetailModal({
   onPublish,
   onReject,
   isGenerating,
+  userRole = "admin_academy",
 }: PaperDetailModalProps) {
   const curation = paper.curation_data;
   const hasCuration = !!curation;
   const { data: revisions = [], isLoading: loadingRevisions } = usePaperRevisions(open ? paper.id : null);
+  const canDownload = ["admin_academy", "teacher_approved", "teacher_candidate"].includes(userRole);
+  const hasScanWarning = paper.warnings?.some(w => w.includes("escaneado") || w.includes("scan"));
+
+  // Fetch file info
+  const { data: paperFiles = [] } = useQuery({
+    queryKey: ["paper-files", paper.id],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("academy_paper_files" as any)
+        .select("id, file_name, size_bytes, scan_suspected, storage_path")
+        .eq("paper_id", paper.id)
+        .order("created_at", { ascending: false });
+      return (data || []) as any[];
+    },
+  });
+
+  const handleDownloadPdf = async (storagePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("academy-papers")
+        .download(storagePath);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Erro ao baixar PDF.");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
