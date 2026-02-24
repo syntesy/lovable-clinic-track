@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.academy-extract-pdf-text]
 verify_jwt = false
+
+[functions.academy-migrate-reghen-method]
+verify_jwt = false
