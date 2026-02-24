@@ -208,7 +208,7 @@ serve(async (req) => {
         : chunk.content;
       evidenceSnippets.push({
         paper_id: chunk.paper_id,
-        chunk_id: chunk.chunk_id,
+        chunk_id: chunk.id,
         snippet,
         similarity: parseFloat(chunk.similarity.toFixed(4)),
       });
