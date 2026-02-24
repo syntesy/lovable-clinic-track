@@ -1,4 +1,4 @@
-import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList } from 'lucide-react';
+import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList, Microscope } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useCurrentInstitution } from '@/hooks/useEduMembership';
 import {
