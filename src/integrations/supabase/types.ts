@@ -891,6 +891,7 @@ export type Database = {
           evidence_label: string | null
           evidence_notes: string | null
           evidence_score: number | null
+          evidence_score_breakdown: Json | null
           fingerprint: string | null
           generated_by_ai: boolean
           id: string
@@ -921,6 +922,7 @@ export type Database = {
           evidence_label?: string | null
           evidence_notes?: string | null
           evidence_score?: number | null
+          evidence_score_breakdown?: Json | null
           fingerprint?: string | null
           generated_by_ai?: boolean
           id?: string
@@ -951,6 +953,7 @@ export type Database = {
           evidence_label?: string | null
           evidence_notes?: string | null
           evidence_score?: number | null
+          evidence_score_breakdown?: Json | null
           fingerprint?: string | null
           generated_by_ai?: boolean
           id?: string
