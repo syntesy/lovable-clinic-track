@@ -120,9 +120,12 @@ export function PaperSummaryCard({ article }: PaperSummaryCardProps) {
 
         <Separator />
 
-        <p className="text-[10px] text-muted-foreground italic">
-          ⚕️ Score heurístico baseado em tipo de estudo e metadados. Não é uma avaliação formal de risco de viés (RoB). Não substitui avaliação clínica individual.
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] text-muted-foreground italic">
+            ⚕️ Score heurístico baseado em tipo de estudo e metadados. Não é uma avaliação formal de risco de viés (RoB). Não substitui avaliação clínica individual.
+          </p>
+          {article.is_published && <EvidenceMethodSeal />}
+        </div>
       </CardContent>
     </Card>
   );

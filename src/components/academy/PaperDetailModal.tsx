@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { GuidedReadingSection } from "./GuidedReadingSection";
 import { PaperSummaryCard } from "./PaperSummaryCard";
+import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
 
 interface PaperDetailModalProps {
   paper: AcademyPaper;

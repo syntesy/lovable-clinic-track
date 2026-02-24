@@ -84,6 +84,7 @@ export default function AplicarTabContent() {
                             {article.year} • {article.journal}
                           </p>
                           <p className="text-muted-foreground line-clamp-2">{article.summary_short}</p>
+                          <EvidenceMethodSeal className="mt-2" />
                         </div>
                         <div className="flex md:flex-col gap-2 md:justify-center items-start">
                           <button onClick={(e) => { e.stopPropagation(); toggleFav.mutate({ articleId: article.id, isFavorited: isFav }); }} className="mb-1">
