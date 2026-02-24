@@ -65,6 +65,10 @@ export default function AcademyPapersAdminPage() {
   const [showImport, setShowImport] = useState(false);
   const [importInput, setImportInput] = useState("");
   const [selectedPaper, setSelectedPaper] = useState<AcademyPaper | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfTitle, setPdfTitle] = useState("");
+  const [pdfAssociatePaperId, setPdfAssociatePaperId] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: papers = [], isLoading } = useAcademyPapers(statusFilter);
   const importMutation = useImportPaper();
