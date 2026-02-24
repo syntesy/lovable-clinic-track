@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Layers, CheckSquare, FileCheck, TrendingUp } from "lucide-react";
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
-import heroBg from "@/assets/hero-bg.png";
+import slideBgIntegracao from "@/assets/slide-bg-integracao.png";
 
 export default function IntegracaoPage() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function IntegracaoPage() {
     <InternalPageLayout hideFooterCTA>
       {/* SEÇÃO 1 – HERO */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0" style={{ backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+        <div className="absolute inset-0" style={{ backgroundImage: `url(${slideBgIntegracao})`, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="absolute inset-0 bg-black/[0.03]" />
         <div className="relative z-10 text-center px-8 max-w-4xl">
           <span className="text-primary text-xs tracking-[0.3em] uppercase mb-4 block">Integração</span>
