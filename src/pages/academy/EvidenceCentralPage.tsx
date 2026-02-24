@@ -71,6 +71,9 @@ export default function EvidenceCentralPage() {
               <TabsTrigger value="feed" className="gap-1.5 data-[state=active]:bg-primary/10">
                 <Rss className="w-3.5 h-3.5" /> Feed
               </TabsTrigger>
+              <TabsTrigger value="perguntar" className="gap-1.5 data-[state=active]:bg-primary/10">
+                <MessageSquare className="w-3.5 h-3.5" /> Perguntar
+              </TabsTrigger>
             </TabsList>
           </div>
         </div>
