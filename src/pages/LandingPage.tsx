@@ -96,7 +96,7 @@ const slides: Slide[] = [
     ctaLink: "/integracao",
     cta2: "Criar conta",
     cta2Link: "__signup__",
-    bg: heroBg,
+    bg: slideBgIntegracao,
   },
 ];
 
