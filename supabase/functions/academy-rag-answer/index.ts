@@ -9,15 +9,15 @@ const corsHeaders = {
 
 const OPENAI_EMBEDDING_MODEL = "text-embedding-3-small";
 const AI_MODEL = "google/gemini-2.5-flash";
-const TOP_K = 10;
-const MIN_SIMILARITY = 0.3;
+const TOP_K_HYBRID = 30;
+const TOP_K_FINAL = 10;
+const MIN_SIMILARITY = 0.25;
 
-// Rate limits per role (per day)
 const RATE_LIMITS: Record<string, number> = {
   student: 20,
   teacher_candidate: 50,
   teacher_approved: 100,
-  admin_academy: -1, // unlimited
+  admin_academy: -1,
 };
 
 const RAG_SYSTEM_PROMPT = `Você é um sistema de interpretação científica especializado em fisioterapia regenerativa e medicina ortobiológica.
@@ -55,17 +55,12 @@ async function generateEmbedding(text: string, apiKey: string): Promise<number[]
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: OPENAI_EMBEDDING_MODEL,
-      input: text,
-    }),
+    body: JSON.stringify({ model: OPENAI_EMBEDDING_MODEL, input: text }),
   });
-
   if (!response.ok) {
     const errText = await response.text();
     throw new Error(`OpenAI Embeddings error (${response.status}): ${errText}`);
   }
-
   const data = await response.json();
   return data.data[0].embedding;
 }
@@ -80,6 +75,57 @@ function getAllowedStatuses(role: string): string[] {
     default:
       return ["published"];
   }
+}
+
+// Re-rank heuristic: boost/penalize based on filters and warnings
+function rerank(
+  papers: any[],
+  question: string,
+  filters?: Record<string, any>
+): any[] {
+  const questionLower = question.toLowerCase();
+  const questionTerms = questionLower.split(/\s+/).filter(t => t.length > 3);
+  const isHumanClinical = !questionLower.includes("animal") && !questionLower.includes("in vitro");
+
+  return papers.map(p => {
+    let boost = 0;
+    const titleLower = (p.paper_title || "").toLowerCase();
+    const warnings = p.paper_warnings || [];
+    const curationData = p.paper_curation_data || {};
+
+    // Boost if title contains question terms
+    for (const term of questionTerms) {
+      if (titleLower.includes(term)) boost += 0.05;
+    }
+
+    // Boost if tags_norm match filters
+    if (filters) {
+      const tagsNorm = curationData.tags_norm || {};
+      const interventionsNorm = curationData.interventions_norm || [];
+      const pathologiesNorm = curationData.pathologies_norm || [];
+
+      if (filters.pathology) {
+        const pf = filters.pathology.toLowerCase();
+        if (pathologiesNorm.some((t: string) => t.toLowerCase().includes(pf))) boost += 0.1;
+      }
+      if (filters.intervention) {
+        const inf = filters.intervention.toLowerCase();
+        if (interventionsNorm.some((t: string) => t.toLowerCase().includes(inf))) boost += 0.1;
+      }
+    }
+
+    // Penalize animal/in vitro warnings when human clinical question
+    if (isHumanClinical) {
+      for (const w of warnings) {
+        const wl = (w || "").toLowerCase();
+        if (wl.includes("animal") || wl.includes("in vitro") || wl.includes("pré-clínico")) {
+          boost -= 0.15;
+        }
+      }
+    }
+
+    return { ...p, score_final: (p.score_final || 0) + boost };
+  }).sort((a, b) => b.score_final - a.score_final);
 }
 
 serve(async (req) => {
@@ -176,48 +222,87 @@ serve(async (req) => {
 
     const questionEmbedding = await generateEmbedding(question.trim(), OPENAI_API_KEY);
 
-    // Search chunks via RPC
-    const { data: chunks, error: rpcErr } = await supabaseService.rpc("match_academy_chunks", {
+    // Hybrid retrieval: vector + FTS
+    const { data: hybridResults, error: hybridErr } = await supabaseService.rpc("hybrid_match_papers", {
+      query_text: question.trim(),
       query_embedding: JSON.stringify(questionEmbedding),
-      match_count: TOP_K,
+      match_count: TOP_K_HYBRID,
       allowed_statuses: allowedStatuses,
     });
 
-    if (rpcErr) throw new Error(`Erro na busca vetorial: ${rpcErr.message}`);
+    if (hybridErr) {
+      console.error("Hybrid retrieval error:", hybridErr);
+      throw new Error(`Erro na busca híbrida: ${hybridErr.message}`);
+    }
 
-    const relevantChunks = (chunks || []).filter((c: any) => c.similarity >= MIN_SIMILARITY);
+    // Log retrieval stats
+    const retrievalStats = {
+      total_candidates: (hybridResults || []).length,
+      vector_only: (hybridResults || []).filter((r: any) => r.source === "vector").length,
+      fts_only: (hybridResults || []).filter((r: any) => r.source === "fts").length,
+      both: (hybridResults || []).filter((r: any) => r.source === "both").length,
+    };
 
-    // Build citations + evidence_snippets
+    await supabaseService.from("academy_ai_logs").insert({
+      action: "rag_retrieval",
+      user_id: userId,
+      input: { question, filters, role: userRole, allowed_statuses: allowedStatuses },
+      output: { stats: retrievalStats, top_scores: (hybridResults || []).slice(0, 5).map((r: any) => ({ paper_id: r.paper_id, score: r.score_final, source: r.source })) },
+      status: "success",
+      duration_ms: Date.now() - startTime,
+    });
+
+    const relevantResults = (hybridResults || []).filter((r: any) => r.score_final >= MIN_SIMILARITY);
+
+    // Re-rank
+    const preRerank = relevantResults.map((r: any) => r.paper_id);
+    const reranked = rerank(relevantResults, question, filters);
+    const topResults = reranked.slice(0, TOP_K_FINAL);
+    const postRerank = topResults.map((r: any) => r.paper_id);
+
+    // Log rerank
+    await supabaseService.from("academy_ai_logs").insert({
+      action: "rag_rerank",
+      user_id: userId,
+      input: { question, pre_rerank_count: preRerank.length, pre_rerank_ids: preRerank.slice(0, 15) },
+      output: { post_rerank_count: postRerank.length, post_rerank_ids: postRerank },
+      status: "success",
+      duration_ms: Date.now() - startTime,
+    });
+
+    // Build citations + evidence_snippets from hybrid results
     const paperMap = new Map<string, any>();
     const evidenceSnippets: any[] = [];
 
-    for (const chunk of relevantChunks) {
-      if (!paperMap.has(chunk.paper_id)) {
-        paperMap.set(chunk.paper_id, {
-          paper_id: chunk.paper_id,
-          title: chunk.paper_title,
-          year: chunk.paper_year,
-          journal: chunk.paper_journal,
-          doi: chunk.paper_doi,
-          pmid: chunk.paper_pmid,
+    for (const result of topResults) {
+      paperMap.set(result.paper_id, {
+        paper_id: result.paper_id,
+        title: result.paper_title,
+        year: result.paper_year,
+        journal: result.paper_journal,
+        doi: result.paper_doi,
+        pmid: result.paper_pmid,
+      });
+
+      // Extract snippets from best_chunks
+      const chunks = result.best_chunks || [];
+      for (const chunk of (Array.isArray(chunks) ? chunks.slice(0, 3) : [])) {
+        const snippet = (chunk.content || "").length > 250
+          ? (chunk.content || "").slice(0, 247) + "…"
+          : chunk.content || "";
+        evidenceSnippets.push({
+          paper_id: result.paper_id,
+          chunk_id: chunk.chunk_id || null,
+          snippet,
+          similarity: parseFloat((chunk.similarity || 0).toFixed(4)),
         });
       }
-      // Add snippet (max ~200 chars for display)
-      const snippet = chunk.content.length > 250
-        ? chunk.content.slice(0, 247) + "…"
-        : chunk.content;
-      evidenceSnippets.push({
-        paper_id: chunk.paper_id,
-        chunk_id: chunk.id,
-        snippet,
-        similarity: parseFloat(chunk.similarity.toFixed(4)),
-      });
     }
     const citations = Array.from(paperMap.values());
 
     // Insufficient evidence
-    if (relevantChunks.length === 0) {
-      const result = {
+    if (topResults.length === 0) {
+      const insuffResult = {
         answer_md: "## Evidência Insuficiente\n\nNão há evidência suficiente na biblioteca atual para responder com segurança a esta pergunta.\n\nConsidere reformular a pergunta ou verificar se existem artigos relevantes publicados na biblioteca.\n\n---\n*⚕️ Esta síntese é baseada exclusivamente nos estudos disponíveis na biblioteca e não substitui avaliação clínica individual.*",
         citations: [],
         evidence_snippets: [],
@@ -228,22 +313,29 @@ serve(async (req) => {
         action: "rag_answer",
         user_id: userId,
         input: { question, filters, role: userRole, allowed_statuses: allowedStatuses },
-        output: { answer_md: result.answer_md, citations: [], insufficient: true },
+        output: { answer_md: insuffResult.answer_md, citations: [], insufficient: true },
         status: "success",
         duration_ms: Date.now() - startTime,
         model_used: "none",
       });
 
-      return new Response(JSON.stringify(result), {
+      return new Response(JSON.stringify(insuffResult), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Build context
-    const contextParts = relevantChunks.map(
-      (c: any, i: number) =>
-        `[Trecho ${i + 1}] (${c.paper_title}, ${c.paper_year || "N/A"}, ${c.paper_journal || "N/A"}, similaridade: ${c.similarity.toFixed(3)})\n${c.content}`
-    );
+    // Build context from best_chunks of top results
+    const contextParts: string[] = [];
+    let ctxIndex = 0;
+    for (const result of topResults) {
+      const chunks = result.best_chunks || [];
+      for (const chunk of (Array.isArray(chunks) ? chunks.slice(0, 2) : [])) {
+        ctxIndex++;
+        contextParts.push(
+          `[Trecho ${ctxIndex}] (${result.paper_title}, ${result.paper_year || "N/A"}, ${result.paper_journal || "N/A"}, score: ${(result.score_final || 0).toFixed(3)})\n${chunk.content || ""}`
+        );
+      }
+    }
 
     const userPrompt = `PERGUNTA DO USUÁRIO: ${question}
 
@@ -304,8 +396,8 @@ Responda seguindo o formato obrigatório. Se os trechos não contêm informaçã
     await supabaseService.from("academy_ai_logs").insert({
       action: "rag_answer",
       user_id: userId,
-      input: { question, filters, role: userRole, allowed_statuses: allowedStatuses, chunks_found: relevantChunks.length },
-      output: { answer_md: answerMd, citations, evidence_snippets: evidenceSnippets, chunks_used: relevantChunks.length },
+      input: { question, filters, role: userRole, allowed_statuses: allowedStatuses, hybrid_candidates: retrievalStats.total_candidates, reranked_count: topResults.length },
+      output: { answer_md: answerMd, citations, evidence_snippets: evidenceSnippets, chunks_used: contextParts.length },
       status: "success",
       duration_ms: Date.now() - startTime,
       model_used: AI_MODEL,
