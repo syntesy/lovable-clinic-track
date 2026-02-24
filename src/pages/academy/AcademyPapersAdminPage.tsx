@@ -276,7 +276,10 @@ export default function AcademyPapersAdminPage() {
                             </Badge>
                           )}
                         </div>
-                        <h3 className="font-semibold text-foreground line-clamp-2">{paper.title}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-foreground line-clamp-2">{paper.title}</h3>
+                          {paper.curation_status === "published" && <EvidenceMethodSeal />}
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           {paper.authors ? `${paper.authors} • ` : ""}
                           {paper.year || "Ano N/A"} • {paper.journal || "Journal N/A"}
