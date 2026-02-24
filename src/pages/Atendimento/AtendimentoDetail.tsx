@@ -878,6 +878,15 @@ const AtendimentoDetail = () => {
               orthobiologicPrevValidationError={orthobiologicPrevValidationError}
               orthobiologicPrevOtherValidationError={orthobiologicPrevOtherValidationError}
             />
+
+            {/* Evidence Panel (Reghen Evidence Method™) */}
+            {attendanceId && (
+              <EvidencePanel
+                attendanceId={attendanceId}
+                topicKey={topicKey}
+                isClosed={isClosed}
+              />
+            )}
           </div>
         );
 
