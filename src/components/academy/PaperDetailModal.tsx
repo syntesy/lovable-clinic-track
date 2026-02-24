@@ -36,6 +36,7 @@ import { PaperSummaryCard } from "./PaperSummaryCard";
 import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
 import { ReghenLayersDisplay } from "./ReghenLayersDisplay";
 import { hasReghenMethod, getLegacyWarning } from "@/hooks/useEvidenceScore";
+import { validateReghenEvidenceMethod, type RemComplianceResult } from "@/utils/remComplianceValidator";
 
 interface PaperDetailModalProps {
   paper: AcademyPaper;
