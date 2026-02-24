@@ -14,6 +14,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -70,7 +72,6 @@ serve(async (req) => {
     }
 
     if (attendance.user_id !== user.id) {
-      // Check admin
       const { data: adminRole } = await supabaseService
         .from("user_roles")
         .select("role")
@@ -95,7 +96,7 @@ serve(async (req) => {
     const { data: papers, error: searchErr } = await supabaseService
       .from("academy_papers")
       .select(
-        "id, title, year, journal, authors, evidence_score, evidence_label, curation_data, curation_status"
+        "id, title, year, journal, authors, abstract_text, evidence_score, evidence_label, curation_data, curation_status"
       )
       .eq("curation_status", "published")
       .is("deleted_at", null)
@@ -116,7 +117,7 @@ serve(async (req) => {
         const { data: extra } = await supabaseService
           .from("academy_papers")
           .select(
-            "id, title, year, journal, authors, evidence_score, evidence_label, curation_data, curation_status"
+            "id, title, year, journal, authors, abstract_text, evidence_score, evidence_label, curation_data, curation_status"
           )
           .eq("curation_status", "published")
           .is("deleted_at", null)
@@ -145,6 +146,7 @@ serve(async (req) => {
         year: p.year,
         journal: p.journal,
         authors: p.authors,
+        abstract_text: p.abstract_text || null,
         evidence_score: p.evidence_score,
         evidence_label: p.evidence_label,
         study_type: rem?.layer_2_methodology?.study_type || null,
@@ -168,62 +170,109 @@ serve(async (req) => {
       study_types: [...new Set(topPapers.map((p: any) => p.study_type).filter(Boolean))],
     };
 
-    // Generate short summary via AI
+    // A) Generate short summary — 100% grounded on retrieved papers
     let shortSummary = "";
+    let summaryStatus: "success" | "fail" | "insufficient" = "insufficient";
+
     if (topPapers.length > 0) {
-      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-      if (LOVABLE_API_KEY) {
-        try {
-          const paperDescriptions = topPapers
-            .map(
-              (p: any, i: number) =>
-                `${i + 1}. "${p.title}" (${p.year || "N/A"}, ${p.journal || "N/A"}) — Score: ${p.evidence_score || "N/A"}, Tipo: ${p.study_type || "N/A"}`
-            )
-            .join("\n");
+      // Build grounding context from paper titles + abstracts + evidence profile
+      const hasAbstracts = topPapers.some((p: any) => p.abstract_text);
 
-          const aiResponse = await fetch(
-            "https://ai.gateway.lovable.dev/v1/chat/completions",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: AI_MODEL,
-                messages: [
-                  {
-                    role: "system",
-                    content: `Você é um sistema de síntese científica. Gere uma síntese curta (2-5 linhas) sobre o tópico "${topic_key}" baseando-se EXCLUSIVAMENTE nos artigos listados. NÃO prescreva conduta. NÃO invente dados. Use linguagem como "a evidência sugere", "os estudos apontam". Responda em português.`,
-                  },
-                  {
-                    role: "user",
-                    content: `Artigos disponíveis sobre "${topic_key}":\n\n${paperDescriptions}\n\nGere uma síntese curta e grounded.`,
-                  },
-                ],
-              }),
+      if (!hasAbstracts) {
+        // Not enough content to synthesize
+        shortSummary = "Evidência insuficiente na biblioteca para este tópico.";
+        summaryStatus = "insufficient";
+      } else {
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        if (LOVABLE_API_KEY) {
+          try {
+            const paperDescriptions = topPapers
+              .map(
+                (p: any, i: number) =>
+                  `${i + 1}. "${p.title}" (${p.year || "N/A"}, ${p.journal || "N/A"}) — Score: ${p.evidence_score || "N/A"}, Tipo: ${p.study_type || "N/A"}, Aplicabilidade: ${p.applicability || "N/A"}\nResumo: ${(p.abstract_text || "Não disponível").slice(0, 500)}`
+              )
+              .join("\n\n");
+
+            const aiResponse = await fetch(
+              "https://ai.gateway.lovable.dev/v1/chat/completions",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: AI_MODEL,
+                  messages: [
+                    {
+                      role: "system",
+                      content: `Você é um sistema de síntese científica do Reghen Evidence Method™.
+
+REGRAS OBRIGATÓRIAS:
+1. Gere uma síntese curta (2-5 linhas) EXCLUSIVAMENTE baseada nos títulos, resumos e perfis de evidência dos artigos listados abaixo.
+2. NUNCA prescreva conduta (não use "indique", "faça", "deve", "recomenda-se").
+3. NUNCA invente números, estatísticas ou dados não presentes nos resumos.
+4. NUNCA extrapole para populações ou contextos não descritos nos estudos.
+5. Use linguagem como "os estudos listados sugerem", "a evidência disponível aponta", "segundo os artigos recuperados".
+6. Comece com "Com base nos estudos listados, " ou frase equivalente.
+7. Responda em português.
+
+Se os resumos não contiverem informação suficiente para uma síntese, responda EXATAMENTE: "Evidência insuficiente na biblioteca para este tópico."`,
+                    },
+                    {
+                      role: "user",
+                      content: `Tópico: "${topic_key}"\n\nArtigos disponíveis:\n\n${paperDescriptions}\n\nGere a síntese grounded.`,
+                    },
+                  ],
+                }),
+              }
+            );
+
+            if (aiResponse.ok) {
+              const aiData = await aiResponse.json();
+              shortSummary = aiData.choices?.[0]?.message?.content || "";
+              summaryStatus = shortSummary ? "success" : "fail";
+            } else {
+              summaryStatus = "fail";
             }
-          );
-
-          if (aiResponse.ok) {
-            const aiData = await aiResponse.json();
-            shortSummary = aiData.choices?.[0]?.message?.content || "";
+          } catch (e) {
+            console.error("AI summary error:", e);
+            summaryStatus = "fail";
           }
-        } catch (e) {
-          console.error("AI summary error:", e);
         }
       }
     }
 
+    // Fallback
     if (!shortSummary && topPapers.length > 0) {
-      shortSummary = `Foram encontrados ${topPapers.length} artigo(s) publicado(s) sobre "${pathology}" com "${intervention}".`;
+      shortSummary = `Foram encontrados ${topPapers.length} artigo(s) publicado(s) sobre "${pathology}" com "${intervention}". Consulte os estudos listados para detalhes.`;
+      summaryStatus = "success";
     } else if (topPapers.length === 0) {
-      shortSummary = `Nenhum artigo publicado encontrado para o tópico "${topic_key}" na biblioteca atual.`;
+      shortSummary = "Evidência insuficiente na biblioteca para este tópico.";
+      summaryStatus = "insufficient";
     }
+
+    // Remove abstract_text from response (only used for synthesis, not exposed to client)
+    const responsePapers = topPapers.map(({ abstract_text, ...rest }: any) => rest);
+
+    // Log panel summary
+    await supabaseService.from("academy_ai_logs").insert({
+      action: "reghen_panel_summary",
+      user_id: user.id,
+      input: { attendance_id, topic_key },
+      output: {
+        status: summaryStatus,
+        paper_ids: topPapers.map((p: any) => p.paper_id),
+        papers_count: topPapers.length,
+        reason: summaryStatus === "insufficient" ? "no_abstracts_or_no_papers" : null,
+      },
+      status: summaryStatus === "fail" ? "error" : "success",
+      duration_ms: Date.now() - startTime,
+    });
 
     return new Response(
       JSON.stringify({
-        papers: topPapers,
+        papers: responsePapers,
         evidence_profile: evidenceProfile,
         short_summary: shortSummary,
       }),
