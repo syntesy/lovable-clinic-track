@@ -243,10 +243,10 @@ const AgenteMAC = () => {
   return (
     <div className="h-[calc(100vh-80px)] md:h-[calc(100vh-96px)] flex flex-col md:flex-row gap-3 md:gap-4">
       {/* Sidebar com conversas - escondido em mobile, pode ser exibido com botão */}
-      <div className="hidden md:flex w-[280px] bg-card/85 rounded-2xl p-4 flex-col gap-3 overflow-y-auto flex-shrink-0">
+      <div className="hidden md:flex w-[280px] bg-card rounded-2xl border border-border/40 p-4 flex-col gap-3 overflow-y-auto flex-shrink-0">
         <Button
           onClick={createNewConversation}
-          className="bg-[#2F3F6B] hover:bg-[#2F3F6B]/90 rounded-xl py-3 flex items-center gap-2 justify-center w-full"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-3 flex items-center gap-2 justify-center w-full"
         >
           <Plus size={18} />
           Nova Conversa
@@ -262,8 +262,8 @@ const AgenteMAC = () => {
             onClick={() => loadConversationMessages(conv.id)}
             className={`p-3 rounded-lg cursor-pointer transition-all flex items-center gap-2 justify-between ${
               currentConversationId === conv.id 
-                ? "bg-[#3D4F7C] text-white" 
-                : "bg-[#F5F6FA] text-foreground hover:bg-muted"
+                ? "bg-accent text-accent-foreground" 
+                : "bg-secondary text-secondary-foreground hover:bg-muted"
             }`}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -286,7 +286,7 @@ const AgenteMAC = () => {
       <div className="flex md:hidden gap-2">
         <Button
           onClick={createNewConversation}
-          className="bg-[#2F3F6B] hover:bg-[#2F3F6B]/90 rounded-xl flex-1"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl flex-1"
         >
           <Plus size={18} className="mr-2" />
           Nova Conversa
@@ -294,9 +294,9 @@ const AgenteMAC = () => {
       </div>
 
       {/* Área principal do chat */}
-      <div className="flex-1 flex flex-col bg-card/85 rounded-2xl overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col bg-card rounded-2xl border border-border/40 overflow-hidden min-h-0">
         {/* Header */}
-        <div className="p-4 md:p-6 border-b-2 border-border bg-[#F5F6FA]">
+        <div className="p-4 md:p-6 border-b border-border bg-secondary">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -321,11 +321,11 @@ const AgenteMAC = () => {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4 min-h-0">
           {messages.length === 0 && (
             <div className="text-center py-8 md:py-12">
-              <Bot size={40} className="mx-auto mb-4 text-[#3A3A45] md:w-12 md:h-12" />
-              <p className="text-sm md:text-base font-medium text-[#3A3A45]">
+              <Bot size={40} className="mx-auto mb-4 text-muted-foreground md:w-12 md:h-12" />
+              <p className="text-sm md:text-base font-medium text-foreground">
                 Olá! Sou o Agente Fisioterapia Regenerativa.
               </p>
-              <p className="text-xs md:text-sm mt-2 text-[#5A6080]">
+              <p className="text-xs md:text-sm mt-2 text-muted-foreground">
                 Como posso ajudá-lo com informações sobre terapias regenerativas e protocolos de fotobiomodulação?
               </p>
             </div>
@@ -337,19 +337,19 @@ const AgenteMAC = () => {
               className={`flex gap-2 md:gap-3 items-start ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
             >
               <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.role === "user" ? "bg-[#2F3F6B]" : "bg-[#3D4F7C]"
+                message.role === "user" ? "bg-primary" : "bg-accent"
               }`}>
                 {message.role === "user" ? (
-                  <User size={18} color="white" />
+                  <User size={18} className="text-primary-foreground" />
                 ) : (
-                  <Bot size={18} color="white" />
+                  <Bot size={18} className="text-accent-foreground" />
                 )}
               </div>
 
               <div className={`p-3 md:p-4 rounded-xl max-w-[85%] md:max-w-[70%] break-words whitespace-pre-wrap text-sm md:text-base ${
                 message.role === "user" 
-                  ? "bg-[#3D4F7C] text-white" 
-                  : "bg-[#F5F6FA] text-foreground"
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-secondary text-secondary-foreground"
               }`}>
                 {message.content}
               </div>
@@ -358,10 +358,10 @@ const AgenteMAC = () => {
 
           {isLoading && (
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#3D4F7C] flex items-center justify-center">
-                <Bot size={18} color="white" />
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-accent flex items-center justify-center">
+                <Bot size={18} className="text-accent-foreground" />
               </div>
-              <div className="bg-[#F5F6FA] p-3 md:p-4 rounded-xl">
+              <div className="bg-secondary p-3 md:p-4 rounded-xl">
                 <div className="flex gap-1">
                   <div className="animate-pulse w-2 h-2 rounded-full bg-muted-foreground" />
                   <div className="animate-pulse w-2 h-2 rounded-full bg-muted-foreground" style={{ animationDelay: "0.2s" }} />
@@ -375,42 +375,20 @@ const AgenteMAC = () => {
         </div>
 
         {/* Input Area */}
-        <div style={{
-          padding: "24px",
-          borderTop: "2px solid #C5CADF",
-          backgroundColor: "#F5F6FA"
-        }}>
-          <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+        <div className="p-6 border-t border-border bg-secondary">
+          <div className="flex gap-3 items-end">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Digite sua mensagem... (Enter para enviar, Shift+Enter para nova linha)"
               disabled={isLoading}
-              style={{
-                minHeight: "60px",
-                maxHeight: "120px",
-                resize: "none",
-                backgroundColor: "white",
-                border: "2px solid #C5CADF",
-                borderRadius: "12px",
-                fontSize: "14px",
-                fontFamily: "Inter, sans-serif"
-              }}
+              className="min-h-[60px] max-h-[120px] resize-none bg-background border border-border rounded-xl text-sm text-foreground"
             />
             <Button
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
-              style={{
-                backgroundColor: "#2F3F6B",
-                color: "white",
-                borderRadius: "12px",
-                padding: "0 24px",
-                height: "44px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px"
-              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 h-11 flex items-center gap-2"
             >
               <Send size={18} />
               Enviar
