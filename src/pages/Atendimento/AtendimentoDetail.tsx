@@ -1173,6 +1173,15 @@ const AtendimentoDetail = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Evidence used block (Reghen Evidence Method™) */}
+            {attendanceId && (
+              <EvidencePanel
+                attendanceId={attendanceId}
+                topicKey={topicKey}
+                isClosed={true}
+              />
+            )}
           </div>
         );
       }
