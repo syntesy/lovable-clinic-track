@@ -45,6 +45,7 @@ import {
   type AcademyPaper,
 } from "@/hooks/useAcademyPapers";
 import { useIndexPaper } from "@/hooks/useAcademyRag";
+import { useUploadPdf, useExtractPdfText } from "@/hooks/useAcademyPdfUpload";
 import { toast } from "sonner";
 import { PaperDetailModal } from "@/components/academy/PaperDetailModal";
 
