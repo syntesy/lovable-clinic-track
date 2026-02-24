@@ -670,6 +670,31 @@ const AtendimentoDetail = () => {
     await closeAttendance.mutateAsync(attendance.id);
   };
 
+  // Derive topic_key from attendance pathology + intervention type
+  const createEvidenceLink = useCreateEvidenceLink();
+  
+  const topicKey = useMemo(() => {
+    if (!dbAttendancePathology) return null;
+    const pathLabel = dbAttendancePathology.custom_pathology_label || null;
+    // If no label available, we can't build a meaningful topic key
+    if (!pathLabel) return null;
+    const intervention = attendance?.involves_orthobiologics ? "PRP" : "FISIOTERAPIA";
+    return buildTopicKey(intervention, pathLabel);
+  }, [dbAttendancePathology, attendance?.involves_orthobiologics]);
+
+  // Auto-create evidence link when topic_key changes
+  useEffect(() => {
+    if (!topicKey || !attendanceId || isClosed) return;
+    createEvidenceLink.mutate({
+      attendanceId,
+      patientId: attendance?.patient_id,
+      pathologyId: dbAttendancePathology?.pathology_id || undefined,
+      interventionCode: attendance?.involves_orthobiologics ? "PRP" : "FISIOTERAPIA",
+      topicKey,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicKey, attendanceId]);
+
   // Determine current clinical status (S0-S3)
   const currentStatus: AttendanceStatus = useMemo(() => {
     if (!attendance?.involves_orthobiologics) return "S1";
