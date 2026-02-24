@@ -710,6 +710,7 @@ const App = () => (
           {/* Keep these as standalone */}
           <Route path="/academy/admin/biblioteca" element={<ProtectedRoute><EduLayout><AcademyLibraryAdminPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/papers" element={<ProtectedRoute><EduLayout><AcademyPapersAdminPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/admin/ai-tests" element={<ProtectedRoute><EduLayout><AcademyAiTestsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/colecoes/:id" element={<ProtectedRoute><EduLayout><AcademyCollectionDetailPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/notificacoes" element={<ProtectedRoute><EduLayout><AcademyNotificationsPage /></EduLayout></ProtectedRoute>} />
 

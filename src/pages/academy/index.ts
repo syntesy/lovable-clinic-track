@@ -42,3 +42,5 @@ export { default as AcademyCollectionDetailPage } from './AcademyCollectionDetai
 export { default as AcademyNotificationsPage } from './AcademyNotificationsPage';
 // Stage 8: Evidence Central
 export { default as EvidenceCentralPage } from './EvidenceCentralPage';
+// AI Tests
+export { default as AcademyAiTestsPage } from './AcademyAiTestsPage';
