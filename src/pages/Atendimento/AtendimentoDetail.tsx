@@ -54,7 +54,8 @@ import { PatientProceduresList } from "@/components/patient/PatientProceduresLis
 import { ClinicalStandardCard } from "@/components/clinical-standard";
 import { EvidencePanel } from "@/components/attendance/EvidencePanel";
 import { buildTopicKey } from "@/utils/topicKey";
-import { useCreateEvidenceLink } from "@/hooks/useReghenEvidence";
+
+const AtendimentoDetail = () => {
   const { attendanceId } = useParams<{ attendanceId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
