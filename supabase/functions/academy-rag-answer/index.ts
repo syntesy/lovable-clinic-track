@@ -367,15 +367,29 @@ serve(async (req) => {
       });
     }
 
-    // Build context from best_chunks of top results
+    // Build context from best_chunks of top results (enriched with REM)
     const contextParts: string[] = [];
     let ctxIndex = 0;
     for (const result of topResults) {
+      const remInfo = remMap.get(result.paper_id);
+      const remLayers = remInfo?.curation_data?.reghen_evidence_method?.layers;
+
+      // Build evidence profile header when REM exists
+      let evidenceProfile = "";
+      if (remLayers) {
+        const parts: string[] = [];
+        if (remLayers.layer_2_methodology?.study_type) parts.push(`Tipo: ${remLayers.layer_2_methodology.study_type}`);
+        if (remLayers.layer_2_methodology?.is_human != null) parts.push(`Humano: ${remLayers.layer_2_methodology.is_human ? "sim" : "não"}`);
+        if (remLayers.layer_4_applicability?.classification) parts.push(`Aplicabilidade: ${remLayers.layer_4_applicability.classification}`);
+        if (remInfo?.evidence_score != null) parts.push(`Score: ${remInfo.evidence_score}/100`);
+        if (parts.length > 0) evidenceProfile = `\n[Perfil de Evidência] ${parts.join(" | ")}`;
+      }
+
       const chunks = result.best_chunks || [];
       for (const chunk of (Array.isArray(chunks) ? chunks.slice(0, 2) : [])) {
         ctxIndex++;
         contextParts.push(
-          `[Trecho ${ctxIndex}] (${result.paper_title}, ${result.paper_year || "N/A"}, ${result.paper_journal || "N/A"}, score: ${(result.score_final || 0).toFixed(3)})\n${chunk.content || ""}`
+          `[Trecho ${ctxIndex}] (${result.paper_title}, ${result.paper_year || "N/A"}, ${result.paper_journal || "N/A"}, score: ${(result.score_final || 0).toFixed(3)})${evidenceProfile}\n${chunk.content || ""}`
         );
       }
     }
