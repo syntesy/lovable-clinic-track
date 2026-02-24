@@ -36,6 +36,7 @@ export function PaperSummaryCard({ article }: PaperSummaryCardProps) {
       article.follow_up ? `🕐 Follow-up: ${article.follow_up}` : "",
       "",
       "⚕️ Score heurístico — não substitui avaliação clínica formal.",
+      article.is_published ? "🛡️ RegHen Evidence Method™" : "",
     ].filter(Boolean).join("\n");
     navigator.clipboard.writeText(lines);
     toast.success("Ficha copiada!");
