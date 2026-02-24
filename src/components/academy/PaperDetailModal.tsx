@@ -286,10 +286,49 @@ export function PaperDetailModal({
 
                     {/* Reghen Evidence Method™ 7 Layers */}
                     {hasRem ? (
-                      <ReghenLayersDisplay
-                        layers={remLayers}
-                        breakdown={(paper as any).evidence_score_breakdown || null}
-                      />
+                      <>
+                        {/* Compliance badge */}
+                        {compliance && (
+                          <div className={`rounded-lg border p-2 mb-3 ${
+                            compliance.is_valid
+                              ? "border-emerald-500/30 bg-emerald-500/10"
+                              : "border-red-500/30 bg-red-500/10"
+                          }`}>
+                            <div className="flex items-center gap-2 mb-1">
+                              {compliance.is_valid ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              ) : (
+                                <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                              )}
+                              <span className={`text-xs font-medium ${compliance.is_valid ? "text-emerald-400" : "text-red-400"}`}>
+                                REM™ Compliance: {compliance.compliance_score}/100
+                              </span>
+                            </div>
+                            {compliance.errors.length > 0 && (
+                              <ul className="space-y-0.5 mt-1">
+                                {compliance.errors.map((e, i) => (
+                                  <li key={i} className="text-[11px] text-red-400 flex items-start gap-1">
+                                    <span className="shrink-0">✕</span> {e}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {compliance.warnings.length > 0 && (
+                              <ul className="space-y-0.5 mt-1">
+                                {compliance.warnings.map((w, i) => (
+                                  <li key={i} className="text-[11px] text-yellow-400 flex items-start gap-1">
+                                    <span className="shrink-0">⚠</span> {w}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        )}
+                        <ReghenLayersDisplay
+                          layers={remLayers}
+                          breakdown={(paper as any).evidence_score_breakdown || null}
+                        />
+                      </>
                     ) : (
                       /* Legacy curation display */
                       <>
