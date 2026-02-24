@@ -108,6 +108,45 @@ export default function AcademyPapersAdminPage() {
     }
   };
 
+  const handlePdfUpload = async () => {
+    if (!pdfFile) {
+      toast.error("Selecione um arquivo PDF.");
+      return;
+    }
+    if (!pdfAssociatePaperId && !pdfTitle.trim()) {
+      toast.error("Informe o título do novo paper ou selecione um existente.");
+      return;
+    }
+    try {
+      const result = await uploadPdf({
+        file: pdfFile,
+        paperId: pdfAssociatePaperId || undefined,
+        title: pdfTitle.trim() || undefined,
+      });
+      toast.success(result.created_new ? "Paper criado e PDF enviado!" : "PDF associado ao paper!");
+
+      // Auto-extract text
+      try {
+        toast.info("Extraindo texto do PDF...");
+        const extractResult = await extractPdfText(result.paper_id);
+        if (extractResult?.extracted) {
+          toast.success(`Texto extraído: ${extractResult.chunks_created} chunks criados.`);
+        } else if (extractResult?.warning) {
+          toast.warning(extractResult.warning);
+        }
+      } catch {
+        toast.warning("PDF enviado, mas extração de texto falhou. Pode ser processado depois.");
+      }
+
+      setShowImport(false);
+      setPdfFile(null);
+      setPdfTitle("");
+      setPdfAssociatePaperId("");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao fazer upload do PDF.");
+    }
+  };
+
   const handleGenerateCuration = async (paper: AcademyPaper) => {
     try {
       toast.info("Gerando curadoria com IA...");
