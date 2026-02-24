@@ -64,6 +64,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 export default function AcademyPapersAdminPage() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [remFilter, setRemFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [importInput, setImportInput] = useState("");
