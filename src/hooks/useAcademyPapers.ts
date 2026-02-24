@@ -23,9 +23,22 @@ export interface AcademyPaper {
   generated_by_ai: boolean;
   published_by: string | null;
   published_at: string | null;
+  fingerprint: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export interface PaperRevision {
+  id: string;
+  paper_id: string;
+  actor_user_id: string;
+  action: string;
+  curation_data: any;
+  warnings: any;
+  tags_norm: any;
+  status: string;
+  created_at: string;
 }
 
 export function useAcademyPapers(statusFilter?: string) {
@@ -45,6 +58,23 @@ export function useAcademyPapers(statusFilter?: string) {
       const { data, error } = await query;
       if (error) throw error;
       return data as unknown as AcademyPaper[];
+    },
+  });
+}
+
+export function usePaperRevisions(paperId: string | null) {
+  return useQuery({
+    queryKey: ["paper-revisions", paperId],
+    enabled: !!paperId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("academy_paper_revisions" as any)
+        .select("*")
+        .eq("paper_id", paperId!)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as unknown as PaperRevision[];
     },
   });
 }
@@ -85,6 +115,21 @@ export function useGenerateCuration() {
   });
 }
 
+async function createRevision(paperId: string, action: string, paper: any) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from("academy_paper_revisions" as any).insert({
+    paper_id: paperId,
+    actor_user_id: user.id,
+    action,
+    curation_data: paper.curation_data || null,
+    warnings: paper.warnings || null,
+    tags_norm: paper.curation_data?.tags_norm || null,
+    status: paper.curation_status,
+  } as any);
+}
+
 export function useUpdatePaperStatus() {
   const queryClient = useQueryClient();
 
@@ -104,9 +149,28 @@ export function useUpdatePaperStatus() {
         .eq("id", paperId);
 
       if (error) throw error;
+
+      // Fetch updated paper for revision snapshot
+      const { data: updatedPaper } = await supabase
+        .from("academy_papers")
+        .select("*")
+        .eq("id", paperId)
+        .single();
+
+      if (updatedPaper) {
+        const actionMap: Record<string, string> = {
+          draft: "save_draft",
+          ready: "mark_ready",
+          published: "publish",
+          rejected: "unpublish",
+          archived: "unpublish",
+        };
+        await createRevision(paperId, actionMap[status] || "edit", updatedPaper);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["academy-papers"] });
+      queryClient.invalidateQueries({ queryKey: ["paper-revisions"] });
     },
   });
 }

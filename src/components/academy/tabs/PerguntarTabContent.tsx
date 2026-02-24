@@ -3,17 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Brain, ExternalLink, AlertTriangle, RotateCcw } from "lucide-react";
-import { useAcademyRag, type RagCitation } from "@/hooks/useAcademyRag";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Loader2, Send, Brain, ExternalLink, AlertTriangle, RotateCcw, FileSearch } from "lucide-react";
+import { useAcademyRag, type RagCitation, type EvidenceSnippet } from "@/hooks/useAcademyRag";
 
 export default function PerguntarTabContent() {
   const [question, setQuestion] = useState("");
   const { ask, isLoading, result, error, reset } = useAcademyRag();
+  const [snippetsPaperId, setSnippetsPaperId] = useState<string | null>(null);
 
   const handleSubmit = () => {
     if (question.trim().length < 5) return;
     ask(question.trim());
   };
+
+  const snippetsForPaper = snippetsPaperId
+    ? (result?.evidence_snippets || []).filter((s) => s.paper_id === snippetsPaperId)
+    : [];
+
+  const snippetPaperTitle = snippetsPaperId
+    ? result?.citations.find((c) => c.paper_id === snippetsPaperId)?.title || ""
+    : "";
 
   return (
     <section className="py-8">
@@ -118,9 +133,17 @@ export default function PerguntarTabContent() {
                   <ExternalLink className="w-4 h-4" /> Artigos Citados
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {result.citations.map((c) => (
-                    <CitationCard key={c.paper_id} citation={c} />
-                  ))}
+                  {result.citations.map((c) => {
+                    const hasSnippets = (result.evidence_snippets || []).some((s) => s.paper_id === c.paper_id);
+                    return (
+                      <CitationCard
+                        key={c.paper_id}
+                        citation={c}
+                        hasSnippets={hasSnippets}
+                        onViewSnippets={() => setSnippetsPaperId(c.paper_id)}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -134,11 +157,42 @@ export default function PerguntarTabContent() {
           </div>
         )}
       </div>
+
+      {/* Snippets modal */}
+      <Dialog open={!!snippetsPaperId} onOpenChange={(o) => !o && setSnippetsPaperId(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base leading-tight">Trechos Utilizados</DialogTitle>
+            <p className="text-sm text-muted-foreground line-clamp-2">{snippetPaperTitle}</p>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+            {snippetsForPaper.map((s, i) => (
+              <div key={i} className="rounded-lg border border-border p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="text-[10px]">Similaridade: {(s.similarity * 100).toFixed(1)}%</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">{s.snippet}</p>
+              </div>
+            ))}
+            {snippetsForPaper.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum trecho disponível.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
 
-function CitationCard({ citation }: { citation: RagCitation }) {
+function CitationCard({
+  citation,
+  hasSnippets,
+  onViewSnippets,
+}: {
+  citation: RagCitation;
+  hasSnippets: boolean;
+  onViewSnippets: () => void;
+}) {
   const link = citation.pmid
     ? `https://pubmed.ncbi.nlm.nih.gov/${citation.pmid}`
     : citation.doi
@@ -152,7 +206,7 @@ function CitationCard({ citation }: { citation: RagCitation }) {
         <p className="text-xs text-muted-foreground">
           {citation.year || "N/A"} • {citation.journal || "N/A"}
         </p>
-        <div className="flex gap-1.5 mt-2">
+        <div className="flex gap-1.5 mt-2 flex-wrap">
           {citation.pmid && (
             <Badge variant="outline" className="text-[10px]">PMID: {citation.pmid}</Badge>
           )}
@@ -162,6 +216,11 @@ function CitationCard({ citation }: { citation: RagCitation }) {
                 <ExternalLink className="w-2.5 h-2.5" /> Abrir
               </Badge>
             </a>
+          )}
+          {hasSnippets && (
+            <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px] gap-0.5" onClick={onViewSnippets}>
+              <FileSearch className="w-2.5 h-2.5" /> Ver trechos usados
+            </Button>
           )}
         </div>
       </CardContent>

@@ -90,6 +90,21 @@ async function fetchFromCrossref(doi: string) {
   };
 }
 
+// ========== Fingerprint for dedup without PMID/DOI ==========
+async function generateFingerprint(title: string, year: number | null, journal: string | null): Promise<string> {
+  const raw = `${title.toLowerCase().trim()}|${year ?? ""}|${(journal ?? "").toLowerCase().trim()}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(raw);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// ========== Normalize DOI ==========
+function normalizeDoi(doi: string): string {
+  return doi.toLowerCase().trim().replace(/^https?:\/\/doi\.org\//i, "");
+}
+
 // ========== Input parsing ==========
 function parseInput(input: string): { type: "pmid" | "doi"; value: string } {
   const trimmed = input.trim();
@@ -100,7 +115,7 @@ function parseInput(input: string): { type: "pmid" | "doi"; value: string } {
   if (/^\d{5,12}$/.test(trimmed)) return { type: "pmid", value: trimmed };
 
   const doiMatch = trimmed.match(/(?:doi\.org\/|^)(10\.\d{4,}\/[^\s]+)/i);
-  if (doiMatch) return { type: "doi", value: doiMatch[1] };
+  if (doiMatch) return { type: "doi", value: normalizeDoi(doiMatch[1]) };
 
   throw new Error("Entrada inválida. Forneça um PMID, URL do PubMed, DOI ou URL do DOI.");
 }
@@ -115,7 +130,6 @@ serve(async (req) => {
   let supabaseAuth: any = null;
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -141,7 +155,6 @@ serve(async (req) => {
     }
     userId = claims.claims.sub as string;
 
-    // Parse input
     const { identifier } = await req.json();
     if (!identifier || typeof identifier !== "string") {
       return new Response(
@@ -152,16 +165,17 @@ serve(async (req) => {
 
     const parsed = parseInput(identifier);
 
-    // Check duplicates — FIX: return existing paper instead of just error
+    // Normalize DOI for dedup
     const dupColumn = parsed.type === "pmid" ? "pmid" : "doi";
+    const dupValue = parsed.type === "doi" ? normalizeDoi(parsed.value) : parsed.value;
+
     const { data: existing } = await supabaseAuth
       .from("academy_papers")
       .select("*")
-      .eq(dupColumn, parsed.value)
+      .eq(dupColumn, dupValue)
       .maybeSingle();
 
     if (existing) {
-      // Log dedup attempt
       await supabaseAuth.from("academy_ai_logs").insert({
         action: "admin_import",
         paper_id: existing.id,
@@ -187,13 +201,52 @@ serve(async (req) => {
     const paperData =
       parsed.type === "pmid"
         ? await fetchFromPubMed(parsed.value)
-        : await fetchFromCrossref(parsed.value);
+        : await fetchFromCrossref(dupValue);
 
-    // Insert paper
+    // Generate fingerprint for dedup without PMID/DOI
+    const fp = await generateFingerprint(paperData.title, paperData.year, paperData.journal);
+
+    // Check fingerprint dedup
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const { data: fpExisting } = await supabaseService
+      .from("academy_papers")
+      .select("*")
+      .eq("fingerprint", fp)
+      .maybeSingle();
+
+    if (fpExisting) {
+      await supabaseAuth.from("academy_ai_logs").insert({
+        action: "admin_import",
+        paper_id: fpExisting.id,
+        user_id: userId,
+        input: { identifier, fingerprint: fp, dedup: true },
+        output: { paper_id: fpExisting.id, title: fpExisting.title, deduplicated: true, dedup_method: "fingerprint" },
+        status: "success",
+        duration_ms: Date.now() - startTime,
+      });
+
+      return new Response(
+        JSON.stringify({
+          paper: fpExisting,
+          warnings: fpExisting.warnings || [],
+          deduplicated: true,
+          message: `Artigo já importado (fingerprint): "${fpExisting.title}"`,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Insert paper with fingerprint
     const { data: paper, error: insertErr } = await supabaseAuth
       .from("academy_papers")
       .insert({
         ...paperData,
+        doi: paperData.doi ? normalizeDoi(paperData.doi) : null,
+        fingerprint: fp,
         import_source: parsed.type,
         curation_status: "draft",
         created_by: userId,
@@ -203,14 +256,13 @@ serve(async (req) => {
 
     if (insertErr) throw new Error(`Erro ao salvar: ${insertErr.message}`);
 
-    // Log audit — FIX: use action='admin_import'
     const duration_ms = Date.now() - startTime;
     await supabaseAuth.from("academy_ai_logs").insert({
       action: "admin_import",
       paper_id: paper.id,
       user_id: userId,
       input: { identifier, parsed_type: parsed.type, parsed_value: parsed.value },
-      output: { paper_id: paper.id, title: paper.title, has_abstract: !!paper.abstract_text },
+      output: { paper_id: paper.id, title: paper.title, has_abstract: !!paper.abstract_text, fingerprint: fp },
       status: "success",
       duration_ms,
     });
@@ -222,7 +274,6 @@ serve(async (req) => {
     console.error("Import error:", error);
     const message = error instanceof Error ? error.message : "Erro desconhecido";
 
-    // FIX: Actually log failures with authenticated client
     if (supabaseAuth && userId) {
       try {
         await supabaseAuth.from("academy_ai_logs").insert({

@@ -12,6 +12,14 @@ const AI_MODEL = "google/gemini-2.5-flash";
 const TOP_K = 10;
 const MIN_SIMILARITY = 0.3;
 
+// Rate limits per role (per day)
+const RATE_LIMITS: Record<string, number> = {
+  student: 20,
+  teacher_candidate: 50,
+  teacher_approved: 100,
+  admin_academy: -1, // unlimited
+};
+
 const RAG_SYSTEM_PROMPT = `Você é um sistema de interpretação científica especializado em fisioterapia regenerativa e medicina ortobiológica.
 
 REGRAS ABSOLUTAS:
@@ -117,12 +125,12 @@ serve(async (req) => {
       );
     }
 
-    // Determine user role
     const supabaseService = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Determine user role
     const { data: roleData } = await supabaseService
       .from("academy_user_roles")
       .select("role")
@@ -131,6 +139,36 @@ serve(async (req) => {
 
     const userRole = roleData?.role || "student";
     const allowedStatuses = getAllowedStatuses(userRole);
+
+    // Rate limiting
+    const dailyLimit = RATE_LIMITS[userRole] ?? 20;
+    if (dailyLimit !== -1) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const { count, error: countErr } = await supabaseService
+        .from("academy_ai_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("action", "rag_answer")
+        .gte("created_at", todayStart.toISOString());
+
+      if (!countErr && (count ?? 0) >= dailyLimit) {
+        await supabaseService.from("academy_ai_logs").insert({
+          action: "rag_answer",
+          user_id: userId,
+          input: { question, role: userRole, rate_limited: true },
+          status: "fail",
+          error_message: `Rate limit exceeded: ${count}/${dailyLimit} per day`,
+          duration_ms: Date.now() - startTime,
+        });
+
+        return new Response(
+          JSON.stringify({ error: `Limite diário de ${dailyLimit} consultas atingido. Tente novamente amanhã.` }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // Generate question embedding
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
@@ -147,11 +185,12 @@ serve(async (req) => {
 
     if (rpcErr) throw new Error(`Erro na busca vetorial: ${rpcErr.message}`);
 
-    // Filter by minimum similarity
     const relevantChunks = (chunks || []).filter((c: any) => c.similarity >= MIN_SIMILARITY);
 
-    // Deduplicate papers
+    // Build citations + evidence_snippets
     const paperMap = new Map<string, any>();
+    const evidenceSnippets: any[] = [];
+
     for (const chunk of relevantChunks) {
       if (!paperMap.has(chunk.paper_id)) {
         paperMap.set(chunk.paper_id, {
@@ -163,6 +202,16 @@ serve(async (req) => {
           pmid: chunk.paper_pmid,
         });
       }
+      // Add snippet (max ~200 chars for display)
+      const snippet = chunk.content.length > 250
+        ? chunk.content.slice(0, 247) + "…"
+        : chunk.content;
+      evidenceSnippets.push({
+        paper_id: chunk.paper_id,
+        chunk_id: chunk.chunk_id,
+        snippet,
+        similarity: parseFloat(chunk.similarity.toFixed(4)),
+      });
     }
     const citations = Array.from(paperMap.values());
 
@@ -171,6 +220,7 @@ serve(async (req) => {
       const result = {
         answer_md: "## Evidência Insuficiente\n\nNão há evidência suficiente na biblioteca atual para responder com segurança a esta pergunta.\n\nConsidere reformular a pergunta ou verificar se existem artigos relevantes publicados na biblioteca.\n\n---\n*⚕️ Esta síntese é baseada exclusivamente nos estudos disponíveis na biblioteca e não substitui avaliação clínica individual.*",
         citations: [],
+        evidence_snippets: [],
         suggested_terms: [],
       };
 
@@ -203,7 +253,6 @@ ${contextParts.join("\n\n---\n\n")}
 
 Responda seguindo o formato obrigatório. Se os trechos não contêm informação suficiente, diga explicitamente.`;
 
-    // Generate answer with Gemini via Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -248,15 +297,15 @@ Responda seguindo o formato obrigatório. Se os trechos não contêm informaçã
     const result = {
       answer_md: answerMd,
       citations,
+      evidence_snippets: evidenceSnippets,
       suggested_terms: [],
     };
 
-    // Log
     await supabaseService.from("academy_ai_logs").insert({
       action: "rag_answer",
       user_id: userId,
       input: { question, filters, role: userRole, allowed_statuses: allowedStatuses, chunks_found: relevantChunks.length },
-      output: { answer_md: answerMd, citations, chunks_used: relevantChunks.length },
+      output: { answer_md: answerMd, citations, evidence_snippets: evidenceSnippets, chunks_used: relevantChunks.length },
       status: "success",
       duration_ms: Date.now() - startTime,
       model_used: AI_MODEL,
