@@ -52,8 +52,9 @@ import { PrescriptionFormModal } from "@/components/patient/PrescriptionFormModa
 import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
 import { PatientProceduresList } from "@/components/patient/PatientProceduresList";
 import { ClinicalStandardCard } from "@/components/clinical-standard";
-
-const AtendimentoDetail = () => {
+import { EvidencePanel } from "@/components/attendance/EvidencePanel";
+import { buildTopicKey } from "@/utils/topicKey";
+import { useCreateEvidenceLink } from "@/hooks/useReghenEvidence";
   const { attendanceId } = useParams<{ attendanceId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
