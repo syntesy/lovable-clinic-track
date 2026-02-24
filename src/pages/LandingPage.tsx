@@ -263,7 +263,7 @@ export default function LandingPage() {
               backgroundImage: `url(${slide.bg})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              opacity: 0.88,
+              opacity: 1,
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#080b14]/40 via-[#080b14]/15 to-[#080b14]/55" />
