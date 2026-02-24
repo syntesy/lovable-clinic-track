@@ -87,6 +87,13 @@ export default function AcademyCollectionDetailPage() {
                   <CardContent className="py-5 flex flex-col flex-1">
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       <Badge variant="secondary" className="text-xs">{article.study_type}</Badge>
+                      {article.evidence_score != null && (
+                        <Badge variant="outline" className={`text-xs ${
+                          article.evidence_score >= 70 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                          : article.evidence_score >= 40 ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
+                          : "bg-red-500/10 text-red-400 border-red-500/30"
+                        }`}>Score: {article.evidence_score}</Badge>
+                      )}
                       {article.interventions?.slice(0, 2).map((i: string) => (
                         <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
                       ))}
