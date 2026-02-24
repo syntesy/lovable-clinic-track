@@ -130,6 +130,7 @@ export function GuidedReadingSection({ article }: GuidedReadingSectionProps) {
           </p>
           <EvidenceMethodSeal />
         </div>
+      </CardContent>
     </Card>
   );
 }
