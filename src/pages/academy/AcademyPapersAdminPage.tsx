@@ -76,6 +76,8 @@ export default function AcademyPapersAdminPage() {
   const updateStatusMutation = useUpdatePaperStatus();
   const deleteMutation = useSoftDeletePaper();
   const { indexPaper } = useIndexPaper();
+  const { uploadPdf, isUploading } = useUploadPdf();
+  const { extractPdfText, isExtracting } = useExtractPdfText();
 
   const filteredPapers = papers.filter((p) => {
     if (!searchTerm.trim()) return true;
