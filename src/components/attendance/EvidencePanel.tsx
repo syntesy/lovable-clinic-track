@@ -82,6 +82,9 @@ export function EvidencePanel({ attendanceId, topicKey, isClosed }: EvidencePane
 
   return (
     <div className="space-y-4">
+      {/* Coherence Badge */}
+      <CoherenceBadgeWrapper snapshots={snapshots} panelResult={panelResult} />
+
       {/* Evidence Panel */}
       <Card>
         <CardHeader className="pb-3">
@@ -90,7 +93,12 @@ export function EvidencePanel({ attendanceId, topicKey, isClosed }: EvidencePane
               <BookOpen className="w-4 h-4" />
               Evidência
             </CardTitle>
-            <EvidenceMethodSeal size="sm" />
+            <div className="flex items-center gap-2">
+              <EvidenceMethodSeal size="sm" />
+              {snapshots.length > 0 && (
+                <EvidenceTimelineModal snapshots={snapshots} attendanceId={attendanceId} />
+              )}
+            </div>
           </div>
           <CardDescription>
             Tópico: <span className="font-medium text-foreground">{topicKey}</span>
