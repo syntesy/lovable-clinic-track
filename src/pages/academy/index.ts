@@ -46,3 +46,4 @@ export { default as EvidenceCentralPage } from './EvidenceCentralPage';
 export { default as AcademyAiTestsPage } from './AcademyAiTestsPage';
 // Watchlists
 export { default as AcademyWatchlistsPage } from './AcademyWatchlistsPage';
+export { default as AcademyPdfHealthPage } from './AcademyPdfHealthPage';
