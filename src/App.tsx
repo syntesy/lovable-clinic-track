@@ -108,7 +108,7 @@ import {
   MarketplacePage, MarketplaceDetailPage,
   MyPurchasesPage, CoursePlayerPage,
   AcademyFinancialAdmin, AcademyTermsPage, AcademyPrivacyPage, AcademyRefundPolicyPage,
-  AcademyLibraryPage, AcademyLibraryAdminPage,
+  AcademyLibraryPage, AcademyLibraryAdminPage, AcademyPapersAdminPage,
   AcademyFeedPage, AcademyCollectionsPage, AcademyCollectionDetailPage, AcademyNotificationsPage,
   EvidenceCentralPage,
 } from "./pages/academy";
