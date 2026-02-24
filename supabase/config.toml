@@ -56,3 +56,9 @@ verify_jwt = false
 
 [functions.reconcile-academy-access]
 verify_jwt = false
+
+[functions.academy-import-paper]
+verify_jwt = false
+
+[functions.academy-generate-curation]
+verify_jwt = false

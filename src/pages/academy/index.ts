@@ -34,6 +34,7 @@ export { default as AcademyRefundPolicyPage } from './AcademyRefundPolicyPage';
 // Library
 export { default as AcademyLibraryPage } from './AcademyLibraryPage';
 export { default as AcademyLibraryAdminPage } from './AcademyLibraryAdminPage';
+export { default as AcademyPapersAdminPage } from './AcademyPapersAdminPage';
 // Stage 7: Feed, Collections, Notifications
 export { default as AcademyFeedPage } from './AcademyFeedPage';
 export { default as AcademyCollectionsPage } from './AcademyCollectionsPage';
