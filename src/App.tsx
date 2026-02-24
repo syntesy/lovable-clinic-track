@@ -118,6 +118,7 @@ import { QAModeBanner } from "./components/QAModeBanner";
 import { ProtocolsList, ProtocolDetail, ProtocolEdit, ProtocolCreate, ConformidadeDashboard } from "./pages/governance";
 import { RequireGovernanceAccess } from "./components/governance/RequireGovernanceAccess";
 import DevRlsTest from "./pages/DevRlsTest";
+import EvidenceDashboardPage from "./pages/reghen/EvidenceDashboardPage";
 
 const queryClient = new QueryClient();
 
