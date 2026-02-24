@@ -39,6 +39,7 @@ interface PaperDetailModalProps {
   onPublish: () => void;
   onReject: () => void;
   isGenerating: boolean;
+  userRole?: string;
 }
 
 const ACTION_LABELS: Record<string, string> = {
