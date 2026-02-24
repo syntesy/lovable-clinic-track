@@ -19,6 +19,8 @@ export interface AcademyPaper {
   warnings: string[];
   created_by: string;
   curated_by: string | null;
+  curated_at: string | null;
+  generated_by_ai: boolean;
   published_by: string | null;
   published_at: string | null;
   created_at: string;

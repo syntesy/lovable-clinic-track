@@ -33,6 +33,8 @@ NORMALIZAÇÃO DE TAGS:
 
 Responda SEMPRE usando a função fornecida.`;
 
+const AI_MODEL = "google/gemini-2.5-flash";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -41,6 +43,7 @@ serve(async (req) => {
   const startTime = Date.now();
   let paperId: string | null = null;
   let userId: string | null = null;
+  let supabaseAuth: any = null;
 
   try {
     // Auth
@@ -51,13 +54,13 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
+    supabaseAuth = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claims, error: claimsErr } = await supabase.auth.getClaims(
+    const { data: claims, error: claimsErr } = await supabaseAuth.auth.getClaims(
       authHeader.replace("Bearer ", "")
     );
     if (claimsErr || !claims?.claims) {
@@ -76,7 +79,7 @@ serve(async (req) => {
       });
     }
 
-    const { data: paper, error: fetchErr } = await supabase
+    const { data: paper, error: fetchErr } = await supabaseAuth
       .from("academy_papers")
       .select("*")
       .eq("id", paper_id)
@@ -89,7 +92,7 @@ serve(async (req) => {
     }
 
     // Update status to curating
-    await supabase
+    await supabaseAuth
       .from("academy_papers")
       .update({ curation_status: "curating" })
       .eq("id", paper_id);
@@ -116,7 +119,7 @@ ${paper.pmid ? `PMID: ${paper.pmid}` : ""}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
@@ -161,18 +164,21 @@ ${paper.pmid ? `PMID: ${paper.pmid}` : ""}`;
       console.error("AI gateway error:", status, errText);
 
       if (status === 429) {
+        // Revert status before returning
+        await supabaseAuth.from("academy_papers").update({ curation_status: "draft" }).eq("id", paper_id);
         return new Response(
           JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (status === 402) {
+        await supabaseAuth.from("academy_papers").update({ curation_status: "draft" }).eq("id", paper_id);
         return new Response(
           JSON.stringify({ error: "Créditos insuficientes. Entre em contato com o suporte." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      throw new Error("Erro na API de IA");
+      throw new Error(`Erro na API de IA (status ${status})`);
     }
 
     const data = await response.json();
@@ -189,30 +195,32 @@ ${paper.pmid ? `PMID: ${paper.pmid}` : ""}`;
       ...(curationData.warnings || []),
     ];
 
-    // Update paper with curation
-    const { error: updateErr } = await supabase
+    // FIX: Update paper with curation + curated_at + generated_by_ai
+    const { error: updateErr } = await supabaseAuth
       .from("academy_papers")
       .update({
         curation_status: "ready",
         curation_data: curationData,
         warnings: allWarnings,
         curated_by: userId,
+        curated_at: new Date().toISOString(),
+        generated_by_ai: true,
       })
       .eq("id", paper_id);
 
     if (updateErr) throw new Error(`Erro ao salvar curadoria: ${updateErr.message}`);
 
-    // Log audit
+    // Log audit — FIX: use action='admin_curation' + model_used
     const duration_ms = Date.now() - startTime;
-    await supabase.from("academy_ai_logs").insert({
-      action: "curation",
+    await supabaseAuth.from("academy_ai_logs").insert({
+      action: "admin_curation",
       paper_id,
       user_id: userId,
       input: { title: paper.title, has_abstract: !!paper.abstract_text, abstract_length: paper.abstract_text?.length || 0 },
       output: curationData,
       status: "success",
       duration_ms,
-      model_used: "google/gemini-2.5-flash",
+      model_used: AI_MODEL,
     });
 
     return new Response(JSON.stringify({ curation: curationData, warnings: allWarnings }), {
@@ -220,30 +228,36 @@ ${paper.pmid ? `PMID: ${paper.pmid}` : ""}`;
     });
   } catch (error) {
     console.error("Curation error:", error);
+    const message = error instanceof Error ? error.message : "Erro desconhecido";
 
-    // Try to log failure and revert status
-    try {
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!
-      );
-      if (paperId) {
-        await supabase.from("academy_papers").update({ curation_status: "draft" }).eq("id", paperId);
+    // FIX: Use authenticated client for error recovery (not anon)
+    if (supabaseAuth && paperId) {
+      try {
+        await supabaseAuth.from("academy_papers")
+          .update({ curation_status: "draft" })
+          .eq("id", paperId);
+      } catch (revertErr) {
+        console.error("Failed to revert status:", revertErr);
       }
-      if (userId && paperId) {
-        await supabase.from("academy_ai_logs").insert({
-          action: "curation",
+    }
+
+    if (supabaseAuth && userId) {
+      try {
+        await supabaseAuth.from("academy_ai_logs").insert({
+          action: "admin_curation",
           paper_id: paperId,
           user_id: userId,
           input: { paper_id: paperId },
           status: "fail",
-          error_message: error instanceof Error ? error.message : "Unknown error",
+          error_message: message,
           duration_ms: Date.now() - startTime,
+          model_used: AI_MODEL,
         });
+      } catch (logErr) {
+        console.error("Failed to log error:", logErr);
       }
-    } catch {}
+    }
 
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
     return new Response(JSON.stringify({ error: message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

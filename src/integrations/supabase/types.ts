@@ -691,11 +691,13 @@ export type Database = {
           authors: string | null
           created_at: string
           created_by: string
+          curated_at: string | null
           curated_by: string | null
           curation_data: Json | null
           curation_status: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at: string | null
           doi: string | null
+          generated_by_ai: boolean
           id: string
           import_payload: Json | null
           import_source: Database["public"]["Enums"]["paper_import_source"]
@@ -714,11 +716,13 @@ export type Database = {
           authors?: string | null
           created_at?: string
           created_by: string
+          curated_at?: string | null
           curated_by?: string | null
           curation_data?: Json | null
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          generated_by_ai?: boolean
           id?: string
           import_payload?: Json | null
           import_source?: Database["public"]["Enums"]["paper_import_source"]
@@ -737,11 +741,13 @@ export type Database = {
           authors?: string | null
           created_at?: string
           created_by?: string
+          curated_at?: string | null
           curated_by?: string | null
           curation_data?: Json | null
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          generated_by_ai?: boolean
           id?: string
           import_payload?: Json | null
           import_source?: Database["public"]["Enums"]["paper_import_source"]
