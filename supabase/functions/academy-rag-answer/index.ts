@@ -77,7 +77,7 @@ function getAllowedStatuses(role: string): string[] {
   }
 }
 
-// Re-rank heuristic: boost/penalize based on filters and warnings
+// Re-rank heuristic: boost/penalize based on filters, warnings, and source_part
 function rerank(
   papers: any[],
   question: string,
@@ -113,6 +113,11 @@ function rerank(
         if (interventionsNorm.some((t: string) => t.toLowerCase().includes(inf))) boost += 0.1;
       }
     }
+
+    // Boost if paper has PDF chunks (richer content)
+    const chunks = p.best_chunks || [];
+    const hasPdfChunks = chunks.some((c: any) => c.source_part === "pdf");
+    if (hasPdfChunks) boost += 0.05;
 
     // Penalize animal/in vitro warnings when human clinical question
     if (isHumanClinical) {
