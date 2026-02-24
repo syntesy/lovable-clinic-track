@@ -715,6 +715,7 @@ const App = () => (
           <Route path="/academy/admin/ai-tests" element={<ProtectedRoute><EduLayout><AcademyAiTestsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/watchlists" element={<ProtectedRoute><EduLayout><AcademyWatchlistsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/pdf-health" element={<ProtectedRoute><EduLayout><AcademyPdfHealthPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/trilhas" element={<ProtectedRoute><EduLayout><AcademyTrilhasPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/colecoes/:id" element={<ProtectedRoute><EduLayout><AcademyCollectionDetailPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/notificacoes" element={<ProtectedRoute><EduLayout><AcademyNotificationsPage /></EduLayout></ProtectedRoute>} />
 

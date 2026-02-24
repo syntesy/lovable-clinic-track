@@ -379,6 +379,67 @@ export function PaperDetailModal({
               </div>
             </ScrollArea>
           </TabsContent>
+
+          <TabsContent value="reading" className="flex-1 min-h-0">
+            <ScrollArea className="h-full max-h-[60vh] -mx-6 px-6">
+              <div className="pb-4">
+                <GuidedReadingSection article={{
+                  study_type: curation?.study_type || paper.curation_data?.study_type || "",
+                  year: paper.year || 0,
+                  follow_up: curation?.follow_up,
+                  effect_summary: curation?.outcomes_principais,
+                  limitations: curation?.limitations,
+                  summary_short: curation?.summary_short || paper.abstract_text || "",
+                  summary_full: curation?.summary_full_md,
+                  abstract_text: paper.abstract_text,
+                  evidence_score: paper.evidence_score,
+                }} />
+                {!curation && (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Curadoria necessária para gerar guia de leitura.
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="ficha" className="flex-1 min-h-0">
+            <ScrollArea className="h-full max-h-[60vh] -mx-6 px-6">
+              <div className="pb-4">
+                <PaperSummaryCard
+                  article={{
+                    id: paper.id,
+                    title: paper.title,
+                    authors: paper.authors,
+                    journal: paper.journal,
+                    year: paper.year || 0,
+                    study_type: curation?.study_type || "",
+                    interventions: curation?.interventions_norm || [],
+                    pathologies: curation?.pathologies_norm || [],
+                    keywords: [],
+                    pubmed_url: paper.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}` : null,
+                    doi_url: paper.doi ? `https://doi.org/${paper.doi}` : null,
+                    abstract_text: paper.abstract_text,
+                    summary_short: curation?.summary_short || paper.abstract_text || "",
+                    summary_full: curation?.summary_full_md || null,
+                    effect_summary: curation?.outcomes_principais || null,
+                    limitations: curation?.limitations || null,
+                    follow_up: curation?.follow_up || null,
+                    external_id: null,
+                    ai_summary: null,
+                    evidence_score: paper.evidence_score,
+                    created_by: paper.created_by,
+                    created_at: paper.created_at,
+                    updated_at: paper.updated_at,
+                    is_published: paper.curation_status === "published",
+                    deleted_at: paper.deleted_at,
+                  }}
+                  open={true}
+                  onOpenChange={() => {}}
+                />
+              </div>
+            </ScrollArea>
+          </TabsContent>
         </Tabs>
 
         {/* Actions */}

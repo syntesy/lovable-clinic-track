@@ -47,3 +47,4 @@ export { default as AcademyAiTestsPage } from './AcademyAiTestsPage';
 // Watchlists
 export { default as AcademyWatchlistsPage } from './AcademyWatchlistsPage';
 export { default as AcademyPdfHealthPage } from './AcademyPdfHealthPage';
+export { default as AcademyTrilhasPage } from './AcademyTrilhasPage';
