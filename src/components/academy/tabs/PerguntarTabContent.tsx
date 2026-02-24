@@ -230,7 +230,6 @@ function CitationCard({
         <EvidenceMethodSeal className="mt-2" />
       </CardContent>
     </Card>
-    </Card>
   );
 }
 
