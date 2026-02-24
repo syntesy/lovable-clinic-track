@@ -277,19 +277,50 @@ serve(async (req) => {
       duration_ms: Date.now() - startTime,
     });
 
+    // Fetch REM layers for top results
+    const topPaperIds = topResults.map((r: any) => r.paper_id);
+    const { data: remData } = topPaperIds.length > 0
+      ? await supabaseService
+          .from("academy_papers")
+          .select("id, curation_data, evidence_score, evidence_label, evidence_score_breakdown")
+          .in("id", topPaperIds)
+      : { data: [] };
+    const remMap = new Map<string, any>();
+    for (const p of (remData || [])) {
+      remMap.set(p.id, p);
+    }
+
     // Build citations + evidence_snippets from hybrid results
     const paperMap = new Map<string, any>();
     const evidenceSnippets: any[] = [];
 
     for (const result of topResults) {
-      paperMap.set(result.paper_id, {
+      const remInfo = remMap.get(result.paper_id);
+      const remLayers = remInfo?.curation_data?.reghen_evidence_method?.layers;
+
+      const citation: any = {
         paper_id: result.paper_id,
         title: result.paper_title,
         year: result.paper_year,
         journal: result.paper_journal,
         doi: result.paper_doi,
         pmid: result.paper_pmid,
-      });
+      };
+
+      // Enrich with REM data when available
+      if (remLayers) {
+        citation.study_type = remLayers.layer_2_methodology?.study_type || null;
+        citation.applicability = remLayers.layer_4_applicability?.classification || null;
+        citation.applicability_justification = remLayers.layer_4_applicability?.justification || null;
+      }
+      if (remInfo?.evidence_score != null) {
+        citation.evidence_score = remInfo.evidence_score;
+      }
+      if (remInfo?.evidence_label) {
+        citation.evidence_label = remInfo.evidence_label;
+      }
+
+      paperMap.set(result.paper_id, citation);
 
       // Extract snippets from best_chunks (safe: max 3 per paper, max 400 chars)
       const chunks = result.best_chunks || [];
