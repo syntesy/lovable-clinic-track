@@ -145,6 +145,20 @@ export function useUpdatePaperStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         updateData.published_by = user?.id;
         updateData.published_at = new Date().toISOString();
+
+        // Compute evidence score on publish
+        const { data: paperForScore } = await supabase
+          .from("academy_papers")
+          .select("curation_data, warnings, abstract_text, year")
+          .eq("id", paperId)
+          .single();
+
+        if (paperForScore) {
+          const scoreResult = computeEvidenceScore(paperForScore as any);
+          updateData.evidence_score = scoreResult.score;
+          updateData.evidence_label = scoreResult.label;
+          updateData.evidence_notes = scoreResult.notes;
+        }
       }
 
       const { error } = await supabase
