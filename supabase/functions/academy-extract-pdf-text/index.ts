@@ -8,11 +8,13 @@ const corsHeaders = {
 };
 
 const OPENAI_EMBEDDING_MODEL = "text-embedding-3-small";
-const MIN_TEXT_LENGTH = 500;
+const SCAN_THRESHOLD_CHARS = 1500;
 const CHUNK_SIZE = 1200;
 const CHUNK_OVERLAP = 150;
+const MAX_PDF_CHARS = 250000;
+const MAX_CHUNKS_PER_PAPER = 200;
 
-function chunkText(text: string): { content: string; char_start: number; char_end: number }[] {
+function chunkText(text: string, maxChunks: number): { content: string; char_start: number; char_end: number }[] {
   const len = text.length;
   if (len <= CHUNK_SIZE) {
     return [{ content: text, char_start: 0, char_end: len }];
@@ -21,7 +23,7 @@ function chunkText(text: string): { content: string; char_start: number; char_en
   const chunks: { content: string; char_start: number; char_end: number }[] = [];
   let start = 0;
 
-  while (start < len) {
+  while (start < len && chunks.length < maxChunks) {
     const end = Math.min(start + CHUNK_SIZE, len);
     chunks.push({ content: text.slice(start, end), char_start: start, char_end: end });
     if (end >= len) break;
@@ -50,29 +52,21 @@ async function generateEmbeddings(texts: string[], apiKey: string): Promise<numb
   return data.data.map((d: any) => d.embedding);
 }
 
-// Simple PDF text extraction using basic parsing
-// Extracts text content from PDF binary data
 function extractTextFromPdf(pdfBytes: Uint8Array): string {
-  // Convert to string for text stream extraction
   const decoder = new TextDecoder("latin1");
   const rawStr = decoder.decode(pdfBytes);
   
   const textParts: string[] = [];
-  
-  // Extract text from PDF text streams (BT...ET blocks)
   const btEtRegex = /BT\s([\s\S]*?)ET/g;
   let match;
   
   while ((match = btEtRegex.exec(rawStr)) !== null) {
     const block = match[1];
-    // Extract text from Tj and TJ operators
     const tjRegex = /\(([^)]*)\)\s*Tj/g;
     let tjMatch;
     while ((tjMatch = tjRegex.exec(block)) !== null) {
       textParts.push(tjMatch[1]);
     }
-    
-    // TJ arrays
     const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
     let tjArrayMatch;
     while ((tjArrayMatch = tjArrayRegex.exec(block)) !== null) {
@@ -85,11 +79,9 @@ function extractTextFromPdf(pdfBytes: Uint8Array): string {
     }
   }
   
-  // Also try to extract from stream content
   const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
   while ((match = streamRegex.exec(rawStr)) !== null) {
     const content = match[1];
-    // Only process uncompressed streams that look like text
     if (content.includes("BT") && content.includes("ET")) {
       const innerBtEt = /BT\s([\s\S]*?)ET/g;
       let innerMatch;
@@ -104,19 +96,14 @@ function extractTextFromPdf(pdfBytes: Uint8Array): string {
     }
   }
   
-  // Clean up extracted text
   let text = textParts.join(" ");
-  
-  // Decode PDF escape sequences
   text = text
-    .replace(/\n/g, "\n")
-    .replace(/\r/g, "\r")
-    .replace(/\t/g, "\t")
-    .replace(/\\(/g, "(")
-    .replace(/\\)/g, ")")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\\(/g, "(")
+    .replace(/\\\)/g, ")")
     .replace(/\\\\/g, "\\");
-  
-  // Clean up whitespace
   text = text.replace(/\s+/g, " ").trim();
   
   return text;
@@ -196,15 +183,23 @@ serve(async (req) => {
     }
 
     const pdfBytes = new Uint8Array(await pdfData.arrayBuffer());
-
-    // Extract text
     let extractedText = extractTextFromPdf(pdfBytes);
+    const extractedWords = extractedText.split(/\s+/).filter(w => w.length > 0).length;
+    const warnings: string[] = [];
+    let scanSuspected = false;
 
-    // If basic extraction fails, try using Lovable AI for OCR/extraction
-    if (extractedText.length < MIN_TEXT_LENGTH) {
-      // Log warning but don't fail
-      const warning = `PDF com baixo texto extraível (${extractedText.length} chars). Possível PDF digitalizado (scan).`;
-      
+    // Scan detection
+    if (extractedText.length < SCAN_THRESHOLD_CHARS) {
+      scanSuspected = true;
+      const warning = `Texto insuficiente extraído (${extractedText.length} chars, ${extractedWords} palavras) — PDF pode ser escaneado (scan).`;
+      warnings.push(warning);
+
+      // Update file record with scan_suspected
+      await supabaseService
+        .from("academy_paper_files")
+        .update({ scan_suspected: true })
+        .eq("id", fileRecord.id);
+
       // Update paper warnings
       const { data: paper } = await supabaseService
         .from("academy_papers")
@@ -213,10 +208,11 @@ serve(async (req) => {
         .single();
 
       const currentWarnings = (paper?.warnings as string[]) || [];
-      if (!currentWarnings.includes(warning)) {
+      const scanWarning = "Texto insuficiente extraído — PDF pode ser escaneado (scan).";
+      if (!currentWarnings.some(w => w.includes("escaneado"))) {
         await supabaseService
           .from("academy_papers")
-          .update({ warnings: [...currentWarnings, warning] })
+          .update({ warnings: [...currentWarnings, scanWarning] })
           .eq("id", paperId);
       }
 
@@ -225,7 +221,12 @@ serve(async (req) => {
         paper_id: paperId,
         user_id: userId,
         input: { paper_id: paperId, file_id: fileRecord.id },
-        output: { warning, extracted_length: extractedText.length },
+        output: { 
+          warning, 
+          extracted_chars: extractedText.length, 
+          extracted_words: extractedWords,
+          scan_suspected: true 
+        },
         status: "success",
         duration_ms: Date.now() - startTime,
       });
@@ -234,10 +235,26 @@ serve(async (req) => {
         extracted: false,
         warning,
         chars_extracted: extractedText.length,
+        words_extracted: extractedWords,
+        scan_suspected: true,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Cost cap: truncate text
+    let truncated = false;
+    if (extractedText.length > MAX_PDF_CHARS) {
+      extractedText = extractedText.slice(0, MAX_PDF_CHARS);
+      truncated = true;
+      warnings.push(`PDF muito longo — indexação parcial aplicada (limite: ${MAX_PDF_CHARS} chars).`);
+    }
+
+    // Update scan_suspected = false since we have good text
+    await supabaseService
+      .from("academy_paper_files")
+      .update({ scan_suspected: false })
+      .eq("id", fileRecord.id);
 
     // Save full text for audit
     await supabaseService
@@ -250,14 +267,31 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       }, { onConflict: "paper_id" });
 
-    // Chunk the text
-    const chunks = chunkText(extractedText);
+    // Chunk the text with max cap
+    const chunks = chunkText(extractedText, MAX_CHUNKS_PER_PAPER);
+    if (chunks.length >= MAX_CHUNKS_PER_PAPER) {
+      warnings.push(`Número de chunks limitado a ${MAX_CHUNKS_PER_PAPER} (limite de custo).`);
+    }
+
+    // Update paper warnings if any cost warnings
+    if (warnings.length > 0) {
+      const { data: paper } = await supabaseService
+        .from("academy_papers")
+        .select("warnings")
+        .eq("id", paperId)
+        .single();
+      const currentWarnings = (paper?.warnings as string[]) || [];
+      const newWarnings = [...currentWarnings, ...warnings.filter(w => !currentWarnings.includes(w))];
+      await supabaseService
+        .from("academy_papers")
+        .update({ warnings: newWarnings })
+        .eq("id", paperId);
+    }
 
     // Generate embeddings
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
-    // Process in batches of 20 to avoid API limits
     const batchSize = 20;
     const allEmbeddings: number[][] = [];
     for (let i = 0; i < chunks.length; i += batchSize) {
@@ -266,7 +300,7 @@ serve(async (req) => {
       allEmbeddings.push(...embeddings);
     }
 
-    // Delete old PDF chunks only (keep abstract chunks)
+    // Delete old PDF chunks only
     await supabaseService
       .from("academy_chunks")
       .delete()
@@ -290,13 +324,18 @@ serve(async (req) => {
 
     if (insertErr) throw new Error(`Erro ao inserir chunks: ${insertErr.message}`);
 
-    // Log success
     await supabaseService.from("academy_ai_logs").insert({
       action: "pdf_extract_index",
       paper_id: paperId,
       user_id: userId,
       input: { paper_id: paperId, file_id: fileRecord.id, text_length: extractedText.length },
-      output: { chunks_created: chunks.length, model: OPENAI_EMBEDDING_MODEL },
+      output: { 
+        chunks_created: chunks.length, 
+        chars_indexed: extractedText.length,
+        model: OPENAI_EMBEDDING_MODEL, 
+        truncated,
+        warnings,
+      },
       status: "success",
       duration_ms: Date.now() - startTime,
       model_used: OPENAI_EMBEDDING_MODEL,
@@ -305,7 +344,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       extracted: true,
       chars_extracted: extractedText.length,
+      words_extracted: extractedWords,
       chunks_created: chunks.length,
+      truncated,
+      warnings,
+      scan_suspected: false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

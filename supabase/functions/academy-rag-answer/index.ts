@@ -12,6 +12,8 @@ const AI_MODEL = "google/gemini-2.5-flash";
 const TOP_K_HYBRID = 30;
 const TOP_K_FINAL = 10;
 const MIN_SIMILARITY = 0.25;
+const MAX_SNIPPETS_PER_PAPER = 3;
+const MAX_SNIPPET_CHARS = 400;
 
 const RATE_LIMITS: Record<string, number> = {
   student: 20,
@@ -289,17 +291,22 @@ serve(async (req) => {
         pmid: result.paper_pmid,
       });
 
-      // Extract snippets from best_chunks
+      // Extract snippets from best_chunks (safe: max 3 per paper, max 400 chars)
       const chunks = result.best_chunks || [];
-      for (const chunk of (Array.isArray(chunks) ? chunks.slice(0, 3) : [])) {
-        const snippet = (chunk.content || "").length > 250
-          ? (chunk.content || "").slice(0, 247) + "…"
-          : chunk.content || "";
+      let paperSnippetCount = 0;
+      for (const chunk of (Array.isArray(chunks) ? chunks : [])) {
+        if (paperSnippetCount >= MAX_SNIPPETS_PER_PAPER) break;
+        const rawContent = chunk.content || "";
+        const snippet = rawContent.length > MAX_SNIPPET_CHARS
+          ? rawContent.slice(0, MAX_SNIPPET_CHARS - 1) + "…"
+          : rawContent;
         evidenceSnippets.push({
           paper_id: result.paper_id,
           chunk_id: chunk.chunk_id || null,
           snippet,
           similarity: parseFloat((chunk.similarity || 0).toFixed(4)),
+        });
+        paperSnippetCount++;
         });
       }
     }
