@@ -10,6 +10,7 @@ import slideBg03 from "@/assets/slide-bg-ciencia.png";
 import slideBg04 from "@/assets/slide-bg-04.jpg";
 import slideBg05 from "@/assets/slide-bg-resultados.png";
 import slideBg06 from "@/assets/slide-bg-06.jpg";
+import slideBgIntegracao from "@/assets/slide-bg-integracao.png";
 
 interface Slide {
   label: string;
@@ -96,7 +97,7 @@ const slides: Slide[] = [
     ctaLink: "/integracao",
     cta2: "Criar conta",
     cta2Link: "__signup__",
-    bg: heroBg,
+    bg: slideBgIntegracao,
   },
 ];
 
