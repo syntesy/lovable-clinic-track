@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, FileText, ClipboardCopy, Download } from "lucide-react";
 import { toast } from "sonner";
 import type { AcademyArticle } from "@/hooks/useAcademyArticles";
-import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
+import { EvidenceMethodSeal, EVIDENCE_METHOD_SEAL_TEXT } from "./EvidenceMethodSeal";
 
 interface PaperSummaryCardProps {
   article: AcademyArticle;
