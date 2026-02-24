@@ -80,3 +80,9 @@ verify_jwt = false
 
 [functions.academy-migrate-reghen-method]
 verify_jwt = false
+
+[functions.reghen-evidence-panel]
+verify_jwt = false
+
+[functions.reghen-evidence-answer]
+verify_jwt = false

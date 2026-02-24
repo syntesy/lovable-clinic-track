@@ -5430,6 +5430,111 @@ export type Database = {
         }
         Relationships: []
       }
+      reghen_evidence_links: {
+        Row: {
+          attendance_id: string
+          created_at: string
+          created_by: string
+          id: string
+          intervention_code: string | null
+          pathology_id: string | null
+          patient_id: string | null
+          topic_key: string
+        }
+        Insert: {
+          attendance_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          intervention_code?: string | null
+          pathology_id?: string | null
+          patient_id?: string | null
+          topic_key: string
+        }
+        Update: {
+          attendance_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          intervention_code?: string | null
+          pathology_id?: string | null
+          patient_id?: string | null
+          topic_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reghen_evidence_links_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reghen_evidence_links_pathology_id_fkey"
+            columns: ["pathology_id"]
+            isOneToOne: false
+            referencedRelation: "pathologies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reghen_evidence_links_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reghen_evidence_snapshots: {
+        Row: {
+          answer_md: string | null
+          attendance_id: string
+          created_at: string
+          created_by: string
+          evidence_profile: Json | null
+          id: string
+          papers: Json
+          query_text: string | null
+          retrieval_mode: string
+          snippets: Json | null
+          topic_key: string
+        }
+        Insert: {
+          answer_md?: string | null
+          attendance_id: string
+          created_at?: string
+          created_by: string
+          evidence_profile?: Json | null
+          id?: string
+          papers?: Json
+          query_text?: string | null
+          retrieval_mode: string
+          snippets?: Json | null
+          topic_key: string
+        }
+        Update: {
+          answer_md?: string | null
+          attendance_id?: string
+          created_at?: string
+          created_by?: string
+          evidence_profile?: Json | null
+          id?: string
+          papers?: Json
+          query_text?: string | null
+          retrieval_mode?: string
+          snippets?: Json | null
+          topic_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reghen_evidence_snapshots_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registry_access_logs: {
         Row: {
           access_details: Json | null

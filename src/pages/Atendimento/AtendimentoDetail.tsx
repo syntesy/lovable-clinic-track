@@ -52,6 +52,9 @@ import { PrescriptionFormModal } from "@/components/patient/PrescriptionFormModa
 import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
 import { PatientProceduresList } from "@/components/patient/PatientProceduresList";
 import { ClinicalStandardCard } from "@/components/clinical-standard";
+import { EvidencePanel } from "@/components/attendance/EvidencePanel";
+import { buildTopicKey } from "@/utils/topicKey";
+import { useCreateEvidenceLink } from "@/hooks/useReghenEvidence";
 
 const AtendimentoDetail = () => {
   const { attendanceId } = useParams<{ attendanceId: string }>();
@@ -668,6 +671,45 @@ const AtendimentoDetail = () => {
     await closeAttendance.mutateAsync(attendance.id);
   };
 
+  // Derive topic_key from attendance pathology + intervention type
+  const createEvidenceLink = useCreateEvidenceLink();
+
+  // Fetch pathology label if needed
+  const { data: pathologyLabel } = useQuery({
+    queryKey: ["pathology-label", dbAttendancePathology?.pathology_id],
+    queryFn: async () => {
+      if (!dbAttendancePathology?.pathology_id) return null;
+      const { data } = await supabase
+        .from("pathologies")
+        .select("label")
+        .eq("id", dbAttendancePathology.pathology_id)
+        .single();
+      return data?.label || null;
+    },
+    enabled: !!dbAttendancePathology?.pathology_id && !dbAttendancePathology?.custom_pathology_label,
+  });
+  
+  const topicKey = useMemo(() => {
+    if (!dbAttendancePathology) return null;
+    const pathLabel = dbAttendancePathology.custom_pathology_label || pathologyLabel || null;
+    if (!pathLabel) return null;
+    const intervention = attendance?.involves_orthobiologics ? "PRP" : "FISIOTERAPIA";
+    return buildTopicKey(intervention, pathLabel);
+  }, [dbAttendancePathology, pathologyLabel, attendance?.involves_orthobiologics]);
+
+  // Auto-create evidence link when topic_key changes
+  useEffect(() => {
+    if (!topicKey || !attendanceId || isClosed) return;
+    createEvidenceLink.mutate({
+      attendanceId,
+      patientId: attendance?.patient_id,
+      pathologyId: dbAttendancePathology?.pathology_id || undefined,
+      interventionCode: attendance?.involves_orthobiologics ? "PRP" : "FISIOTERAPIA",
+      topicKey,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicKey, attendanceId]);
+
   // Determine current clinical status (S0-S3)
   const currentStatus: AttendanceStatus = useMemo(() => {
     if (!attendance?.involves_orthobiologics) return "S1";
@@ -850,6 +892,15 @@ const AtendimentoDetail = () => {
               orthobiologicPrevValidationError={orthobiologicPrevValidationError}
               orthobiologicPrevOtherValidationError={orthobiologicPrevOtherValidationError}
             />
+
+            {/* Evidence Panel (Reghen Evidence Method™) */}
+            {attendanceId && (
+              <EvidencePanel
+                attendanceId={attendanceId}
+                topicKey={topicKey}
+                isClosed={isClosed}
+              />
+            )}
           </div>
         );
 
@@ -1122,6 +1173,15 @@ const AtendimentoDetail = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Evidence used block (Reghen Evidence Method™) */}
+            {attendanceId && (
+              <EvidencePanel
+                attendanceId={attendanceId}
+                topicKey={topicKey}
+                isClosed={true}
+              />
+            )}
           </div>
         );
       }
