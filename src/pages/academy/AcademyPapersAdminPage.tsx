@@ -222,6 +222,11 @@ export default function AcademyPapersAdminPage() {
                               {paper.warnings.length} aviso(s)
                             </Badge>
                           )}
+                          {paper.evidence_score != null && (
+                            <Badge variant="outline" className={`gap-0.5 text-[10px] ${paper.evidence_score >= 70 ? "text-emerald-400" : paper.evidence_score >= 40 ? "text-yellow-400" : "text-red-400"}`}>
+                              ⚡ {paper.evidence_score}
+                            </Badge>
+                          )}
                         </div>
                         <h3 className="font-semibold text-foreground line-clamp-2">{paper.title}</h3>
                         <p className="text-xs text-muted-foreground mt-1">

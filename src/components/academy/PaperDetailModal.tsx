@@ -81,6 +81,27 @@ export function PaperDetailModal({
               </a>
             )}
           </div>
+          {/* Evidence Score */}
+          {paper.evidence_score != null && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge
+                variant="outline"
+                className={`text-xs gap-1 ${
+                  paper.evidence_score >= 70
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : paper.evidence_score >= 40
+                    ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
+                    : "bg-red-500/10 text-red-400 border-red-500/30"
+                }`}
+              >
+                Score: {paper.evidence_score}/100
+              </Badge>
+              {paper.evidence_label && (
+                <Badge variant="outline" className="text-xs">{paper.evidence_label}</Badge>
+              )}
+              <span className="text-[10px] text-muted-foreground italic">heurístico</span>
+            </div>
+          )}
         </DialogHeader>
 
         <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
