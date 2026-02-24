@@ -750,6 +750,85 @@ export type Database = {
           },
         ]
       }
+      academy_paper_files: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          id: string
+          mime_type: string
+          paper_id: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          id?: string
+          mime_type?: string
+          paper_id: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          id?: string
+          mime_type?: string
+          paper_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_paper_files_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_paper_fulltext: {
+        Row: {
+          char_count: number | null
+          created_at: string | null
+          extracted_text: string
+          extraction_method: string | null
+          id: string
+          paper_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          char_count?: number | null
+          created_at?: string | null
+          extracted_text: string
+          extraction_method?: string | null
+          id?: string
+          paper_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          char_count?: number | null
+          created_at?: string | null
+          extracted_text?: string
+          extraction_method?: string | null
+          id?: string
+          paper_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_paper_fulltext_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: true
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_paper_revisions: {
         Row: {
           action: string
