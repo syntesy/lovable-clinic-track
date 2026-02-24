@@ -30,6 +30,12 @@ import { usePaperRevisions } from "@/hooks/useAcademyPapers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { GuidedReadingSection } from "./GuidedReadingSection";
+import { PaperSummaryCard } from "./PaperSummaryCard";
+import { usePaperRevisions } from "@/hooks/useAcademyPapers";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 interface PaperDetailModalProps {
   paper: AcademyPaper;
