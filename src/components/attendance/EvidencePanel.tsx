@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Loader2, BookOpen, Search, ShieldCheck, CheckCircle, MessageSquare, Info } from "lucide-react";
 import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
+import { EvidenceTimelineModal } from "@/components/attendance/EvidenceTimelineModal";
+import { EvidenceCoherenceBadge } from "@/components/attendance/EvidenceCoherenceBadge";
 import {
   useEvidenceLinks,
   useEvidenceSnapshots,
