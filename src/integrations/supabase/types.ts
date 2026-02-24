@@ -806,6 +806,9 @@ export type Database = {
           curation_status: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at: string | null
           doi: string | null
+          evidence_label: string | null
+          evidence_notes: string | null
+          evidence_score: number | null
           fingerprint: string | null
           generated_by_ai: boolean
           id: string
@@ -817,6 +820,7 @@ export type Database = {
           published_at: string | null
           published_by: string | null
           title: string
+          tsv: unknown
           updated_at: string
           warnings: string[] | null
           year: number | null
@@ -832,6 +836,9 @@ export type Database = {
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          evidence_label?: string | null
+          evidence_notes?: string | null
+          evidence_score?: number | null
           fingerprint?: string | null
           generated_by_ai?: boolean
           id?: string
@@ -843,6 +850,7 @@ export type Database = {
           published_at?: string | null
           published_by?: string | null
           title: string
+          tsv?: unknown
           updated_at?: string
           warnings?: string[] | null
           year?: number | null
@@ -858,6 +866,9 @@ export type Database = {
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          evidence_label?: string | null
+          evidence_notes?: string | null
+          evidence_score?: number | null
           fingerprint?: string | null
           generated_by_ai?: boolean
           id?: string
@@ -869,6 +880,7 @@ export type Database = {
           published_at?: string | null
           published_by?: string | null
           title?: string
+          tsv?: unknown
           updated_at?: string
           warnings?: string[] | null
           year?: number | null
@@ -1092,6 +1104,39 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      academy_pubmed_watchlists: {
+        Row: {
+          created_at: string
+          created_by: string
+          frequency: string
+          id: string
+          last_run_at: string | null
+          last_run_results: Json | null
+          name: string
+          query: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          last_run_results?: Json | null
+          name: string
+          query: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          last_run_results?: Json | null
+          name?: string
+          query?: string
         }
         Relationships: []
       }
@@ -7348,6 +7393,27 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      hybrid_match_papers: {
+        Args: {
+          allowed_statuses: string[]
+          match_count: number
+          query_embedding: string
+          query_text: string
+        }
+        Returns: {
+          best_chunks: Json
+          paper_curation_data: Json
+          paper_doi: string
+          paper_id: string
+          paper_journal: string
+          paper_pmid: string
+          paper_title: string
+          paper_warnings: string[]
+          paper_year: number
+          score_final: number
+          source: string
+        }[]
       }
       is_academy_admin: { Args: { _user_id: string }; Returns: boolean }
       is_approved_mentor: { Args: never; Returns: boolean }
