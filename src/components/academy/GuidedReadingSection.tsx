@@ -124,10 +124,12 @@ export function GuidedReadingSection({ article }: GuidedReadingSectionProps) {
           </div>
         ) : null}
 
-        <p className="text-[10px] text-muted-foreground italic mt-2">
-          ⚕️ Guia gerado automaticamente com base nos metadados. Informações ausentes não foram preenchidas.
-        </p>
-      </CardContent>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-[10px] text-muted-foreground italic">
+            ⚕️ Guia gerado automaticamente com base nos metadados. Informações ausentes não foram preenchidas.
+          </p>
+          <EvidenceMethodSeal />
+        </div>
     </Card>
   );
 }
