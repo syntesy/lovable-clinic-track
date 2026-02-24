@@ -42,6 +42,7 @@ import {
   useSoftDeletePaper,
   type AcademyPaper,
 } from "@/hooks/useAcademyPapers";
+import { useIndexPaper } from "@/hooks/useAcademyRag";
 import { toast } from "sonner";
 import { PaperDetailModal } from "@/components/academy/PaperDetailModal";
 
@@ -67,6 +68,7 @@ export default function AcademyPapersAdminPage() {
   const curationMutation = useGenerateCuration();
   const updateStatusMutation = useUpdatePaperStatus();
   const deleteMutation = useSoftDeletePaper();
+  const { indexPaper } = useIndexPaper();
 
   const filteredPapers = papers.filter((p) => {
     if (!searchTerm.trim()) return true;
@@ -114,6 +116,20 @@ export default function AcademyPapersAdminPage() {
     try {
       await updateStatusMutation.mutateAsync({ paperId: paper.id, status: newStatus });
       toast.success(`Status alterado para "${STATUS_CONFIG[newStatus]?.label || newStatus}".`);
+
+      // Auto-index when publishing
+      if (newStatus === "published") {
+        try {
+          const result = await indexPaper(paper.id);
+          if (result?.indexed) {
+            toast.success(`Paper indexado para RAG (${result.chunks_created} chunks).`);
+          } else if (result?.warning) {
+            toast.warning(result.warning);
+          }
+        } catch {
+          toast.warning("Paper publicado, mas indexação RAG falhou. Pode ser reindexado depois.");
+        }
+      }
     } catch (err: any) {
       toast.error(err.message || "Erro ao alterar status.");
     }

@@ -2,7 +2,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Brain, Search, Microscope, FolderOpen, Rss } from "lucide-react";
+import { ArrowLeft, Brain, Search, Microscope, FolderOpen, Rss, MessageSquare } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -11,8 +11,9 @@ import AcademyLibraryContent from "@/components/academy/tabs/ExplorarTabContent"
 import AplicarTabContent from "@/components/academy/tabs/AplicarTabContent";
 import ColecoesTabContent from "@/components/academy/tabs/ColecoesTabContent";
 import FeedTabContent from "@/components/academy/tabs/FeedTabContent";
+import PerguntarTabContent from "@/components/academy/tabs/PerguntarTabContent";
 
-const VALID_TABS = ["explorar", "aplicar", "colecoes", "feed"] as const;
+const VALID_TABS = ["explorar", "aplicar", "colecoes", "feed", "perguntar"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 export default function EvidenceCentralPage() {
@@ -70,6 +71,9 @@ export default function EvidenceCentralPage() {
               <TabsTrigger value="feed" className="gap-1.5 data-[state=active]:bg-primary/10">
                 <Rss className="w-3.5 h-3.5" /> Feed
               </TabsTrigger>
+              <TabsTrigger value="perguntar" className="gap-1.5 data-[state=active]:bg-primary/10">
+                <MessageSquare className="w-3.5 h-3.5" /> Perguntar
+              </TabsTrigger>
             </TabsList>
           </div>
         </div>
@@ -85,6 +89,9 @@ export default function EvidenceCentralPage() {
         </TabsContent>
         <TabsContent value="feed" className="mt-0">
           <FeedTabContent />
+        </TabsContent>
+        <TabsContent value="perguntar" className="mt-0">
+          <PerguntarTabContent />
         </TabsContent>
       </Tabs>
     </div>

@@ -62,3 +62,9 @@ verify_jwt = false
 
 [functions.academy-generate-curation]
 verify_jwt = false
+
+[functions.academy-index-paper]
+verify_jwt = false
+
+[functions.academy-rag-answer]
+verify_jwt = false
