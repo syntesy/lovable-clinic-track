@@ -757,6 +757,7 @@ export type Database = {
           id: string
           mime_type: string
           paper_id: string
+          scan_suspected: boolean | null
           size_bytes: number | null
           storage_path: string
           uploaded_by: string | null
@@ -767,6 +768,7 @@ export type Database = {
           id?: string
           mime_type?: string
           paper_id: string
+          scan_suspected?: boolean | null
           size_bytes?: number | null
           storage_path: string
           uploaded_by?: string | null
@@ -777,6 +779,7 @@ export type Database = {
           id?: string
           mime_type?: string
           paper_id?: string
+          scan_suspected?: boolean | null
           size_bytes?: number | null
           storage_path?: string
           uploaded_by?: string | null
