@@ -118,6 +118,7 @@ import { QAModeBanner } from "./components/QAModeBanner";
 import { ProtocolsList, ProtocolDetail, ProtocolEdit, ProtocolCreate, ConformidadeDashboard } from "./pages/governance";
 import { RequireGovernanceAccess } from "./components/governance/RequireGovernanceAccess";
 import DevRlsTest from "./pages/DevRlsTest";
+import EvidenceDashboardPage from "./pages/reghen/EvidenceDashboardPage";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +165,7 @@ const App = () => (
           <Route path="/atendimentos" element={<ProtectedRoute><Layout><AtendimentosList /></Layout></ProtectedRoute>} />
           <Route path="/atendimentos/novo" element={<ProtectedRoute><Layout><NovoAtendimento /></Layout></ProtectedRoute>} />
           <Route path="/atendimentos/:attendanceId" element={<ProtectedRoute><Layout><AtendimentoDetail /></Layout></ProtectedRoute>} />
+          <Route path="/reghen/evidence-dashboard" element={<ProtectedRoute><Layout><EvidenceDashboardPage /></Layout></ProtectedRoute>} />
           
           {/* Daily Clinical Dashboard */}
           <Route

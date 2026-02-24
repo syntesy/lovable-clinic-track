@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Loader2, BookOpen, Search, ShieldCheck, CheckCircle, MessageSquare, Info } from "lucide-react";
 import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
+import { EvidenceTimelineModal } from "@/components/attendance/EvidenceTimelineModal";
+import { EvidenceCoherenceBadge } from "@/components/attendance/EvidenceCoherenceBadge";
 import {
   useEvidenceLinks,
   useEvidenceSnapshots,
@@ -18,6 +20,25 @@ interface EvidencePanelProps {
   attendanceId: string;
   topicKey: string | null;
   isClosed: boolean;
+}
+
+function CoherenceBadgeWrapper({ snapshots, panelResult }: { snapshots: any[]; panelResult: EvidencePanelResult | null }) {
+  const hasInsufficient = useMemo(() => {
+    // Check snapshots for insufficient evidence
+    const fromSnapshots = snapshots.some((s: any) =>
+      s.answer_md?.toLowerCase().includes("insuficiente")
+    );
+    // Check panel result
+    const fromPanel = panelResult?.short_summary?.toLowerCase().includes("insuficiente") ?? false;
+    return fromSnapshots || fromPanel;
+  }, [snapshots, panelResult]);
+
+  return (
+    <EvidenceCoherenceBadge
+      snapshotCount={snapshots.length}
+      hasInsufficientEvidence={hasInsufficient}
+    />
+  );
 }
 
 export function EvidencePanel({ attendanceId, topicKey, isClosed }: EvidencePanelProps) {
@@ -80,6 +101,9 @@ export function EvidencePanel({ attendanceId, topicKey, isClosed }: EvidencePane
 
   return (
     <div className="space-y-4">
+      {/* Coherence Badge */}
+      <CoherenceBadgeWrapper snapshots={snapshots} panelResult={panelResult} />
+
       {/* Evidence Panel */}
       <Card>
         <CardHeader className="pb-3">
@@ -88,7 +112,12 @@ export function EvidencePanel({ attendanceId, topicKey, isClosed }: EvidencePane
               <BookOpen className="w-4 h-4" />
               Evidência
             </CardTitle>
-            <EvidenceMethodSeal size="sm" />
+            <div className="flex items-center gap-2">
+              <EvidenceMethodSeal size="sm" />
+              {snapshots.length > 0 && (
+                <EvidenceTimelineModal snapshots={snapshots} attendanceId={attendanceId} />
+              )}
+            </div>
           </div>
           <CardDescription>
             Tópico: <span className="font-medium text-foreground">{topicKey}</span>
