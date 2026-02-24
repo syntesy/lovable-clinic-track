@@ -250,6 +250,44 @@ export type Database = {
         }
         Relationships: []
       }
+      academy_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          embedding: string
+          id: string
+          paper_id: string
+          source_part: string
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          embedding: string
+          id?: string
+          paper_id: string
+          source_part?: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          embedding?: string
+          id?: string
+          paper_id?: string
+          source_part?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_chunks_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_course_lessons: {
         Row: {
           created_at: string | null
@@ -7263,6 +7301,26 @@ export type Database = {
         Returns: string
       }
       mark_missed_followups: { Args: never; Returns: number }
+      match_academy_chunks: {
+        Args: {
+          allowed_statuses?: string[]
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          paper_authors: string
+          paper_doi: string
+          paper_id: string
+          paper_journal: string
+          paper_pmid: string
+          paper_status: string
+          paper_title: string
+          paper_year: number
+          similarity: number
+        }[]
+      }
       mentor_has_taxonomies: { Args: { mentor_id: string }; Returns: boolean }
       mentor_has_valid_seal: { Args: { mentor_id: string }; Returns: boolean }
       normalize_evidence_tag: { Args: { tag: string }; Returns: string }
