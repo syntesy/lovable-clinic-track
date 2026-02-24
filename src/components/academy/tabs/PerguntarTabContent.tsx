@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Send, Brain, ExternalLink, AlertTriangle, RotateCcw, FileSearch } from "lucide-react";
 import { useAcademyRag, type RagCitation, type EvidenceSnippet } from "@/hooks/useAcademyRag";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 export default function PerguntarTabContent() {
   const [question, setQuestion] = useState("");
