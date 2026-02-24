@@ -170,7 +170,6 @@ function CitationCard({ citation }: { citation: RagCitation }) {
 }
 
 function MarkdownRenderer({ content }: { content: string }) {
-  // Simple markdown renderer for headers, bold, italic, lists, horizontal rules
   const lines = content.split("\n");
 
   return (
@@ -179,11 +178,15 @@ function MarkdownRenderer({ content }: { content: string }) {
         const trimmed = line.trim();
         if (!trimmed) return <div key={i} className="h-2" />;
         if (trimmed === "---") return <hr key={i} className="border-border my-4" />;
-        if (trimmed.startsWith("## ")) return <h2 key={i} className="text-base font-semibold text-foreground mt-4 mb-2">{formatInline(trimmed.slice(3))}</h2>;
-        if (trimmed.startsWith("# ")) return <h1 key={i} className="text-lg font-bold text-foreground mt-4 mb-2">{formatInline(trimmed.slice(2))}</h1>;
-        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) return <li key={i} className="ml-4 text-sm text-muted-foreground list-disc">{formatInline(trimmed.slice(2))}</li>;
-        if (/^\d+\.\s/.test(trimmed)) return <li key={i} className="ml-4 text-sm text-muted-foreground list-decimal">{formatInline(trimmed.replace(/^\d+\.\s/, ""))}</li>;
-        return <p key={i} className="text-sm text-muted-foreground leading-relaxed">{formatInline(trimmed)}</p>;
+        if (trimmed.startsWith("## "))
+          return <h2 key={i} className="text-base font-semibold text-foreground mt-4 mb-2" dangerouslySetInnerHTML={{ __html: formatInline(trimmed.slice(3)) }} />;
+        if (trimmed.startsWith("# "))
+          return <h1 key={i} className="text-lg font-bold text-foreground mt-4 mb-2" dangerouslySetInnerHTML={{ __html: formatInline(trimmed.slice(2)) }} />;
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* "))
+          return <li key={i} className="ml-4 text-sm text-muted-foreground list-disc" dangerouslySetInnerHTML={{ __html: formatInline(trimmed.slice(2)) }} />;
+        if (/^\d+\.\s/.test(trimmed))
+          return <li key={i} className="ml-4 text-sm text-muted-foreground list-decimal" dangerouslySetInnerHTML={{ __html: formatInline(trimmed.replace(/^\d+\.\s/, "")) }} />;
+        return <p key={i} className="text-sm text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: formatInline(trimmed) }} />;
       })}
     </div>
   );
