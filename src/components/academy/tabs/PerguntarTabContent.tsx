@@ -229,10 +229,7 @@ function CitationCard({
         </div>
         <EvidenceMethodSeal className="mt-2" />
       </CardContent>
-            </Button>
-          )}
-        </div>
-      </CardContent>
+    </Card>
     </Card>
   );
 }

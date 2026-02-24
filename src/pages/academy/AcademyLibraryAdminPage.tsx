@@ -231,6 +231,7 @@ export default function AcademyLibraryAdminPage() {
                         )}
                         <Badge variant="outline">{article.study_type}</Badge>
                         {article.is_published && <EvidenceMethodSeal />}
+                      </div>
                       <h3 className="font-semibold text-foreground line-clamp-1">{article.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
                         {article.authors} • {article.year} • {article.journal}
