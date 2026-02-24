@@ -12,6 +12,8 @@ const AI_MODEL = "google/gemini-2.5-flash";
 const TOP_K_HYBRID = 30;
 const TOP_K_FINAL = 10;
 const MIN_SIMILARITY = 0.25;
+const MAX_SNIPPETS_PER_PAPER = 3;
+const MAX_SNIPPET_CHARS = 400;
 
 const RATE_LIMITS: Record<string, number> = {
   student: 20,
