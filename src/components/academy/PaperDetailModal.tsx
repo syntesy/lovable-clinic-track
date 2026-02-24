@@ -68,9 +68,12 @@ export function PaperDetailModal({
 }: PaperDetailModalProps) {
   const curation = paper.curation_data;
   const hasCuration = !!curation;
+  const remLayers = curation?.reghen_evidence_method?.layers;
+  const hasRem = hasReghenMethod(curation);
   const { data: revisions = [], isLoading: loadingRevisions } = usePaperRevisions(open ? paper.id : null);
   const canDownload = ["admin_academy", "teacher_approved", "teacher_candidate"].includes(userRole);
   const hasScanWarning = paper.warnings?.some(w => w.includes("escaneado") || w.includes("scan"));
+  const isLegacy = hasCuration && !hasRem && paper.curation_status === "published";
 
   // Fetch file info
   const { data: paperFiles = [] } = useQuery({
