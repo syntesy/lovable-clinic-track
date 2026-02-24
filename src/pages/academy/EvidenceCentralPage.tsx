@@ -90,6 +90,9 @@ export default function EvidenceCentralPage() {
         <TabsContent value="feed" className="mt-0">
           <FeedTabContent />
         </TabsContent>
+        <TabsContent value="perguntar" className="mt-0">
+          <PerguntarTabContent />
+        </TabsContent>
       </Tabs>
     </div>
   );
