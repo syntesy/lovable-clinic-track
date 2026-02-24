@@ -111,6 +111,8 @@ import {
   AcademyLibraryPage, AcademyLibraryAdminPage, AcademyPapersAdminPage,
   AcademyFeedPage, AcademyCollectionsPage, AcademyCollectionDetailPage, AcademyNotificationsPage,
   EvidenceCentralPage, AcademyAiTestsPage, AcademyWatchlistsPage, AcademyPdfHealthPage,
+  AcademyTrilhasPage,
+} from "./pages/academy";
 } from "./pages/academy";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
