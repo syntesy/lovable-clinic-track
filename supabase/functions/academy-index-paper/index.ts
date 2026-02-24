@@ -143,11 +143,12 @@ serve(async (req) => {
     const chunks = chunkTextAdaptive(paper.abstract_text);
     const embeddings = await generateEmbeddings(chunks.map(c => c.content), OPENAI_API_KEY);
 
-    // Delete old chunks
+    // Delete old abstract chunks only (keep PDF chunks)
     await supabaseService
       .from("academy_chunks")
       .delete()
-      .eq("paper_id", paper_id);
+      .eq("paper_id", paper_id)
+      .eq("source_part", "abstract");
 
     // Insert with char_start/char_end
     const rows = chunks.map((chunk, i) => ({
