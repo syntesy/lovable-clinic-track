@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Route, Search, BookOpen, Loader2, ExternalLink } from "lucide-react";
 import { useAcademyArticles, useArticleFilterOptions } from "@/hooks/useAcademyArticles";
 import { computeEvidenceScore } from "@/hooks/useEvidenceScore";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 const LEVELS = [
   { level: 1, label: "Nível 1 — Revisões Sistemáticas e Meta-análises", types: ["Meta-análise", "Revisão Sistemática", "Systematic Review", "Meta-analysis"] },
@@ -151,6 +152,7 @@ export default function AcademyTrilhasPage() {
                                 </div>
                                 <h3 className="font-medium text-foreground text-sm line-clamp-2">{a.title}</h3>
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.summary_short}</p>
+                                <EvidenceMethodSeal className="mt-1.5" />
                               </div>
                               <div className="flex gap-1 shrink-0">
                                 {(a.pubmed_url || a.doi_url) && (

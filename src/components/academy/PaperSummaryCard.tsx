@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, FileText, ClipboardCopy, Download } from "lucide-react";
 import { toast } from "sonner";
 import type { AcademyArticle } from "@/hooks/useAcademyArticles";
+import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
 
 interface PaperSummaryCardProps {
   article: AcademyArticle;
@@ -35,6 +36,7 @@ export function PaperSummaryCard({ article }: PaperSummaryCardProps) {
       article.follow_up ? `🕐 Follow-up: ${article.follow_up}` : "",
       "",
       "⚕️ Score heurístico — não substitui avaliação clínica formal.",
+      article.is_published ? "🛡️ RegHen Evidence Method™" : "",
     ].filter(Boolean).join("\n");
     navigator.clipboard.writeText(lines);
     toast.success("Ficha copiada!");
@@ -119,9 +121,12 @@ export function PaperSummaryCard({ article }: PaperSummaryCardProps) {
 
         <Separator />
 
-        <p className="text-[10px] text-muted-foreground italic">
-          ⚕️ Score heurístico baseado em tipo de estudo e metadados. Não é uma avaliação formal de risco de viés (RoB). Não substitui avaliação clínica individual.
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] text-muted-foreground italic">
+            ⚕️ Score heurístico baseado em tipo de estudo e metadados. Não é uma avaliação formal de risco de viés (RoB). Não substitui avaliação clínica individual.
+          </p>
+          {article.is_published && <EvidenceMethodSeal />}
+        </div>
       </CardContent>
     </Card>
   );

@@ -8,6 +8,7 @@ import { BookOpen, ExternalLink, FileText, Loader2, Microscope } from "lucide-re
 import { useAcademyArticles, useAcademyArticleDetail, type ArticleFilters } from "@/hooks/useAcademyArticles";
 import { useAcademyFavorites, useToggleFavorite } from "@/hooks/useAcademyFavorites";
 import { Heart } from "lucide-react";
+import { EvidenceMethodSeal } from "@/components/academy/EvidenceMethodSeal";
 
 const STUDY_TYPE_COLORS: Record<string, string> = {
   "Revisão Sistemática": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
@@ -83,6 +84,7 @@ export default function AplicarTabContent() {
                             {article.year} • {article.journal}
                           </p>
                           <p className="text-muted-foreground line-clamp-2">{article.summary_short}</p>
+                          <EvidenceMethodSeal className="mt-2" />
                         </div>
                         <div className="flex md:flex-col gap-2 md:justify-center items-start">
                           <button onClick={(e) => { e.stopPropagation(); toggleFav.mutate({ articleId: article.id, isFavorited: isFav }); }} className="mb-1">

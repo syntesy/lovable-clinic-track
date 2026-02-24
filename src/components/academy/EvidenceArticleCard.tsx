@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAcademyArticleDetail } from "@/hooks/useAcademyArticles";
 import { ExternalLink, BookOpen, X } from "lucide-react";
+import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
 
 interface EvidenceArticleCardProps {
   article: {
@@ -63,6 +64,7 @@ export function EvidenceArticleCard({ article, relationType, note, onRemove, sho
               </div>
             ) : null}
             {note && <p className="text-xs text-muted-foreground mt-2 italic">"{note}"</p>}
+            <EvidenceMethodSeal className="mt-2" />
           </div>
           <div className="flex flex-col gap-1">
             <Button variant="ghost" size="sm" onClick={() => setShowDetail(true)}>
