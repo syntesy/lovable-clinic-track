@@ -153,6 +153,8 @@ export function PaperDetailModal({
         <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
           <TabsList className="shrink-0">
             <TabsTrigger value="details" className="gap-1"><FileText className="h-3 w-3" /> Detalhes</TabsTrigger>
+            <TabsTrigger value="reading" className="gap-1"><BookOpen className="h-3 w-3" /> Leitura Guiada</TabsTrigger>
+            <TabsTrigger value="ficha" className="gap-1"><FileText className="h-3 w-3" /> Ficha Aula</TabsTrigger>
             <TabsTrigger value="history" className="gap-1"><History className="h-3 w-3" /> Histórico</TabsTrigger>
           </TabsList>
 
