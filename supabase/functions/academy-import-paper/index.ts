@@ -27,32 +27,19 @@ function parsePubMedXml(xml: string, pmid: string) {
     return matches.map((m) => m[1].replace(/<[^>]+>/g, "").trim());
   };
 
-  // Extract title
   const title = extract("ArticleTitle") || "Título não disponível";
-
-  // Extract abstract
   const abstractTexts = extractAll("AbstractText");
   const abstract_text = abstractTexts.length > 0 ? abstractTexts.join(" ") : null;
-
-  // Extract authors
   const lastNames = extractAll("LastName");
   const foreNames = extractAll("ForeName");
   const authors = lastNames
     .map((ln, i) => (foreNames[i] ? `${ln} ${foreNames[i]}` : ln))
     .join(", ");
-
-  // Extract journal
   const journal = extract("Title") || extract("ISOAbbreviation");
-
-  // Extract year
   const yearMatch = xml.match(/<PubDate[^>]*>[\s\S]*?<Year>(\d{4})<\/Year>/);
   const year = yearMatch ? parseInt(yearMatch[1]) : null;
-
-  // Extract DOI
   const doiMatch = xml.match(/<ArticleId IdType="doi">([^<]+)<\/ArticleId>/);
   const doi = doiMatch ? doiMatch[1].trim() : null;
-
-  // Extract MeSH terms
   const meshTerms = extractAll("DescriptorName");
 
   return {
@@ -107,14 +94,11 @@ async function fetchFromCrossref(doi: string) {
 function parseInput(input: string): { type: "pmid" | "doi"; value: string } {
   const trimmed = input.trim();
 
-  // Check PMID (numeric or pubmed URL)
   const pmidMatch = trimmed.match(/(?:pubmed\.ncbi\.nlm\.nih\.gov\/|^)(\d{5,12})(?:\/|$)/);
   if (pmidMatch) return { type: "pmid", value: pmidMatch[1] };
 
-  // Check if it's just a number
   if (/^\d{5,12}$/.test(trimmed)) return { type: "pmid", value: trimmed };
 
-  // Check DOI (doi.org URL or raw DOI)
   const doiMatch = trimmed.match(/(?:doi\.org\/|^)(10\.\d{4,}\/[^\s]+)/i);
   if (doiMatch) return { type: "doi", value: doiMatch[1] };
 
@@ -127,6 +111,8 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
+  let userId: string | null = null;
+  let supabaseAuth: any = null;
 
   try {
     // Auth
@@ -138,13 +124,13 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
+    supabaseAuth = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claims, error: claimsErr } = await supabase.auth.getClaims(
+    const { data: claims, error: claimsErr } = await supabaseAuth.auth.getClaims(
       authHeader.replace("Bearer ", "")
     );
     if (claimsErr || !claims?.claims) {
@@ -153,7 +139,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claims.claims.sub as string;
+    userId = claims.claims.sub as string;
 
     // Parse input
     const { identifier } = await req.json();
@@ -166,31 +152,35 @@ serve(async (req) => {
 
     const parsed = parseInput(identifier);
 
-    // Check duplicates
-    if (parsed.type === "pmid") {
-      const { data: existing } = await supabase
-        .from("academy_papers")
-        .select("id, title")
-        .eq("pmid", parsed.value)
-        .maybeSingle();
-      if (existing) {
-        return new Response(
-          JSON.stringify({ error: `Artigo já importado: "${existing.title}"`, existing_id: existing.id }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } else {
-      const { data: existing } = await supabase
-        .from("academy_papers")
-        .select("id, title")
-        .eq("doi", parsed.value)
-        .maybeSingle();
-      if (existing) {
-        return new Response(
-          JSON.stringify({ error: `Artigo já importado: "${existing.title}"`, existing_id: existing.id }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    // Check duplicates — FIX: return existing paper instead of just error
+    const dupColumn = parsed.type === "pmid" ? "pmid" : "doi";
+    const { data: existing } = await supabaseAuth
+      .from("academy_papers")
+      .select("*")
+      .eq(dupColumn, parsed.value)
+      .maybeSingle();
+
+    if (existing) {
+      // Log dedup attempt
+      await supabaseAuth.from("academy_ai_logs").insert({
+        action: "admin_import",
+        paper_id: existing.id,
+        user_id: userId,
+        input: { identifier, parsed_type: parsed.type, parsed_value: parsed.value, dedup: true },
+        output: { paper_id: existing.id, title: existing.title, deduplicated: true },
+        status: "success",
+        duration_ms: Date.now() - startTime,
+      });
+
+      return new Response(
+        JSON.stringify({
+          paper: existing,
+          warnings: existing.warnings || [],
+          deduplicated: true,
+          message: `Artigo já importado: "${existing.title}"`,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Fetch metadata
@@ -200,7 +190,7 @@ serve(async (req) => {
         : await fetchFromCrossref(parsed.value);
 
     // Insert paper
-    const { data: paper, error: insertErr } = await supabase
+    const { data: paper, error: insertErr } = await supabaseAuth
       .from("academy_papers")
       .insert({
         ...paperData,
@@ -213,10 +203,10 @@ serve(async (req) => {
 
     if (insertErr) throw new Error(`Erro ao salvar: ${insertErr.message}`);
 
-    // Log audit
+    // Log audit — FIX: use action='admin_import'
     const duration_ms = Date.now() - startTime;
-    await supabase.from("academy_ai_logs").insert({
-      action: "import",
+    await supabaseAuth.from("academy_ai_logs").insert({
+      action: "admin_import",
       paper_id: paper.id,
       user_id: userId,
       input: { identifier, parsed_type: parsed.type, parsed_value: parsed.value },
@@ -230,17 +220,24 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Import error:", error);
-
-    // Try to log failure
-    try {
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!
-      );
-      // Best effort logging - may fail if no auth
-    } catch {}
-
     const message = error instanceof Error ? error.message : "Erro desconhecido";
+
+    // FIX: Actually log failures with authenticated client
+    if (supabaseAuth && userId) {
+      try {
+        await supabaseAuth.from("academy_ai_logs").insert({
+          action: "admin_import",
+          user_id: userId,
+          input: { error_context: "import_failed" },
+          status: "fail",
+          error_message: message,
+          duration_ms: Date.now() - startTime,
+        });
+      } catch (logErr) {
+        console.error("Failed to log error:", logErr);
+      }
+    }
+
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
