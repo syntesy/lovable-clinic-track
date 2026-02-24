@@ -67,6 +67,27 @@ export type Database = {
           },
         ]
       }
+      academy_ai_tests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          id: string
+          test_cases: Json
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          id?: string
+          test_cases?: Json
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          test_cases?: Json
+        }
+        Relationships: []
+      }
       academy_article_collection_items: {
         Row: {
           article_id: string
@@ -252,6 +273,8 @@ export type Database = {
       }
       academy_chunks: {
         Row: {
+          char_end: number | null
+          char_start: number | null
           chunk_index: number
           content: string
           created_at: string
@@ -261,6 +284,8 @@ export type Database = {
           source_part: string
         }
         Insert: {
+          char_end?: number | null
+          char_start?: number | null
           chunk_index?: number
           content: string
           created_at?: string
@@ -270,6 +295,8 @@ export type Database = {
           source_part?: string
         }
         Update: {
+          char_end?: number | null
+          char_start?: number | null
           chunk_index?: number
           content?: string
           created_at?: string
@@ -723,6 +750,50 @@ export type Database = {
           },
         ]
       }
+      academy_paper_revisions: {
+        Row: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          curation_data: Json | null
+          id: string
+          paper_id: string
+          status: string
+          tags_norm: Json | null
+          warnings: Json | null
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          created_at?: string
+          curation_data?: Json | null
+          id?: string
+          paper_id: string
+          status: string
+          tags_norm?: Json | null
+          warnings?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          created_at?: string
+          curation_data?: Json | null
+          id?: string
+          paper_id?: string
+          status?: string
+          tags_norm?: Json | null
+          warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_paper_revisions_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_papers: {
         Row: {
           abstract_text: string | null
@@ -735,6 +806,7 @@ export type Database = {
           curation_status: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at: string | null
           doi: string | null
+          fingerprint: string | null
           generated_by_ai: boolean
           id: string
           import_payload: Json | null
@@ -760,6 +832,7 @@ export type Database = {
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          fingerprint?: string | null
           generated_by_ai?: boolean
           id?: string
           import_payload?: Json | null
@@ -785,6 +858,7 @@ export type Database = {
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          fingerprint?: string | null
           generated_by_ai?: boolean
           id?: string
           import_payload?: Json | null
