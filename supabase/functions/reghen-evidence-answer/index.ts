@@ -7,6 +7,41 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// D) PII patterns for LGPD guardrail
+const PII_PATTERNS = [
+  { name: "CPF", pattern: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/ },
+  { name: "telefone", pattern: /\b(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}-?\d{4}\b/ },
+  { name: "email", pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/ },
+  // Full name + identifier (e.g. "João da Silva CPF", "Maria 123")
+  { name: "nome_com_identificador", pattern: /\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+(?:da|de|do|dos|das)?\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+(?:cpf|rg|telefone|fone|cel|email|endereço)/i },
+];
+
+function detectPII(text: string): string | null {
+  for (const { name, pattern } of PII_PATTERNS) {
+    if (pattern.test(text)) {
+      return name;
+    }
+  }
+  return null;
+}
+
+// B) Snapshot hash generation
+async function generateSnapshotHash(
+  attendanceId: string,
+  topicKey: string,
+  retrievalMode: string,
+  paperIds: string[],
+  queryText: string | null
+): Promise<string> {
+  const sortedPaperIds = [...paperIds].sort().join(",");
+  const normalizedQuery = (queryText || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const raw = `${attendanceId}|${topicKey}|${retrievalMode}|${sortedPaperIds}|${normalizedQuery}`;
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(raw));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,6 +89,29 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // D) LGPD PII guardrail
+    const piiType = detectPII(question);
+    if (piiType) {
+      // Log blocked input
+      await supabaseService.from("academy_ai_logs").insert({
+        action: "reghen_blocked_input",
+        user_id: user.id,
+        input: { attendance_id, topic_key, pii_type: piiType },
+        output: null,
+        status: "blocked",
+        duration_ms: Date.now() - startTime,
+      });
+
+      return new Response(
+        JSON.stringify({
+          error: "Dados pessoais detectados na pergunta. Por questões de privacidade (LGPD), não inclua CPF, telefone, e-mail ou nomes completos com identificadores. Reformule sua pergunta utilizando apenas termos clínicos.",
+          blocked: true,
+          pii_type: piiType,
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Validate attendance ownership
     const { data: attendance, error: attErr } = await supabaseService
@@ -114,8 +172,7 @@ serve(async (req) => {
     // Parse topic_key for filters
     const [intervention, pathology] = topic_key.split("|", 2);
 
-    // Call academy-rag-answer internally by invoking the same pattern
-    // But we call it directly via HTTP to reuse all its logic
+    // Call academy-rag-answer
     const ragUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/academy-rag-answer`;
     const ragResponse = await fetch(ragUrl, {
       method: "POST",
@@ -140,7 +197,18 @@ serve(async (req) => {
 
     const ragData = await ragResponse.json();
 
-    // Save snapshot automatically
+    // B) Generate snapshot hash for deduplication
+    const paperIds = (ragData.citations || []).map((c: any) => c.paper_id).filter(Boolean);
+    const snapshotHash = await generateSnapshotHash(
+      attendance_id,
+      topic_key,
+      "manual_question",
+      paperIds,
+      question
+    );
+
+    // Try to save snapshot with hash — handle UNIQUE violation gracefully
+    let deduplicated = false;
     const { error: snapError } = await supabaseService
       .from("reghen_evidence_snapshots")
       .insert({
@@ -153,10 +221,16 @@ serve(async (req) => {
         answer_md: ragData.answer_md || null,
         snippets: ragData.evidence_snippets || null,
         created_by: user.id,
+        snapshot_hash: snapshotHash,
       });
 
     if (snapError) {
-      console.error("Snapshot save error:", snapError);
+      if (snapError.code === "23505") {
+        // Unique violation — deduplicated
+        deduplicated = true;
+      } else {
+        console.error("Snapshot save error:", snapError);
+      }
     }
 
     // Log
@@ -167,12 +241,13 @@ serve(async (req) => {
       output: {
         citations_count: ragData.citations?.length || 0,
         has_answer: !!ragData.answer_md,
+        deduplicated,
       },
       status: "success",
       duration_ms: Date.now() - startTime,
     });
 
-    return new Response(JSON.stringify(ragData), {
+    return new Response(JSON.stringify({ ...ragData, deduplicated }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
