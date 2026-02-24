@@ -6,9 +6,9 @@ import heroBg from "@/assets/hero-bg.png";
 import heroBgReghen from "@/assets/hero-bg-reghen.png";
 import slideBg01 from "@/assets/slide-bg-01-new.png";
 import slideBg02 from "@/assets/slide-bg-02.jpg";
-import slideBg03 from "@/assets/slide-bg-03.jpg";
+import slideBg03 from "@/assets/slide-bg-ciencia.png";
 import slideBg04 from "@/assets/slide-bg-04.jpg";
-import slideBg05 from "@/assets/slide-bg-05.jpg";
+import slideBg05 from "@/assets/slide-bg-resultados.png";
 import slideBg06 from "@/assets/slide-bg-06.jpg";
 
 interface Slide {
