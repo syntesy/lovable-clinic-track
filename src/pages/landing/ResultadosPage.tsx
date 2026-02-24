@@ -1,7 +1,7 @@
 import InternalPageLayout from "@/components/landing/InternalPageLayout";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, TrendingUp, GitCompare, Link, Database } from "lucide-react";
-import slideBg04 from "@/assets/slide-bg-04.jpg";
+import slideBgResultados from "@/assets/slide-bg-resultados.png";
 
 export default function ResultadosPage() {
   const navigate = useNavigate();
