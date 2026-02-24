@@ -673,15 +673,29 @@ const AtendimentoDetail = () => {
 
   // Derive topic_key from attendance pathology + intervention type
   const createEvidenceLink = useCreateEvidenceLink();
+
+  // Fetch pathology label if needed
+  const { data: pathologyLabel } = useQuery({
+    queryKey: ["pathology-label", dbAttendancePathology?.pathology_id],
+    queryFn: async () => {
+      if (!dbAttendancePathology?.pathology_id) return null;
+      const { data } = await supabase
+        .from("pathologies")
+        .select("label")
+        .eq("id", dbAttendancePathology.pathology_id)
+        .single();
+      return data?.label || null;
+    },
+    enabled: !!dbAttendancePathology?.pathology_id && !dbAttendancePathology?.custom_pathology_label,
+  });
   
   const topicKey = useMemo(() => {
     if (!dbAttendancePathology) return null;
-    const pathLabel = dbAttendancePathology.custom_pathology_label || null;
-    // If no label available, we can't build a meaningful topic key
+    const pathLabel = dbAttendancePathology.custom_pathology_label || pathologyLabel || null;
     if (!pathLabel) return null;
     const intervention = attendance?.involves_orthobiologics ? "PRP" : "FISIOTERAPIA";
     return buildTopicKey(intervention, pathLabel);
-  }, [dbAttendancePathology, attendance?.involves_orthobiologics]);
+  }, [dbAttendancePathology, pathologyLabel, attendance?.involves_orthobiologics]);
 
   // Auto-create evidence link when topic_key changes
   useEffect(() => {
