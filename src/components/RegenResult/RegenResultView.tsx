@@ -42,6 +42,10 @@ interface RegenResultViewProps {
   caseId?: string;
   patientName?: string;
   
+  // Evidence Engine keys
+  pathologyKey?: string | null;
+  interventionKey?: string | null;
+  
   // State
   isLoading?: boolean;
   error?: string | null;
