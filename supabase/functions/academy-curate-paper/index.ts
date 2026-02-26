@@ -87,21 +87,18 @@ function resolvePaperTemplateServer(curationJson: any): PaperTemplate {
   const hasStructuredOutcomes = outcomes.some(
     (o: any) => o?.name && o.name !== "Não identificado" && o?.direction && o.direction !== "unknown"
   );
+  const hasComparator = comparador.length > 0 && !["nenhum", "none", "n/a", "não aplicável", ""].includes(comparador.toLowerCase());
 
-  // 1) REVIEW_CONSENSUS (check first — reviews may mention trials in text)
+  // 1) CLINICAL_COMPARATIVE — structural signals first (most deterministic)
+  if (sampleSize > 0 && hasComparator && hasStructuredOutcomes) {
+    return "CLINICAL_COMPARATIVE";
+  }
+
+  // 2) REVIEW_CONSENSUS
   const reviewPatterns = ["systematic review", "meta-analysis", "guideline", "consensus", "position statement",
     "revisão sistemática", "meta-análise", "diretriz", "consenso"];
   if (reviewPatterns.some((p) => studyType.includes(p))) {
     return "REVIEW_CONSENSUS";
-  }
-
-  // 2) CLINICAL_COMPARATIVE
-  const clinicalPatterns = ["randomized", "randomised", "trial", "cohort", "case-control",
-    "ensaio", "coorte", "caso-controle", "rct", "ecr"];
-  const isClinicalType = clinicalPatterns.some((p) => studyType.includes(p));
-  const hasComparator = comparador.length > 0 && comparador.toLowerCase() !== "nenhum" && comparador.toLowerCase() !== "none";
-  if (isClinicalType && sampleSize > 0 && hasComparator && hasStructuredOutcomes) {
-    return "CLINICAL_COMPARATIVE";
   }
 
   // 3) TRANSLATIONAL_PRECLINICAL
