@@ -3,6 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
+function generateRequestId(): string {
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function computeClientHash(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function useUploadPdf() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStage, setUploadStage] = useState<string>("");
@@ -17,11 +28,17 @@ export function useUploadPdf() {
     paperId?: string;
     title?: string;
   }) => {
+    const requestId = generateRequestId();
     setIsUploading(true);
     try {
-      // Stage 1: Upload directly to Storage
+      // Stage 1: Compute hash for idempotency
+      setUploadStage("Calculando integridade…");
+      const fileHash = await computeClientHash(file);
+      console.log(`[upload:hash] requestId=${requestId} hash=${fileHash}`);
+
+      // Stage 2: Upload directly to Storage
       setUploadStage("Enviando PDF…");
-      console.log("[upload:start]", { fileName: file.name, size: file.size });
+      console.log(`[upload:start] requestId=${requestId}`, { fileName: file.name, size: file.size });
 
       const timestamp = Date.now();
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -37,16 +54,16 @@ export function useUploadPdf() {
         });
 
       if (storageErr) {
-        console.error("[upload:storage-error]", storageErr);
+        console.error(`[upload:storage-error] requestId=${requestId}`, storageErr);
         if (storageErr.message?.includes("row-level security")) {
           throw new Error("Sem permissão para enviar arquivos. Verifique se você tem perfil de professor ou administrador.");
         }
         throw new Error(`Erro ao enviar PDF: ${storageErr.message}`);
       }
 
-      console.log("[upload:success]", { filePath: tempPath });
+      console.log(`[upload:success] requestId=${requestId}`, { filePath: tempPath });
 
-      // Stage 2: Call edge function to create paper record + link file
+      // Stage 3: Call edge function with storage_path + hash
       setUploadStage("Registrando paper…");
       const payload = {
         paper_id: paperId || null,
@@ -54,16 +71,16 @@ export function useUploadPdf() {
         file_name: file.name,
         storage_path: tempPath,
         file_size: file.size,
+        file_hash: fileHash,
       };
-      console.log("[function:invoke]", payload);
+      console.log(`[function:invoke] requestId=${requestId}`, payload);
 
       const { data, error } = await supabase.functions.invoke("academy-upload-pdf", {
         body: payload,
       });
 
       if (error) {
-        console.error("[function:error]", error);
-        // Classify error
+        console.error(`[function:error] requestId=${requestId}`, error);
         if (error.message?.includes("Failed to send")) {
           throw new Error("Não foi possível conectar ao servidor de processamento. Verifique sua conexão e tente novamente.");
         }
@@ -71,15 +88,21 @@ export function useUploadPdf() {
       }
 
       if (data?.error) {
-        console.error("[function:response-error]", data);
+        console.error(`[function:response-error] requestId=${requestId}`, data);
         throw new Error(data.error);
       }
 
-      console.log("[function:success]", data);
+      console.log(`[function:success] requestId=${requestId}`, data);
+
+      if (data?.idempotent) {
+        toast.info("Este PDF já foi enviado anteriormente. Usando o registro existente.");
+      }
+
       queryClient.invalidateQueries({ queryKey: ["academy-papers"] });
-      return data;
+      return { ...data, request_id: requestId };
     } catch (err: any) {
       const msg = err.message || "Erro ao fazer upload do PDF.";
+      console.error(`[upload:failed] requestId=${requestId}`, msg);
       toast.error(msg);
       throw err;
     } finally {
@@ -121,4 +144,26 @@ export function useExtractPdfText() {
   };
 
   return { extractPdfText, isExtracting };
+}
+
+/**
+ * Hook to get a signed URL for a published paper's PDF (for students).
+ * Returns a 2-minute signed URL.
+ */
+export function useSignedPaperUrl() {
+  const getSignedUrl = async (storagePath: string): Promise<string | null> => {
+    const { data, error } = await supabase.storage
+      .from("academy-papers")
+      .createSignedUrl(storagePath, 120); // 2 minutes
+
+    if (error) {
+      console.error("[signed-url:error]", error);
+      toast.error("Não foi possível gerar link de acesso ao PDF.");
+      return null;
+    }
+
+    return data.signedUrl;
+  };
+
+  return { getSignedUrl };
 }
