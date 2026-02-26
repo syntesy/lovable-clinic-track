@@ -51,9 +51,9 @@ export function validateReghenEvidenceMethod(layers: any): RemComplianceResult {
     const hasAnyOutcome = clinical.length > 0 || functional.length > 0 || biological.length > 0;
 
     if (!hasAnyOutcome) {
-      // Downgrade to warning instead of error — outcomes may not be structured yet
-      warnings.push("Layer 1: Nenhum outcome estruturado encontrado. Considere reestruturar a curadoria.");
-      score -= 5;
+      // Warning only — outcomes may need to be completed via curation re-run
+      warnings.push("Layer 1: Nenhum outcome estruturado encontrado. Use 'Completar outcomes com IA' para reestruturar.");
+      score -= 3;
     }
 
     // Biomarkers in clinical check

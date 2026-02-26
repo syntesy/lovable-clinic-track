@@ -88,7 +88,7 @@ export function PaperDetailModal({
     queryFn: async () => {
       const { data } = await supabase
         .from("academy_paper_fulltext" as any)
-        .select("has_sufficient_text, is_scanned, extraction_method, char_count, word_count, chunk_count, updated_at")
+        .select("has_sufficient_text, is_scanned, extraction_method, char_count, word_count, chunk_count, updated_at, abstract, abstract_source, abstract_char_count")
         .eq("paper_id", paper.id)
         .maybeSingle();
       return data as any | null;
@@ -324,12 +324,21 @@ export function PaperDetailModal({
                   </div>
                 )}
 
-                {/* Abstract */}
+                {/* Abstract — source of truth: fulltext.abstract */}
                 <section>
                   <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
                     <FileText className="w-4 h-4" /> Abstract
+                    {fulltextData?.abstract_source && fulltextData.abstract_source !== "none" && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {fulltextData.abstract_source === "extracted" ? "Extraído do PDF" :
+                         fulltextData.abstract_source === "fallback" ? "Inferido (fallback)" :
+                         fulltextData.abstract_source === "generated" ? "Gerado por IA" : ""}
+                      </Badge>
+                    )}
                   </h3>
-                  {paper.abstract_text ? (
+                  {fulltextData?.abstract ? (
+                    <p className="text-sm text-muted-foreground leading-relaxed">{fulltextData.abstract}</p>
+                  ) : paper.abstract_text ? (
                     <p className="text-sm text-muted-foreground leading-relaxed">{paper.abstract_text}</p>
                   ) : fulltextData?.has_sufficient_text ? (
                     <p className="text-sm text-muted-foreground italic">
