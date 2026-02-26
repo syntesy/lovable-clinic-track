@@ -29,6 +29,7 @@ import { CardBRS } from "./CardBRS";
 import { CardTOG } from "./CardTOG";
 import { CardPEE } from "./CardPEE";
 import { CardDataQuality } from "./CardDataQuality";
+import { CardEvidence } from "./CardEvidence";
 
 interface RegenResultViewProps {
   // Data
