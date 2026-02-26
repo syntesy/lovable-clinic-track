@@ -160,12 +160,21 @@ export default function CuradoriaOriginal() {
         <CardContent className="p-0">
           {hasPdf ? (
             <div className="relative w-full" style={{ height: "calc(100vh - 250px)", minHeight: "500px" }}>
-              <iframe
-                src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+              <object
+                data={pdfUrl || undefined}
+                type="application/pdf"
                 className="absolute inset-0 w-full h-full"
-                title={article.title}
-                onError={() => setPdfUrl(null)}
-              />
+                aria-label={article.title}
+              >
+                <div className="flex h-full w-full items-center justify-center p-6">
+                  <Button asChild variant="outline" className="gap-2">
+                    <a href={pdfUrl || undefined} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4" />
+                      Abrir PDF em nova aba
+                    </a>
+                  </Button>
+                </div>
+              </object>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20">
