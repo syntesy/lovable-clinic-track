@@ -30,7 +30,7 @@ import type { AcademyPaper } from "@/hooks/useAcademyPapers";
 import { usePaperRevisions } from "@/hooks/useAcademyPapers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { GuidedReadingSection } from "./GuidedReadingSection";
 import { PaperSummaryCard } from "./PaperSummaryCard";
 import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
@@ -67,6 +67,8 @@ export function PaperDetailModal({
   isGenerating,
   userRole = "admin_academy",
 }: PaperDetailModalProps) {
+  const queryClient = useQueryClient();
+  const [reprocessingFileId, setReprocessingFileId] = useState<string | null>(null);
   const curation = paper.curation_data;
   const hasCuration = !!curation;
   const remLayers = curation?.reghen_evidence_method?.layers;
@@ -86,7 +88,7 @@ export function PaperDetailModal({
     queryFn: async () => {
       const { data } = await supabase
         .from("academy_paper_files" as any)
-        .select("id, file_name, size_bytes, scan_suspected, storage_path")
+        .select("id, file_name, size_bytes, scan_suspected, storage_path, processing_status")
         .eq("paper_id", paper.id)
         .order("created_at", { ascending: false });
       return (data || []) as any[];
@@ -107,6 +109,23 @@ export function PaperDetailModal({
       URL.revokeObjectURL(url);
     } catch {
       toast.error("Erro ao baixar PDF.");
+    }
+  };
+
+  const handleReprocess = async (fileId: string) => {
+    setReprocessingFileId(fileId);
+    try {
+      const { data, error } = await supabase.functions.invoke("academy-upload-pdf", {
+        body: { paper_id: paper.id, file_id: fileId, reprocess: true },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Reprocessamento iniciado.");
+      queryClient.invalidateQueries({ queryKey: ["paper-files", paper.id] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao reprocessar.");
+    } finally {
+      setReprocessingFileId(null);
     }
   };
 
@@ -208,17 +227,51 @@ export function PaperDetailModal({
                                 Scan
                               </Badge>
                             )}
+                            {/* Processing status badge */}
+                            {(f.processing_status === "pending" || f.processing_status === "queued") && (
+                              <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px] shrink-0 gap-1">
+                                <Clock className="w-2.5 h-2.5" /> Em processamento
+                              </Badge>
+                            )}
+                            {f.processing_status === "processed" && (
+                              <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] shrink-0 gap-1">
+                                <CheckCircle2 className="w-2.5 h-2.5" /> Processado
+                              </Badge>
+                            )}
+                            {f.processing_status === "failed" && (
+                              <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px] shrink-0 gap-1">
+                                <XCircle className="w-2.5 h-2.5" /> Falha no processamento
+                              </Badge>
+                            )}
                           </div>
-                          {canDownload && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="shrink-0 gap-1"
-                              onClick={() => handleDownloadPdf(f.storage_path, f.file_name)}
-                            >
-                              <Download className="w-3 h-3" /> Baixar
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {f.processing_status === "failed" && canDownload && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-1 text-xs"
+                                disabled={reprocessingFileId === f.id}
+                                onClick={() => handleReprocess(f.id)}
+                              >
+                                {reprocessingFileId === f.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-3 h-3" />
+                                )}
+                                Reprocessar
+                              </Button>
+                            )}
+                            {canDownload && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-1"
+                                onClick={() => handleDownloadPdf(f.storage_path, f.file_name)}
+                              >
+                                <Download className="w-3 h-3" /> Baixar
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
