@@ -126,6 +126,30 @@ export default function CuradoriaDetalhe() {
     fetchData();
   }, [fetchData]);
 
+  // Check PDF availability when user opens original
+  useEffect(() => {
+    if (!showOriginal || !article || pdfChecked) return;
+    
+    const checkPdf = async () => {
+      if (!article.pdf_path) { setPdfChecked(true); return; }
+      
+      if (article.pdf_path.startsWith('/articles/')) {
+        try {
+          const res = await fetch(article.pdf_path, { method: 'HEAD' });
+          setPdfUrl(res.ok ? article.pdf_path : null);
+        } catch { setPdfUrl(null); }
+      } else {
+        const { data: urlData } = supabase.storage.from("articles").getPublicUrl(article.pdf_path);
+        try {
+          const res = await fetch(urlData.publicUrl, { method: 'HEAD' });
+          setPdfUrl(res.ok ? urlData.publicUrl : null);
+        } catch { setPdfUrl(null); }
+      }
+      setPdfChecked(true);
+    };
+    checkPdf();
+  }, [showOriginal, article, pdfChecked]);
+
   // Polling for active job
   useEffect(() => {
     if (!activeJob || !["queued", "running"].includes(activeJob.status)) return;
