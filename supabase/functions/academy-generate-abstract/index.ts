@@ -115,10 +115,10 @@ serve(async (req) => {
     const truncatedSource = sourceText.slice(0, 8000);
     const title = paper?.title || "Artigo científico";
 
-    // Call Gemini via Lovable AI proxy
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "GEMINI_API_KEY não configurada.", request_id: requestId }), {
+    // Use Lovable AI gateway (same as academy-curate-paper)
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY não configurada.", request_id: requestId }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -138,25 +138,30 @@ Paper title: ${title}
 Source text (excerpt):
 ${truncatedSource}`;
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 500 },
-        }),
-      }
-    );
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: "You are a scientific abstract writer. Output ONLY the abstract text." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 500,
+      }),
+    });
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      throw new Error(`Gemini API error: ${geminiResponse.status} - ${errText}`);
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      throw new Error(`AI API error: ${aiResponse.status} - ${errText}`);
     }
 
-    const geminiData = await geminiResponse.json();
-    const generatedAbstract = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    const aiData = await aiResponse.json();
+    const generatedAbstract = aiData?.choices?.[0]?.message?.content?.trim() || "";
 
     if (!generatedAbstract || generatedAbstract.length < 50) {
       throw new Error("Abstract gerado é muito curto ou vazio.");
