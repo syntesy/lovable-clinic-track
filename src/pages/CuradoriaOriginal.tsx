@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CuradoriaArticle, CuradoriaStatus } from "@/types/curadoria";
 import { SolicitarCuradoriaModal } from "@/components/curadoria/SolicitarCuradoriaModal";
 import { ArrowLeft, MessageSquarePlus, AlertCircle, ExternalLink, FileText } from "lucide-react";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
 
 export default function CuradoriaOriginal() {
   const { id } = useParams<{ id: string }>();
@@ -133,27 +134,29 @@ export default function CuradoriaOriginal() {
         )}
       </div>
 
-      {/* Banner CTA */}
-      <Card className="bg-primary/10 border-primary/30">
-        <CardContent className="flex items-center justify-between gap-4 py-4">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-primary shrink-0" />
-            <p className="text-sm text-foreground">
-              Você está lendo o artigo original. Deseja uma curadoria clínica aplicada à prática?
-            </p>
-          </div>
-          {canRequestCuradoria && (
-            <Button 
-              size="sm" 
-              onClick={() => setShowRequestModal(true)}
-              className="shrink-0 gap-2"
-            >
-              <MessageSquarePlus className="h-4 w-4" />
-              Solicitar Curadoria
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      {/* Banner CTA — gated by feature flag */}
+      {FEATURE_FLAGS.PRACTICE_CURATION && (
+        <Card className="bg-primary/10 border-primary/30">
+          <CardContent className="flex items-center justify-between gap-4 py-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-primary shrink-0" />
+              <p className="text-sm text-foreground">
+                Você está lendo o artigo original. Deseja uma curadoria clínica aplicada à prática?
+              </p>
+            </div>
+            {canRequestCuradoria && (
+              <Button 
+                size="sm" 
+                onClick={() => setShowRequestModal(true)}
+                className="shrink-0 gap-2"
+              >
+                <MessageSquarePlus className="h-4 w-4" />
+                Solicitar Curadoria
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* PDF Viewer */}
       <Card className="bg-card border-border overflow-hidden">

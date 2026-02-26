@@ -81,12 +81,14 @@ export function PaperDetailModal({
 }: PaperDetailModalProps) {
   const queryClient = useQueryClient();
   const [reprocessingFileId, setReprocessingFileId] = useState<string | null>(null);
+  const [generatingAbstract, setGeneratingAbstract] = useState(false);
   const curation = paper.curation_data;
   const hasCuration = !!curation;
   const remLayers = curation?.reghen_evidence_method?.layers;
   const hasRem = hasReghenMethod(curation);
   const { data: revisions = [], isLoading: loadingRevisions } = usePaperRevisions(open ? paper.id : null);
   const canDownload = ["admin_academy", "teacher_approved", "teacher_candidate"].includes(userRole);
+  const isAdmin = ["admin_academy", "teacher_approved"].includes(userRole);
   const isLegacy = hasCuration && !hasRem && paper.curation_status === "published";
 
   // Fetch fulltext data from DB
@@ -409,24 +411,46 @@ export function PaperDetailModal({
                     {fulltextData?.abstract_source && fulltextData.abstract_source !== "none" && abstractValidation.isValid && (
                       <Badge variant="outline" className="text-[10px]">
                         {fulltextData.abstract_source === "extracted" ? "Extraído do PDF" :
-                         fulltextData.abstract_source === "fallback" ? "Inferido (fallback)" :
+                         fulltextData.abstract_source === "fallback" ? "Fallback" :
                          fulltextData.abstract_source === "generated" ? "Gerado por IA" : ""}
-                      </Badge>
-                    )}
-                    {!abstractValidation.isValid && abstractText && (
-                      <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-400 border-orange-500/30">
-                        Abstract inválido
                       </Badge>
                     )}
                   </h3>
                   {abstractValidation.isValid && abstractText ? (
                     <p className="text-sm text-muted-foreground leading-relaxed">{abstractText}</p>
-                  ) : fulltextData?.has_sufficient_text ? (
-                    <p className="text-sm text-muted-foreground italic">
-                      Abstract não disponível ou inválido. O texto completo está disponível para curadoria.
-                    </p>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">Abstract não disponível.</p>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground italic">
+                        Abstract não identificado no PDF.
+                      </p>
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          disabled={generatingAbstract}
+                          onClick={async () => {
+                            setGeneratingAbstract(true);
+                            try {
+                              const { data, error } = await supabase.functions.invoke("academy-generate-abstract", {
+                                body: { paper_id: paper.id },
+                              });
+                              if (error) throw error;
+                              if (data?.error) throw new Error(data.error);
+                              toast.success("Abstract gerado com sucesso.");
+                              queryClient.invalidateQueries({ queryKey: ["paper-fulltext", paper.id] });
+                            } catch (err: any) {
+                              toast.error(err.message || "Erro ao gerar abstract.");
+                            } finally {
+                              setGeneratingAbstract(false);
+                            }
+                          }}
+                        >
+                          {generatingAbstract ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                          Gerar resumo por IA (neutro)
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </section>
 
