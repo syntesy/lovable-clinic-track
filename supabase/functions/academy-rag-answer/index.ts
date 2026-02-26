@@ -338,7 +338,7 @@ serve(async (req) => {
           similarity: parseFloat((chunk.similarity || 0).toFixed(4)),
         });
         paperSnippetCount++;
-        });
+      }
       }
     }
     const citations = Array.from(paperMap.values());
