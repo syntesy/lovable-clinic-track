@@ -9,6 +9,7 @@ const corsHeaders = {
 
 const AI_MODEL = "google/gemini-2.5-flash";
 const MAX_CONTEXT_CHARS = 80_000;
+const MIN_CHUNKS_FOR_CURATION = 5;
 
 const CURATION_SCHEMA = {
   type: "object",
@@ -31,13 +32,26 @@ const CURATION_SCHEMA = {
     aplicabilidade_clinica: { type: "string" },
     conclusao_pratica: { type: "string" },
     tags: { type: "array", items: { type: "string" } },
+    outcomes: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          domain: { type: "string" },
+          name: { type: "string" },
+          direction: { type: "string" },
+          timeframe: { type: "string" },
+        },
+        required: ["domain", "name", "direction", "timeframe"],
+      },
+    },
   },
   required: [
     "tipo_estudo", "nivel_evidencia", "ano_publicacao", "tamanho_amostra_total",
     "intervencao", "comparador", "desfechos_primarios", "desfechos_secundarios",
     "follow_up_medio", "resultados_principais", "significancia_estatistica",
     "eventos_adversos", "risco_vies", "justificativa_risco_vies",
-    "score_metodologico", "aplicabilidade_clinica", "conclusao_pratica", "tags",
+    "score_metodologico", "aplicabilidade_clinica", "conclusao_pratica", "tags", "outcomes",
   ],
 };
 
@@ -51,7 +65,11 @@ REGRAS:
 3. risco_vies deve ser: baixo, moderado ou alto.
 4. score_metodologico é inteiro de 0 a 10.
 5. tags: termos normalizados em português (ex: ["PRP", "Tendinopatia", "ECR"]).
-6. Seja objetivo e factual.
+6. outcomes: OBRIGATÓRIO pelo menos 1 outcome com { domain, name, direction, timeframe }.
+   - domain: "clinical", "functional", "imaging", "biological", "safety"
+   - direction: "favorable", "neutral", "unfavorable", "unknown"
+   - Se não identificar outcomes claros, use [{domain:"clinical", name:"Não identificado", direction:"unknown", timeframe:"unknown"}]
+7. Seja objetivo e factual.
 
 Responda APENAS usando a função fornecida.`;
 
@@ -59,13 +77,18 @@ function generateRequestId(): string {
   return `req_cur_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
-function validateCurationJson(data: any): { valid: boolean; errors: string[] } {
+function validateCurationJson(data: any): { valid: boolean; errors: string[]; warnings: string[] } {
   const errors: string[] = [];
+  const warnings: string[] = [];
   const required = CURATION_SCHEMA.required;
 
   for (const field of required) {
     if (data[field] === undefined || data[field] === null) {
-      errors.push(`Campo obrigatório ausente: ${field}`);
+      if (field === "outcomes") {
+        warnings.push("outcomes ausente — será preenchido com fallback");
+      } else {
+        errors.push(`Campo obrigatório ausente: ${field}`);
+      }
     }
   }
 
@@ -87,7 +110,11 @@ function validateCurationJson(data: any): { valid: boolean; errors: string[] } {
     errors.push("desfechos_primarios deve ser um array");
   }
 
-  return { valid: errors.length === 0, errors };
+  if (data.outcomes && !Array.isArray(data.outcomes)) {
+    warnings.push("outcomes não é um array — será convertido");
+  }
+
+  return { valid: errors.length === 0, errors, warnings };
 }
 
 serve(async (req) => {
@@ -104,8 +131,7 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized", request_id: requestId }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -125,12 +151,72 @@ serve(async (req) => {
 
     const body = await req.json();
     paperId = body.paper_id;
+    const force = body.force === true;
     const incomingRequestId = body.request_id || requestId;
 
     if (!paperId) {
       return new Response(JSON.stringify({ error: "paper_id é obrigatório", request_id: incomingRequestId }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // PRE-CONDITIONS CHECK
+    // ═══════════════════════════════════════════
+    
+    // Check file processing status
+    const { data: fileData } = await supabaseService
+      .from("academy_paper_files")
+      .select("id, processing_status, processing_error")
+      .eq("paper_id", paperId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (fileData && fileData.processing_status !== "processed") {
+      console.log(`[curate:skip] Paper ${paperId} file not processed yet (status: ${fileData.processing_status})`);
+      return new Response(JSON.stringify({
+        error: `PDF ainda não foi processado (status: ${fileData.processing_status}). Processe o PDF primeiro.`,
+        processing_status: fileData.processing_status,
+        processing_error: fileData.processing_error,
+        request_id: incomingRequestId,
+      }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check fulltext sufficiency
+    const { data: fulltextData } = await supabaseService
+      .from("academy_paper_fulltext")
+      .select("has_sufficient_text, char_count, word_count, chunk_count")
+      .eq("paper_id", paperId)
+      .maybeSingle();
+
+    if (!fulltextData) {
+      return new Response(JSON.stringify({
+        error: "Texto completo não encontrado. Processe o PDF primeiro.",
+        request_id: incomingRequestId,
+      }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!fulltextData.has_sufficient_text) {
+      console.log(`[curate:skip] Paper ${paperId} has insufficient text (chars=${fulltextData.char_count} words=${fulltextData.word_count} chunks=${fulltextData.chunk_count})`);
+      return new Response(JSON.stringify({
+        error: `Texto insuficiente para curadoria (${fulltextData.char_count} chars, ${fulltextData.word_count} words, ${fulltextData.chunk_count} chunks). PDF pode ser escaneado.`,
+        request_id: incomingRequestId,
+      }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if ((fulltextData.chunk_count || 0) < MIN_CHUNKS_FOR_CURATION) {
+      return new Response(JSON.stringify({
+        error: `Chunks insuficientes para curadoria (${fulltextData.chunk_count} < ${MIN_CHUNKS_FOR_CURATION}).`,
+        request_id: incomingRequestId,
+      }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -141,8 +227,8 @@ serve(async (req) => {
       .eq("paper_id", paperId)
       .maybeSingle();
 
-    if (existing) {
-      console.log(`[curate:skip] Paper ${paperId} already curated.`);
+    if (existing && !force) {
+      console.log(`[curate:skip] Paper ${paperId} already curated (use force=true to re-curate).`);
       return new Response(JSON.stringify({
         message: "Curadoria já existente para este paper.",
         curation_id: existing.id,
@@ -150,6 +236,12 @@ serve(async (req) => {
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // If force mode, delete existing curation
+    if (existing && force) {
+      console.log(`[curate:force] Deleting existing curation for paper ${paperId}`);
+      await supabaseService.from("academy_paper_curation").delete().eq("paper_id", paperId);
     }
 
     // Set curation_status to curating
@@ -179,6 +271,9 @@ serve(async (req) => {
     if (chunksErr) {
       throw new Error(`Erro ao buscar chunks: ${chunksErr.message}`);
     }
+
+    const chunksUsed = chunks?.length || 0;
+    console.log(`[curate:context] paperId=${paperId} chunks=${chunksUsed} title="${paper.title?.slice(0, 80)}"`);
 
     // Consolidate text respecting token limit
     let consolidatedText = "";
@@ -256,24 +351,32 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
 
     const curationData = JSON.parse(toolCall.function.arguments);
 
+    // Outcomes fallback: ensure at least one outcome exists
+    if (!curationData.outcomes || !Array.isArray(curationData.outcomes) || curationData.outcomes.length === 0) {
+      console.warn(`[curate:outcomes-fallback] No outcomes returned by AI, adding fallback`);
+      curationData.outcomes = [{ domain: "clinical", name: "Não identificado", direction: "unknown", timeframe: "unknown" }];
+    }
+
     // Validate JSON
     const validation = validateCurationJson(curationData);
     if (!validation.valid) {
       console.warn(`[curate:validation] Errors: ${validation.errors.join(", ")}`);
-      // Still save but log warnings
+    }
+    if (validation.warnings.length > 0) {
+      console.warn(`[curate:validation:warnings] ${validation.warnings.join(", ")}`);
     }
 
-    // Persist curation
+    // Persist curation (upsert for idempotency)
     const { error: insertErr } = await supabaseService
       .from("academy_paper_curation")
-      .insert({
+      .upsert({
         paper_id: paperId,
         curation_json: curationData,
         nivel_evidencia: curationData.nivel_evidencia || null,
         score_metodologico: typeof curationData.score_metodologico === "number" ? curationData.score_metodologico : null,
         risco_vies: curationData.risco_vies || null,
         request_id: incomingRequestId,
-      });
+      }, { onConflict: "paper_id" });
 
     if (insertErr) {
       throw new Error(`Erro ao salvar curadoria: ${insertErr.message}`);
@@ -286,7 +389,7 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
       .eq("id", paperId);
 
     const durationMs = Date.now() - startTime;
-    console.log(`[curate:done] paperId=${paperId} requestId=${incomingRequestId} duration=${durationMs}ms`);
+    console.log(`[curate:done] paperId=${paperId} requestId=${incomingRequestId} duration=${durationMs}ms nivel=${curationData.nivel_evidencia} score=${curationData.score_metodologico} risco=${curationData.risco_vies} outcomes=${curationData.outcomes?.length}`);
 
     // Log success
     await supabaseService.from("academy_ai_logs").insert({
@@ -296,16 +399,19 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
       request_id: incomingRequestId,
       input: {
         paper_id: paperId,
-        chunks_used: chunks?.length || 0,
+        chunks_used: chunksUsed,
         context_chars: consolidatedText.length,
         has_abstract: !!paper.abstract_text,
+        force,
       },
       output: {
         nivel_evidencia: curationData.nivel_evidencia,
         score_metodologico: curationData.score_metodologico,
         risco_vies: curationData.risco_vies,
         tags: curationData.tags,
+        outcomes_count: curationData.outcomes?.length,
         validation_errors: validation.errors,
+        validation_warnings: validation.warnings,
       },
       status: "success",
       duration_ms: durationMs,
@@ -318,6 +424,7 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
       nivel_evidencia: curationData.nivel_evidencia,
       score_metodologico: curationData.score_metodologico,
       risco_vies: curationData.risco_vies,
+      outcomes_count: curationData.outcomes?.length,
       request_id: incomingRequestId,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

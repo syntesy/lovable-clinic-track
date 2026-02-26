@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.reghen-evidence-answer]
 verify_jwt = false
+
+[functions.academy-curate-paper]
+verify_jwt = false
