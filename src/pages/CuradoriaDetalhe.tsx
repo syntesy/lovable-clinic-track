@@ -299,11 +299,9 @@ export default function CuradoriaDetalhe() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link to={`/curadoria/${article.id}/original`} className="gap-2">
-                <FileText className="h-4 w-4" />
-                Ler artigo original
-              </Link>
+            <Button onClick={() => setShowOriginal(!showOriginal)} className="gap-2">
+              <FileText className="h-4 w-4" />
+              {showOriginal ? 'Fechar artigo original' : 'Ler artigo original'}
             </Button>
             {article.pubmed_url && (
               <Button variant="outline" asChild>
@@ -316,6 +314,76 @@ export default function CuradoriaDetalhe() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Inline Original Article Viewer */}
+      {showOriginal && (
+        <Card className="bg-card border-border overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Artigo Original
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => setShowOriginal(false)}>
+              Fechar
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            {!pdfChecked ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : pdfUrl ? (
+              <div className="relative w-full" style={{ height: "calc(100vh - 200px)", minHeight: "600px" }}>
+                <object
+                  data={pdfUrl}
+                  type="application/pdf"
+                  className="absolute inset-0 w-full h-full"
+                  aria-label={article.title}
+                >
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6">
+                    <FileText className="h-12 w-12 text-muted-foreground" />
+                    <p className="text-muted-foreground">Não foi possível exibir o PDF inline.</p>
+                    <Button asChild variant="outline" className="gap-2">
+                      <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                        Abrir PDF em nova aba
+                      </a>
+                    </Button>
+                  </div>
+                </object>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16">
+                <FileText className="h-14 w-14 text-muted-foreground mb-4" />
+                <h3 className="text-base font-medium text-foreground mb-2">
+                  PDF não disponível para visualização inline
+                </h3>
+                <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
+                  Abra o artigo através do link externo.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {article.doi && (
+                    <Button asChild variant="outline" className="gap-2">
+                      <a href={`https://doi.org/${article.doi}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                        Abrir via DOI
+                      </a>
+                    </Button>
+                  )}
+                  {article.pubmed_url && article.pubmed_url.length > 35 && (
+                    <Button asChild variant="outline" className="gap-2">
+                      <a href={article.pubmed_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                        Abrir no PubMed
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Abstract Section */}
       {article.abstract && (
