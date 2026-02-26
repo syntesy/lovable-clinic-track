@@ -110,7 +110,7 @@ export function PaperDetailModal({
     queryFn: async () => {
       const { data } = await supabase
         .from("academy_paper_curation" as any)
-        .select("id, curation_json, nivel_evidencia, score_metodologico, risco_vies, request_id, created_at")
+        .select("id, curation_json, nivel_evidencia, score_metodologico, risco_vies, request_id, created_at, paper_template, schema_version, data_quality_warnings")
         .eq("paper_id", paper.id)
         .maybeSingle();
       return data as any | null;
@@ -134,14 +134,17 @@ export function PaperDetailModal({
   const hasScanWarning = fulltextData?.is_scanned === true;
   const curationJson = curationRow?.curation_json || null;
 
-  // Template router
-  const template = resolvePaperTemplate(curationJson, {
-    nivel_evidencia: curationRow?.nivel_evidencia,
-    risco_vies: curationRow?.risco_vies,
-    score_metodologico: curationRow?.score_metodologico,
-    evidence_score: paper.evidence_score,
-    has_sufficient_text: fulltextData?.has_sufficient_text,
-  });
+  // Template: DB is source of truth, client router is fallback only
+  const template: PaperTemplate = curationRow?.paper_template
+    ? (curationRow.paper_template as PaperTemplate)
+    : resolvePaperTemplate(curationJson, {
+        nivel_evidencia: curationRow?.nivel_evidencia,
+        risco_vies: curationRow?.risco_vies,
+        score_metodologico: curationRow?.score_metodologico,
+        evidence_score: paper.evidence_score,
+        has_sufficient_text: fulltextData?.has_sufficient_text,
+      });
+  const templateFromDb = !!curationRow?.paper_template;
 
   // REM compliance — adjusted for template
   const compliance: RemComplianceResult | null = hasRem
@@ -279,6 +282,7 @@ export function PaperDetailModal({
                   fulltextData={fulltextData}
                   curationRow={curationRow}
                   userRole={userRole}
+                  dataQualityWarnings={curationRow?.data_quality_warnings as any[] | null}
                 />
 
                 {/* Scan Warning */}
@@ -623,6 +627,7 @@ export function PaperDetailModal({
                   curationJson={curationJson}
                   remLayers={remLayers}
                   paperTitle={paper.title}
+                  template={template}
                 />
               </div>
             </div>
@@ -639,6 +644,7 @@ export function PaperDetailModal({
                   isPublished={paper.curation_status === "published"}
                   evidenceScore={paper.evidence_score}
                   curationJson={curationJson}
+                  template={template}
                 />
               </div>
             </div>
