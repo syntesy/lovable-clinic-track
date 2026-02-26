@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { extractText } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,63 +57,6 @@ async function generateEmbeddings(texts: string[], apiKey: string): Promise<numb
   return data.data.map((d: any) => d.embedding);
 }
 
-function extractTextFromPdf(pdfBytes: Uint8Array): string {
-  const decoder = new TextDecoder("latin1");
-  const rawStr = decoder.decode(pdfBytes);
-  
-  const textParts: string[] = [];
-  const btEtRegex = /BT\s([\s\S]*?)ET/g;
-  let match;
-  
-  while ((match = btEtRegex.exec(rawStr)) !== null) {
-    const block = match[1];
-    const tjRegex = /\(([^)]*)\)\s*Tj/g;
-    let tjMatch;
-    while ((tjMatch = tjRegex.exec(block)) !== null) {
-      textParts.push(tjMatch[1]);
-    }
-    const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
-    let tjArrayMatch;
-    while ((tjArrayMatch = tjArrayRegex.exec(block)) !== null) {
-      const arrayContent = tjArrayMatch[1];
-      const strRegex = /\(([^)]*)\)/g;
-      let strMatch;
-      while ((strMatch = strRegex.exec(arrayContent)) !== null) {
-        textParts.push(strMatch[1]);
-      }
-    }
-  }
-  
-  const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
-  while ((match = streamRegex.exec(rawStr)) !== null) {
-    const content = match[1];
-    if (content.includes("BT") && content.includes("ET")) {
-      const innerBtEt = /BT\s([\s\S]*?)ET/g;
-      let innerMatch;
-      while ((innerMatch = innerBtEt.exec(content)) !== null) {
-        const block = innerMatch[1];
-        const tjRegex = /\(([^)]*)\)\s*Tj/g;
-        let tjMatch;
-        while ((tjMatch = tjRegex.exec(block)) !== null) {
-          textParts.push(tjMatch[1]);
-        }
-      }
-    }
-  }
-  
-  let text = textParts.join(" ");
-  text = text
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\r")
-    .replace(/\\t/g, "\t")
-    .replace(/\\\(/g, "(")
-    .replace(/\\\)/g, ")")
-    .replace(/\\\\/g, "\\");
-  text = text.replace(/\s+/g, " ").trim();
-  
-  return text;
-}
-
 async function updateFileStatus(
   supabase: any,
   fileId: string,
@@ -164,7 +108,6 @@ serve(async (req) => {
 
     const body = await req.json();
     paperId = body.paper_id;
-    // Accept optional file_id for reprocessing
     const requestFileId = body.file_id || null;
     const incomingRequestId = body.request_id || requestId;
 
@@ -180,7 +123,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get file record (specific or latest)
+    // Get file record
     let fileQuery = supabaseService
       .from("academy_paper_files")
       .select("*")
@@ -207,9 +150,9 @@ serve(async (req) => {
 
     fileId = fileRecord.id;
 
-    // Update status: queued/pending → processing
     await updateFileStatus(supabaseService, fileId, "processing");
     console.log(`[process:start] requestId=${incomingRequestId} paperId=${paperId} fileId=${fileId}`);
+    console.log(`[download:pre] storage_path="${fileRecord.storage_path}" bucket="academy-papers"`);
 
     // Download PDF from storage
     const { data: pdfData, error: dlErr } = await supabaseService.storage
@@ -217,15 +160,55 @@ serve(async (req) => {
       .download(fileRecord.storage_path);
 
     if (dlErr || !pdfData) {
-      await updateFileStatus(supabaseService, fileId, "failed", `Erro ao baixar PDF: ${dlErr?.message || "arquivo não encontrado"}`);
-      throw new Error(`Erro ao baixar PDF: ${dlErr?.message || "arquivo não encontrado"}`);
+      const errMsg = `Erro ao baixar PDF: ${dlErr?.message || "arquivo não encontrado"}`;
+      console.error(`[download:error] ${errMsg}`);
+      await updateFileStatus(supabaseService, fileId, "failed", errMsg);
+      throw new Error(errMsg);
     }
 
-    const pdfBytes = new Uint8Array(await pdfData.arrayBuffer());
-    let extractedText = extractTextFromPdf(pdfBytes);
+    console.log(`[download:ok] blob_size=${pdfData.size} type=${pdfData.type}`);
+
+    const arrayBuffer = await pdfData.arrayBuffer();
+    const pdfBytes = new Uint8Array(arrayBuffer);
+    console.log(`[buffer] byte_length=${pdfBytes.byteLength}`);
+
+    if (pdfBytes.byteLength === 0) {
+      const errMsg = "Buffer vazio após download — arquivo corrompido ou path inválido.";
+      console.error(`[buffer:error] ${errMsg}`);
+      await updateFileStatus(supabaseService, fileId, "failed", errMsg);
+      throw new Error(errMsg);
+    }
+
+    // Verify PDF magic bytes (%PDF)
+    const magicBytes = String.fromCharCode(pdfBytes[0], pdfBytes[1], pdfBytes[2], pdfBytes[3]);
+    console.log(`[buffer:magic] first_4_bytes="${magicBytes}" hex=${Array.from(pdfBytes.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+
+    if (magicBytes !== "%PDF") {
+      const errMsg = `Arquivo não é PDF válido. Magic bytes: "${magicBytes}"`;
+      console.error(`[buffer:error] ${errMsg}`);
+      await updateFileStatus(supabaseService, fileId, "failed", errMsg);
+      throw new Error(errMsg);
+    }
+
+    // === EXTRACT TEXT USING unpdf (handles compressed streams, CIDFonts, etc.) ===
+    let extractedText = "";
+    try {
+      console.log(`[parse:start] Extracting text with unpdf...`);
+      const result = await extractText(pdfBytes, { mergePages: true });
+      extractedText = (result.text || "").replace(/\s+/g, " ").trim();
+      console.log(`[parse:ok] chars=${extractedText.length} first_300="${extractedText.slice(0, 300)}"`);
+    } catch (parseErr: any) {
+      const errMsg = `Erro ao parsear PDF: ${parseErr.message || parseErr}`;
+      console.error(`[parse:error] ${errMsg}`, parseErr.stack || "");
+      await updateFileStatus(supabaseService, fileId, "failed", errMsg);
+      throw new Error(errMsg);
+    }
+
     const extractedWords = extractedText.split(/\s+/).filter(w => w.length > 0).length;
     const warnings: string[] = [];
     let scanSuspected = false;
+
+    console.log(`[extract:result] chars=${extractedText.length} words=${extractedWords}`);
 
     // Scan detection
     if (extractedText.length < SCAN_THRESHOLD_CHARS) {
@@ -238,7 +221,6 @@ serve(async (req) => {
         .update({ scan_suspected: true, processing_status: "processed", processing_error: warning })
         .eq("id", fileId);
 
-      // Update paper warnings
       const { data: paper } = await supabaseService
         .from("academy_papers")
         .select("warnings")
@@ -286,20 +268,19 @@ serve(async (req) => {
       warnings.push(`PDF muito longo — indexação parcial aplicada (limite: ${MAX_PDF_CHARS} chars).`);
     }
 
-    // Update scan_suspected = false
     await supabaseService
       .from("academy_paper_files")
       .update({ scan_suspected: false })
       .eq("id", fileId);
 
-    // Save full text for audit
+    // Save full text
     await supabaseService
       .from("academy_paper_fulltext")
       .upsert({
         paper_id: paperId,
         extracted_text: extractedText,
         char_count: extractedText.length,
-        extraction_method: "pdf-parse-basic",
+        extraction_method: "unpdf",
         updated_at: new Date().toISOString(),
       }, { onConflict: "paper_id" });
 
@@ -368,7 +349,7 @@ serve(async (req) => {
 
     // ✅ Mark as processed
     await updateFileStatus(supabaseService, fileId, "processed");
-    console.log(`[process:done] requestId=${incomingRequestId} paperId=${paperId} chunks=${chunks.length}`);
+    console.log(`[process:done] requestId=${incomingRequestId} paperId=${paperId} chunks=${chunks.length} chars=${extractedText.length}`);
 
     // 🔗 Auto-trigger curation pipeline (fire-and-forget)
     try {
@@ -427,7 +408,6 @@ serve(async (req) => {
     console.error("PDF extract error:", error);
     const message = error instanceof Error ? error.message : "Erro desconhecido";
 
-    // Mark file as failed if we have the fileId
     if (fileId) {
       try {
         const supabaseService = createClient(
