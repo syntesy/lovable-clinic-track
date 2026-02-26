@@ -1,4 +1,4 @@
-import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList, Microscope, ShieldCheck } from 'lucide-react';
+import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList, Microscope, ShieldCheck, Activity } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useCurrentInstitution } from '@/hooks/useEduMembership';
 import {
@@ -40,6 +40,7 @@ const adminMenuItems = [
   { title: "Matrículas", url: "/edu/admin/enrollments", icon: UserCog },
   { title: "Biblioteca Científica", url: "/academy/admin/biblioteca", icon: BookOpen },
   { title: "Papers & Curadoria IA", url: "/academy/admin/papers", icon: Microscope },
+  { title: "Pipeline Health", url: "/academy/admin/pipeline-health", icon: Activity },
   { title: "Configurações", url: "/edu/admin/settings", icon: Settings },
 ];
 
