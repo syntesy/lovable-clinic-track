@@ -370,6 +370,27 @@ serve(async (req) => {
     await updateFileStatus(supabaseService, fileId, "processed");
     console.log(`[process:done] requestId=${incomingRequestId} paperId=${paperId} chunks=${chunks.length}`);
 
+    // 🔗 Auto-trigger curation pipeline (fire-and-forget)
+    try {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+      const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const curateUrl = `${SUPABASE_URL}/functions/v1/academy-curate-paper`;
+      fetch(curateUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          paper_id: paperId,
+          request_id: incomingRequestId,
+        }),
+      }).catch(err => console.warn(`[auto-curate] Fire-and-forget failed: ${err.message}`));
+      console.log(`[auto-curate] Triggered for paperId=${paperId}`);
+    } catch (triggerErr) {
+      console.warn(`[auto-curate] Trigger error (non-blocking):`, triggerErr);
+    }
+
     await supabaseService.from("academy_ai_logs").insert({
       action: "pdf_extract_index",
       paper_id: paperId,

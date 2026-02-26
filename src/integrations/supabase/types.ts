@@ -753,6 +753,47 @@ export type Database = {
           },
         ]
       }
+      academy_paper_curation: {
+        Row: {
+          created_at: string
+          curation_json: Json
+          id: string
+          nivel_evidencia: string | null
+          paper_id: string
+          request_id: string | null
+          risco_vies: string | null
+          score_metodologico: number | null
+        }
+        Insert: {
+          created_at?: string
+          curation_json: Json
+          id?: string
+          nivel_evidencia?: string | null
+          paper_id: string
+          request_id?: string | null
+          risco_vies?: string | null
+          score_metodologico?: number | null
+        }
+        Update: {
+          created_at?: string
+          curation_json?: Json
+          id?: string
+          nivel_evidencia?: string | null
+          paper_id?: string
+          request_id?: string | null
+          risco_vies?: string | null
+          score_metodologico?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_paper_curation_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: true
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_paper_files: {
         Row: {
           created_at: string | null
