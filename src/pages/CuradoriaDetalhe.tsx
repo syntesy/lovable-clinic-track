@@ -340,10 +340,26 @@ export default function CuradoriaDetalhe() {
                   className="absolute inset-0 w-full h-full"
                   aria-label={article.title}
                 >
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6">
-                    <FileText className="h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">Não foi possível exibir o PDF neste navegador.</p>
-                  </div>
+                  {article.doi ? (
+                    <iframe
+                      src={`https://doi.org/${article.doi}`}
+                      className="w-full h-full border-0"
+                      title={article.title}
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    />
+                  ) : article.pubmed_url && article.pubmed_url.length > 35 ? (
+                    <iframe
+                      src={article.pubmed_url}
+                      className="w-full h-full border-0"
+                      title={article.title}
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6">
+                      <FileText className="h-12 w-12 text-muted-foreground" />
+                      <p className="text-muted-foreground">Não foi possível exibir o artigo neste navegador.</p>
+                    </div>
+                  )}
                 </object>
               </div>
             ) : article.doi ? (
