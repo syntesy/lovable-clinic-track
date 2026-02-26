@@ -467,6 +467,84 @@ export type Database = {
           },
         ]
       }
+      academy_evidence_aggregates: {
+        Row: {
+          average_evidence_score: number | null
+          average_method_score: number | null
+          best_level_evidence: string | null
+          confidence_level: string
+          consistency_score: number
+          direction_summary: string
+          id: string
+          intervention_key: string
+          papers_count: number
+          pathology_key: string
+          reasons: Json
+          recommendation_strength: string
+          top_paper_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          average_evidence_score?: number | null
+          average_method_score?: number | null
+          best_level_evidence?: string | null
+          confidence_level?: string
+          consistency_score?: number
+          direction_summary?: string
+          id?: string
+          intervention_key: string
+          papers_count?: number
+          pathology_key: string
+          reasons?: Json
+          recommendation_strength?: string
+          top_paper_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          average_evidence_score?: number | null
+          average_method_score?: number | null
+          best_level_evidence?: string | null
+          confidence_level?: string
+          consistency_score?: number
+          direction_summary?: string
+          id?: string
+          intervention_key?: string
+          papers_count?: number
+          pathology_key?: string
+          reasons?: Json
+          recommendation_strength?: string
+          top_paper_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      academy_evidence_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          intervention_key: string
+          pathology_key: string
+          synonyms: Json
+          tags_required: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intervention_key: string
+          pathology_key: string
+          synonyms?: Json
+          tags_required?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intervention_key?: string
+          pathology_key?: string
+          synonyms?: Json
+          tags_required?: Json
+        }
+        Relationships: []
+      }
       academy_lesson_articles: {
         Row: {
           article_id: string

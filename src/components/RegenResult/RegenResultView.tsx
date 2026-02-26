@@ -29,6 +29,7 @@ import { CardBRS } from "./CardBRS";
 import { CardTOG } from "./CardTOG";
 import { CardPEE } from "./CardPEE";
 import { CardDataQuality } from "./CardDataQuality";
+import { CardEvidence } from "./CardEvidence";
 
 interface RegenResultViewProps {
   // Data
@@ -40,6 +41,10 @@ interface RegenResultViewProps {
   // Identifiers
   caseId?: string;
   patientName?: string;
+  
+  // Evidence Engine keys
+  pathologyKey?: string | null;
+  interventionKey?: string | null;
   
   // State
   isLoading?: boolean;
@@ -124,6 +129,8 @@ export function RegenResultView({
   screeningUpdatedAt,
   caseId,
   patientName,
+  pathologyKey,
+  interventionKey,
   isLoading = false,
   error = null,
   onGenerateResult,
@@ -239,7 +246,13 @@ export function RegenResultView({
           safetyBlocked={safetyBlocked}
         />
 
-        {/* CARD G - Data Quality */}
+        {/* CARD G - Evidence Engine */}
+        <CardEvidence
+          pathologyKey={pathologyKey}
+          interventionKey={interventionKey}
+        />
+
+        {/* CARD H - Data Quality */}
         <CardDataQuality dataQuality={engineOutputs!.data_quality} />
 
         {/* Footer - Disclaimer */}
