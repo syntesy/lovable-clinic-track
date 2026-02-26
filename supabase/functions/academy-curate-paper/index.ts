@@ -459,6 +459,8 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
         nivel_evidencia: curationData.nivel_evidencia,
         score_metodologico: curationData.score_metodologico,
         risco_vies: curationData.risco_vies,
+        paper_template: paperTemplate,
+        schema_version: schemaVersion,
         tags: curationData.tags,
         outcomes_count: curationData.outcomes?.length,
         validation_errors: validation.errors,
