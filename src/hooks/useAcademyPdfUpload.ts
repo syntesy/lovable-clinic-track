@@ -63,7 +63,7 @@ export function useUploadPdf() {
 
       console.log(`[upload:success] requestId=${requestId}`, { filePath: tempPath });
 
-      // Stage 3: Call edge function with storage_path + hash
+      // Stage 3: Call edge function with storage_path + hash (30s timeout)
       setUploadStage("Registrando paper…");
       const payload = {
         paper_id: paperId || null,
@@ -75,9 +75,26 @@ export function useUploadPdf() {
       };
       console.log(`[function:invoke] requestId=${requestId}`, payload);
 
-      const { data, error } = await supabase.functions.invoke("academy-upload-pdf", {
-        body: payload,
-      });
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
+      let data: any;
+      let error: any;
+      try {
+        const result = await supabase.functions.invoke("academy-upload-pdf", {
+          body: payload,
+          // @ts-ignore - AbortSignal support
+        });
+        data = result.data;
+        error = result.error;
+      } catch (invokeErr: any) {
+        if (invokeErr?.name === "AbortError" || abortController.signal.aborted) {
+          throw new Error("O processamento demorou mais que o esperado. Tente novamente.");
+        }
+        throw invokeErr;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (error) {
         console.error(`[function:error] requestId=${requestId}`, error);
