@@ -26,6 +26,7 @@ export type Database = {
           model_used: string | null
           output: Json | null
           paper_id: string | null
+          request_id: string | null
           status: string
           user_id: string
         }
@@ -40,6 +41,7 @@ export type Database = {
           model_used?: string | null
           output?: Json | null
           paper_id?: string | null
+          request_id?: string | null
           status?: string
           user_id: string
         }
@@ -54,6 +56,7 @@ export type Database = {
           model_used?: string | null
           output?: Json | null
           paper_id?: string | null
+          request_id?: string | null
           status?: string
           user_id?: string
         }
@@ -753,10 +756,14 @@ export type Database = {
       academy_paper_files: {
         Row: {
           created_at: string | null
+          file_hash: string | null
           file_name: string
           id: string
           mime_type: string
           paper_id: string
+          processing_error: string | null
+          processing_status: string
+          request_id: string | null
           scan_suspected: boolean | null
           size_bytes: number | null
           storage_path: string
@@ -764,10 +771,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          file_hash?: string | null
           file_name: string
           id?: string
           mime_type?: string
           paper_id: string
+          processing_error?: string | null
+          processing_status?: string
+          request_id?: string | null
           scan_suspected?: boolean | null
           size_bytes?: number | null
           storage_path: string
@@ -775,10 +786,14 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          file_hash?: string | null
           file_name?: string
           id?: string
           mime_type?: string
           paper_id?: string
+          processing_error?: string | null
+          processing_status?: string
+          request_id?: string | null
           scan_suspected?: boolean | null
           size_bytes?: number | null
           storage_path?: string

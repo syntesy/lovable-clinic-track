@@ -148,16 +148,20 @@ export function useExtractPdfText() {
 
 /**
  * Hook to get a signed URL for a published paper's PDF (for students).
- * Returns a 2-minute signed URL.
+ * Returns a 2-minute signed URL with auto-renewal on 403/expiry.
  */
 export function useSignedPaperUrl() {
-  const getSignedUrl = async (storagePath: string): Promise<string | null> => {
+  const getSignedUrl = async (storagePath: string, isRetry = false): Promise<string | null> => {
     const { data, error } = await supabase.storage
       .from("academy-papers")
       .createSignedUrl(storagePath, 120); // 2 minutes
 
     if (error) {
       console.error("[signed-url:error]", error);
+      if (!isRetry) {
+        console.log("[signed-url:retry] Auto-renewing signed URL…");
+        return getSignedUrl(storagePath, true);
+      }
       toast.error("Não foi possível gerar link de acesso ao PDF.");
       return null;
     }
@@ -165,5 +169,31 @@ export function useSignedPaperUrl() {
     return data.signedUrl;
   };
 
-  return { getSignedUrl };
+  /**
+   * Fetch a URL and auto-renew once if the response is 403 (expired).
+   */
+  const fetchWithAutoRenew = async (storagePath: string): Promise<{ url: string; blob: Blob } | null> => {
+    const url = await getSignedUrl(storagePath);
+    if (!url) return null;
+
+    const res = await fetch(url);
+    if (res.ok) {
+      return { url, blob: await res.blob() };
+    }
+
+    if (res.status === 403) {
+      console.log("[signed-url:expired] Auto-renewing…");
+      const newUrl = await getSignedUrl(storagePath, false);
+      if (!newUrl) return null;
+      const retryRes = await fetch(newUrl);
+      if (retryRes.ok) {
+        return { url: newUrl, blob: await retryRes.blob() };
+      }
+    }
+
+    toast.error("Não foi possível acessar o PDF. Tente novamente.");
+    return null;
+  };
+
+  return { getSignedUrl, fetchWithAutoRenew };
 }
