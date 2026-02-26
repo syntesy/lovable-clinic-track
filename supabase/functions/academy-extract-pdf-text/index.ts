@@ -14,6 +14,10 @@ const CHUNK_OVERLAP = 150;
 const MAX_PDF_CHARS = 250000;
 const MAX_CHUNKS_PER_PAPER = 200;
 
+function generateRequestId(): string {
+  return `req_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+}
+
 function chunkText(text: string, maxChunks: number): { content: string; char_start: number; char_end: number }[] {
   const len = text.length;
   if (len <= CHUNK_SIZE) {
@@ -109,19 +113,35 @@ function extractTextFromPdf(pdfBytes: Uint8Array): string {
   return text;
 }
 
+async function updateFileStatus(
+  supabase: any,
+  fileId: string,
+  status: string,
+  error?: string
+) {
+  const update: any = { processing_status: status };
+  if (error) update.processing_error = error;
+  await supabase
+    .from("academy_paper_files")
+    .update(update)
+    .eq("id", fileId);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = generateRequestId();
   const startTime = Date.now();
   let userId: string | null = null;
   let paperId: string | null = null;
+  let fileId: string | null = null;
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized", request_id: requestId }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -135,7 +155,7 @@ serve(async (req) => {
 
     const { data: { user }, error: userErr } = await supabaseAuth.auth.getUser();
     if (userErr || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized", request_id: requestId }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -144,9 +164,12 @@ serve(async (req) => {
 
     const body = await req.json();
     paperId = body.paper_id;
+    // Accept optional file_id for reprocessing
+    const requestFileId = body.file_id || null;
+    const incomingRequestId = body.request_id || requestId;
 
     if (!paperId) {
-      return new Response(JSON.stringify({ error: "paper_id é obrigatório" }), {
+      return new Response(JSON.stringify({ error: "paper_id é obrigatório", request_id: incomingRequestId }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -157,21 +180,36 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get file record
-    const { data: fileRecord, error: fileErr } = await supabaseService
+    // Get file record (specific or latest)
+    let fileQuery = supabaseService
       .from("academy_paper_files")
       .select("*")
       .eq("paper_id", paperId)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
+
+    if (requestFileId) {
+      fileQuery = supabaseService
+        .from("academy_paper_files")
+        .select("*")
+        .eq("id", requestFileId)
+        .limit(1);
+    }
+
+    const { data: fileRecord, error: fileErr } = await fileQuery.single();
 
     if (fileErr || !fileRecord) {
-      return new Response(JSON.stringify({ error: "Nenhum PDF encontrado para este paper." }), {
+      return new Response(JSON.stringify({ error: "Nenhum PDF encontrado para este paper.", request_id: incomingRequestId }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    fileId = fileRecord.id;
+
+    // Update status: queued/pending → processing
+    await updateFileStatus(supabaseService, fileId, "processing");
+    console.log(`[process:start] requestId=${incomingRequestId} paperId=${paperId} fileId=${fileId}`);
 
     // Download PDF from storage
     const { data: pdfData, error: dlErr } = await supabaseService.storage
@@ -179,6 +217,7 @@ serve(async (req) => {
       .download(fileRecord.storage_path);
 
     if (dlErr || !pdfData) {
+      await updateFileStatus(supabaseService, fileId, "failed", `Erro ao baixar PDF: ${dlErr?.message || "arquivo não encontrado"}`);
       throw new Error(`Erro ao baixar PDF: ${dlErr?.message || "arquivo não encontrado"}`);
     }
 
@@ -194,11 +233,10 @@ serve(async (req) => {
       const warning = `Texto insuficiente extraído (${extractedText.length} chars, ${extractedWords} palavras) — PDF pode ser escaneado (scan).`;
       warnings.push(warning);
 
-      // Update file record with scan_suspected
       await supabaseService
         .from("academy_paper_files")
-        .update({ scan_suspected: true })
-        .eq("id", fileRecord.id);
+        .update({ scan_suspected: true, processing_status: "processed", processing_error: warning })
+        .eq("id", fileId);
 
       // Update paper warnings
       const { data: paper } = await supabaseService
@@ -220,13 +258,9 @@ serve(async (req) => {
         action: "pdf_extract_index",
         paper_id: paperId,
         user_id: userId,
-        input: { paper_id: paperId, file_id: fileRecord.id },
-        output: { 
-          warning, 
-          extracted_chars: extractedText.length, 
-          extracted_words: extractedWords,
-          scan_suspected: true 
-        },
+        request_id: incomingRequestId,
+        input: { paper_id: paperId, file_id: fileId },
+        output: { warning, extracted_chars: extractedText.length, extracted_words: extractedWords, scan_suspected: true },
         status: "success",
         duration_ms: Date.now() - startTime,
       });
@@ -237,6 +271,8 @@ serve(async (req) => {
         chars_extracted: extractedText.length,
         words_extracted: extractedWords,
         scan_suspected: true,
+        processing_status: "processed",
+        request_id: incomingRequestId,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -250,11 +286,11 @@ serve(async (req) => {
       warnings.push(`PDF muito longo — indexação parcial aplicada (limite: ${MAX_PDF_CHARS} chars).`);
     }
 
-    // Update scan_suspected = false since we have good text
+    // Update scan_suspected = false
     await supabaseService
       .from("academy_paper_files")
       .update({ scan_suspected: false })
-      .eq("id", fileRecord.id);
+      .eq("id", fileId);
 
     // Save full text for audit
     await supabaseService
@@ -267,13 +303,13 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       }, { onConflict: "paper_id" });
 
-    // Chunk the text with max cap
+    // Chunk the text
     const chunks = chunkText(extractedText, MAX_CHUNKS_PER_PAPER);
     if (chunks.length >= MAX_CHUNKS_PER_PAPER) {
       warnings.push(`Número de chunks limitado a ${MAX_CHUNKS_PER_PAPER} (limite de custo).`);
     }
 
-    // Update paper warnings if any cost warnings
+    // Update paper warnings if any
     if (warnings.length > 0) {
       const { data: paper } = await supabaseService
         .from("academy_papers")
@@ -290,7 +326,10 @@ serve(async (req) => {
 
     // Generate embeddings
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
+    if (!OPENAI_API_KEY) {
+      await updateFileStatus(supabaseService, fileId, "failed", "OPENAI_API_KEY not configured");
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
 
     const batchSize = 20;
     const allEmbeddings: number[][] = [];
@@ -322,19 +361,28 @@ serve(async (req) => {
       .from("academy_chunks")
       .insert(rows);
 
-    if (insertErr) throw new Error(`Erro ao inserir chunks: ${insertErr.message}`);
+    if (insertErr) {
+      await updateFileStatus(supabaseService, fileId, "failed", `Erro ao inserir chunks: ${insertErr.message}`);
+      throw new Error(`Erro ao inserir chunks: ${insertErr.message}`);
+    }
+
+    // ✅ Mark as processed
+    await updateFileStatus(supabaseService, fileId, "processed");
+    console.log(`[process:done] requestId=${incomingRequestId} paperId=${paperId} chunks=${chunks.length}`);
 
     await supabaseService.from("academy_ai_logs").insert({
       action: "pdf_extract_index",
       paper_id: paperId,
       user_id: userId,
-      input: { paper_id: paperId, file_id: fileRecord.id, text_length: extractedText.length },
-      output: { 
-        chunks_created: chunks.length, 
+      request_id: incomingRequestId,
+      input: { paper_id: paperId, file_id: fileId, text_length: extractedText.length },
+      output: {
+        chunks_created: chunks.length,
         chars_indexed: extractedText.length,
-        model: OPENAI_EMBEDDING_MODEL, 
+        model: OPENAI_EMBEDDING_MODEL,
         truncated,
         warnings,
+        processing_status: "processed",
       },
       status: "success",
       duration_ms: Date.now() - startTime,
@@ -349,12 +397,25 @@ serve(async (req) => {
       truncated,
       warnings,
       scan_suspected: false,
+      processing_status: "processed",
+      request_id: incomingRequestId,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("PDF extract error:", error);
     const message = error instanceof Error ? error.message : "Erro desconhecido";
+
+    // Mark file as failed if we have the fileId
+    if (fileId) {
+      try {
+        const supabaseService = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+        );
+        await updateFileStatus(supabaseService, fileId, "failed", message);
+      } catch {}
+    }
 
     if (userId) {
       try {
@@ -366,7 +427,8 @@ serve(async (req) => {
           action: "pdf_extract_index",
           paper_id: paperId,
           user_id: userId,
-          input: { paper_id: paperId },
+          request_id: requestId,
+          input: { paper_id: paperId, file_id: fileId },
           status: "fail",
           error_message: message,
           duration_ms: Date.now() - startTime,
@@ -376,7 +438,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ error: message, request_id: requestId }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
