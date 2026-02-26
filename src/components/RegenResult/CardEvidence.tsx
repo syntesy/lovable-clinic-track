@@ -271,8 +271,10 @@ export function CardEvidence({ pathologyKey, interventionKey }: CardEvidenceProp
           paper={selectedPaper}
           open={!!selectedPaper}
           onOpenChange={(open) => { if (!open) setSelectedPaper(null); }}
-          onApprove={() => {}}
+          onGenerateCuration={() => {}}
+          onPublish={() => {}}
           onReject={() => {}}
+          isGenerating={false}
           userRole="admin_academy"
         />
       )}
