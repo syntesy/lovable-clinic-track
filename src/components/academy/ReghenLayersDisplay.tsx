@@ -31,7 +31,7 @@ const LIMITATION_CATEGORY_LABELS: Record<string, string> = {
 };
 
 function BoolBadge({ value, trueLabel, falseLabel }: { value: boolean | null | undefined; trueLabel: string; falseLabel: string }) {
-  if (value === null || value === undefined) return <Badge variant="outline" className="text-[10px] text-muted-foreground">Não informado</Badge>;
+  if (value === null || value === undefined) return null;
   return value
     ? <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">{trueLabel}</Badge>
     : <Badge variant="outline" className="text-[10px] border-orange-500/30 text-orange-400">{falseLabel}</Badge>;

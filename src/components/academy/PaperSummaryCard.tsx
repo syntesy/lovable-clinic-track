@@ -2,9 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Copy, FileText, ClipboardCopy, AlertTriangle } from "lucide-react";
+import { Copy, FileText, ClipboardCopy } from "lucide-react";
 import { toast } from "sonner";
 import { EvidenceMethodSeal, EVIDENCE_METHOD_SEAL_TEXT } from "./EvidenceMethodSeal";
+import {
+  resolvePaperTemplate,
+  safeField,
+  safeArray,
+  getBestConclusion,
+  getWhatIsThis,
+  getAudience,
+  TEMPLATE_LABELS,
+} from "@/utils/paperTemplateRouter";
 
 interface CurationJson {
   tipo_estudo?: string;
@@ -23,7 +32,10 @@ interface CurationJson {
   score_metodologico?: number;
   aplicabilidade_clinica?: string;
   conclusao_pratica?: string;
+  conclusao?: string;
   tags?: string[];
+  outcomes?: Array<{ name?: string; direction?: string; timeframe?: string; domain?: string }>;
+  [key: string]: any;
 }
 
 interface PaperSummaryCardProps {
@@ -36,13 +48,6 @@ interface PaperSummaryCardProps {
   curationJson: CurationJson | null;
 }
 
-function getScoreColor(score: number | null) {
-  if (score == null) return "bg-muted text-muted-foreground";
-  if (score >= 70) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-  if (score >= 40) return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
-  return "bg-red-500/10 text-red-400 border-red-500/30";
-}
-
 export function PaperSummaryCard({
   title,
   authors,
@@ -53,79 +58,70 @@ export function PaperSummaryCard({
   curationJson,
 }: PaperSummaryCardProps) {
   const c = curationJson;
-
-  // Build the main message
-  const mainMessage = c?.conclusao_pratica || c?.resultados_principais || "";
-
-  // Build PICO lines
-  const picoLines = [
-    c?.intervencao ? `Intervenção: ${c.intervencao}` : null,
-    c?.comparador ? `Comparador: ${c.comparador}` : null,
-    c?.tamanho_amostra_total ? `Amostra: n=${c.tamanho_amostra_total}` : null,
-    c?.follow_up_medio ? `Follow-up: ${c.follow_up_medio}` : null,
-  ].filter(Boolean);
-
-  // Key results (max 3)
-  const keyResults: string[] = [];
-  if (c?.resultados_principais) keyResults.push(c.resultados_principais);
-  if (c?.significancia_estatistica) keyResults.push(`Significância: ${c.significancia_estatistica}`);
-  if (c?.eventos_adversos && c.eventos_adversos !== "" && c.eventos_adversos !== "Não relatados") {
-    keyResults.push(`Eventos adversos: ${c.eventos_adversos}`);
-  }
-
-  // Clinical applications (max 3)
-  const applications: string[] = [];
-  if (c?.aplicabilidade_clinica) applications.push(c.aplicabilidade_clinica);
-  if (c?.conclusao_pratica && c.conclusao_pratica !== c?.aplicabilidade_clinica) applications.push(c.conclusao_pratica);
-
-  // Limitations from risco_vies
-  const limitations: string[] = [];
-  if (c?.risco_vies && c.risco_vies !== "baixo" && c.justificativa_risco_vies) {
-    limitations.push(c.justificativa_risco_vies);
-  }
-  if (c?.tamanho_amostra_total != null && c.tamanho_amostra_total < 50) {
-    limitations.push(`Amostra pequena (n=${c.tamanho_amostra_total}).`);
-  }
-
+  const template = resolvePaperTemplate(c);
   const hasContent = c != null;
-  const needsReview = !c;
+
+  // Fixed format: 1 central sentence
+  const centralSentence = c ? (getBestConclusion(c) || safeField(c.resultados_principais)) : null;
+
+  // 3 learnings
+  const learnings: string[] = [];
+  if (c) {
+    const mainResult = safeField(c.resultados_principais);
+    if (mainResult && mainResult !== centralSentence) learnings.push(mainResult);
+    const sig = safeField(c.significancia_estatistica);
+    if (sig) learnings.push(`Significância: ${sig}`);
+    const applic = safeField(c.aplicabilidade_clinica);
+    if (applic && applic !== centralSentence) learnings.push(applic);
+    const conclusion = safeField(c.conclusao_pratica);
+    if (conclusion && conclusion !== centralSentence && conclusion !== applic) learnings.push(conclusion);
+  }
+
+  // 2 limitations
+  const limitations: string[] = [];
+  if (c) {
+    if (safeField(c.risco_vies) && c.risco_vies !== 'baixo' && safeField(c.justificativa_risco_vies)) {
+      limitations.push(c.justificativa_risco_vies!);
+    }
+    if ((c.tamanho_amostra_total ?? 0) > 0 && c.tamanho_amostra_total! < 50) {
+      limitations.push(`Amostra pequena (n=${c.tamanho_amostra_total}).`);
+    }
+    if (template === 'TEMPLATE_TRANSLATIONAL_PRECLINICAL') {
+      limitations.push('Evidência pré-clínica — não aplicável diretamente à prática.');
+    }
+  }
+
+  // Classification
+  const audience = getAudience(template);
+
+  const needsReview = !hasContent;
 
   const copyText = () => {
     const lines = [
       `📄 ${title}`,
-      `📅 ${year || ""} • ${journal || ""}`,
-      c?.tipo_estudo ? `🔬 ${c.tipo_estudo}` : "",
-      c?.nivel_evidencia ? `📊 Nível de Evidência: ${c.nivel_evidencia}` : "",
-      evidenceScore != null ? `📊 Evidence Score: ${evidenceScore}/100` : "",
-      "",
-      mainMessage ? `💡 ${mainMessage}` : "",
-      "",
-      ...picoLines.map(l => `  ${l}`),
-      "",
-      ...keyResults.slice(0, 3).map(r => `• ${r}`),
-      "",
-      ...applications.map(a => `🏥 ${a}`),
-      "",
-      ...limitations.map(l => `⚠️ ${l}`),
-      "",
-      "⚕️ Não substitui avaliação clínica formal.",
-      isPublished ? `🛡️ ${EVIDENCE_METHOD_SEAL_TEXT}` : "",
-    ].filter(Boolean).join("\n");
+      `📅 ${year || ''} • ${journal || ''}`,
+      `🏷️ ${TEMPLATE_LABELS[template]}`,
+      '',
+      centralSentence ? `💡 ${centralSentence}` : '',
+      '',
+      ...learnings.slice(0, 3).map(l => `• ${l}`),
+      '',
+      ...limitations.slice(0, 2).map(l => `⚠️ ${l}`),
+      '',
+      `🎯 ${audience.join(' • ')}`,
+      '',
+      '⚕️ Não substitui avaliação clínica formal.',
+      isPublished ? `🛡️ ${EVIDENCE_METHOD_SEAL_TEXT}` : '',
+    ].filter(Boolean).join('\n');
     navigator.clipboard.writeText(lines);
-    toast.success("Ficha copiada para o clipboard!");
+    toast.success('Ficha copiada para o clipboard!');
   };
 
   const copyShort = () => {
-    const bullets = [
-      mainMessage,
-      ...keyResults.slice(0, 2),
-      ...applications.slice(0, 1),
-      ...limitations.slice(0, 1),
-    ].filter(Boolean).slice(0, 6);
-
-    const text = `${title} (${year || "?"}, ${c?.tipo_estudo || "?"})\n${bullets.map(b => `• ${b}`).join("\n")}`;
+    const bullets = [centralSentence, ...learnings.slice(0, 2), ...limitations.slice(0, 1)].filter(Boolean).slice(0, 4);
+    const text = `${title} (${year || '?'}, ${TEMPLATE_LABELS[template]})\n${bullets.map(b => `• ${b}`).join('\n')}`;
     navigator.clipboard.writeText(text);
-    toast.success("Versão resumida copiada!");
+    toast.success('Versão resumida copiada!');
   };
 
   return (
@@ -133,14 +129,14 @@ export function PaperSummaryCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="w-4 h-4 text-primary" /> Ficha Resumo para Aula
+            <FileText className="w-4 h-4 text-primary" /> Ficha Aula
           </CardTitle>
           <div className="flex gap-1">
             <Button variant="ghost" size="sm" onClick={copyText} className="gap-1 text-xs" disabled={!hasContent}>
-              <Copy className="w-3 h-3" /> Copiar para slide
+              <Copy className="w-3 h-3" /> Copiar
             </Button>
             <Button variant="ghost" size="sm" onClick={copyShort} className="gap-1 text-xs" disabled={!hasContent}>
-              <ClipboardCopy className="w-3 h-3" /> Versão resumida
+              <ClipboardCopy className="w-3 h-3" /> Resumida
             </Button>
           </div>
         </div>
@@ -148,13 +144,12 @@ export function PaperSummaryCard({
       <CardContent className="space-y-4">
         {needsReview && (
           <div className="flex items-center gap-2 p-2 rounded border border-orange-500/30 bg-orange-500/10">
-            <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
-            <p className="text-xs text-orange-400">
-              Curadoria não disponível. Ficha gerada com dados mínimos.
-            </p>
             <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-400 border-orange-500/30 shrink-0">
               Requer revisão humana
             </Badge>
+            <p className="text-xs text-orange-400">
+              Curadoria não disponível. Ficha gerada com dados mínimos.
+            </p>
           </div>
         )}
 
@@ -166,75 +161,55 @@ export function PaperSummaryCard({
           </p>
         </div>
 
-        {/* Tags & scores */}
+        {/* Template badge + tags */}
         <div className="flex flex-wrap gap-2">
-          {c?.tipo_estudo && <Badge variant="secondary">{c.tipo_estudo}</Badge>}
-          {c?.nivel_evidencia && (
+          <Badge variant="secondary">{TEMPLATE_LABELS[template]}</Badge>
+          {template === 'TEMPLATE_CLINICAL_COMPARATIVE' && safeField(c?.nivel_evidencia) && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
-              Nível {c.nivel_evidencia}
+              Nível {c!.nivel_evidencia}
+            </Badge>
+          )}
+          {template === 'TEMPLATE_TRANSLATIONAL_PRECLINICAL' && (
+            <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-400 border-orange-500/30">
+              Experimental
             </Badge>
           )}
           {evidenceScore != null && (
-            <Badge variant="outline" className={getScoreColor(evidenceScore)}>
+            <Badge variant="outline" className={
+              evidenceScore >= 70 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+              evidenceScore >= 40 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
+              'bg-red-500/10 text-red-400 border-red-500/30'
+            }>
               Score: {evidenceScore}/100
             </Badge>
           )}
-          {c?.tags?.slice(0, 4).map(t => (
-            <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
-          ))}
         </div>
 
         <Separator />
 
-        {/* Main message */}
-        {mainMessage && (
+        {/* Central sentence */}
+        {centralSentence && (
           <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Mensagem Principal</h4>
-            <p className="text-sm text-foreground font-medium">{mainMessage}</p>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Frase central</h4>
+            <p className="text-sm text-foreground font-medium">{centralSentence}</p>
           </div>
         )}
 
-        {/* PICO */}
-        {picoLines.length > 0 && (
+        {/* 3 learnings */}
+        {learnings.length > 0 && (
           <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">PICO</h4>
-            <div className="space-y-0.5">
-              {picoLines.map((l, i) => (
-                <p key={i} className="text-sm text-foreground">{l}</p>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Key results */}
-        {keyResults.length > 0 && (
-          <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Resultados-chave</h4>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Aprendizados</h4>
             <ul className="space-y-0.5">
-              {keyResults.slice(0, 3).map((r, i) => (
+              {learnings.slice(0, 3).map((l, i) => (
                 <li key={i} className="text-sm text-foreground flex items-start gap-2">
-                  <span className="text-emerald-500 mt-1">✓</span> {r}
+                  <span className="text-emerald-500 mt-1">✓</span> {l}
                 </li>
               ))}
             </ul>
           </div>
         )}
 
-        {/* Clinical applications */}
-        {applications.length > 0 && (
-          <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Aplicações Clínicas</h4>
-            <ul className="space-y-0.5">
-              {applications.slice(0, 3).map((a, i) => (
-                <li key={i} className="text-sm text-foreground flex items-start gap-2">
-                  <span className="text-primary mt-1">→</span> {a}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Limitations */}
+        {/* 2 limitations */}
         {limitations.length > 0 && (
           <div>
             <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Limitações</h4>
@@ -247,6 +222,16 @@ export function PaperSummaryCard({
             </ul>
           </div>
         )}
+
+        {/* Audience classification */}
+        <div>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Para quem serve</h4>
+          <div className="flex flex-wrap gap-1.5">
+            {audience.map(a => (
+              <Badge key={a} variant="outline" className="text-xs">{a}</Badge>
+            ))}
+          </div>
+        </div>
 
         <Separator />
 

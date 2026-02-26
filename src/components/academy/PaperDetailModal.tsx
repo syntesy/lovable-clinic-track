@@ -37,6 +37,18 @@ import { ReghenLayersDisplay } from "./ReghenLayersDisplay";
 import { PaperTechnicalStatus } from "./PaperTechnicalStatus";
 import { hasReghenMethod, getLegacyWarning } from "@/hooks/useEvidenceScore";
 import { validateReghenEvidenceMethod, type RemComplianceResult } from "@/utils/remComplianceValidator";
+import {
+  resolvePaperTemplate,
+  safeField,
+  safeArray,
+  getBestConclusion,
+  getWhatIsThis,
+  getAudience,
+  validateAbstract,
+  TEMPLATE_LABELS,
+  TEMPLATE_APPLICABILITY,
+  type PaperTemplate,
+} from "@/utils/paperTemplateRouter";
 
 interface PaperDetailModalProps {
   paper: AcademyPaper;
@@ -76,9 +88,6 @@ export function PaperDetailModal({
   const { data: revisions = [], isLoading: loadingRevisions } = usePaperRevisions(open ? paper.id : null);
   const canDownload = ["admin_academy", "teacher_approved", "teacher_candidate"].includes(userRole);
   const isLegacy = hasCuration && !hasRem && paper.curation_status === "published";
-  const compliance: RemComplianceResult | null = hasRem
-    ? validateReghenEvidenceMethod(remLayers)
-    : null;
 
   // Fetch fulltext data from DB
   const { data: fulltextData } = useQuery({
@@ -108,9 +117,6 @@ export function PaperDetailModal({
     },
   });
 
-  const hasScanWarning = fulltextData?.is_scanned === true;
-  const curationJson = curationRow?.curation_json || null;
-
   // Fetch file info
   const { data: paperFiles = [] } = useQuery({
     queryKey: ["paper-files", paper.id],
@@ -124,6 +130,27 @@ export function PaperDetailModal({
       return (data || []) as any[];
     },
   });
+
+  const hasScanWarning = fulltextData?.is_scanned === true;
+  const curationJson = curationRow?.curation_json || null;
+
+  // Template router
+  const template = resolvePaperTemplate(curationJson, {
+    nivel_evidencia: curationRow?.nivel_evidencia,
+    risco_vies: curationRow?.risco_vies,
+    score_metodologico: curationRow?.score_metodologico,
+    evidence_score: paper.evidence_score,
+    has_sufficient_text: fulltextData?.has_sufficient_text,
+  });
+
+  // REM compliance — adjusted for template
+  const compliance: RemComplianceResult | null = hasRem
+    ? validateReghenEvidenceMethod(remLayers)
+    : null;
+
+  // Abstract validation
+  const abstractText = fulltextData?.abstract || paper.abstract_text || null;
+  const abstractValidation = validateAbstract(abstractText, fulltextData?.abstract_char_count ?? (abstractText?.length || 0));
 
   const handleDownloadPdf = async (storagePath: string, fileName: string) => {
     try {
@@ -170,17 +197,43 @@ export function PaperDetailModal({
           <p className="text-sm text-muted-foreground">
             {paper.authors} • {paper.year} • {paper.journal}
           </p>
+          {/* Template + key chips */}
           <div className="flex flex-wrap gap-1.5 mt-2">
+            <Badge variant="secondary" className="text-xs">{TEMPLATE_LABELS[template]}</Badge>
+            {template === 'TEMPLATE_CLINICAL_COMPARATIVE' ? (
+              <>
+                {safeField(curationJson?.nivel_evidencia) && (
+                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                    Nível {curationJson.nivel_evidencia}
+                  </Badge>
+                )}
+                {safeField(curationJson?.risco_vies) && (
+                  <Badge variant="outline" className={`text-xs ${
+                    curationJson.risco_vies === 'baixo' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                    curationJson.risco_vies === 'moderado' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
+                    'bg-red-500/10 text-red-400 border-red-500/30'
+                  }`}>
+                    Viés: {curationJson.risco_vies}
+                  </Badge>
+                )}
+              </>
+            ) : (
+              <>
+                <Badge variant="outline" className="text-xs text-muted-foreground">Nível: N/A</Badge>
+                <Badge variant="outline" className="text-xs text-muted-foreground">Viés: N/A</Badge>
+              </>
+            )}
+            <Badge variant="outline" className="text-xs">{TEMPLATE_APPLICABILITY[template]}</Badge>
             {paper.pmid && (
               <a href={`https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}`} target="_blank" rel="noopener noreferrer">
-                <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-muted">
-                  <ExternalLink className="h-3 w-3" /> PubMed: {paper.pmid}
+                <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-muted text-xs">
+                  <ExternalLink className="h-3 w-3" /> PubMed
                 </Badge>
               </a>
             )}
             {paper.doi && (
               <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer">
-                <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-muted">
+                <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-muted text-xs">
                   <ExternalLink className="h-3 w-3" /> DOI
                 </Badge>
               </a>
@@ -204,7 +257,6 @@ export function PaperDetailModal({
               {paper.evidence_label && (
                 <Badge variant="outline" className="text-xs">{paper.evidence_label}</Badge>
               )}
-              <span className="text-[10px] text-muted-foreground italic">heurístico</span>
             </div>
           )}
         </DialogHeader>
@@ -237,7 +289,7 @@ export function PaperDetailModal({
                       <div>
                         <p className="text-sm font-medium text-orange-300">PDF escaneado / sem texto selecionável</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          O texto extraído deste PDF é insuficiente. A busca RAG pode não funcionar adequadamente.
+                          O texto extraído deste PDF é insuficiente.
                         </p>
                       </div>
                     </div>
@@ -312,7 +364,7 @@ export function PaperDetailModal({
                 )}
 
                 {/* Warnings */}
-                {paper.warnings?.length > 0 && (
+                {paper.warnings && paper.warnings.length > 0 && (
                   <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-3 space-y-1">
                     {paper.warnings.map((w, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm">
@@ -323,33 +375,59 @@ export function PaperDetailModal({
                   </div>
                 )}
 
-                {/* Abstract — source of truth: fulltext.abstract */}
+                {/* ── EM 20 SEGUNDOS ── */}
+                {curationJson && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+                    <h3 className="text-xs font-semibold text-primary uppercase">Em 20 segundos</h3>
+                    {getWhatIsThis(curationJson) && (
+                      <p className="text-sm text-foreground">
+                        <span className="text-muted-foreground">O que é:</span> {getWhatIsThis(curationJson)}
+                      </p>
+                    )}
+                    {getBestConclusion(curationJson) && (
+                      <p className="text-sm text-foreground">
+                        <span className="text-muted-foreground">Conclui:</span> {getBestConclusion(curationJson)}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-xs text-muted-foreground">Para:</span>
+                      {getAudience(template).map(a => (
+                        <Badge key={a} variant="outline" className="text-[10px]">{a}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Abstract */}
                 <section>
                   <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
                     <FileText className="w-4 h-4" /> Abstract
-                    {fulltextData?.abstract_source && fulltextData.abstract_source !== "none" && (
+                    {fulltextData?.abstract_source && fulltextData.abstract_source !== "none" && abstractValidation.isValid && (
                       <Badge variant="outline" className="text-[10px]">
                         {fulltextData.abstract_source === "extracted" ? "Extraído do PDF" :
                          fulltextData.abstract_source === "fallback" ? "Inferido (fallback)" :
                          fulltextData.abstract_source === "generated" ? "Gerado por IA" : ""}
                       </Badge>
                     )}
+                    {!abstractValidation.isValid && abstractText && (
+                      <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-400 border-orange-500/30">
+                        Abstract inválido
+                      </Badge>
+                    )}
                   </h3>
-                  {fulltextData?.abstract ? (
-                    <p className="text-sm text-muted-foreground leading-relaxed">{fulltextData.abstract}</p>
-                  ) : paper.abstract_text ? (
-                    <p className="text-sm text-muted-foreground leading-relaxed">{paper.abstract_text}</p>
+                  {abstractValidation.isValid && abstractText ? (
+                    <p className="text-sm text-muted-foreground leading-relaxed">{abstractText}</p>
                   ) : fulltextData?.has_sufficient_text ? (
                     <p className="text-sm text-muted-foreground italic">
-                      Abstract não identificado no PDF. O texto completo está disponível para curadoria.
+                      Abstract não disponível ou inválido. O texto completo está disponível para curadoria.
                     </p>
                   ) : (
-                    <p className="text-sm text-orange-400 italic">Abstract não disponível.</p>
+                    <p className="text-sm text-muted-foreground italic">Abstract não disponível.</p>
                   )}
                 </section>
 
                 {/* MeSH Terms */}
-                {paper.mesh_terms?.length > 0 && (
+                {paper.mesh_terms && paper.mesh_terms.length > 0 && (
                   <section>
                     <h3 className="text-sm font-semibold text-foreground mb-2">MeSH Terms</h3>
                     <div className="flex flex-wrap gap-1">
@@ -384,6 +462,7 @@ export function PaperDetailModal({
 
                     {hasRem ? (
                       <>
+                        {/* REM Compliance — template-aware */}
                         {compliance && (
                           <div className={`rounded-lg border p-2 mb-3 ${
                             compliance.is_valid
@@ -397,12 +476,13 @@ export function PaperDetailModal({
                                 <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
                               )}
                               <span className={`text-xs font-medium ${compliance.is_valid ? "text-emerald-400" : "text-red-400"}`}>
-                                REM™ Compliance: {compliance.compliance_score}/100
+                                Qualidade e Consistência (REM™): {compliance.compliance_score}/100
                               </span>
                             </div>
+                            {/* Show max 2 alerts */}
                             {compliance.errors.length > 0 && (
                               <ul className="space-y-0.5 mt-1">
-                                {compliance.errors.map((e, i) => (
+                                {compliance.errors.slice(0, 2).map((e, i) => (
                                   <li key={i} className="text-[11px] text-red-400 flex items-start gap-1">
                                     <span className="shrink-0">✕</span> {e}
                                   </li>
@@ -411,12 +491,17 @@ export function PaperDetailModal({
                             )}
                             {compliance.warnings.length > 0 && (
                               <ul className="space-y-0.5 mt-1">
-                                {compliance.warnings.map((w, i) => (
+                                {compliance.warnings.slice(0, 2).map((w, i) => (
                                   <li key={i} className="text-[11px] text-yellow-400 flex items-start gap-1">
                                     <span className="shrink-0">⚠</span> {w}
                                   </li>
                                 ))}
                               </ul>
+                            )}
+                            {template !== 'TEMPLATE_CLINICAL_COMPARATIVE' && (
+                              <p className="text-[10px] text-muted-foreground mt-1 italic">
+                                Critérios clínicos (outcome, comparador) não aplicáveis para este tipo de paper.
+                              </p>
                             )}
                           </div>
                         )}
@@ -426,49 +511,22 @@ export function PaperDetailModal({
                         />
                       </>
                     ) : (
-                      /* Legacy curation display */
+                      /* Non-REM: template-specific curation display */
                       <>
-                        <div className="grid grid-cols-2 gap-4">
-                          <CurationField label="Tipo de Estudo" value={curation.study_type} />
-                          <CurationField label="Nível de Evidência" value={curation.level_inference} />
-                          <CurationField label="População" value={curation.population} />
-                          <CurationField label="Intervenção" value={curation.intervention} />
-                          <CurationField label="Comparação" value={curation.comparison} />
-                          <CurationField label="Direção do Efeito" value={curation.effect_direction} />
-                        </div>
-
-                        <CurationField label="Desfechos Principais" value={curation.outcomes_principais} />
-                        <CurationField label="Resumo Curto" value={curation.summary_short} />
-                        <CurationField label="Follow-up" value={curation.follow_up} />
-
-                        {curation.limitations?.length > 0 && (
-                          <section>
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Limitações</h4>
-                            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5">
-                              {curation.limitations.map((l: string, i: number) => (
-                                <li key={i}>{l}</li>
-                              ))}
-                            </ul>
-                          </section>
+                        {curationJson && (
+                          <TemplateCurationDisplay curationJson={curationJson} template={template} />
                         )}
-                      </>
-                    )}
-
-                    {/* Structured curation data from academy_paper_curation */}
-                    {curationJson && !hasRem && (
-                      <>
-                        <Separator />
-                        <div className="grid grid-cols-2 gap-4">
-                          <CurationField label="Tipo de Estudo" value={curationJson.tipo_estudo} />
-                          <CurationField label="Nível de Evidência" value={curationJson.nivel_evidencia} />
-                          <CurationField label="Intervenção" value={curationJson.intervencao} />
-                          <CurationField label="Comparador" value={curationJson.comparador} />
-                          <CurationField label="Follow-up" value={curationJson.follow_up_medio} />
-                          <CurationField label="Risco de Viés" value={curationJson.risco_vies} />
-                        </div>
-                        <CurationField label="Resultados Principais" value={curationJson.resultados_principais} />
-                        <CurationField label="Aplicabilidade Clínica" value={curationJson.aplicabilidade_clinica} />
-                        <CurationField label="Conclusão Prática" value={curationJson.conclusao_pratica} />
+                        {/* Legacy fields fallback */}
+                        {!curationJson && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <CurationField label="Tipo de Estudo" value={curation.study_type} />
+                            <CurationField label="Nível de Evidência" value={curation.level_inference} />
+                            <CurationField label="População" value={curation.population} />
+                            <CurationField label="Intervenção" value={curation.intervention} />
+                            <CurationField label="Comparação" value={curation.comparison} />
+                            <CurationField label="Direção do Efeito" value={curation.effect_direction} />
+                          </div>
+                        )}
                       </>
                     )}
 
@@ -490,15 +548,6 @@ export function PaperDetailModal({
                           {curation.pathologies_norm.map((t: string, i: number) => (
                             <Badge key={i} variant="secondary" className="text-xs">{t}</Badge>
                           ))}
-                        </div>
-                      </section>
-                    )}
-
-                    {curation.summary_full_md && (
-                      <section>
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Resumo Completo</h4>
-                        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                          {curation.summary_full_md}
                         </div>
                       </section>
                     )}
@@ -609,6 +658,83 @@ export function PaperDetailModal({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ── Template-specific curation display ──
+function TemplateCurationDisplay({ curationJson, template }: { curationJson: any; template: PaperTemplate }) {
+  const c = curationJson;
+
+  if (template === 'TEMPLATE_CLINICAL_COMPARATIVE') {
+    return (
+      <div className="space-y-4">
+        {/* PICO */}
+        {(safeField(c.intervencao) || safeField(c.comparador)) && (
+          <div className="grid grid-cols-2 gap-4">
+            <CurationField label="Intervenção" value={safeField(c.intervencao)} />
+            <CurationField label="Comparador" value={safeField(c.comparador)} />
+            {(c.tamanho_amostra_total ?? 0) > 0 && (
+              <CurationField label="Amostra" value={`n=${c.tamanho_amostra_total}`} />
+            )}
+            <CurationField label="Follow-up" value={safeField(c.follow_up_medio)} />
+          </div>
+        )}
+        {/* Key results */}
+        <CurationField label="Resultados Principais" value={safeField(c.resultados_principais)} />
+        {/* Reliability */}
+        <div className="flex flex-wrap gap-2">
+          {safeField(c.risco_vies) && (
+            <Badge variant="outline" className={`text-xs ${
+              c.risco_vies === 'baixo' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+              c.risco_vies === 'moderado' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
+              'bg-red-500/10 text-red-400 border-red-500/30'
+            }`}>
+              Viés: {c.risco_vies}
+            </Badge>
+          )}
+          {c.score_metodologico != null && (
+            <Badge variant="outline" className="text-xs">Score: {c.score_metodologico}/10</Badge>
+          )}
+        </div>
+        <CurationField label="Aplicabilidade Clínica" value={safeField(c.aplicabilidade_clinica)} />
+        <CurationField label="Conclusão Prática" value={safeField(c.conclusao_pratica)} />
+      </div>
+    );
+  }
+
+  if (template === 'TEMPLATE_REVIEW_CONSENSUS') {
+    return (
+      <div className="space-y-4">
+        <CurationField label="O que revisa" value={safeField(c.intervencao)} />
+        <CurationField label="Principais achados" value={safeField(c.resultados_principais)} />
+        <CurationField label="Aplicabilidade" value={safeField(c.aplicabilidade_clinica)} />
+        <CurationField label="Conclusão" value={safeField(c.conclusao_pratica)} />
+      </div>
+    );
+  }
+
+  if (template === 'TEMPLATE_TRANSLATIONAL_PRECLINICAL') {
+    return (
+      <div className="space-y-4">
+        <CurationField label="Pergunta científica" value={safeField(c.intervencao)} />
+        <CurationField label="Mecanismos / achados" value={safeField(c.resultados_principais)} />
+        <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-2">
+          <p className="text-sm text-orange-300">
+            ⚠ Este paper não fornece evidência clínica direta. Resultados são experimentais.
+          </p>
+        </div>
+        <CurationField label="Aplicabilidade" value={safeField(c.aplicabilidade_clinica)} />
+      </div>
+    );
+  }
+
+  // OTHER
+  return (
+    <div className="space-y-4">
+      <CurationField label="Tipo de Estudo" value={safeField(c.tipo_estudo)} />
+      <CurationField label="Resultados" value={safeField(c.resultados_principais)} />
+      <CurationField label="Conclusão" value={safeField(c.conclusao_pratica) || safeField(c.aplicabilidade_clinica)} />
+    </div>
   );
 }
 
