@@ -77,6 +77,44 @@ function generateRequestId(): string {
   return `req_cur_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
+type PaperTemplate = "CLINICAL_COMPARATIVE" | "REVIEW_CONSENSUS" | "TRANSLATIONAL_PRECLINICAL" | "OTHER";
+
+function resolvePaperTemplateServer(curationJson: any): PaperTemplate {
+  const studyType = (curationJson?.tipo_estudo || "").toLowerCase();
+  const comparador = (curationJson?.comparador || "").trim();
+  const sampleSize = Number(curationJson?.tamanho_amostra_total) || 0;
+  const outcomes = Array.isArray(curationJson?.outcomes) ? curationJson.outcomes : [];
+  const hasStructuredOutcomes = outcomes.some(
+    (o: any) => o?.name && o.name !== "Não identificado" && o?.direction && o.direction !== "unknown"
+  );
+
+  // 1) REVIEW_CONSENSUS (check first — reviews may mention trials in text)
+  const reviewPatterns = ["systematic review", "meta-analysis", "guideline", "consensus", "position statement",
+    "revisão sistemática", "meta-análise", "diretriz", "consenso"];
+  if (reviewPatterns.some((p) => studyType.includes(p))) {
+    return "REVIEW_CONSENSUS";
+  }
+
+  // 2) CLINICAL_COMPARATIVE
+  const clinicalPatterns = ["randomized", "randomised", "trial", "cohort", "case-control",
+    "ensaio", "coorte", "caso-controle", "rct", "ecr"];
+  const isClinicalType = clinicalPatterns.some((p) => studyType.includes(p));
+  const hasComparator = comparador.length > 0 && comparador.toLowerCase() !== "nenhum" && comparador.toLowerCase() !== "none";
+  if (isClinicalType && sampleSize > 0 && hasComparator && hasStructuredOutcomes) {
+    return "CLINICAL_COMPARATIVE";
+  }
+
+  // 3) TRANSLATIONAL_PRECLINICAL
+  const preclinicalPatterns = ["in vitro", "animal", "cells", "mechanism", "preclinical",
+    "pré-clínico", "células", "mecanismo", "translacional"];
+  if (preclinicalPatterns.some((p) => studyType.includes(p)) || (!hasComparator && !hasStructuredOutcomes)) {
+    return "TRANSLATIONAL_PRECLINICAL";
+  }
+
+  // 4) OTHER fallback
+  return "OTHER";
+}
+
 function validateCurationJson(data: any): { valid: boolean; errors: string[]; warnings: string[] } {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -366,6 +404,16 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
       console.warn(`[curate:validation:warnings] ${validation.warnings.join(", ")}`);
     }
 
+    // Resolve template server-side
+    const paperTemplate = resolvePaperTemplateServer(curationData);
+    const schemaVersion = 2;
+
+    // Inject into curation_json for consistency
+    curationData.paper_template = paperTemplate;
+    curationData.schema_version = schemaVersion;
+
+    console.log(`[curate:template] paperId=${paperId} template=${paperTemplate} study_type="${curationData.tipo_estudo}"`);
+
     // Persist curation (upsert for idempotency)
     const { error: insertErr } = await supabaseService
       .from("academy_paper_curation")
@@ -376,6 +424,9 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
         score_metodologico: typeof curationData.score_metodologico === "number" ? curationData.score_metodologico : null,
         risco_vies: curationData.risco_vies || null,
         request_id: incomingRequestId,
+        paper_template: paperTemplate,
+        schema_version: schemaVersion,
+        data_quality_warnings: validation.warnings.length > 0 ? validation.warnings : [],
       }, { onConflict: "paper_id" });
 
     if (insertErr) {
@@ -389,7 +440,7 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
       .eq("id", paperId);
 
     const durationMs = Date.now() - startTime;
-    console.log(`[curate:done] paperId=${paperId} requestId=${incomingRequestId} duration=${durationMs}ms nivel=${curationData.nivel_evidencia} score=${curationData.score_metodologico} risco=${curationData.risco_vies} outcomes=${curationData.outcomes?.length}`);
+    console.log(`[curate:done] paperId=${paperId} requestId=${incomingRequestId} duration=${durationMs}ms template=${paperTemplate} nivel=${curationData.nivel_evidencia} score=${curationData.score_metodologico} risco=${curationData.risco_vies} outcomes=${curationData.outcomes?.length}`);
 
     // Log success
     await supabaseService.from("academy_ai_logs").insert({
@@ -408,6 +459,8 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
         nivel_evidencia: curationData.nivel_evidencia,
         score_metodologico: curationData.score_metodologico,
         risco_vies: curationData.risco_vies,
+        paper_template: paperTemplate,
+        schema_version: schemaVersion,
         tags: curationData.tags,
         outcomes_count: curationData.outcomes?.length,
         validation_errors: validation.errors,
@@ -421,6 +474,8 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
     return new Response(JSON.stringify({
       success: true,
       paper_id: paperId,
+      paper_template: paperTemplate,
+      schema_version: schemaVersion,
       nivel_evidencia: curationData.nivel_evidencia,
       score_metodologico: curationData.score_metodologico,
       risco_vies: curationData.risco_vies,

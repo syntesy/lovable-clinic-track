@@ -835,31 +835,40 @@ export type Database = {
         Row: {
           created_at: string
           curation_json: Json
+          data_quality_warnings: Json | null
           id: string
           nivel_evidencia: string | null
           paper_id: string
+          paper_template: string
           request_id: string | null
           risco_vies: string | null
+          schema_version: number
           score_metodologico: number | null
         }
         Insert: {
           created_at?: string
           curation_json: Json
+          data_quality_warnings?: Json | null
           id?: string
           nivel_evidencia?: string | null
           paper_id: string
+          paper_template?: string
           request_id?: string | null
           risco_vies?: string | null
+          schema_version?: number
           score_metodologico?: number | null
         }
         Update: {
           created_at?: string
           curation_json?: Json
+          data_quality_warnings?: Json | null
           id?: string
           nivel_evidencia?: string | null
           paper_id?: string
+          paper_template?: string
           request_id?: string | null
           risco_vies?: string | null
+          schema_version?: number
           score_metodologico?: number | null
         }
         Relationships: [
