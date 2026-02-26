@@ -43,6 +43,9 @@ export default function CuradoriaDetalhe() {
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfChecked, setPdfChecked] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
