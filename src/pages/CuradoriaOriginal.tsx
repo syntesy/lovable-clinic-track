@@ -96,7 +96,9 @@ export default function CuradoriaOriginal() {
 
   // Determine if we have a viewable PDF
   const hasPdf = Boolean(pdfUrl);
-  const hasExternalUrl = Boolean(article.pubmed_url || article.doi);
+  // Treat generic PubMed homepage as no URL
+  const hasSpecificPubmedUrl = Boolean(article.pubmed_url && article.pubmed_url.length > 35);
+  const hasExternalUrl = Boolean(hasSpecificPubmedUrl || article.doi);
 
   return (
     <div className="space-y-4">
