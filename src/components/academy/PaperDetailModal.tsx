@@ -161,7 +161,7 @@ export function PaperDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-3xl h-[92vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between gap-2">
             <DialogTitle className="text-lg leading-tight pr-8">{paper.title}</DialogTitle>
@@ -209,7 +209,7 @@ export function PaperDetailModal({
           )}
         </DialogHeader>
 
-        <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
+        <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <TabsList className="shrink-0">
             <TabsTrigger value="details" className="gap-1"><FileText className="h-3 w-3" /> Detalhes</TabsTrigger>
             <TabsTrigger value="reading" className="gap-1"><BookOpen className="h-3 w-3" /> Leitura Guiada</TabsTrigger>
@@ -217,7 +217,7 @@ export function PaperDetailModal({
             <TabsTrigger value="history" className="gap-1"><History className="h-3 w-3" /> Histórico</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="flex-1 min-h-0 mt-0">
+          <TabsContent value="details" className="flex-1 min-h-0 mt-0 overflow-hidden">
             <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="space-y-6 pb-24">
                 {/* Technical Status Panel */}
@@ -529,7 +529,7 @@ export function PaperDetailModal({
             </div>
           </TabsContent>
 
-          <TabsContent value="history" className="flex-1 min-h-0 mt-0">
+          <TabsContent value="history" className="flex-1 min-h-0 mt-0 overflow-hidden">
             <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="space-y-3 pb-24">
                 {loadingRevisions ? (
@@ -567,7 +567,7 @@ export function PaperDetailModal({
             </div>
           </TabsContent>
 
-          <TabsContent value="reading" className="flex-1 min-h-0 mt-0">
+          <TabsContent value="reading" className="flex-1 min-h-0 mt-0 overflow-hidden">
             <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="pb-24">
                 <GuidedReadingSection
@@ -579,7 +579,7 @@ export function PaperDetailModal({
             </div>
           </TabsContent>
 
-          <TabsContent value="ficha" className="flex-1 min-h-0 mt-0">
+          <TabsContent value="ficha" className="flex-1 min-h-0 mt-0 overflow-hidden">
             <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="pb-24">
                 <PaperSummaryCard
@@ -598,7 +598,7 @@ export function PaperDetailModal({
 
         {/* Actions */}
         {hasCuration && paper.curation_status === "ready" && (
-          <div className="flex justify-end gap-2 pt-4 border-t shrink-0 bg-background">
+          <div className="flex justify-end gap-2 pt-3 pb-1 border-t shrink-0 bg-background">
             <Button variant="outline" onClick={onReject} className="gap-1 text-destructive">
               <XCircle className="w-4 h-4" /> Rejeitar
             </Button>
