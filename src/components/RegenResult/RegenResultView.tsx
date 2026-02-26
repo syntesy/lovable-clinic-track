@@ -129,6 +129,8 @@ export function RegenResultView({
   screeningUpdatedAt,
   caseId,
   patientName,
+  pathologyKey,
+  interventionKey,
   isLoading = false,
   error = null,
   onGenerateResult,
