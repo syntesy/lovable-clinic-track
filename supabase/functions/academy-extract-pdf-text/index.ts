@@ -225,6 +225,27 @@ serve(async (req) => {
       warnings.push(`Número de chunks limitado a ${MAX_CHUNKS_PER_PAPER} (limite de custo).`);
     }
 
+    // === ABSTRACT EXTRACTION ===
+    let abstractText = "";
+    let abstractSource = "none";
+    
+    // Try to find "abstract" section in extracted text
+    const abstractMatch = extractedText.match(/\babstract\b[\s.:]*(.+?)(?=\b(?:introduction|methods|materials|background|keywords)\b)/is);
+    if (abstractMatch && abstractMatch[1].trim().length > 100) {
+      abstractText = abstractMatch[1].trim().slice(0, 2000);
+      abstractSource = "extracted";
+      console.log(`[abstract:extracted] chars=${abstractText.length}`);
+    } else {
+      // Fallback: take first meaningful text (skip title/authors lines)
+      const lines = extractedText.split(/[.\n]/).filter(l => l.trim().length > 20);
+      const fallbackText = lines.slice(0, 30).join(". ").slice(0, 1800);
+      if (fallbackText.length > 200) {
+        abstractText = fallbackText;
+        abstractSource = "fallback";
+        console.log(`[abstract:fallback] chars=${abstractText.length}`);
+      }
+    }
+
     // === OBJECTIVE TEXT SUFFICIENCY CLASSIFICATION ===
     const hasSufficientText = extractedText.length >= SUFFICIENT_TEXT_MIN_CHARS
       && extractedWords >= SUFFICIENT_TEXT_MIN_WORDS
@@ -257,6 +278,23 @@ serve(async (req) => {
         extraction_method: "unpdf",
         updated_at: new Date().toISOString(),
       }, { onConflict: "paper_id" });
+
+    // Update paper abstract if we extracted one and it's currently empty
+    if (abstractText && abstractSource !== "none") {
+      const { data: paperData } = await supabaseService
+        .from("academy_papers")
+        .select("abstract_text")
+        .eq("id", paperId)
+        .single();
+      
+      if (!paperData?.abstract_text || (paperData.abstract_text || "").length < 50) {
+        await supabaseService
+          .from("academy_papers")
+          .update({ abstract_text: abstractText })
+          .eq("id", paperId);
+        console.log(`[abstract:saved] source=${abstractSource} chars=${abstractText.length}`);
+      }
+    }
 
     // Update paper warnings: remove old scan warnings, add new ones
     {

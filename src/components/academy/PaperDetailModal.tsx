@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,7 @@ import { GuidedReadingSection } from "./GuidedReadingSection";
 import { PaperSummaryCard } from "./PaperSummaryCard";
 import { EvidenceMethodSeal } from "./EvidenceMethodSeal";
 import { ReghenLayersDisplay } from "./ReghenLayersDisplay";
+import { PaperTechnicalStatus } from "./PaperTechnicalStatus";
 import { hasReghenMethod, getLegacyWarning } from "@/hooks/useEvidenceScore";
 import { validateReghenEvidenceMethod, type RemComplianceResult } from "@/utils/remComplianceValidator";
 
@@ -75,35 +76,41 @@ export function PaperDetailModal({
   const hasRem = hasReghenMethod(curation);
   const { data: revisions = [], isLoading: loadingRevisions } = usePaperRevisions(open ? paper.id : null);
   const canDownload = ["admin_academy", "teacher_approved", "teacher_candidate"].includes(userRole);
-  // Scan warning is now determined by DB fulltext flags, not client-side heuristics
-  const [hasScanWarning, setHasScanWarning] = useState(false);
   const isLegacy = hasCuration && !hasRem && paper.curation_status === "published";
   const compliance: RemComplianceResult | null = hasRem
     ? validateReghenEvidenceMethod(remLayers)
     : null;
 
-  // Fetch fulltext sufficiency flags from DB
+  // Fetch fulltext data from DB
   const { data: fulltextData } = useQuery({
     queryKey: ["paper-fulltext", paper.id],
     enabled: open,
     queryFn: async () => {
       const { data } = await supabase
         .from("academy_paper_fulltext" as any)
-        .select("has_sufficient_text, is_scanned")
+        .select("has_sufficient_text, is_scanned, extraction_method, char_count, word_count, chunk_count, updated_at")
         .eq("paper_id", paper.id)
         .maybeSingle();
-      return data as unknown as { has_sufficient_text: boolean; is_scanned: boolean } | null;
+      return data as any | null;
     },
   });
 
-  // Update scan warning based on DB flags
-  useEffect(() => {
-    if (fulltextData) {
-      setHasScanWarning(fulltextData.is_scanned === true);
-    } else {
-      setHasScanWarning(false);
-    }
-  }, [fulltextData]);
+  // Fetch curation row from academy_paper_curation
+  const { data: curationRow } = useQuery({
+    queryKey: ["paper-curation", paper.id],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("academy_paper_curation" as any)
+        .select("id, curation_json, nivel_evidencia, score_metodologico, risco_vies, request_id, created_at")
+        .eq("paper_id", paper.id)
+        .maybeSingle();
+      return data as any | null;
+    },
+  });
+
+  const hasScanWarning = fulltextData?.is_scanned === true;
+  const curationJson = curationRow?.curation_json || null;
 
   // Fetch file info
   const { data: paperFiles = [] } = useQuery({
@@ -214,6 +221,15 @@ export function PaperDetailModal({
           <TabsContent value="details" className="flex-1 min-h-0">
             <ScrollArea className="h-full max-h-[60vh] -mx-6 px-6">
               <div className="space-y-6 pb-4">
+                {/* Technical Status Panel */}
+                <PaperTechnicalStatus
+                  paperId={paper.id}
+                  curationStatus={paper.curation_status}
+                  fulltextData={fulltextData}
+                  curationRow={curationRow}
+                  userRole={userRole}
+                />
+
                 {/* Scan Warning */}
                 {hasScanWarning && (
                   <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-3">
@@ -222,7 +238,7 @@ export function PaperDetailModal({
                       <div>
                         <p className="text-sm font-medium text-orange-300">PDF escaneado / sem texto selecionável</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          O texto extraído deste PDF é insuficiente. A busca RAG pode não funcionar adequadamente para este paper.
+                          O texto extraído deste PDF é insuficiente. A busca RAG pode não funcionar adequadamente.
                         </p>
                       </div>
                     </div>
@@ -246,25 +262,19 @@ export function PaperDetailModal({
                                 ({(f.size_bytes / 1024 / 1024).toFixed(1)} MB)
                               </span>
                             )}
-                            {f.scan_suspected && (
-                              <Badge variant="outline" className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-[10px] shrink-0">
-                                Scan
-                              </Badge>
-                            )}
-                            {/* Processing status badge */}
-                            {(f.processing_status === "pending" || f.processing_status === "queued") && (
-                              <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px] shrink-0 gap-1">
-                                <Clock className="w-2.5 h-2.5" /> Em processamento
-                              </Badge>
-                            )}
                             {f.processing_status === "processed" && (
-                              <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] shrink-0 gap-1">
+                              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[10px] shrink-0 gap-1">
                                 <CheckCircle2 className="w-2.5 h-2.5" /> Processado
                               </Badge>
                             )}
                             {f.processing_status === "failed" && (
-                              <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px] shrink-0 gap-1">
-                                <XCircle className="w-2.5 h-2.5" /> Falha no processamento
+                              <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/30 text-[10px] shrink-0 gap-1">
+                                <XCircle className="w-2.5 h-2.5" /> Falha
+                              </Badge>
+                            )}
+                            {(f.processing_status === "pending" || f.processing_status === "queued") && (
+                              <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30 text-[10px] shrink-0 gap-1">
+                                <Clock className="w-2.5 h-2.5" /> Processando
                               </Badge>
                             )}
                           </div>
@@ -321,6 +331,10 @@ export function PaperDetailModal({
                   </h3>
                   {paper.abstract_text ? (
                     <p className="text-sm text-muted-foreground leading-relaxed">{paper.abstract_text}</p>
+                  ) : fulltextData?.has_sufficient_text ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      Abstract não identificado no PDF. O texto completo está disponível para curadoria.
+                    </p>
                   ) : (
                     <p className="text-sm text-orange-400 italic">Abstract não disponível.</p>
                   )}
@@ -351,7 +365,6 @@ export function PaperDetailModal({
                       </Badge>
                     </div>
 
-                    {/* Legacy warning */}
                     {isLegacy && (
                       <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-2 mb-3">
                         <p className="text-xs text-yellow-400 flex items-center gap-1.5">
@@ -361,10 +374,8 @@ export function PaperDetailModal({
                       </div>
                     )}
 
-                    {/* Reghen Evidence Method™ 7 Layers */}
                     {hasRem ? (
                       <>
-                        {/* Compliance badge */}
                         {compliance && (
                           <div className={`rounded-lg border p-2 mb-3 ${
                             compliance.is_valid
@@ -432,6 +443,24 @@ export function PaperDetailModal({
                             </ul>
                           </section>
                         )}
+                      </>
+                    )}
+
+                    {/* Structured curation data from academy_paper_curation */}
+                    {curationJson && !hasRem && (
+                      <>
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-4">
+                          <CurationField label="Tipo de Estudo" value={curationJson.tipo_estudo} />
+                          <CurationField label="Nível de Evidência" value={curationJson.nivel_evidencia} />
+                          <CurationField label="Intervenção" value={curationJson.intervencao} />
+                          <CurationField label="Comparador" value={curationJson.comparador} />
+                          <CurationField label="Follow-up" value={curationJson.follow_up_medio} />
+                          <CurationField label="Risco de Viés" value={curationJson.risco_vies} />
+                        </div>
+                        <CurationField label="Resultados Principais" value={curationJson.resultados_principais} />
+                        <CurationField label="Aplicabilidade Clínica" value={curationJson.aplicabilidade_clinica} />
+                        <CurationField label="Conclusão Prática" value={curationJson.conclusao_pratica} />
                       </>
                     )}
 
@@ -533,23 +562,11 @@ export function PaperDetailModal({
           <TabsContent value="reading" className="flex-1 min-h-0">
             <ScrollArea className="h-full max-h-[60vh] -mx-6 px-6">
               <div className="pb-4">
-                <GuidedReadingSection article={{
-                  study_type: curation?.study_type || paper.curation_data?.study_type || "",
-                  year: paper.year || 0,
-                  follow_up: curation?.follow_up,
-                  effect_summary: curation?.outcomes_principais,
-                  limitations: curation?.limitations,
-                  summary_short: curation?.summary_short || paper.abstract_text || "",
-                  summary_full: curation?.summary_full_md,
-                  abstract_text: paper.abstract_text,
-                  evidence_score: paper.evidence_score,
-                  curation_data: curation || null,
-                }} />
-                {!curation && (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Curadoria necessária para gerar guia de leitura.
-                  </p>
-                )}
+                <GuidedReadingSection
+                  curationJson={curationJson}
+                  remLayers={remLayers}
+                  paperTitle={paper.title}
+                />
               </div>
             </ScrollArea>
           </TabsContent>
@@ -558,35 +575,13 @@ export function PaperDetailModal({
             <ScrollArea className="h-full max-h-[60vh] -mx-6 px-6">
               <div className="pb-4">
                 <PaperSummaryCard
-                  article={{
-                    id: paper.id,
-                    title: paper.title,
-                    authors: paper.authors,
-                    journal: paper.journal,
-                    year: paper.year || 0,
-                    study_type: curation?.study_type || "",
-                    interventions: curation?.interventions_norm || [],
-                    pathologies: curation?.pathologies_norm || [],
-                    keywords: [],
-                    pubmed_url: paper.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}` : null,
-                    doi_url: paper.doi ? `https://doi.org/${paper.doi}` : null,
-                    abstract_text: paper.abstract_text,
-                    summary_short: curation?.summary_short || paper.abstract_text || "",
-                    summary_full: curation?.summary_full_md || null,
-                    effect_summary: curation?.outcomes_principais || null,
-                    limitations: curation?.limitations || null,
-                    follow_up: curation?.follow_up || null,
-                    external_id: null,
-                    ai_summary: null,
-                    evidence_score: paper.evidence_score,
-                    created_by: paper.created_by,
-                    created_at: paper.created_at,
-                    updated_at: paper.updated_at,
-                    is_published: paper.curation_status === "published",
-                    deleted_at: paper.deleted_at,
-                  }}
-                  open={true}
-                  onOpenChange={() => {}}
+                  title={paper.title}
+                  authors={paper.authors}
+                  journal={paper.journal}
+                  year={paper.year}
+                  isPublished={paper.curation_status === "published"}
+                  evidenceScore={paper.evidence_score}
+                  curationJson={curationJson}
                 />
               </div>
             </ScrollArea>
