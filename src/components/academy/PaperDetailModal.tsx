@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -219,7 +218,7 @@ export function PaperDetailModal({
           </TabsList>
 
           <TabsContent value="details" className="flex-1 min-h-0 mt-0">
-            <ScrollArea className="h-full -mx-6 px-6">
+            <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="space-y-6 pb-24">
                 {/* Technical Status Panel */}
                 <PaperTechnicalStatus
@@ -527,11 +526,11 @@ export function PaperDetailModal({
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
 
           <TabsContent value="history" className="flex-1 min-h-0 mt-0">
-            <ScrollArea className="h-full -mx-6 px-6">
+            <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="space-y-3 pb-24">
                 {loadingRevisions ? (
                   <div className="flex justify-center py-8">
@@ -565,11 +564,11 @@ export function PaperDetailModal({
                   ))
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
 
           <TabsContent value="reading" className="flex-1 min-h-0 mt-0">
-            <ScrollArea className="h-full -mx-6 px-6">
+            <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="pb-24">
                 <GuidedReadingSection
                   curationJson={curationJson}
@@ -577,11 +576,11 @@ export function PaperDetailModal({
                   paperTitle={paper.title}
                 />
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
 
           <TabsContent value="ficha" className="flex-1 min-h-0 mt-0">
-            <ScrollArea className="h-full -mx-6 px-6">
+            <div className="h-full overflow-y-auto -mx-6 px-6">
               <div className="pb-24">
                 <PaperSummaryCard
                   title={paper.title}
@@ -593,7 +592,7 @@ export function PaperDetailModal({
                   curationJson={curationJson}
                 />
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
         </Tabs>
 
