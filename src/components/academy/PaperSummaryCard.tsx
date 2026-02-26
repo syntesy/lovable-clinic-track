@@ -13,6 +13,7 @@ import {
   getWhatIsThis,
   getAudience,
   TEMPLATE_LABELS,
+  type PaperTemplate,
 } from "@/utils/paperTemplateRouter";
 
 interface CurationJson {
@@ -46,6 +47,7 @@ interface PaperSummaryCardProps {
   isPublished?: boolean;
   evidenceScore?: number | null;
   curationJson: CurationJson | null;
+  template?: PaperTemplate;
 }
 
 export function PaperSummaryCard({
@@ -56,9 +58,11 @@ export function PaperSummaryCard({
   isPublished,
   evidenceScore,
   curationJson,
+  template: templateProp,
 }: PaperSummaryCardProps) {
   const c = curationJson;
-  const template = resolvePaperTemplate(c);
+  // Use template from parent (DB source) if available, otherwise fallback to client router
+  const template = templateProp || resolvePaperTemplate(c);
   const hasContent = c != null;
 
   // Fixed format: 1 central sentence

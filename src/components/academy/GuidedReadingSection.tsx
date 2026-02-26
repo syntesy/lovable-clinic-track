@@ -40,9 +40,10 @@ interface GuidedReadingSectionProps {
   curationJson: CurationJson | null;
   remLayers?: any;
   paperTitle?: string;
+  template?: PaperTemplate;
 }
 
-export function GuidedReadingSection({ curationJson, remLayers, paperTitle }: GuidedReadingSectionProps) {
+export function GuidedReadingSection({ curationJson, remLayers, paperTitle, template: templateProp }: GuidedReadingSectionProps) {
   if (!curationJson) {
     return (
       <Card className="border-primary/10">
@@ -56,7 +57,8 @@ export function GuidedReadingSection({ curationJson, remLayers, paperTitle }: Gu
     );
   }
 
-  const template = resolvePaperTemplate(curationJson);
+  // Use template from parent (DB source) if available, otherwise fallback to client router
+  const template = templateProp || resolvePaperTemplate(curationJson);
 
   return (
     <Card className="border-primary/10">
