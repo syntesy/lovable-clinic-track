@@ -77,6 +77,44 @@ function generateRequestId(): string {
   return `req_cur_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
+type PaperTemplate = "CLINICAL_COMPARATIVE" | "REVIEW_CONSENSUS" | "TRANSLATIONAL_PRECLINICAL" | "OTHER";
+
+function resolvePaperTemplateServer(curationJson: any): PaperTemplate {
+  const studyType = (curationJson?.tipo_estudo || "").toLowerCase();
+  const comparador = (curationJson?.comparador || "").trim();
+  const sampleSize = Number(curationJson?.tamanho_amostra_total) || 0;
+  const outcomes = Array.isArray(curationJson?.outcomes) ? curationJson.outcomes : [];
+  const hasStructuredOutcomes = outcomes.some(
+    (o: any) => o?.name && o.name !== "Não identificado" && o?.direction && o.direction !== "unknown"
+  );
+
+  // 1) REVIEW_CONSENSUS (check first — reviews may mention trials in text)
+  const reviewPatterns = ["systematic review", "meta-analysis", "guideline", "consensus", "position statement",
+    "revisão sistemática", "meta-análise", "diretriz", "consenso"];
+  if (reviewPatterns.some((p) => studyType.includes(p))) {
+    return "REVIEW_CONSENSUS";
+  }
+
+  // 2) CLINICAL_COMPARATIVE
+  const clinicalPatterns = ["randomized", "randomised", "trial", "cohort", "case-control",
+    "ensaio", "coorte", "caso-controle", "rct", "ecr"];
+  const isClinicalType = clinicalPatterns.some((p) => studyType.includes(p));
+  const hasComparator = comparador.length > 0 && comparador.toLowerCase() !== "nenhum" && comparador.toLowerCase() !== "none";
+  if (isClinicalType && sampleSize > 0 && hasComparator && hasStructuredOutcomes) {
+    return "CLINICAL_COMPARATIVE";
+  }
+
+  // 3) TRANSLATIONAL_PRECLINICAL
+  const preclinicalPatterns = ["in vitro", "animal", "cells", "mechanism", "preclinical",
+    "pré-clínico", "células", "mecanismo", "translacional"];
+  if (preclinicalPatterns.some((p) => studyType.includes(p)) || (!hasComparator && !hasStructuredOutcomes)) {
+    return "TRANSLATIONAL_PRECLINICAL";
+  }
+
+  // 4) OTHER fallback
+  return "OTHER";
+}
+
 function validateCurationJson(data: any): { valid: boolean; errors: string[]; warnings: string[] } {
   const errors: string[] = [];
   const warnings: string[] = [];
