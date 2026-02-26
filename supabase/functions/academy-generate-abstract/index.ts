@@ -81,12 +81,34 @@ serve(async (req) => {
       .eq("id", paperId)
       .single();
 
-    // Get fulltext or chunks
+    // Get fulltext — check idempotency first
     const { data: fulltext } = await supabaseService
       .from("academy_paper_fulltext")
-      .select("extracted_text")
+      .select("extracted_text, abstract, abstract_source, abstract_char_count")
       .eq("paper_id", paperId)
       .maybeSingle();
+
+    // IDEMPOTENCY: if a valid abstract already exists, return it without calling AI
+    const existingSource = fulltext?.abstract_source;
+    const existingAbstract = fulltext?.abstract || "";
+    const existingCharCount = fulltext?.abstract_char_count || 0;
+    if (
+      existingAbstract &&
+      existingCharCount >= 400 &&
+      ["extracted", "fallback", "generated"].includes(existingSource)
+    ) {
+      console.log(`[abstract:idempotent] paperId=${paperId} source=${existingSource} chars=${existingCharCount}`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          abstract: existingAbstract,
+          abstract_source: existingSource,
+          request_id: requestId,
+          idempotent: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     let sourceText = fulltext?.extracted_text || "";
 
@@ -128,8 +150,10 @@ serve(async (req) => {
 
 Rules:
 - Write in English
-- Be objective and neutral — do NOT invent numbers, statistics, or conclusions not present in the text
-- Summarize: objective, methods, key findings, and conclusion
+- Be strictly objective and neutral
+- Do NOT invent, fabricate, or extrapolate numbers, statistics, percentages, p-values, sample sizes, or conclusions that are not explicitly present in the source text
+- If a piece of information (e.g. sample size, effect size, follow-up duration) is not described in the source text, do NOT mention it at all — simply omit it
+- Summarize: objective, methods, key findings, and conclusion — only what is explicitly stated
 - Do NOT include author names, affiliations, or references
 - Output ONLY the abstract text, nothing else
 

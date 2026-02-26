@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.academy-curate-paper]
 verify_jwt = false
+
+[functions.academy-generate-abstract]
+verify_jwt = false
