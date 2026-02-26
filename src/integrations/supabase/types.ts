@@ -852,6 +852,9 @@ export type Database = {
       }
       academy_paper_fulltext: {
         Row: {
+          abstract: string | null
+          abstract_char_count: number | null
+          abstract_source: string | null
           char_count: number | null
           chunk_count: number | null
           created_at: string | null
@@ -865,6 +868,9 @@ export type Database = {
           word_count: number | null
         }
         Insert: {
+          abstract?: string | null
+          abstract_char_count?: number | null
+          abstract_source?: string | null
           char_count?: number | null
           chunk_count?: number | null
           created_at?: string | null
@@ -878,6 +884,9 @@ export type Database = {
           word_count?: number | null
         }
         Update: {
+          abstract?: string | null
+          abstract_char_count?: number | null
+          abstract_source?: string | null
           char_count?: number | null
           chunk_count?: number | null
           created_at?: string | null

@@ -225,14 +225,19 @@ serve(async (req) => {
       warnings.push(`Número de chunks limitado a ${MAX_CHUNKS_PER_PAPER} (limite de custo).`);
     }
 
-    // === ABSTRACT EXTRACTION ===
+    // === ABSTRACT EXTRACTION (robust multi-pattern) ===
     let abstractText = "";
     let abstractSource = "none";
     
-    // Try to find "abstract" section in extracted text
-    const abstractMatch = extractedText.match(/\babstract\b[\s.:]*(.+?)(?=\b(?:introduction|methods|materials|background|keywords)\b)/is);
-    if (abstractMatch && abstractMatch[1].trim().length > 100) {
-      abstractText = abstractMatch[1].trim().slice(0, 2000);
+    // Pattern 1: "Abstract" followed by content until Introduction/Methods/Materials/Background/Keywords
+    const abstractMatch = extractedText.match(/\babstract\b[\s.:]*(.+?)(?=\b(?:introduction|key\s*words|keywords)\b)/is);
+    // Pattern 2: "Abstract" followed by structured sections (OBJECTIVES/BACKGROUND/AIM)
+    const structuredMatch = !abstractMatch ? extractedText.match(/\babstract\b[\s.:]*((OBJECTIVES?|BACKGROUND|AIM|PURPOSE)[\s:].+?)((?=\bintroduction\b)|(?=\bkey\s*words\b)|(?=\bK\s*nee\s+O))/is) : null;
+    
+    const matchedAbstract = abstractMatch?.[1] || structuredMatch?.[1] || "";
+    
+    if (matchedAbstract.trim().length > 100) {
+      abstractText = matchedAbstract.trim().slice(0, 2000);
       abstractSource = "extracted";
       console.log(`[abstract:extracted] chars=${abstractText.length}`);
     } else {
@@ -264,7 +269,7 @@ serve(async (req) => {
       .update({ scan_suspected: isScanned })
       .eq("id", fileId);
 
-    // Save full text with sufficiency fields
+    // Save full text with sufficiency fields + abstract (single source of truth)
     await supabaseService
       .from("academy_paper_fulltext")
       .upsert({
@@ -276,24 +281,21 @@ serve(async (req) => {
         has_sufficient_text: hasSufficientText,
         is_scanned: isScanned,
         extraction_method: "unpdf",
+        abstract: abstractText || null,
+        abstract_source: abstractSource,
+        abstract_char_count: abstractText.length,
         updated_at: new Date().toISOString(),
       }, { onConflict: "paper_id" });
 
-    // Update paper abstract if we extracted one and it's currently empty
+    console.log(`[fulltext:saved] abstract_source=${abstractSource} abstract_chars=${abstractText.length}`);
+
+    // Sync abstract to academy_papers as cache (always overwrite on reprocess)
     if (abstractText && abstractSource !== "none") {
-      const { data: paperData } = await supabaseService
+      await supabaseService
         .from("academy_papers")
-        .select("abstract_text")
-        .eq("id", paperId)
-        .single();
-      
-      if (!paperData?.abstract_text || (paperData.abstract_text || "").length < 50) {
-        await supabaseService
-          .from("academy_papers")
-          .update({ abstract_text: abstractText })
-          .eq("id", paperId);
-        console.log(`[abstract:saved] source=${abstractSource} chars=${abstractText.length}`);
-      }
+        .update({ abstract_text: abstractText })
+        .eq("id", paperId);
+      console.log(`[abstract:synced_to_papers] source=${abstractSource} chars=${abstractText.length}`);
     }
 
     // Update paper warnings: remove old scan warnings, add new ones

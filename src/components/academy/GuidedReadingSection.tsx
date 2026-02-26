@@ -85,11 +85,14 @@ export function GuidedReadingSection({ curationJson, remLayers, paperTitle }: Gu
   if (c.tamanho_amostra_total != null && c.tamanho_amostra_total >= 100) strengths.push(`Amostra robusta (n=${c.tamanho_amostra_total}).`);
   if (c.significancia_estatistica) strengths.push(`Significância: ${c.significancia_estatistica}`);
 
-  // Outcomes
+  // Outcomes - structured from desfechos or fallback
   const allOutcomes = [
     ...(c.desfechos_primarios || []).map(d => ({ name: d, type: "Primário" })),
     ...(c.desfechos_secundarios || []).map(d => ({ name: d, type: "Secundário" })),
   ];
+
+  // If no outcomes found, add fallback warning
+  const hasOutcomes = allOutcomes.length > 0;
 
   return (
     <Card className="border-primary/10">
@@ -185,7 +188,14 @@ export function GuidedReadingSection({ curationJson, remLayers, paperTitle }: Gu
               ))}
             </div>
           )}
-          {allOutcomes.length === 0 && <MissingField field="desfechos" />}
+          {!hasOutcomes && (
+            <div className="flex items-start gap-2 mt-1">
+              <AlertTriangle className="w-3 h-3 text-orange-400 mt-0.5" />
+              <p className="text-xs text-orange-400 italic">
+                Desfechos não estruturados na curadoria. Considere regerar com schema reforçado.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Strengths */}
