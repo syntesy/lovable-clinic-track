@@ -36,6 +36,7 @@ interface PaperTechnicalStatusProps {
   fulltextData: FulltextData | null;
   curationRow: CurationRow | null;
   userRole: string;
+  dataQualityWarnings?: any[] | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -47,12 +48,19 @@ const STATUS_COLORS: Record<string, string> = {
   failed: "bg-red-500/10 text-red-400 border-red-500/30",
 };
 
+const WARNING_LABELS: Record<string, string> = {
+  MISSING_OUTCOMES: "Outcomes não estruturados. Regerar curadoria ou revisar extraction.",
+  MISSING_SAMPLE_SIZE: "Tamanho de amostra ausente. Revisar curadoria.",
+  MISSING_COMPARATOR: "Comparador ausente. Revisar curadoria.",
+};
+
 export function PaperTechnicalStatus({
   paperId,
   curationStatus,
   fulltextData,
   curationRow,
   userRole,
+  dataQualityWarnings,
 }: PaperTechnicalStatusProps) {
   const queryClient = useQueryClient();
   const [reprocessing, setReprocessing] = useState(false);
@@ -202,6 +210,26 @@ export function PaperTechnicalStatus({
               </code>
             </CollapsibleContent>
           </Collapsible>
+        )}
+
+        {/* Data Quality Warnings — Admin/Teacher only */}
+        {isAdmin && dataQualityWarnings && dataQualityWarnings.length > 0 && (
+          <div className="pt-2 border-t border-border space-y-1.5">
+            <h5 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-orange-400" /> Alertas Estruturais
+            </h5>
+            <ul className="space-y-1">
+              {dataQualityWarnings.map((w: any, i: number) => {
+                const code = typeof w === 'string' ? w : w?.code || w?.type || String(w);
+                const label = WARNING_LABELS[code] || code;
+                return (
+                  <li key={i} className="text-xs text-orange-400 flex items-start gap-1.5">
+                    <span className="shrink-0 mt-0.5">⚠</span> {label}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
 
         {/* Admin Actions */}
