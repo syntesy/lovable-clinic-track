@@ -474,6 +474,8 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
     return new Response(JSON.stringify({
       success: true,
       paper_id: paperId,
+      paper_template: paperTemplate,
+      schema_version: schemaVersion,
       nivel_evidencia: curationData.nivel_evidencia,
       score_metodologico: curationData.score_metodologico,
       risco_vies: curationData.risco_vies,
