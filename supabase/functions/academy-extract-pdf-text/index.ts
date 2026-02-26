@@ -98,6 +98,36 @@ async function updateFileStatus(supabase: any, fileId: string, status: string, e
   await supabase.from("academy_paper_files").update(update).eq("id", fileId);
 }
 
+/** Affiliation / author line patterns */
+const AFFILIATION_PATTERNS = /\b(department\s+of|university|institute|hospital|faculty|school\s+of|centro|universidade|departamento|instituto|address|correspondence|email|tel\b|fax\b)\b/i;
+const EMAIL_PATTERN = /@/;
+const COUNTRY_PATTERN = /\b(united states|brazil|brasil|uk|germany|france|italy|spain|japan|china|australia|canada|india|netherlands|switzerland|sweden|south korea|portugal|argentina|mexico)\b/i;
+const STATE_ABBREV_PATTERN = /,\s*[A-Z]{2}\s*(\d{5})?$/;
+
+/** Remove affiliation-heavy lines from text */
+function stripAffiliationLines(text: string): string {
+  const lines = text.split("\n");
+  return lines.filter(line => {
+    const trimmed = line.trim();
+    if (trimmed.length < 5) return true; // keep short/empty lines
+    if (AFFILIATION_PATTERNS.test(trimmed)) return false;
+    if (EMAIL_PATTERN.test(trimmed)) return false;
+    if (COUNTRY_PATTERN.test(trimmed)) return false;
+    if (STATE_ABBREV_PATTERN.test(trimmed)) return false;
+    return true;
+  }).join("\n");
+}
+
+/** Check if text is majority affiliations (>=30% of lines) */
+function isAffiliationHeavy(text: string): boolean {
+  const lines = text.split("\n").filter(l => l.trim().length > 5);
+  if (lines.length === 0) return true;
+  const affiliationLines = lines.filter(l =>
+    AFFILIATION_PATTERNS.test(l) || EMAIL_PATTERN.test(l) || COUNTRY_PATTERN.test(l) || STATE_ABBREV_PATTERN.test(l.trim())
+  );
+  return (affiliationLines.length / lines.length) >= 0.30;
+}
+
 /** Extract abstract using multi-pattern matching */
 function extractAbstract(fulltext: string): { text: string; source: string } {
   // Pattern: "Abstract" section
@@ -109,20 +139,27 @@ function extractAbstract(fulltext: string): { text: string; source: string } {
   for (const pattern of patterns) {
     const match = fulltext.match(pattern);
     const captured = match?.[1] || match?.[2] || "";
-    const cleaned = captured
+    let cleaned = captured
       .replace(/\d+\s*$/gm, "") // page numbers
       .replace(/https?:\/\/\S+/g, "") // URLs
       .replace(/doi:\s*\S+/gi, "") // DOI refs
       .trim();
-    if (cleaned.length > 100) {
+    // Strip any affiliation lines that leaked into the abstract
+    cleaned = stripAffiliationLines(cleaned).trim();
+    if (cleaned.length > 100 && !isAffiliationHeavy(cleaned)) {
       return { text: cleaned.slice(0, 2000), source: "extracted" };
     }
   }
 
   // Fallback: skip first 200 chars (likely title/authors), take meaningful text
   const lines = fulltext.split(/[.\n]/).filter(l => l.trim().length > 20);
-  const fallbackText = lines.slice(2, 30).join(". ").slice(0, 1800).trim();
-  if (fallbackText.length > 200) {
+  let fallbackText = lines.slice(2, 30).join(". ").slice(0, 1800).trim();
+
+  // Clean affiliation lines from fallback
+  fallbackText = stripAffiliationLines(fallbackText).trim();
+
+  // Validate fallback
+  if (fallbackText.length >= 400 && !isAffiliationHeavy(fallbackText)) {
     return { text: fallbackText, source: "fallback" };
   }
 
