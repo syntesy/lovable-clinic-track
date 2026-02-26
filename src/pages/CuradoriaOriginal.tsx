@@ -71,8 +71,11 @@ export default function CuradoriaOriginal() {
     (article.status === "sem_curadoria" || article.status === "indeferida");
 
   const handleOpenExternal = () => {
-    if (article?.pubmed_url) {
-      window.open(article.pubmed_url, "_blank", "noopener,noreferrer");
+    const pubmedUrl = article?.pubmed_url?.trim();
+    const isSpecificPubmed = Boolean(pubmedUrl && pubmedUrl.length > 35);
+
+    if (isSpecificPubmed && pubmedUrl) {
+      window.open(pubmedUrl, "_blank", "noopener,noreferrer");
     } else if (article?.doi) {
       window.open(`https://doi.org/${article.doi}`, "_blank", "noopener,noreferrer");
     }
