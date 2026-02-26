@@ -5,7 +5,15 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+function errorResponse(status: number, message: string, code: string) {
+  return new Response(
+    JSON.stringify({ ok: false, error: message, code }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -18,10 +26,7 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return errorResponse(401, "Sua sessão expirou. Faça login novamente.", "UNAUTHORIZED");
     }
 
     const supabaseAuth = createClient(
@@ -32,10 +37,7 @@ serve(async (req) => {
 
     const { data: { user }, error: userErr } = await supabaseAuth.auth.getUser();
     if (userErr || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return errorResponse(401, "Sua sessão expirou. Faça login novamente.", "UNAUTHORIZED");
     }
     userId = user.id;
 
@@ -53,7 +55,6 @@ serve(async (req) => {
 
     const userRole = roleData?.role || "student";
     if (!["admin_academy", "teacher_approved", "teacher_candidate"].includes(userRole)) {
-      // Also check if they're a general admin
       const { data: generalRole } = await supabaseService
         .from("user_roles")
         .select("role")
@@ -62,39 +63,63 @@ serve(async (req) => {
         .maybeSingle();
 
       if (!generalRole) {
-        return new Response(JSON.stringify({ error: "Apenas admin/teacher podem fazer upload de PDFs." }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(403, "Apenas admin/teacher podem fazer upload de PDFs.", "FORBIDDEN");
       }
     }
 
-    // Parse JSON body (base64 encoded PDF)
+    // Parse body - now expects storage_path instead of base64
     const body = await req.json();
-    const { paper_id, title, file_name, file_base64 } = body;
+    const { paper_id, title, file_name, storage_path, file_size, file_base64 } = body;
 
-    if (!file_base64 || !file_name) {
-      return new Response(JSON.stringify({ error: "file_name e file_base64 são obrigatórios." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Support both new (storage_path) and legacy (file_base64) flows
+    let finalStoragePath = storage_path;
+    let finalFileSize = file_size || 0;
+
+    if (!finalStoragePath && file_base64) {
+      // Legacy base64 flow - decode and upload
+      if (!file_name) {
+        return errorResponse(400, "file_name é obrigatório.", "INVALID_PAYLOAD");
+      }
+      const binaryStr = atob(file_base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      finalFileSize = bytes.length;
+
+      const timestamp = Date.now();
+      finalStoragePath = `papers/${paper_id || "pending"}/${timestamp}-${file_name}`;
+
+      const { error: uploadErr } = await supabaseService.storage
+        .from("academy-papers")
+        .upload(finalStoragePath, bytes, {
+          contentType: "application/pdf",
+          upsert: false,
+        });
+
+      if (uploadErr) throw new Error(`Erro no upload: ${uploadErr.message}`);
     }
 
-    // Decode base64
-    const binaryStr = atob(file_base64);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i);
+    if (!finalStoragePath || !file_name) {
+      return errorResponse(400, "storage_path e file_name são obrigatórios.", "INVALID_PAYLOAD");
+    }
+
+    // Verify file exists in storage
+    const { data: fileCheck } = await supabaseService.storage
+      .from("academy-papers")
+      .list(finalStoragePath.split("/").slice(0, -1).join("/"), {
+        search: finalStoragePath.split("/").pop(),
+      });
+
+    if (!fileCheck || fileCheck.length === 0) {
+      return errorResponse(404, "Arquivo não encontrado. Reenvie o PDF.", "FILE_NOT_FOUND");
     }
 
     // Create paper if no paper_id
     let finalPaperId = paper_id;
     if (!finalPaperId) {
       if (!title || title.trim().length < 3) {
-        return new Response(JSON.stringify({ error: "Título é obrigatório ao criar novo paper." }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(400, "Título é obrigatório ao criar novo paper (mínimo 3 caracteres).", "INVALID_TITLE");
       }
 
       const { data: newPaper, error: paperErr } = await supabaseService
@@ -112,30 +137,28 @@ serve(async (req) => {
 
       if (paperErr) throw new Error(`Erro ao criar paper: ${paperErr.message}`);
       finalPaperId = newPaper.id;
+
+      // If file was uploaded to pending path, move it
+      if (finalStoragePath.startsWith("papers/pending/")) {
+        const newPath = finalStoragePath.replace("papers/pending/", `papers/${finalPaperId}/`);
+        const { error: moveErr } = await supabaseService.storage
+          .from("academy-papers")
+          .move(finalStoragePath, newPath);
+        if (!moveErr) {
+          finalStoragePath = newPath;
+        }
+      }
     }
-
-    // Upload to storage
-    const timestamp = Date.now();
-    const storagePath = `papers/${finalPaperId}/${timestamp}-${file_name}`;
-
-    const { error: uploadErr } = await supabaseService.storage
-      .from("academy-papers")
-      .upload(storagePath, bytes, {
-        contentType: "application/pdf",
-        upsert: false,
-      });
-
-    if (uploadErr) throw new Error(`Erro no upload: ${uploadErr.message}`);
 
     // Insert file record
     const { data: fileRecord, error: fileErr } = await supabaseService
       .from("academy_paper_files")
       .insert({
         paper_id: finalPaperId,
-        storage_path: storagePath,
+        storage_path: finalStoragePath,
         file_name,
         mime_type: "application/pdf",
-        size_bytes: bytes.length,
+        size_bytes: finalFileSize,
         uploaded_by: userId,
       })
       .select("id")
@@ -148,22 +171,24 @@ serve(async (req) => {
       action: "pdf_upload",
       paper_id: finalPaperId,
       user_id: userId,
-      input: { file_name, size_bytes: bytes.length, paper_id: finalPaperId, created_new: !paper_id },
-      output: { file_id: fileRecord.id, storage_path: storagePath },
+      input: { file_name, size_bytes: finalFileSize, paper_id: finalPaperId, created_new: !paper_id },
+      output: { file_id: fileRecord.id, storage_path: finalStoragePath },
       status: "success",
       duration_ms: Date.now() - startTime,
     });
 
     return new Response(JSON.stringify({
+      ok: true,
       paper_id: finalPaperId,
       file_id: fileRecord.id,
       created_new: !paper_id,
+      status: "queued",
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Upload PDF error:", error);
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
+    const message = error instanceof Error ? error.message : "Erro interno ao processar o paper. Tente novamente em instantes.";
 
     if (userId) {
       try {
@@ -184,9 +209,6 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse(500, message, "INTERNAL_ERROR");
   }
 });

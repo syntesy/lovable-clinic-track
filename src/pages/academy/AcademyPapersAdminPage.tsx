@@ -80,7 +80,7 @@ export default function AcademyPapersAdminPage() {
   const updateStatusMutation = useUpdatePaperStatus();
   const deleteMutation = useSoftDeletePaper();
   const { indexPaper } = useIndexPaper();
-  const { uploadPdf, isUploading } = useUploadPdf();
+  const { uploadPdf, isUploading, uploadStage } = useUploadPdf();
   const { extractPdfText, isExtracting } = useExtractPdfText();
 
   const filteredPapers = papers.filter((p) => {
@@ -519,7 +519,7 @@ export default function AcademyPapersAdminPage() {
                   disabled={isUploading || isExtracting || !pdfFile}
                 >
                   {(isUploading || isExtracting) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {isExtracting ? "Extraindo texto…" : isUploading ? "Enviando…" : "Enviar e Processar"}
+                  {isExtracting ? "Extraindo texto…" : isUploading ? (uploadStage || "Enviando…") : "Enviar e Processar"}
                 </Button>
               </DialogFooter>
             </TabsContent>
