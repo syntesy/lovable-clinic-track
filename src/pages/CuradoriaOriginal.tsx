@@ -34,18 +34,26 @@ export default function CuradoriaOriginal() {
       };
       setArticle(typedArticle);
 
-      // Get PDF URL - check if it's a storage path or public folder path
+      // Get PDF URL - validate that path is actually reachable
       if (data.pdf_path) {
-        // If path starts with /articles/, it's in the public folder
         if (data.pdf_path.startsWith('/articles/')) {
-          setPdfUrl(data.pdf_path);
+          try {
+            const response = await fetch(data.pdf_path, { method: 'HEAD' });
+            setPdfUrl(response.ok ? data.pdf_path : null);
+          } catch {
+            setPdfUrl(null);
+          }
         } else {
-          // Otherwise try to get from Supabase storage
           const { data: urlData } = supabase.storage
             .from("articles")
             .getPublicUrl(data.pdf_path);
-          
-          setPdfUrl(urlData.publicUrl);
+
+          try {
+            const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
+            setPdfUrl(response.ok ? urlData.publicUrl : null);
+          } catch {
+            setPdfUrl(null);
+          }
         }
       }
     } catch (error) {
@@ -63,8 +71,11 @@ export default function CuradoriaOriginal() {
     (article.status === "sem_curadoria" || article.status === "indeferida");
 
   const handleOpenExternal = () => {
-    if (article?.pubmed_url) {
-      window.open(article.pubmed_url, "_blank", "noopener,noreferrer");
+    const pubmedUrl = article?.pubmed_url?.trim();
+    const isSpecificPubmed = Boolean(pubmedUrl && pubmedUrl.length > 35);
+
+    if (isSpecificPubmed && pubmedUrl) {
+      window.open(pubmedUrl, "_blank", "noopener,noreferrer");
     } else if (article?.doi) {
       window.open(`https://doi.org/${article.doi}`, "_blank", "noopener,noreferrer");
     }
@@ -156,33 +167,21 @@ export default function CuradoriaOriginal() {
                 onError={() => setPdfUrl(null)}
               />
             </div>
-          ) : article.doi ? (
-            <div className="relative w-full" style={{ height: "calc(100vh - 250px)", minHeight: "500px" }}>
-              <iframe
-                src={`https://doi.org/${article.doi}`}
-                className="absolute inset-0 w-full h-full"
-                title={article.title}
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
-            </div>
-          ) : hasSpecificPubmedUrl ? (
-            <div className="relative w-full" style={{ height: "calc(100vh - 250px)", minHeight: "500px" }}>
-              <iframe
-                src={article.pubmed_url!}
-                className="absolute inset-0 w-full h-full"
-                title={article.title}
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
-            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20">
               <FileText className="h-16 w-16 text-muted-foreground mb-4" />
               <h2 className="text-lg font-medium text-foreground mb-2">
-                Artigo original não disponível
+                Visualização interna indisponível
               </h2>
               <p className="text-muted-foreground text-center mb-6 max-w-md">
-                O PDF deste artigo ainda não foi anexado ao sistema.
+                Este artigo precisa ser aberto em nova aba para leitura completa.
               </p>
+              {hasExternalUrl && (
+                <Button variant="outline" onClick={handleOpenExternal} className="gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Abrir artigo em nova aba
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
