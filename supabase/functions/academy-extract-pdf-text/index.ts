@@ -204,7 +204,7 @@ serve(async (req) => {
     try {
       console.log(`[parse:start] Extracting text with unpdf...`);
       const result = await extractText(pdfBytes, { mergePages: true });
-      extractedText = (result.text || "").replace(/\s+/g, " ").trim();
+      extractedText = sanitizeText((result.text || "").replace(/\s+/g, " ").trim());
       console.log(`[parse:ok] chars=${extractedText.length} first_300="${extractedText.slice(0, 300)}"`);
     } catch (parseErr: any) {
       const errMsg = `Erro ao parsear PDF: ${parseErr.message || parseErr}`;
