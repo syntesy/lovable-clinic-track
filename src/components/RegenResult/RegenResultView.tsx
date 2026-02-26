@@ -246,7 +246,13 @@ export function RegenResultView({
           safetyBlocked={safetyBlocked}
         />
 
-        {/* CARD G - Data Quality */}
+        {/* CARD G - Evidence Engine */}
+        <CardEvidence
+          pathologyKey={pathologyKey}
+          interventionKey={interventionKey}
+        />
+
+        {/* CARD H - Data Quality */}
         <CardDataQuality dataQuality={engineOutputs!.data_quality} />
 
         {/* Footer - Disclaimer */}
