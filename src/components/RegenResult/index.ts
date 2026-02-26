@@ -15,4 +15,5 @@ export { CardBRS } from "./CardBRS";
 export { CardTOG } from "./CardTOG";
 export { CardPEE } from "./CardPEE";
 export { CardDataQuality } from "./CardDataQuality";
+export { CardEvidence } from "./CardEvidence";
 export * from "./types";
