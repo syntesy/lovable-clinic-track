@@ -9,7 +9,9 @@ const corsHeaders = {
 };
 
 const OPENAI_EMBEDDING_MODEL = "text-embedding-3-small";
-const SCAN_THRESHOLD_CHARS = 1500;
+const SUFFICIENT_TEXT_MIN_CHARS = 3000;
+const SUFFICIENT_TEXT_MIN_WORDS = 500;
+const SUFFICIENT_TEXT_MIN_CHUNKS = 5;
 const CHUNK_SIZE = 1200;
 const CHUNK_OVERLAP = 150;
 const MAX_PDF_CHARS = 250000;
@@ -206,59 +208,8 @@ serve(async (req) => {
 
     const extractedWords = extractedText.split(/\s+/).filter(w => w.length > 0).length;
     const warnings: string[] = [];
-    let scanSuspected = false;
 
     console.log(`[extract:result] chars=${extractedText.length} words=${extractedWords}`);
-
-    // Scan detection
-    if (extractedText.length < SCAN_THRESHOLD_CHARS) {
-      scanSuspected = true;
-      const warning = `Texto insuficiente extraído (${extractedText.length} chars, ${extractedWords} palavras) — PDF pode ser escaneado (scan).`;
-      warnings.push(warning);
-
-      await supabaseService
-        .from("academy_paper_files")
-        .update({ scan_suspected: true, processing_status: "processed", processing_error: warning })
-        .eq("id", fileId);
-
-      const { data: paper } = await supabaseService
-        .from("academy_papers")
-        .select("warnings")
-        .eq("id", paperId)
-        .single();
-
-      const currentWarnings = (paper?.warnings as string[]) || [];
-      const scanWarning = "Texto insuficiente extraído — PDF pode ser escaneado (scan).";
-      if (!currentWarnings.some(w => w.includes("escaneado"))) {
-        await supabaseService
-          .from("academy_papers")
-          .update({ warnings: [...currentWarnings, scanWarning] })
-          .eq("id", paperId);
-      }
-
-      await supabaseService.from("academy_ai_logs").insert({
-        action: "pdf_extract_index",
-        paper_id: paperId,
-        user_id: userId,
-        request_id: incomingRequestId,
-        input: { paper_id: paperId, file_id: fileId },
-        output: { warning, extracted_chars: extractedText.length, extracted_words: extractedWords, scan_suspected: true },
-        status: "success",
-        duration_ms: Date.now() - startTime,
-      });
-
-      return new Response(JSON.stringify({
-        extracted: false,
-        warning,
-        chars_extracted: extractedText.length,
-        words_extracted: extractedWords,
-        scan_suspected: true,
-        processing_status: "processed",
-        request_id: incomingRequestId,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     // Cost cap: truncate text
     let truncated = false;
@@ -268,37 +219,56 @@ serve(async (req) => {
       warnings.push(`PDF muito longo — indexação parcial aplicada (limite: ${MAX_PDF_CHARS} chars).`);
     }
 
-    await supabaseService
-      .from("academy_paper_files")
-      .update({ scan_suspected: false })
-      .eq("id", fileId);
-
-    // Save full text
-    await supabaseService
-      .from("academy_paper_fulltext")
-      .upsert({
-        paper_id: paperId,
-        extracted_text: extractedText,
-        char_count: extractedText.length,
-        extraction_method: "unpdf",
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "paper_id" });
-
     // Chunk the text
     const chunks = chunkText(extractedText, MAX_CHUNKS_PER_PAPER);
     if (chunks.length >= MAX_CHUNKS_PER_PAPER) {
       warnings.push(`Número de chunks limitado a ${MAX_CHUNKS_PER_PAPER} (limite de custo).`);
     }
 
-    // Update paper warnings if any
-    if (warnings.length > 0) {
+    // === OBJECTIVE TEXT SUFFICIENCY CLASSIFICATION ===
+    const hasSufficientText = extractedText.length >= SUFFICIENT_TEXT_MIN_CHARS
+      && extractedWords >= SUFFICIENT_TEXT_MIN_WORDS
+      && chunks.length >= SUFFICIENT_TEXT_MIN_CHUNKS;
+    const isScanned = !hasSufficientText;
+
+    console.log(`[classification] has_sufficient_text=${hasSufficientText} is_scanned=${isScanned} chars=${extractedText.length} words=${extractedWords} chunks=${chunks.length}`);
+
+    if (isScanned) {
+      warnings.push(`Texto insuficiente extraído (${extractedText.length} chars, ${extractedWords} palavras, ${chunks.length} chunks) — PDF pode ser escaneado.`);
+    }
+
+    // Update file scan flag
+    await supabaseService
+      .from("academy_paper_files")
+      .update({ scan_suspected: isScanned })
+      .eq("id", fileId);
+
+    // Save full text with sufficiency fields
+    await supabaseService
+      .from("academy_paper_fulltext")
+      .upsert({
+        paper_id: paperId,
+        extracted_text: extractedText,
+        char_count: extractedText.length,
+        word_count: extractedWords,
+        chunk_count: chunks.length,
+        has_sufficient_text: hasSufficientText,
+        is_scanned: isScanned,
+        extraction_method: "unpdf",
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "paper_id" });
+
+    // Update paper warnings: remove old scan warnings, add new ones
+    {
       const { data: paper } = await supabaseService
         .from("academy_papers")
         .select("warnings")
         .eq("id", paperId)
         .single();
       const currentWarnings = (paper?.warnings as string[]) || [];
-      const newWarnings = [...currentWarnings, ...warnings.filter(w => !currentWarnings.includes(w))];
+      // Remove old scan-related warnings
+      const cleanedWarnings = currentWarnings.filter(w => !w.includes("escaneado") && !w.includes("scan") && !w.includes("Texto insuficiente"));
+      const newWarnings = [...cleanedWarnings, ...warnings.filter(w => !cleanedWarnings.includes(w))];
       await supabaseService
         .from("academy_papers")
         .update({ warnings: newWarnings })
@@ -398,7 +368,9 @@ serve(async (req) => {
       chunks_created: chunks.length,
       truncated,
       warnings,
-      scan_suspected: false,
+      has_sufficient_text: hasSufficientText,
+      is_scanned: isScanned,
+      scan_suspected: isScanned,
       processing_status: "processed",
       request_id: incomingRequestId,
     }), {
