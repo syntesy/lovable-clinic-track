@@ -440,7 +440,7 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
       .eq("id", paperId);
 
     const durationMs = Date.now() - startTime;
-    console.log(`[curate:done] paperId=${paperId} requestId=${incomingRequestId} duration=${durationMs}ms nivel=${curationData.nivel_evidencia} score=${curationData.score_metodologico} risco=${curationData.risco_vies} outcomes=${curationData.outcomes?.length}`);
+    console.log(`[curate:done] paperId=${paperId} requestId=${incomingRequestId} duration=${durationMs}ms template=${paperTemplate} nivel=${curationData.nivel_evidencia} score=${curationData.score_metodologico} risco=${curationData.risco_vies} outcomes=${curationData.outcomes?.length}`);
 
     // Log success
     await supabaseService.from("academy_ai_logs").insert({
