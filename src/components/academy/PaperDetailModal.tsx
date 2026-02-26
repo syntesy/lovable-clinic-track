@@ -218,7 +218,7 @@ export function PaperDetailModal({
             <TabsTrigger value="history" className="gap-1"><History className="h-3 w-3" /> Histórico</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="flex-1 min-h-0">
+          <TabsContent value="details" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full -mx-6 px-6">
               <div className="space-y-6 pb-24">
                 {/* Technical Status Panel */}
@@ -530,7 +530,7 @@ export function PaperDetailModal({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="history" className="flex-1 min-h-0">
+          <TabsContent value="history" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full -mx-6 px-6">
               <div className="space-y-3 pb-24">
                 {loadingRevisions ? (
@@ -568,7 +568,7 @@ export function PaperDetailModal({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="reading" className="flex-1 min-h-0">
+          <TabsContent value="reading" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full -mx-6 px-6">
               <div className="pb-24">
                 <GuidedReadingSection
@@ -580,7 +580,7 @@ export function PaperDetailModal({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="ficha" className="flex-1 min-h-0">
+          <TabsContent value="ficha" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full -mx-6 px-6">
               <div className="pb-24">
                 <PaperSummaryCard
