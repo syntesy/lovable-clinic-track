@@ -28,15 +28,21 @@ export default function AcademyPdfHealthPage() {
   const loadMetrics = async () => {
     setIsLoading(true);
     try {
-      // Fetch paper files
+      // Fetch fulltext records for scan classification
+      const { data: fulltextRecords } = await supabase
+        .from("academy_paper_fulltext" as any)
+        .select("paper_id, is_scanned")
+        .order("created_at", { ascending: false });
+
       const { data: files } = await supabase
         .from("academy_paper_files" as any)
-        .select("id, paper_id, scan_suspected, size_bytes")
+        .select("id, paper_id, size_bytes")
         .order("created_at", { ascending: false });
 
       const allFiles = (files || []) as any[];
       const totalPdfs = allFiles.length;
-      const scanSuspectedCount = allFiles.filter((f: any) => f.scan_suspected).length;
+      const scannedSet = new Set(((fulltextRecords || []) as any[]).filter((f: any) => f.is_scanned).map((f: any) => f.paper_id));
+      const scanSuspectedCount = allFiles.filter((f: any) => scannedSet.has(f.paper_id)).length;
 
       // Fetch extraction logs
       const { data: extractLogs } = await supabase

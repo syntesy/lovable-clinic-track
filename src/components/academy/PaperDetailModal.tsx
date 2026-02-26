@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -75,11 +75,35 @@ export function PaperDetailModal({
   const hasRem = hasReghenMethod(curation);
   const { data: revisions = [], isLoading: loadingRevisions } = usePaperRevisions(open ? paper.id : null);
   const canDownload = ["admin_academy", "teacher_approved", "teacher_candidate"].includes(userRole);
-  const hasScanWarning = paper.warnings?.some(w => w.includes("escaneado") || w.includes("scan"));
+  // Scan warning is now determined by DB fulltext flags, not client-side heuristics
+  const [hasScanWarning, setHasScanWarning] = useState(false);
   const isLegacy = hasCuration && !hasRem && paper.curation_status === "published";
   const compliance: RemComplianceResult | null = hasRem
     ? validateReghenEvidenceMethod(remLayers)
     : null;
+
+  // Fetch fulltext sufficiency flags from DB
+  const { data: fulltextData } = useQuery({
+    queryKey: ["paper-fulltext", paper.id],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("academy_paper_fulltext" as any)
+        .select("has_sufficient_text, is_scanned")
+        .eq("paper_id", paper.id)
+        .maybeSingle();
+      return data as unknown as { has_sufficient_text: boolean; is_scanned: boolean } | null;
+    },
+  });
+
+  // Update scan warning based on DB flags
+  useEffect(() => {
+    if (fulltextData) {
+      setHasScanWarning(fulltextData.is_scanned === true);
+    } else {
+      setHasScanWarning(false);
+    }
+  }, [fulltextData]);
 
   // Fetch file info
   const { data: paperFiles = [] } = useQuery({

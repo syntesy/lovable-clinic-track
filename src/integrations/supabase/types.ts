@@ -853,30 +853,42 @@ export type Database = {
       academy_paper_fulltext: {
         Row: {
           char_count: number | null
+          chunk_count: number | null
           created_at: string | null
           extracted_text: string
           extraction_method: string | null
+          has_sufficient_text: boolean | null
           id: string
+          is_scanned: boolean | null
           paper_id: string
           updated_at: string | null
+          word_count: number | null
         }
         Insert: {
           char_count?: number | null
+          chunk_count?: number | null
           created_at?: string | null
           extracted_text: string
           extraction_method?: string | null
+          has_sufficient_text?: boolean | null
           id?: string
+          is_scanned?: boolean | null
           paper_id: string
           updated_at?: string | null
+          word_count?: number | null
         }
         Update: {
           char_count?: number | null
+          chunk_count?: number | null
           created_at?: string | null
           extracted_text?: string
           extraction_method?: string | null
+          has_sufficient_text?: boolean | null
           id?: string
+          is_scanned?: boolean | null
           paper_id?: string
           updated_at?: string | null
+          word_count?: number | null
         }
         Relationships: [
           {
