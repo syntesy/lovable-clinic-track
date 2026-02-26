@@ -21,6 +21,13 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
+/** Strip null bytes and other problematic Unicode sequences that PostgreSQL rejects. */
+function sanitizeText(text: string): string {
+  // Remove null bytes (\u0000) which PostgreSQL text columns cannot store
+  // Also remove other C0/C1 control characters except common whitespace (tab, newline, CR)
+  return text.replace(/\u0000/g, "").replace(/[\x01-\x08\x0B\x0C\x0E-\x1F]/g, "");
+}
+
 function chunkText(text: string, maxChunks: number): { content: string; char_start: number; char_end: number }[] {
   const len = text.length;
   if (len <= CHUNK_SIZE) {
