@@ -162,7 +162,7 @@ export function PaperDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between gap-2">
             <DialogTitle className="text-lg leading-tight pr-8">{paper.title}</DialogTitle>
@@ -219,7 +219,7 @@ export function PaperDetailModal({
           </TabsList>
 
           <TabsContent value="details" className="flex-1 min-h-0">
-            <ScrollArea className="h-full max-h-[75vh] -mx-6 px-6">
+            <ScrollArea className="h-full -mx-6 px-6">
               <div className="space-y-6 pb-4">
                 {/* Technical Status Panel */}
                 <PaperTechnicalStatus
@@ -531,7 +531,7 @@ export function PaperDetailModal({
           </TabsContent>
 
           <TabsContent value="history" className="flex-1 min-h-0">
-            <ScrollArea className="h-full max-h-[75vh] -mx-6 px-6">
+            <ScrollArea className="h-full -mx-6 px-6">
               <div className="space-y-3 pb-4">
                 {loadingRevisions ? (
                   <div className="flex justify-center py-8">
@@ -569,7 +569,7 @@ export function PaperDetailModal({
           </TabsContent>
 
           <TabsContent value="reading" className="flex-1 min-h-0">
-            <ScrollArea className="h-full max-h-[75vh] -mx-6 px-6">
+            <ScrollArea className="h-full -mx-6 px-6">
               <div className="pb-4">
                 <GuidedReadingSection
                   curationJson={curationJson}
@@ -581,7 +581,7 @@ export function PaperDetailModal({
           </TabsContent>
 
           <TabsContent value="ficha" className="flex-1 min-h-0">
-            <ScrollArea className="h-full max-h-[75vh] -mx-6 px-6">
+            <ScrollArea className="h-full -mx-6 px-6">
               <div className="pb-4">
                 <PaperSummaryCard
                   title={paper.title}
