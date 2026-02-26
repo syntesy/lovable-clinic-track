@@ -39,6 +39,12 @@ export function validateReghenEvidenceMethod(layers: any): RemComplianceResult {
 
   let score = 100;
 
+  // Detect if this is a preclinical/non-comparative paper
+  const studyType = l2?.study_type || "";
+  const isPreclinical = PRE_CLINICAL_TYPES.includes(studyType);
+  const isReview = ["meta", "systematic_review"].includes(studyType);
+  const isClinicalComparative = !isPreclinical && !isReview && l2?.is_human !== false;
+
   // --- Layer 1: Structure (PICO) ---
   if (!l1) {
     errors.push("Layer 1 (Estrutura PICO) ausente.");
@@ -51,18 +57,22 @@ export function validateReghenEvidenceMethod(layers: any): RemComplianceResult {
     const hasAnyOutcome = clinical.length > 0 || functional.length > 0 || biological.length > 0;
 
     if (!hasAnyOutcome) {
-      // Warning only — outcomes may need to be completed via curation re-run
-      warnings.push("Layer 1: Nenhum outcome estruturado encontrado. Use 'Completar outcomes com IA' para reestruturar.");
-      score -= 3;
+      if (isClinicalComparative) {
+        warnings.push("Layer 1: Nenhum outcome estruturado encontrado.");
+        score -= 3;
+      }
+      // For non-clinical papers, missing outcomes is NOT an error
     }
 
-    // Biomarkers in clinical check
-    const biomarkerTerms = ["biomarcador", "biomarker", "citocina", "cytokine", "il-", "tnf", "vegf", "pdgf", "igf"];
-    for (const item of clinical) {
-      const lower = (item || "").toLowerCase();
-      if (biomarkerTerms.some((t) => lower.includes(t))) {
-        errors.push(`Layer 1: Biomarcador "${item}" não pode estar em outcomes.clinical — mover para outcomes.biological.`);
-        score -= 5;
+    // Biomarkers in clinical check — only for clinical papers
+    if (isClinicalComparative) {
+      const biomarkerTerms = ["biomarcador", "biomarker", "citocina", "cytokine", "il-", "tnf", "vegf", "pdgf", "igf"];
+      for (const item of clinical) {
+        const lower = (item || "").toLowerCase();
+        if (biomarkerTerms.some((t) => lower.includes(t))) {
+          errors.push(`Layer 1: Biomarcador "${item}" não pode estar em outcomes.clinical — mover para outcomes.biological.`);
+          score -= 5;
+        }
       }
     }
   }
@@ -77,13 +87,9 @@ export function validateReghenEvidenceMethod(layers: any): RemComplianceResult {
       score -= 10;
     }
 
-    // is_human / study_type consistency
     if (PRE_CLINICAL_TYPES.includes(l2.study_type) && l2.is_human === true) {
       errors.push("Layer 2: is_human=true é incompatível com study_type animal/in_vitro.");
       score -= 10;
-    }
-    if (l2.is_human === true && PRE_CLINICAL_TYPES.includes(l2.study_type)) {
-      // Already caught above
     }
     if (!PRE_CLINICAL_TYPES.includes(l2.study_type) && l2.is_human === false) {
       warnings.push("Layer 2: is_human=false para estudo não pré-clínico — verificar se correto.");
@@ -92,8 +98,10 @@ export function validateReghenEvidenceMethod(layers: any): RemComplianceResult {
 
   // --- Layer 3: Reliability ---
   if (!l3) {
-    warnings.push("Layer 3 (Confiabilidade) ausente — score reduzido.");
-    score -= 5;
+    if (isClinicalComparative) {
+      warnings.push("Layer 3 (Confiabilidade) ausente — score reduzido.");
+      score -= 5;
+    }
   }
 
   // --- Layer 4: Applicability ---
@@ -127,7 +135,6 @@ export function validateReghenEvidenceMethod(layers: any): RemComplianceResult {
     warnings.push("Layer 7 (Educacional) ausente.");
     score -= 3;
   } else {
-    // trail_level coherence
     if (l7.trail_level && l2?.study_type) {
       const validTypes = TRAIL_LEVEL_MAP[l7.trail_level];
       if (validTypes && !validTypes.includes(l2.study_type)) {
