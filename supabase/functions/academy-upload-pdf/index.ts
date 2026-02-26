@@ -252,6 +252,26 @@ serve(async (req) => {
       duration_ms: Date.now() - startTime,
     });
 
+    // Auto-trigger processing pipeline (fire-and-forget via internal fetch)
+    try {
+      const processUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/academy-extract-pdf-text`;
+      fetch(processUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          paper_id: finalPaperId,
+          file_id: fileRecord.id,
+          request_id: requestId,
+        }),
+      }).catch(err => console.warn(`[auto-process] Fire-and-forget failed: ${err.message}`));
+      console.log(`[auto-process] Triggered for paper=${finalPaperId} file=${fileRecord.id}`);
+    } catch (triggerErr) {
+      console.warn(`[auto-process] Trigger error (non-fatal):`, triggerErr);
+    }
+
     return new Response(JSON.stringify({
       ok: true,
       paper_id: finalPaperId,
