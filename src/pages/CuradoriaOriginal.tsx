@@ -96,7 +96,9 @@ export default function CuradoriaOriginal() {
 
   // Determine if we have a viewable PDF
   const hasPdf = Boolean(pdfUrl);
-  const hasExternalUrl = Boolean(article.pubmed_url || article.doi);
+  // Treat generic PubMed homepage as no URL
+  const hasSpecificPubmedUrl = Boolean(article.pubmed_url && article.pubmed_url.length > 35);
+  const hasExternalUrl = Boolean(hasSpecificPubmedUrl || article.doi);
 
   return (
     <div className="space-y-4">
@@ -151,12 +153,22 @@ export default function CuradoriaOriginal() {
                 src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
                 className="absolute inset-0 w-full h-full"
                 title={article.title}
+                onError={() => setPdfUrl(null)}
               />
             </div>
-          ) : article.pubmed_url ? (
+          ) : article.doi ? (
             <div className="relative w-full" style={{ height: "calc(100vh - 250px)", minHeight: "500px" }}>
               <iframe
-                src={article.pubmed_url}
+                src={`https://doi.org/${article.doi}`}
+                className="absolute inset-0 w-full h-full"
+                title={article.title}
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              />
+            </div>
+          ) : hasSpecificPubmedUrl ? (
+            <div className="relative w-full" style={{ height: "calc(100vh - 250px)", minHeight: "500px" }}>
+              <iframe
+                src={article.pubmed_url!}
                 className="absolute inset-0 w-full h-full"
                 title={article.title}
                 sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
@@ -170,20 +182,7 @@ export default function CuradoriaOriginal() {
               </h2>
               <p className="text-muted-foreground text-center mb-6 max-w-md">
                 O PDF deste artigo ainda não foi anexado ao sistema.
-                {article.doi && " Você pode acessá-lo através do DOI."}
               </p>
-              {article.doi && (
-                <Button asChild variant="outline" className="gap-2">
-                  <a 
-                    href={`https://doi.org/${article.doi}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Acessar via DOI
-                  </a>
-                </Button>
-              )}
             </div>
           )}
         </CardContent>
