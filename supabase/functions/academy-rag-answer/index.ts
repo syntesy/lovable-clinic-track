@@ -339,7 +339,6 @@ serve(async (req) => {
         });
         paperSnippetCount++;
       }
-      }
     }
     const citations = Array.from(paperMap.values());
 
