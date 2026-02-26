@@ -404,6 +404,16 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
       console.warn(`[curate:validation:warnings] ${validation.warnings.join(", ")}`);
     }
 
+    // Resolve template server-side
+    const paperTemplate = resolvePaperTemplateServer(curationData);
+    const schemaVersion = 2;
+
+    // Inject into curation_json for consistency
+    curationData.paper_template = paperTemplate;
+    curationData.schema_version = schemaVersion;
+
+    console.log(`[curate:template] paperId=${paperId} template=${paperTemplate} study_type="${curationData.tipo_estudo}"`);
+
     // Persist curation (upsert for idempotency)
     const { error: insertErr } = await supabaseService
       .from("academy_paper_curation")
@@ -414,6 +424,9 @@ ${consolidatedText ? `TEXTO COMPLETO (extraído do PDF):\n${consolidatedText}` :
         score_metodologico: typeof curationData.score_metodologico === "number" ? curationData.score_metodologico : null,
         risco_vies: curationData.risco_vies || null,
         request_id: incomingRequestId,
+        paper_template: paperTemplate,
+        schema_version: schemaVersion,
+        data_quality_warnings: validation.warnings.length > 0 ? validation.warnings : [],
       }, { onConflict: "paper_id" });
 
     if (insertErr) {
