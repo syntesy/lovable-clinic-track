@@ -342,43 +342,37 @@ export default function CuradoriaDetalhe() {
                 >
                   <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6">
                     <FileText className="h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">Não foi possível exibir o PDF inline.</p>
-                    <Button asChild variant="outline" className="gap-2">
-                      <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        Abrir PDF em nova aba
-                      </a>
-                    </Button>
+                    <p className="text-muted-foreground">Não foi possível exibir o PDF neste navegador.</p>
                   </div>
                 </object>
+              </div>
+            ) : article.doi ? (
+              <div className="relative w-full" style={{ height: "calc(100vh - 200px)", minHeight: "600px" }}>
+                <iframe
+                  src={`https://doi.org/${article.doi}`}
+                  className="absolute inset-0 w-full h-full border-0"
+                  title={article.title}
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                />
+              </div>
+            ) : article.pubmed_url && article.pubmed_url.length > 35 ? (
+              <div className="relative w-full" style={{ height: "calc(100vh - 200px)", minHeight: "600px" }}>
+                <iframe
+                  src={article.pubmed_url}
+                  className="absolute inset-0 w-full h-full border-0"
+                  title={article.title}
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                />
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16">
                 <FileText className="h-14 w-14 text-muted-foreground mb-4" />
                 <h3 className="text-base font-medium text-foreground mb-2">
-                  PDF não disponível para visualização inline
+                  Artigo original não disponível
                 </h3>
-                <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
-                  Abra o artigo através do link externo.
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  Nenhum PDF ou link externo cadastrado para este artigo.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  {article.doi && (
-                    <Button asChild variant="outline" className="gap-2">
-                      <a href={`https://doi.org/${article.doi}`} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        Abrir via DOI
-                      </a>
-                    </Button>
-                  )}
-                  {article.pubmed_url && article.pubmed_url.length > 35 && (
-                    <Button asChild variant="outline" className="gap-2">
-                      <a href={article.pubmed_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        Abrir no PubMed
-                      </a>
-                    </Button>
-                  )}
-                </div>
               </div>
             )}
           </CardContent>
