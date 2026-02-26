@@ -220,7 +220,7 @@ export function PaperDetailModal({
 
           <TabsContent value="details" className="flex-1 min-h-0">
             <ScrollArea className="h-full -mx-6 px-6">
-              <div className="space-y-6 pb-4">
+              <div className="space-y-6 pb-24">
                 {/* Technical Status Panel */}
                 <PaperTechnicalStatus
                   paperId={paper.id}
@@ -532,7 +532,7 @@ export function PaperDetailModal({
 
           <TabsContent value="history" className="flex-1 min-h-0">
             <ScrollArea className="h-full -mx-6 px-6">
-              <div className="space-y-3 pb-4">
+              <div className="space-y-3 pb-24">
                 {loadingRevisions ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -570,7 +570,7 @@ export function PaperDetailModal({
 
           <TabsContent value="reading" className="flex-1 min-h-0">
             <ScrollArea className="h-full -mx-6 px-6">
-              <div className="pb-4">
+              <div className="pb-24">
                 <GuidedReadingSection
                   curationJson={curationJson}
                   remLayers={remLayers}
@@ -582,7 +582,7 @@ export function PaperDetailModal({
 
           <TabsContent value="ficha" className="flex-1 min-h-0">
             <ScrollArea className="h-full -mx-6 px-6">
-              <div className="pb-4">
+              <div className="pb-24">
                 <PaperSummaryCard
                   title={paper.title}
                   authors={paper.authors}
@@ -599,7 +599,7 @@ export function PaperDetailModal({
 
         {/* Actions */}
         {hasCuration && paper.curation_status === "ready" && (
-          <div className="flex justify-end gap-2 pt-4 border-t">
+          <div className="flex justify-end gap-2 pt-4 border-t shrink-0 bg-background">
             <Button variant="outline" onClick={onReject} className="gap-1 text-destructive">
               <XCircle className="w-4 h-4" /> Rejeitar
             </Button>
