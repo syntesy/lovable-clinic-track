@@ -58,7 +58,7 @@ const UNIT_NORMALIZATION: Record<string, string> = {
 const INVALID_UNIT_PATTERNS = [
   /^[a-f0-9]{24,}$/i,           // hex hash
   /^[0-9a-f]{8}-[0-9a-f]{4}/i,  // UUID prefix
-  /[{}_%]/,                      // structural chars
+  /[{}_]/,                       // structural chars (% is valid)
 ];
 
 export function sanitizeUnit(unitRaw: string | null | undefined): { unit: string | null; warning?: string } {
@@ -235,7 +235,12 @@ function computeInterpretability(
   // 3. Low confidence on critical
   if (isCritical && item.parser_confidence === "low") reasons.push("CRITICAL_LOW_CONFIDENCE");
 
-  // 4. Try default range if none parsed
+  // 4. Unit required for non-critical biomarkers that have known units
+  if (!isCritical && !item.unit && DEFAULT_RANGES[item.name]) {
+    reasons.push("MISSING_UNIT");
+  }
+
+  // 5. Try default range if none parsed
   if (!refRange) {
     const defaultDef = DEFAULT_RANGES[item.name];
     if (defaultDef) {
@@ -243,8 +248,7 @@ function computeInterpretability(
         reasons.push("RANGE_REQUIRES_SEX");
       } else if (item.unit) {
         refRange = defaultDef.range;
-      } else if (!isCritical) {
-        // Non-critical without unit: use default but flag
+      } else if (!isCritical && !reasons.includes("MISSING_UNIT")) {
         refRange = defaultDef.range;
       }
     } else {
