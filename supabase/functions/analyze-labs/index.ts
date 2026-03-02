@@ -10,6 +10,14 @@ const corsHeaders = {
 const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
 // ══════════════════════════════════════
+// Constants
+// ══════════════════════════════════════
+const MIN_TEXT_FOR_ANALYSIS = 200;
+const LLM_MAX_RETRIES = 3;
+const LLM_RETRY_DELAYS = [1000, 3000, 7000]; // ms
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+// ══════════════════════════════════════
 // normalizeLabs — server-side copy
 // ══════════════════════════════════════
 
@@ -102,7 +110,6 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
 
   const lines = rawText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
 
-  // Patient info from header
   for (const line of lines.slice(0, 10)) {
     const lower = line.toLowerCase();
     if (!result.patient.name && (lower.includes("paciente") || lower.includes("nome"))) {
@@ -179,10 +186,18 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
 }
 
 // ══════════════════════════════════════
-// LLM Analysis
+// Retry helper
 // ══════════════════════════════════════
 
-async function analyzWithLLM(
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ══════════════════════════════════════
+// LLM Analysis with retry
+// ══════════════════════════════════════
+
+async function analyzeWithLLM(
   normalized: NormalizedLabResult,
   clinicalContext: Record<string, unknown>,
   extractionMeta: Record<string, unknown>
@@ -200,7 +215,11 @@ REGRAS ABSOLUTAS:
 - Gere recomendações CONDICIONAIS (ex: "considerar dosar X se houver sintomas de Y")
 - NÃO emita diagnóstico definitivo
 - SEMPRE recomende correlação clínica
+- SOMENTE mencione biomarcadores que existam na lista normalized_labs fornecida
 - Respostas em português do Brasil
+
+BIOMARCADORES DISPONÍVEIS (use SOMENTE estes nomes):
+${normalized.labs.map(l => `- ${l.name}`).join("\n")}
 
 ESTRUTURA DE RESPOSTA (JSON estrito, sem markdown):
 {
@@ -222,42 +241,145 @@ ESTRUTURA DE RESPOSTA (JSON estrito, sem markdown):
     extraction_meta: extractionMeta,
   });
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-      max_tokens: 4000,
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-    }),
-  });
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error(`[analyze:llm-error] status=${response.status}`, errText);
-    throw new Error(`LLM_ERROR: status=${response.status}`);
+  for (let attempt = 0; attempt < LLM_MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = LLM_RETRY_DELAYS[attempt - 1] || 7000;
+        console.log(`[analyze:llm-retry] attempt=${attempt + 1} delay=${delay}ms`);
+        await sleep(delay);
+      }
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ],
+          max_tokens: 4000,
+          temperature: 0.3,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error(`[analyze:llm-error] attempt=${attempt + 1} status=${response.status}`, errText);
+
+        if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < LLM_MAX_RETRIES - 1) {
+          lastError = new Error(`LLM_RETRYABLE: status=${response.status}`);
+          continue;
+        }
+        throw new Error(`LLM_ERROR: status=${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "{}";
+      const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
+        console.error("[analyze:parse-error] LLM returned non-JSON:", cleaned.substring(0, 300));
+        throw new Error("LLM_PARSE_ERROR: resposta não é JSON válido");
+      }
+
+      // Schema validation
+      if (!parsed.summary || !parsed.disclaimer) {
+        console.warn("[analyze:schema-warn] Missing required fields in LLM output");
+        if (!parsed.summary) parsed.summary = "Análise gerada com campos incompletos.";
+        if (!parsed.disclaimer) parsed.disclaimer = "Este relatório não substitui avaliação médica.";
+        if (!parsed.by_system) parsed.by_system = [];
+        if (!parsed.alerts) parsed.alerts = [];
+        if (!parsed.recommendations) parsed.recommendations = [];
+        if (!parsed.regen_notes) parsed.regen_notes = [];
+      }
+
+      return parsed;
+
+    } catch (err: any) {
+      lastError = err;
+      if (!err.message?.includes("RETRYABLE") || attempt >= LLM_MAX_RETRIES - 1) {
+        throw err;
+      }
+    }
   }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || "{}";
-  
-  // Strip markdown fences if present
-  const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-  
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    console.error("[analyze:parse-error] LLM returned non-JSON:", content.substring(0, 200));
-    throw new Error("LLM_PARSE_ERROR: resposta não é JSON válido");
+  throw lastError || new Error("LLM_ERROR: todas as tentativas falharam");
+}
+
+// ══════════════════════════════════════
+// Validate LLM output against normalized
+// ══════════════════════════════════════
+
+function validateAnalysisVsNormalized(
+  analysis: Record<string, unknown>,
+  normalized: NormalizedLabResult
+): { cleaned: Record<string, unknown>; validationAlerts: Array<{ type: string; message: string; severity: string }> } {
+  const knownNames = new Set(normalized.labs.map(l => l.name.toLowerCase()));
+  const validationAlerts: Array<{ type: string; message: string; severity: string }> = [];
+
+  // Check by_system findings for unknown biomarkers
+  const bySystems = analysis.by_system as Array<{ system: string; findings: string[]; flags: string[] }> | undefined;
+  if (Array.isArray(bySystems)) {
+    for (const sys of bySystems) {
+      if (Array.isArray(sys.findings)) {
+        const filtered = sys.findings.filter(f => {
+          // Check if finding references a biomarker not in normalized
+          const mentionedBiomarkers = findMentionedBiomarkers(f, knownNames, normalized.labs);
+          if (mentionedBiomarkers.unknown.length > 0) {
+            validationAlerts.push({
+              type: "data_quality",
+              message: `Biomarcador(es) "${mentionedBiomarkers.unknown.join(", ")}" mencionado(s) na análise mas não presente(s) nos exames fornecidos. Achado removido.`,
+              severity: "medium",
+            });
+            return false; // remove this finding
+          }
+          return true;
+        });
+        sys.findings = filtered;
+      }
+    }
   }
+
+  // Merge validation alerts into analysis alerts
+  const existingAlerts = (analysis.alerts || []) as Array<{ type: string; message: string; severity: string }>;
+  analysis.alerts = [...existingAlerts, ...validationAlerts];
+
+  return { cleaned: analysis, validationAlerts };
+}
+
+/** Check if a text string mentions biomarkers not in the known set */
+function findMentionedBiomarkers(
+  text: string,
+  knownNamesLower: Set<string>,
+  labs: NormalizedLabItem[]
+): { known: string[]; unknown: string[] } {
+  const known: string[] = [];
+  const unknown: string[] = [];
+  const textLower = text.toLowerCase();
+
+  // Check all canonical biomarker names from the aliases
+  const allCanonical = new Set(Object.values(BIOMARKER_ALIASES));
+  for (const canonical of allCanonical) {
+    if (textLower.includes(canonical.toLowerCase())) {
+      if (knownNamesLower.has(canonical.toLowerCase())) {
+        known.push(canonical);
+      } else {
+        unknown.push(canonical);
+      }
+    }
+  }
+
+  return { known, unknown };
 }
 
 // ══════════════════════════════════════
@@ -272,7 +394,6 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth — use service role for DB operations, validate user token when available
     const authHeader = req.headers.get("Authorization");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -310,7 +431,7 @@ serve(async (req) => {
     // If storage_path provided, call extract-file-text internally
     if (storage_path && bucket && !providedRawText) {
       console.log(`[analyze:extract] Calling extract-file-text for ${storage_path}`);
-      
+
       const extractResponse = await supabase.functions.invoke("extract-file-text", {
         body: {
           storage_path,
@@ -322,23 +443,16 @@ serve(async (req) => {
 
       if (extractResponse.error || !extractResponse.data?.ok) {
         const errData = extractResponse.data || {};
-        // Persist failed run
-        await supabase.from("lab_analysis_runs").insert({
-          attendance_id,
-          user_id: userId,
-          bucket,
-          storage_path,
+        await persistRun(supabase, {
+          attendance_id, user_id: userId, bucket, storage_path,
           extraction_method: errData.method || "UNKNOWN",
-          status: "failed",
-          error_code: errData.error_code || "EXTRACTION_FAIL",
-          error_debug: errData.debug || {},
-          warnings: errData.warnings || [],
+          status: "failed", error_code: errData.error_code || "EXTRACTION_FAIL",
+          error_debug: errData.debug || {}, warnings: errData.warnings || [],
         });
 
         return new Response(
           JSON.stringify({
-            ok: false,
-            error_code: errData.error_code || "EXTRACTION_FAIL",
+            ok: false, error_code: errData.error_code || "EXTRACTION_FAIL",
             message: errData.message || "Falha na extração de texto",
             extraction: { method: errData.method, warnings: errData.warnings || [] },
           }),
@@ -352,56 +466,41 @@ serve(async (req) => {
       extractionWarnings = extractResponse.data.warnings || [];
     }
 
-    if (!rawText || rawText.trim().length < 50) {
-      await supabase.from("lab_analysis_runs").insert({
-        attendance_id,
-        user_id: userId,
-        bucket,
-        storage_path,
-        extraction_method: extractionMethod,
-        extraction_confidence: extractionConfidence,
-        raw_text: rawText,
-        status: "failed",
-        error_code: "INSUFFICIENT_TEXT",
+    // ── Threshold check: MIN_TEXT_FOR_ANALYSIS = 200 ──
+    if (!rawText || rawText.trim().length < MIN_TEXT_FOR_ANALYSIS) {
+      await persistRun(supabase, {
+        attendance_id, user_id: userId, bucket, storage_path,
+        extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
+        raw_text: rawText, status: "failed", error_code: "INSUFFICIENT_TEXT",
         warnings: extractionWarnings,
       });
 
       return new Response(
         JSON.stringify({
-          ok: false,
-          error_code: "INSUFFICIENT_TEXT",
-          message: "Texto extraído insuficiente para análise. Cole o texto manualmente.",
+          ok: false, error_code: "INSUFFICIENT_TEXT",
+          message: `Texto extraído insuficiente (${rawText?.trim().length || 0} chars < ${MIN_TEXT_FOR_ANALYSIS}). Cole o texto manualmente.`,
           extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
         }),
         { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Normalize labs
+    // Normalize
     console.log(`[analyze:normalize] raw_text length=${rawText.length}`);
     const normalized = normalizeLabs(rawText);
     console.log(`[analyze:normalized] labs=${normalized.labs.length} unmapped=${normalized.unmapped_lines.length}`);
 
     if (normalized.labs.length === 0) {
-      // Persist failed run
-      await supabase.from("lab_analysis_runs").insert({
-        attendance_id,
-        user_id: userId,
-        bucket,
-        storage_path,
-        extraction_method: extractionMethod,
-        extraction_confidence: extractionConfidence,
-        raw_text: rawText,
-        normalized_json: normalized,
-        status: "failed",
-        error_code: "NO_BIOMARKERS",
-        warnings: extractionWarnings,
+      await persistRun(supabase, {
+        attendance_id, user_id: userId, bucket, storage_path,
+        extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
+        raw_text: rawText, normalized_json: normalized,
+        status: "failed", error_code: "NO_BIOMARKERS", warnings: extractionWarnings,
       });
 
       return new Response(
         JSON.stringify({
-          ok: false,
-          error_code: "NO_BIOMARKERS",
+          ok: false, error_code: "NO_BIOMARKERS",
           message: "Não foi possível identificar biomarcadores no texto. Verifique o conteúdo ou cole manualmente.",
           extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
           normalized,
@@ -410,41 +509,59 @@ serve(async (req) => {
       );
     }
 
-    // Call LLM with JSON only
+    // LLM analysis with retry
     const extractionMeta = {
-      method: extractionMethod,
-      confidence: extractionConfidence,
-      warnings: extractionWarnings,
-      labs_count: normalized.labs.length,
+      method: extractionMethod, confidence: extractionConfidence,
+      warnings: extractionWarnings, labs_count: normalized.labs.length,
       unmapped_count: normalized.unmapped_lines.length,
     };
 
     const context = clinical_context || {};
-    
     console.log(`[analyze:llm] Sending ${normalized.labs.length} labs to LLM`);
-    const analysis = await analyzWithLLM(normalized, context, extractionMeta);
+
+    let analysis: Record<string, unknown>;
+    try {
+      analysis = await analyzeWithLLM(normalized, context, extractionMeta);
+    } catch (llmErr: any) {
+      console.error("[analyze:llm-final-fail]", llmErr.message);
+      await persistRun(supabase, {
+        attendance_id, user_id: userId, bucket, storage_path,
+        extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
+        raw_text: rawText, normalized_json: normalized,
+        status: "failed", error_code: llmErr.message?.startsWith("LLM_PARSE") ? "LLM_PARSE_ERROR" : "LLM_ERROR",
+        error_debug: { error: llmErr.message, retries: LLM_MAX_RETRIES },
+        warnings: extractionWarnings,
+        model_meta: { model: "google/gemini-2.5-flash", duration_ms: Date.now() - startTime, prompt_version: 2 },
+      });
+
+      return new Response(
+        JSON.stringify({
+          ok: false, error_code: "LLM_ERROR",
+          message: `Falha na análise por IA após ${LLM_MAX_RETRIES} tentativas. Tente novamente.`,
+          extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
+          normalized,
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Validate LLM output vs normalized ──
+    const { cleaned: validatedAnalysis, validationAlerts } = validateAnalysisVsNormalized(analysis, normalized);
+    if (validationAlerts.length > 0) {
+      console.log(`[analyze:validation] ${validationAlerts.length} alerts generated for phantom biomarkers`);
+    }
+
     const durationMs = Date.now() - startTime;
 
-    // Persist successful run
-    const { error: insertErr } = await supabase.from("lab_analysis_runs").insert({
-      attendance_id,
-      user_id: userId,
-      bucket,
-      storage_path,
-      extraction_method: extractionMethod,
-      extraction_confidence: extractionConfidence,
-      warnings: extractionWarnings,
-      raw_text: rawText,
-      normalized_json: normalized,
-      analysis_json: analysis,
-      model_meta: { model: "google/gemini-2.5-flash", duration_ms: durationMs, prompt_version: 1 },
+    // Persist success
+    await persistRun(supabase, {
+      attendance_id, user_id: userId, bucket, storage_path,
+      extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
+      warnings: extractionWarnings, raw_text: rawText,
+      normalized_json: normalized, analysis_json: validatedAnalysis,
+      model_meta: { model: "google/gemini-2.5-flash", duration_ms: durationMs, prompt_version: 2 },
       status: "success",
     });
-
-    if (insertErr) {
-      console.error("[analyze:persist-error]", insertErr);
-      // Don't fail the request, analysis was successful
-    }
 
     console.log(`[analyze:done] duration=${durationMs}ms`);
 
@@ -453,7 +570,7 @@ serve(async (req) => {
         ok: true,
         extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
         normalized,
-        analysis,
+        analysis: validatedAnalysis,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -462,7 +579,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         ok: false,
-        error_code: err.message?.startsWith("LLM_") ? "LLM_ERROR" : "INTERNAL_ERROR",
+        error_code: "INTERNAL_ERROR",
         message: err.message || "Erro interno na análise",
         debug: { duration_ms: Date.now() - startTime },
       }),
@@ -470,3 +587,23 @@ serve(async (req) => {
     );
   }
 });
+
+// ══════════════════════════════════════
+// Persist helper — never throws
+// ══════════════════════════════════════
+
+async function persistRun(
+  supabase: ReturnType<typeof createClient>,
+  data: Record<string, unknown>
+) {
+  try {
+    const { error } = await supabase.from("lab_analysis_runs").insert(data);
+    if (error) {
+      console.error("[analyze:persist-error]", error);
+    } else {
+      console.log(`[analyze:persisted] status=${data.status} attendance=${data.attendance_id}`);
+    }
+  } catch (e: any) {
+    console.error("[analyze:persist-fatal]", e.message);
+  }
+}
