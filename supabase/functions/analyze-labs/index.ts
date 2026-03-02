@@ -66,8 +66,12 @@ const BIOMARKER_ALIASES: Record<string, string> = {
 };
 
 const VALUE_PATTERN = /[:=]?\s*([\d]+[.,]?\d*)\s*([\w/%µμ]+(?:\/[\w%]+)?)?/;
-const REF_PATTERN = /(?:ref|referência|referencia|vr|v\.r\.|normal)[:\s]*([^\n(]+)/i;
+const REF_PATTERN = /(?:ref|referência|referencia|vr|v\.r\.|normal)[:\s]*([^\n]+)/i;
 const RANGE_INLINE_PATTERN = /\(?\s*(\d+[.,]?\d*)\s*[-–a]\s*(\d+[.,]?\d*)\s*\)?/;
+
+function cleanRefRange(raw: string): string {
+  return raw.replace(/\)+\s*$/, "").replace(/^\s*\(/, "").trim();
+}
 
 function parseNumber(str: string): number | null {
   const num = parseFloat(str.replace(",", "."));
