@@ -268,11 +268,25 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth relaxed for validation — verify_jwt=false in config.toml
+    // Auth — use service role for DB operations, validate user token when available
+    const authHeader = req.headers.get("Authorization");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-    const userId = "test-validation";
-    console.log("[analyze:request] received request");
+
+    let userId: string | null = null;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      if (token !== anonKey) {
+        const userClient = createClient(
+          Deno.env.get("SUPABASE_URL")!, anonKey,
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const { data: userData } = await userClient.auth.getUser(token);
+        if (userData?.user) userId = userData.user.id;
+      }
+    }
+    console.log(`[analyze:request] userId=${userId || "anonymous"}`);
 
     const body = await req.json();
     const { attendance_id, raw_text: providedRawText, bucket, storage_path, clinical_context } = body;

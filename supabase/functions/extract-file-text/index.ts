@@ -28,6 +28,17 @@ function sanitizeText(text: string): string {
     .replace(/\uFFFD/g, "");
 }
 
+/** Convert Uint8Array to base64 without stack overflow */
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const CHUNK_SIZE = 8192;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, Math.min(i + CHUNK_SIZE, bytes.length));
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
 /** Extract text from PDF using unpdf (native text layer) */
 async function extractPdfNativeText(pdfBytes: Uint8Array): Promise<{ text: string; pages: number }> {
   const result = await extractText(pdfBytes, { mergePages: false });
@@ -214,7 +225,7 @@ serve(async (req) => {
         confidence = "medium";
 
         try {
-          const base64 = btoa(String.fromCharCode(...fileBytes));
+          const base64 = uint8ArrayToBase64(fileBytes);
           rawText = await ocrWithVision(base64, "application/pdf", "deste documento PDF");
           console.log(`[extract:ocr-pdf] chars=${rawText.length}`);
 
@@ -247,7 +258,7 @@ serve(async (req) => {
       pages = 1;
 
       try {
-        const base64 = btoa(String.fromCharCode(...fileBytes));
+        const base64 = uint8ArrayToBase64(fileBytes);
         rawText = await ocrWithVision(base64, mime_type, "desta imagem de exame laboratorial");
         console.log(`[extract:ocr-image] chars=${rawText.length}`);
 
