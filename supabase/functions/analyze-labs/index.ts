@@ -14,7 +14,7 @@ const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 // ══════════════════════════════════════
 const PIPELINE_VERSION = {
   parser: "normalizeLabs_v2",
-  edge: "analyzeLabs_v4",
+  edge: "analyzeLabs_v5",
   prompt: "labs_prompt_v1.1.0",
   model: "google/gemini-2.5-flash",
 };
@@ -139,6 +139,118 @@ const DEFAULT_RANGES: Record<string, { range: string; sex_dependent: boolean }> 
   "Leucócitos": { range: "4000-11000", sex_dependent: false },
   "Plaquetas": { range: "150000-400000", sex_dependent: false },
 };
+
+// ══════════════════════════════════════
+// Pre-filter (deterministic metadata removal)
+// ══════════════════════════════════════
+
+const NON_CLINICAL_KEYWORD_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /\bCNES\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bCRBM\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bCRM\s*[:\-]?\s*\d/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bCRO\s*[:\-]?\s*\d/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bCOREN\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\brespons[aá]vel\s+t[eé]cnic/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bassinado\s+digitalmente\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bassinatura\s+digital\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bCKD[\s-]?EPI\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bcalculo\s+pela\s+f[oó]rmula\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*m[eé]todo\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*f[oó]rmula\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bdata\s+impress[aã]o\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /%PRECISION/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bimpresso\s+por\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /\bresultado\s+impresso\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*layout\b/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*c[oó]digo\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*laborat[oó]rio\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*unidade\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*endere[cç]o\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*telefone\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*fone\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*site\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*e-?mail\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+  { pattern: /^\s*cnpj\s*:/i, reason: "NON_CLINICAL_METADATA_KEYWORD" },
+];
+
+const NON_CLINICAL_ID_PATTERNS_FILTER: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /^\s*protocolo\s*[:=]?\s*[\d\-]+\s*$/i, reason: "NON_CLINICAL_ID_NUMBER" },
+  { pattern: /^\s*registro\s*[:=]?\s*[\d\-]+\s*$/i, reason: "NON_CLINICAL_ID_NUMBER" },
+  { pattern: /^\s*\d{6,}\s*$/, reason: "NON_CLINICAL_ID_NUMBER" },
+];
+
+const NON_CLINICAL_TOKEN_PATTERNS_FILTER: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /[a-f0-9]{24,}/i, reason: "NON_CLINICAL_TOKEN_HASH" },
+  { pattern: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/i, reason: "NON_CLINICAL_TOKEN_HASH" },
+];
+
+const BIOMARKER_HINT = /\b(hemoglobina|glicose|glicemia|ferritina|creatinina|colesterol|hdl|ldl|tsh|pot[aá]ssio|s[oó]dio|plaquetas|leuc[oó]citos|hemat[oó]crito|vitamina|triglice|hba1c|pcr|tgo|tgp|ggt|ureia|albumina|ferro|c[aá]lcio|magn[eé]sio|vcm|fosfatase|bilirrubina|[aá]cido\s+[uú]rico|t4\s*livre|zinco|nitrito)\b/i;
+
+interface PreFilterResult {
+  filtered_text: string;
+  stats: { total: number; kept: number; excluded: number };
+  excluded_lines: Array<{ line: string; reason: string }>;
+}
+
+function preFilterLabsText(rawText: string): PreFilterResult {
+  if (!rawText || rawText.trim().length === 0) {
+    return { filtered_text: "", stats: { total: 0, kept: 0, excluded: 0 }, excluded_lines: [] };
+  }
+  const lines = rawText.split("\n");
+  const kept: string[] = [];
+  const excluded: Array<{ line: string; reason: string }> = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.length === 0) continue;
+    let excludeReason: string | null = null;
+
+    for (const { pattern, reason } of NON_CLINICAL_KEYWORD_PATTERNS) {
+      if (pattern.test(trimmed)) { excludeReason = reason; break; }
+    }
+    if (!excludeReason) {
+      for (const { pattern, reason } of NON_CLINICAL_ID_PATTERNS_FILTER) {
+        if (pattern.test(trimmed)) { excludeReason = reason; break; }
+      }
+    }
+    if (!excludeReason && !BIOMARKER_HINT.test(trimmed)) {
+      for (const { pattern, reason } of NON_CLINICAL_TOKEN_PATTERNS_FILTER) {
+        if (pattern.test(trimmed)) { excludeReason = reason; break; }
+      }
+    }
+
+    if (excludeReason) excluded.push({ line: trimmed, reason: excludeReason });
+    else kept.push(trimmed);
+  }
+
+  return {
+    filtered_text: kept.join("\n"),
+    stats: { total: lines.filter(l => l.trim().length > 0).length, kept: kept.length, excluded: excluded.length },
+    excluded_lines: excluded,
+  };
+}
+
+// ══════════════════════════════════════
+// Anti-false-positive: generic label blocking
+// ══════════════════════════════════════
+
+const GENERIC_LABELS_SET = new Set([
+  "resultado", "valor", "referência", "referencia", "material", "amostra",
+  "observação", "observacao", "nota", "laudo", "exame",
+]);
+const NON_CLINICAL_LABEL_KW = [
+  /\bcrbm\b/i, /\bcnes\b/i, /\brespons[aá]vel\b/i, /\bassinado\b/i,
+  /\bprotocolo\b/i, /\bregistro\b/i, /\blayout\b/i, /\bc[oó]digo\b/i,
+  /\bcrm\b/i, /\bcro\b/i, /\bcoren\b/i, /\bcnpj\b/i,
+];
+
+function isGenericOrNonClinicalLabel(name: string): boolean {
+  const lower = name.toLowerCase().replace(/[:\s]+$/, "").trim();
+  if (GENERIC_LABELS_SET.has(lower)) return true;
+  for (const pat of NON_CLINICAL_LABEL_KW) { if (pat.test(lower)) return true; }
+  if (/^\d+$/.test(lower)) return true;
+  return false;
+}
 
 // ══════════════════════════════════════
 // normalizeLabs — server-side (v2 fail-closed)
@@ -340,6 +452,10 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
       const genericMatch = line.match(/^(.+?)[:=]\s*([\d]+[.,]?\d*)\s*([\w/%µμ^³²]+(?:\/[\w%µμ^³²]+)*)?/);
       if (genericMatch) {
         const name = genericMatch[1].trim();
+        if (isGenericOrNonClinicalLabel(name)) {
+          result.unmapped_lines.push(line);
+          continue;
+        }
         const numValue = parseNumber(genericMatch[2]);
         const rawUnit = genericMatch[3] || null;
         const { unit: sanitizedUnit, warning: unitWarning } = sanitizeUnit(rawUnit);
@@ -593,8 +709,12 @@ serve(async (req) => {
       }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Normalize (v2 fail-closed)
-    const normalized = normalizeLabs(rawText);
+    // Pre-filter (deterministic metadata removal)
+    const prefilterResult = preFilterLabsText(rawText);
+    console.log(`[analyze:prefilter] kept=${prefilterResult.stats.kept} excluded=${prefilterResult.stats.excluded}`);
+
+    // Normalize (v2 fail-closed) — uses FILTERED text
+    const normalized = normalizeLabs(prefilterResult.filtered_text);
     console.log(`[analyze:normalized] total=${normalized.labs.length}`);
 
     // Split interpretable vs blocked
@@ -700,7 +820,7 @@ serve(async (req) => {
       raw_text: rawText,
       normalized_json: normalized,
       analysis_json: validatedAnalysis,
-      model_meta: { model: PIPELINE_VERSION.model, duration_ms: durationMs, prompt_version: PIPELINE_VERSION.prompt },
+      model_meta: { model: PIPELINE_VERSION.model, duration_ms: durationMs, prompt_version: PIPELINE_VERSION.prompt, prefilter_stats: prefilterResult.stats, excluded_lines_sample: prefilterResult.excluded_lines.slice(0, 20) },
       status: "success",
       pipeline_version: PIPELINE_VERSION,
       input_hash: inputHash,
@@ -738,7 +858,9 @@ serve(async (req) => {
       extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
       normalized,
       analysis: validatedAnalysis,
-      safety: { interpretable: interpretableLabs.length, blocked: blockedLabs.length },
+      safety: { interpretable: interpretableLabs.length, blocked: blockedLabs.length, prefilter_excluded: prefilterResult.stats.excluded },
+      prefilter_stats: prefilterResult.stats,
+      excluded_lines_sample: prefilterResult.excluded_lines.slice(0, 20),
       pipeline_version: PIPELINE_VERSION,
       hashes: { input: inputHash, output: outputHash },
       was_manually_corrected: wasManuallyCorreced,

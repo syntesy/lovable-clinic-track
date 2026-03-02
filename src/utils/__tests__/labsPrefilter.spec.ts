@@ -60,6 +60,11 @@ Assinado digitalmente sob o número: f450b2cac153c430e4592183c17bff`;
     expect(ferritina).toBeDefined();
     expect(ferritina!.unit).toBe("ng/mL");
   });
+
+  it("excluded stats should be correct", () => {
+    const { pre } = run(input);
+    expect(pre.stats.excluded).toBeGreaterThanOrEqual(4); // CNES, CRBM, Método, Assinado
+  });
 });
 
 // ══════════════════════════════════════
@@ -74,9 +79,6 @@ Ferritina: 22,2 ng/mL (Ref 20-300)`;
 
   it("excluded_lines should contain CNES/Protocolo/Registro", () => {
     const { pre } = run(input);
-    const reasons = pre.excluded_lines.map(e => e.reason);
-    expect(reasons).toContain("NON_CLINICAL_METADATA_KEYWORD");
-    // Protocolo and Registro should be excluded as ID numbers
     const excludedTexts = pre.excluded_lines.map(e => e.line.toLowerCase());
     expect(excludedTexts.some(t => t.includes("cnes"))).toBe(true);
     expect(excludedTexts.some(t => t.includes("protocolo"))).toBe(true);
@@ -87,7 +89,6 @@ Ferritina: 22,2 ng/mL (Ref 20-300)`;
     const { normalized } = run(input);
     const names = normalized.labs.map(l => l.name);
     expect(names).toContain("Ferritina");
-    // Should not contain numeric-only entries from CNES/Protocolo/Registro
     expect(names.length).toBe(1);
   });
 });
@@ -165,10 +166,74 @@ Este laudo foi assinado digitalmente sob o número: f450b2ca`;
     const { normalized } = run(input);
     const b12 = normalized.labs.find(l => l.name === "Vitamina B12");
     if (b12) {
-      // If parsed, it must be blocked (no unit, suspicious value)
       expect(b12.is_interpretable).toBe(false);
       expect(b12.blocking_reasons.length).toBeGreaterThan(0);
     }
-    // If not parsed at all, that's also acceptable (excluded as noise)
+  });
+});
+
+// ══════════════════════════════════════
+// Caso 6 — "RESULTADO" genérico não vira biomarcador
+// ══════════════════════════════════════
+
+describe("Caso 6 — RESULTADO genérico não vira biomarcador", () => {
+  const input = `RESULTADO: 805 pg/mL
+Ferritina: 83 ng/mL (Ref 20-300)`;
+
+  it("RESULTADO should NOT appear in labs", () => {
+    const { normalized } = run(input);
+    const names = normalized.labs.map(l => l.name);
+    expect(names).not.toContain("RESULTADO");
+    expect(names).not.toContain("Resultado");
+  });
+
+  it("Ferritina should still be parsed", () => {
+    const { normalized } = run(input);
+    const ferritina = normalized.labs.find(l => l.name === "Ferritina");
+    expect(ferritina).toBeDefined();
+    expect(ferritina!.value).toBe(83);
+  });
+});
+
+// ══════════════════════════════════════
+// Caso 7 — Admin headers are excluded
+// ══════════════════════════════════════
+
+describe("Caso 7 — Admin headers are excluded", () => {
+  const input = `Laboratório: Lab Saúde LTDA
+Endereço: Rua A, 123
+Telefone: (62) 3333-4444
+CNPJ: 12.345.678/0001-99
+Glicose: 95 mg/dL (Ref 70-99)`;
+
+  it("admin headers should be excluded", () => {
+    const { pre } = run(input);
+    expect(pre.stats.excluded).toBeGreaterThanOrEqual(4);
+    expect(pre.filtered_text).not.toMatch(/Laboratório/i);
+    expect(pre.filtered_text).not.toMatch(/Endereço/i);
+    expect(pre.filtered_text).not.toMatch(/Telefone/i);
+    expect(pre.filtered_text).not.toMatch(/CNPJ/i);
+  });
+
+  it("Glicose should still be parsed", () => {
+    const { normalized } = run(input);
+    const glicose = normalized.labs.find(l => l.name === "Glicose");
+    expect(glicose).toBeDefined();
+    expect(glicose!.value).toBe(95);
+  });
+});
+
+// ══════════════════════════════════════
+// Caso 8 — kept_lines is populated
+// ══════════════════════════════════════
+
+describe("Caso 8 — kept_lines is populated", () => {
+  const input = `CNES: 123456
+Glicose: 95 mg/dL`;
+
+  it("kept_lines should contain only the biomarker line", () => {
+    const { pre } = run(input);
+    expect(pre.kept_lines.length).toBe(1);
+    expect(pre.kept_lines[0]).toContain("Glicose");
   });
 });

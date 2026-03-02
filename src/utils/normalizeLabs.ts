@@ -288,6 +288,32 @@ function computeParserConfidence(
 }
 
 // ══════════════════════════════════════
+// Anti-false-positive: reject generic / non-clinical labels
+// ══════════════════════════════════════
+
+const GENERIC_LABELS = new Set([
+  "resultado", "valor", "referência", "referencia", "material", "amostra",
+  "observação", "observacao", "nota", "laudo", "exame",
+]);
+
+const NON_CLINICAL_LABEL_KEYWORDS = [
+  /\bcrbm\b/i, /\bcnes\b/i, /\brespons[aá]vel\b/i, /\bassinado\b/i,
+  /\bprotocolo\b/i, /\bregistro\b/i, /\blayout\b/i, /\bc[oó]digo\b/i,
+  /\bcrm\b/i, /\bcro\b/i, /\bcoren\b/i, /\bcnpj\b/i,
+];
+
+function isGenericOrNonClinicalLabel(name: string): boolean {
+  const lower = name.toLowerCase().replace(/[:\s]+$/, "").trim();
+  if (GENERIC_LABELS.has(lower)) return true;
+  for (const pat of NON_CLINICAL_LABEL_KEYWORDS) {
+    if (pat.test(lower)) return true;
+  }
+  // Reject names that are just numbers
+  if (/^\d+$/.test(lower)) return true;
+  return false;
+}
+
+// ══════════════════════════════════════
 // Main Parser
 // ══════════════════════════════════════
 
@@ -397,6 +423,13 @@ export function normalizeLabs(rawText: string): NormalizedLabResult {
       const genericMatch = line.match(/^(.+?)[:=]\s*([\d]+[.,]?\d*)\s*([\w/%µμ^³²]+(?:\/[\w%µμ^³²]+)*)?/);
       if (genericMatch) {
         const name = genericMatch[1].trim();
+
+        // Block generic labels that are NOT biomarkers
+        if (isGenericOrNonClinicalLabel(name)) {
+          result.unmapped_lines.push(line);
+          continue;
+        }
+
         const numValue = parseNumber(genericMatch[2]);
         const rawUnit = genericMatch[3] || null;
         const { unit: sanitizedUnit, warning: unitWarning } = sanitizeUnit(rawUnit);
@@ -406,7 +439,6 @@ export function normalizeLabs(rawText: string): NormalizedLabResult {
         if (refMatch) refRange = cleanRefRange(refMatch[1]);
         const inlineRange = line.match(RANGE_INLINE_PATTERN);
         if (!refRange && inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
-
         const confidence = computeParserConfidence(numValue !== null, sanitizedUnit !== null, refRange !== null, false);
         const blocking_reasons: string[] = [];
         if (unitWarning) blocking_reasons.push(unitWarning);
