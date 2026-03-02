@@ -111,6 +111,11 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
+    // Debug: log headers for troubleshooting auth
+    const allHeaders: Record<string, string> = {};
+    req.headers.forEach((v, k) => { allHeaders[k] = k === "authorization" ? v.substring(0, 30) + "..." : v; });
+    console.log("[extract:auth-debug]", JSON.stringify(allHeaders));
+
     // Auth — accept Bearer user token, service role, or anon key (verify_jwt=false in config)
     const authHeader = req.headers.get("Authorization");
     const apiKey = req.headers.get("apikey");
