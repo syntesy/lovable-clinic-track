@@ -709,8 +709,12 @@ serve(async (req) => {
       }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Normalize (v2 fail-closed)
-    const normalized = normalizeLabs(rawText);
+    // Pre-filter (deterministic metadata removal)
+    const prefilterResult = preFilterLabsText(rawText);
+    console.log(`[analyze:prefilter] kept=${prefilterResult.stats.kept} excluded=${prefilterResult.stats.excluded}`);
+
+    // Normalize (v2 fail-closed) — uses FILTERED text
+    const normalized = normalizeLabs(prefilterResult.filtered_text);
     console.log(`[analyze:normalized] total=${normalized.labs.length}`);
 
     // Split interpretable vs blocked
