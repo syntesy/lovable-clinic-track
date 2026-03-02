@@ -219,7 +219,7 @@ export function normalizeLabs(rawText: string): NormalizedLabResult {
           let refRange = "";
           const refMatch = line.match(REF_PATTERN);
           if (refMatch) {
-            refRange = refMatch[1].trim();
+            refRange = cleanRefRange(refMatch[1]);
           } else {
             const inlineRange = afterAlias.match(RANGE_INLINE_PATTERN);
             if (inlineRange) {
@@ -230,7 +230,7 @@ export function normalizeLabs(rawText: string): NormalizedLabResult {
               const nextLine = lines[i + 1];
               const nextRef = nextLine.match(REF_PATTERN) || nextLine.match(RANGE_INLINE_PATTERN);
               if (nextRef) {
-                refRange = nextRef[1]?.trim() || `${nextRef[1]}-${nextRef[2]}`;
+                refRange = cleanRefRange(nextRef[1]?.trim() || `${nextRef[1]}-${nextRef[2]}`);
               }
             }
           }
@@ -264,7 +264,7 @@ export function normalizeLabs(rawText: string): NormalizedLabResult {
         // Look for reference in same line
         let refRange = "";
         const refMatch = line.match(REF_PATTERN);
-        if (refMatch) refRange = refMatch[1].trim();
+        if (refMatch) refRange = cleanRefRange(refMatch[1]);
         const inlineRange = line.match(RANGE_INLINE_PATTERN);
         if (!refRange && inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
 
