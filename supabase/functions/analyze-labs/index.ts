@@ -13,20 +13,111 @@ const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 // Constants
 // ══════════════════════════════════════
 const MIN_TEXT_FOR_ANALYSIS = 200;
+const MIN_INTERPRETABLE_LABS = 3;
 const LLM_MAX_RETRIES = 3;
-const LLM_RETRY_DELAYS = [1000, 3000, 7000]; // ms
+const LLM_RETRY_DELAYS = [1000, 3000, 7000];
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 
 // ══════════════════════════════════════
-// normalizeLabs — server-side copy
+// Unit Whitelist & Sanitization (mirror of client)
+// ══════════════════════════════════════
+
+const UNIT_WHITELIST = new Set([
+  "%", "mg/dL", "g/dL", "ng/mL", "pg/mL", "µg/dL", "µg/L",
+  "mg/L", "mmol/L", "mEq/L", "U/L", "UI/L", "mUI/L",
+  "10^3/µL", "10^6/µL", "mil/mm³", "mL/min/1.73m²",
+  "fL", "pg", "g/L", "µUI/mL", "mUI/mL", "ng/dL",
+  "µmol/L", "mm³", "/mm³", "cel/mm³", "x10³/µL",
+  "milhões/mm³", "mil/µL", "10³/µL",
+]);
+
+const UNIT_NORMALIZATION: Record<string, string> = {
+  "mg/dl": "mg/dL", "g/dl": "g/dL", "ng/ml": "ng/mL",
+  "pg/ml": "pg/mL", "ug/dl": "µg/dL", "ug/l": "µg/L",
+  "mg/l": "mg/L", "mmol/l": "mmol/L", "meq/l": "mEq/L",
+  "u/l": "U/L", "ui/l": "UI/L", "mui/l": "mUI/L",
+  "fl": "fL", "ml/min/1.73m2": "mL/min/1.73m²",
+  "mui/ml": "mUI/mL", "uui/ml": "µUI/mL",
+  "ng/dl": "ng/dL", "umol/l": "µmol/L",
+};
+
+const INVALID_UNIT_PATTERNS = [
+  /^[a-f0-9]{24,}$/i,
+  /^[0-9a-f]{8}-[0-9a-f]{4}/i,
+  /[{}_%]/,
+];
+
+function sanitizeUnit(unitRaw: string | null | undefined): { unit: string | null; warning?: string } {
+  if (!unitRaw || unitRaw.trim().length === 0) return { unit: null };
+  const trimmed = unitRaw.trim();
+  if (trimmed.length > 20) return { unit: null, warning: "INVALID_UNIT_PATTERN" };
+  for (const pattern of INVALID_UNIT_PATTERNS) {
+    if (pattern.test(trimmed)) return { unit: null, warning: "INVALID_UNIT_PATTERN" };
+  }
+  const lower = trimmed.toLowerCase();
+  if (UNIT_NORMALIZATION[lower]) return { unit: UNIT_NORMALIZATION[lower] };
+  for (const allowed of UNIT_WHITELIST) {
+    if (allowed.toLowerCase() === lower) return { unit: allowed };
+  }
+  if (trimmed === "%") return { unit: "%" };
+  return { unit: null, warning: "INVALID_UNIT" };
+}
+
+// ══════════════════════════════════════
+// Critical Biomarkers & Default Ranges
+// ══════════════════════════════════════
+
+const CRITICAL_BIOMARKERS = new Set([
+  "Sódio", "Potássio", "Glicose", "Creatinina", "HbA1c",
+  "Triglicerídeos", "Hemoglobina", "Plaquetas", "Leucócitos",
+]);
+
+const DEFAULT_RANGES: Record<string, { range: string; sex_dependent: boolean }> = {
+  "Glicose": { range: "70-99", sex_dependent: false },
+  "HbA1c": { range: "4.0-5.6", sex_dependent: false },
+  "Colesterol Total": { range: "0-200", sex_dependent: false },
+  "HDL": { range: "40-60", sex_dependent: true },
+  "LDL": { range: "0-130", sex_dependent: false },
+  "Triglicerídeos": { range: "0-150", sex_dependent: false },
+  "TSH": { range: "0.4-4.0", sex_dependent: false },
+  "T4 Livre": { range: "0.8-1.8", sex_dependent: false },
+  "PCR": { range: "0-5", sex_dependent: false },
+  "VCM": { range: "80-100", sex_dependent: false },
+  "Ferritina": { range: "30-300", sex_dependent: true },
+  "Vitamina D (25-OH)": { range: "30-100", sex_dependent: false },
+  "Vitamina B12": { range: "200-900", sex_dependent: false },
+  "TGO (AST)": { range: "10-40", sex_dependent: false },
+  "TGP (ALT)": { range: "7-56", sex_dependent: false },
+  "GGT": { range: "9-48", sex_dependent: true },
+  "Creatinina": { range: "0.6-1.2", sex_dependent: true },
+  "Ureia": { range: "15-45", sex_dependent: false },
+  "Ácido Úrico": { range: "3.5-7.2", sex_dependent: true },
+  "Sódio": { range: "136-145", sex_dependent: false },
+  "Potássio": { range: "3.5-5.1", sex_dependent: false },
+  "Cálcio": { range: "8.5-10.5", sex_dependent: false },
+  "Magnésio": { range: "1.7-2.2", sex_dependent: false },
+  "Ferro Sérico": { range: "60-170", sex_dependent: true },
+  "Albumina": { range: "3.5-5.0", sex_dependent: false },
+  "Hemoglobina": { range: "12-17", sex_dependent: true },
+  "Hematócrito": { range: "36-50", sex_dependent: true },
+  "Leucócitos": { range: "4000-11000", sex_dependent: false },
+  "Plaquetas": { range: "150000-400000", sex_dependent: false },
+};
+
+// ══════════════════════════════════════
+// normalizeLabs — server-side (v2 fail-closed)
 // ══════════════════════════════════════
 
 interface NormalizedLabItem {
   name: string;
   value: number | null;
-  unit: string;
-  reference_range: string;
+  unit: string | null;
+  reference_range: string | null;
   flag: "low" | "normal" | "high" | "unknown";
+  source_line: string;
+  parser_confidence: "high" | "medium" | "low";
+  is_interpretable: boolean;
+  blocking_reasons: string[];
 }
 
 interface NormalizedLabResult {
@@ -73,7 +164,7 @@ const BIOMARKER_ALIASES: Record<string, string> = {
   "ureia": "Ureia", "urea": "Ureia",
 };
 
-const VALUE_PATTERN = /[:=]?\s*([\d]+[.,]?\d*)\s*([\w/%µμ]+(?:\/[\w%]+)?)?/;
+const VALUE_PATTERN = /[:=]?\s*([\d]+[.,]?\d*)\s*([\w/%µμ^³²]+(?:\/[\w%µμ^³²]+)*)?/;
 const REF_PATTERN = /(?:ref|referência|referencia|vr|v\.r\.|normal)[:\s]*([^\n]+)/i;
 const RANGE_INLINE_PATTERN = /\(?\s*(\d+[.,]?\d*)\s*[-–a]\s*(\d+[.,]?\d*)\s*\)?/;
 
@@ -86,7 +177,7 @@ function parseNumber(str: string): number | null {
   return isNaN(num) ? null : num;
 }
 
-function determineFlagFromRange(value: number | null, rangeStr: string): "low" | "normal" | "high" | "unknown" {
+function determineFlagFromRange(value: number | null, rangeStr: string | null): "low" | "normal" | "high" | "unknown" {
   if (value === null || !rangeStr) return "unknown";
   const rangeMatch = rangeStr.match(/(\d+[.,]?\d*)\s*[-–a]\s*(\d+[.,]?\d*)/);
   if (!rangeMatch) return "unknown";
@@ -98,13 +189,44 @@ function determineFlagFromRange(value: number | null, rangeStr: string): "low" |
   return "normal";
 }
 
+function computeParserConfidence(hasValue: boolean, hasUnit: boolean, hasRange: boolean, isKnown: boolean): "high" | "medium" | "low" {
+  let s = 0;
+  if (hasValue) s++;
+  if (hasUnit) s++;
+  if (hasRange) s++;
+  if (isKnown) s++;
+  return s >= 3 ? "high" : s >= 2 ? "medium" : "low";
+}
+
+function computeInterpretability(
+  item: { name: string; value: number | null; unit: string | null; reference_range: string | null; parser_confidence: "high" | "medium" | "low" },
+  patientSex: string | null
+): { is_interpretable: boolean; blocking_reasons: string[]; reference_range: string | null; flag: "low" | "normal" | "high" | "unknown" } {
+  const reasons: string[] = [];
+  let refRange = item.reference_range;
+  const isCritical = CRITICAL_BIOMARKERS.has(item.name);
+
+  if (item.value === null) reasons.push("MISSING_VALUE");
+  if (isCritical && !item.unit) reasons.push("CRITICAL_MISSING_UNIT");
+  if (isCritical && item.parser_confidence === "low") reasons.push("CRITICAL_LOW_CONFIDENCE");
+
+  if (!refRange) {
+    const def = DEFAULT_RANGES[item.name];
+    if (def) {
+      if (def.sex_dependent && !patientSex) reasons.push("RANGE_REQUIRES_SEX");
+      else if (item.unit || !isCritical) refRange = def.range;
+    } else {
+      reasons.push("NO_REFERENCE_RANGE");
+    }
+  }
+
+  return { is_interpretable: reasons.length === 0, blocking_reasons: reasons, reference_range: refRange, flag: determineFlagFromRange(item.value, refRange) };
+}
+
 function normalizeLabs(rawText: string): NormalizedLabResult {
   const result: NormalizedLabResult = {
     patient: { name: null, sex: null, age: null },
-    collection_date: null,
-    labs: [],
-    unmapped_lines: [],
-    parser_version: 1,
+    collection_date: null, labs: [], unmapped_lines: [], parser_version: 2,
   };
   if (!rawText || rawText.trim().length === 0) return result;
 
@@ -143,12 +265,13 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
         const valueMatch = afterAlias.match(VALUE_PATTERN);
         if (valueMatch) {
           const numValue = parseNumber(valueMatch[1]);
-          const unit = valueMatch[2] || "";
-          let refRange = "";
+          const rawUnit = valueMatch[2] || null;
+          const { unit: sanitizedUnit, warning: unitWarning } = sanitizeUnit(rawUnit);
+
+          let refRange: string | null = null;
           const refMatch = line.match(REF_PATTERN);
-          if (refMatch) {
-            refRange = cleanRefRange(refMatch[1]);
-          } else {
+          if (refMatch) refRange = cleanRefRange(refMatch[1]);
+          else {
             const inlineRange = afterAlias.match(RANGE_INLINE_PATTERN);
             if (inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
             if (!refRange && i + 1 < lines.length) {
@@ -156,8 +279,20 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
               if (nextRef) refRange = cleanRefRange(nextRef[1]?.trim() || `${nextRef[1]}-${nextRef[2]}`);
             }
           }
+
+          const confidence = computeParserConfidence(numValue !== null, sanitizedUnit !== null, refRange !== null, true);
+          const blockingReasons: string[] = [];
+          if (unitWarning) blockingReasons.push(unitWarning);
+          const interp = computeInterpretability({ name: canonical, value: numValue, unit: sanitizedUnit, reference_range: refRange, parser_confidence: confidence }, result.patient.sex);
+
           if (!result.labs.some((l) => l.name === canonical)) {
-            result.labs.push({ name: canonical, value: numValue, unit: unit.trim(), reference_range: refRange, flag: determineFlagFromRange(numValue, refRange) });
+            result.labs.push({
+              name: canonical, value: numValue, unit: sanitizedUnit,
+              reference_range: interp.reference_range, flag: interp.flag,
+              source_line: line, parser_confidence: confidence,
+              is_interpretable: interp.is_interpretable && blockingReasons.length === 0,
+              blocking_reasons: [...blockingReasons, ...interp.blocking_reasons],
+            });
           }
           matched = true;
           break;
@@ -166,17 +301,28 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
     }
 
     if (!matched) {
-      const genericMatch = line.match(/^(.+?)[:=]\s*([\d]+[.,]?\d*)\s*([\w/%µμ]+(?:\/[\w%]+)?)?/);
+      const genericMatch = line.match(/^(.+?)[:=]\s*([\d]+[.,]?\d*)\s*([\w/%µμ^³²]+(?:\/[\w%µμ^³²]+)*)?/);
       if (genericMatch) {
         const name = genericMatch[1].trim();
         const numValue = parseNumber(genericMatch[2]);
-        const unit = genericMatch[3] || "";
-        let refRange = "";
+        const rawUnit = genericMatch[3] || null;
+        const { unit: sanitizedUnit, warning: unitWarning } = sanitizeUnit(rawUnit);
+        let refRange: string | null = null;
         const refMatch = line.match(REF_PATTERN);
         if (refMatch) refRange = cleanRefRange(refMatch[1]);
         const inlineRange = line.match(RANGE_INLINE_PATTERN);
         if (!refRange && inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
-        result.labs.push({ name, value: numValue, unit: unit.trim(), reference_range: refRange, flag: determineFlagFromRange(numValue, refRange) });
+        const confidence = computeParserConfidence(numValue !== null, sanitizedUnit !== null, refRange !== null, false);
+        const blockingReasons: string[] = [];
+        if (unitWarning) blockingReasons.push(unitWarning);
+        const interp = computeInterpretability({ name, value: numValue, unit: sanitizedUnit, reference_range: refRange, parser_confidence: confidence }, result.patient.sex);
+        result.labs.push({
+          name, value: numValue, unit: sanitizedUnit,
+          reference_range: interp.reference_range, flag: interp.flag,
+          source_line: line, parser_confidence: confidence,
+          is_interpretable: interp.is_interpretable && blockingReasons.length === 0,
+          blocking_reasons: [...blockingReasons, ...interp.blocking_reasons],
+        });
       } else if (line.length > 5 && !line.match(/^[-=_]+$/) && !line.match(/^\d+$/)) {
         result.unmapped_lines.push(line);
       }
@@ -186,57 +332,54 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
 }
 
 // ══════════════════════════════════════
-// Retry helper
+// Retry & LLM
 // ══════════════════════════════════════
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ══════════════════════════════════════
-// LLM Analysis with retry
-// ══════════════════════════════════════
-
 async function analyzeWithLLM(
-  normalized: NormalizedLabResult,
+  interpretableLabs: NormalizedLabItem[],
+  blockedSummary: Array<{ name: string; reasons: string[] }>,
   clinicalContext: Record<string, unknown>,
   extractionMeta: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   if (!lovableApiKey) throw new Error("LOVABLE_API_KEY não configurada");
 
-  const systemPrompt = `Você é um assistente clínico especializado em medicina regenerativa e ortobiológicos (PRP, PRF, BMAC).
+  const labNames = interpretableLabs.map(l => `- ${l.name}: ${l.value} ${l.unit || ""} (ref: ${l.reference_range || "padrão"}, status: ${l.flag})`).join("\n");
 
-TAREFA: Analise os exames laboratoriais normalizados em JSON e o contexto clínico fornecido.
+  const systemPrompt = `Você é um assistente clínico especializado em medicina regenerativa e ortobiológicos.
+
+TAREFA: Analise SOMENTE os biomarcadores INTERPRETÁVEIS fornecidos.
 
 REGRAS ABSOLUTAS:
-- NUNCA invente valores, números, p-values, tamanhos amostrais ou conclusões
-- Se um dado não estiver presente nos exames: "não disponível nos exames fornecidos"
-- Se unidade ou referência estiver ausente: sinalize como "unknown" no alerta
-- Gere recomendações CONDICIONAIS (ex: "considerar dosar X se houver sintomas de Y")
+- NUNCA invente valores, unidades ou referências
+- SOMENTE mencione biomarcadores da lista INTERPRETÁVEIS fornecida
+- Se dados forem insuficientes: declare explicitamente
 - NÃO emita diagnóstico definitivo
 - SEMPRE recomende correlação clínica
-- SOMENTE mencione biomarcadores que existam na lista normalized_labs fornecida
 - Respostas em português do Brasil
 
-BIOMARCADORES DISPONÍVEIS (use SOMENTE estes nomes):
-${normalized.labs.map(l => `- ${l.name}`).join("\n")}
+BIOMARCADORES INTERPRETÁVEIS (use SOMENTE estes):
+${labNames}
 
-ESTRUTURA DE RESPOSTA (JSON estrito, sem markdown):
+${blockedSummary.length > 0 ? `BIOMARCADORES BLOQUEADOS (NÃO interpretar, apenas informar que existem dados incompletos):
+${blockedSummary.map(b => `- ${b.name}: ${b.reasons.join(", ")}`).join("\n")}` : ""}
+
+ESTRUTURA DE RESPOSTA (JSON estrito):
 {
   "summary": "resumo curto (2-3 frases)",
-  "by_system": [
-    { "system": "Nome do Sistema", "findings": ["achado 1"], "flags": ["flag relevante"] }
-  ],
-  "alerts": [
-    { "type": "safety|data_quality|clinical", "message": "descrição", "severity": "low|medium|high" }
-  ],
-  "recommendations": ["recomendação condicional 1"],
-  "regen_notes": ["nota relevante para prática regenerativa"],
+  "by_system": [{ "system": "Nome do Sistema", "findings": ["achado"], "flags": ["flag"] }],
+  "alerts": [{ "type": "safety|data_quality|clinical", "message": "descrição", "severity": "low|medium|high" }],
+  "recommendations": ["recomendação condicional"],
+  "regen_notes": ["nota para prática regenerativa"],
   "disclaimer": "Este relatório não substitui avaliação médica. Correlacionar com dados clínicos."
 }`;
 
   const userMessage = JSON.stringify({
-    normalized_labs: normalized,
+    interpretable_labs: interpretableLabs,
+    blocked_labs_summary: blockedSummary,
     clinical_context: clinicalContext,
     extraction_meta: extractionMeta,
   });
@@ -253,18 +396,11 @@ ESTRUTURA DE RESPOSTA (JSON estrito, sem markdown):
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${lovableApiKey}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage },
-          ],
-          max_tokens: 4000,
-          temperature: 0.3,
+          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userMessage }],
+          max_tokens: 4000, temperature: 0.3,
           response_format: { type: "json_object" },
         }),
       });
@@ -272,7 +408,6 @@ ESTRUTURA DE RESPOSTA (JSON estrito, sem markdown):
       if (!response.ok) {
         const errText = await response.text();
         console.error(`[analyze:llm-error] attempt=${attempt + 1} status=${response.status}`, errText);
-
         if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < LLM_MAX_RETRIES - 1) {
           lastError = new Error(`LLM_RETRYABLE: status=${response.status}`);
           continue;
@@ -285,101 +420,61 @@ ESTRUTURA DE RESPOSTA (JSON estrito, sem markdown):
       const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
       let parsed: Record<string, unknown>;
-      try {
-        parsed = JSON.parse(cleaned);
-      } catch {
-        console.error("[analyze:parse-error] LLM returned non-JSON:", cleaned.substring(0, 300));
-        throw new Error("LLM_PARSE_ERROR: resposta não é JSON válido");
-      }
+      try { parsed = JSON.parse(cleaned); }
+      catch { throw new Error("LLM_PARSE_ERROR: resposta não é JSON válido"); }
 
-      // Schema validation
-      if (!parsed.summary || !parsed.disclaimer) {
-        console.warn("[analyze:schema-warn] Missing required fields in LLM output");
-        if (!parsed.summary) parsed.summary = "Análise gerada com campos incompletos.";
-        if (!parsed.disclaimer) parsed.disclaimer = "Este relatório não substitui avaliação médica.";
-        if (!parsed.by_system) parsed.by_system = [];
-        if (!parsed.alerts) parsed.alerts = [];
-        if (!parsed.recommendations) parsed.recommendations = [];
-        if (!parsed.regen_notes) parsed.regen_notes = [];
-      }
+      if (!parsed.summary) parsed.summary = "Análise gerada com campos incompletos.";
+      if (!parsed.disclaimer) parsed.disclaimer = "Este relatório não substitui avaliação médica.";
+      if (!parsed.by_system) parsed.by_system = [];
+      if (!parsed.alerts) parsed.alerts = [];
+      if (!parsed.recommendations) parsed.recommendations = [];
+      if (!parsed.regen_notes) parsed.regen_notes = [];
 
       return parsed;
-
     } catch (err: any) {
       lastError = err;
-      if (!err.message?.includes("RETRYABLE") || attempt >= LLM_MAX_RETRIES - 1) {
-        throw err;
-      }
+      if (!err.message?.includes("RETRYABLE") || attempt >= LLM_MAX_RETRIES - 1) throw err;
     }
   }
-
   throw lastError || new Error("LLM_ERROR: todas as tentativas falharam");
 }
 
 // ══════════════════════════════════════
-// Validate LLM output against normalized
+// Validate LLM output vs interpretable labs
 // ══════════════════════════════════════
 
-function validateAnalysisVsNormalized(
+function validateAnalysisVsInterpretable(
   analysis: Record<string, unknown>,
-  normalized: NormalizedLabResult
+  interpretableLabs: NormalizedLabItem[]
 ): { cleaned: Record<string, unknown>; validationAlerts: Array<{ type: string; message: string; severity: string }> } {
-  const knownNames = new Set(normalized.labs.map(l => l.name.toLowerCase()));
+  const knownNames = new Set(interpretableLabs.map(l => l.name.toLowerCase()));
   const validationAlerts: Array<{ type: string; message: string; severity: string }> = [];
+  const allCanonical = new Set(Object.values(BIOMARKER_ALIASES));
 
-  // Check by_system findings for unknown biomarkers
   const bySystems = analysis.by_system as Array<{ system: string; findings: string[]; flags: string[] }> | undefined;
   if (Array.isArray(bySystems)) {
     for (const sys of bySystems) {
       if (Array.isArray(sys.findings)) {
-        const filtered = sys.findings.filter(f => {
-          // Check if finding references a biomarker not in normalized
-          const mentionedBiomarkers = findMentionedBiomarkers(f, knownNames, normalized.labs);
-          if (mentionedBiomarkers.unknown.length > 0) {
-            validationAlerts.push({
-              type: "data_quality",
-              message: `Biomarcador(es) "${mentionedBiomarkers.unknown.join(", ")}" mencionado(s) na análise mas não presente(s) nos exames fornecidos. Achado removido.`,
-              severity: "medium",
-            });
-            return false; // remove this finding
+        sys.findings = sys.findings.filter(f => {
+          const textLower = f.toLowerCase();
+          for (const canonical of allCanonical) {
+            if (textLower.includes(canonical.toLowerCase()) && !knownNames.has(canonical.toLowerCase())) {
+              validationAlerts.push({
+                type: "data_quality", severity: "medium",
+                message: `LLM_REFERENCED_UNKNOWN_LAB: "${canonical}" não está nos dados interpretáveis. Achado removido.`,
+              });
+              return false;
+            }
           }
           return true;
         });
-        sys.findings = filtered;
       }
     }
   }
 
-  // Merge validation alerts into analysis alerts
   const existingAlerts = (analysis.alerts || []) as Array<{ type: string; message: string; severity: string }>;
   analysis.alerts = [...existingAlerts, ...validationAlerts];
-
   return { cleaned: analysis, validationAlerts };
-}
-
-/** Check if a text string mentions biomarkers not in the known set */
-function findMentionedBiomarkers(
-  text: string,
-  knownNamesLower: Set<string>,
-  labs: NormalizedLabItem[]
-): { known: string[]; unknown: string[] } {
-  const known: string[] = [];
-  const unknown: string[] = [];
-  const textLower = text.toLowerCase();
-
-  // Check all canonical biomarker names from the aliases
-  const allCanonical = new Set(Object.values(BIOMARKER_ALIASES));
-  for (const canonical of allCanonical) {
-    if (textLower.includes(canonical.toLowerCase())) {
-      if (knownNamesLower.has(canonical.toLowerCase())) {
-        known.push(canonical);
-      } else {
-        unknown.push(canonical);
-      }
-    }
-  }
-
-  return { known, unknown };
 }
 
 // ══════════════════════════════════════
@@ -387,9 +482,7 @@ function findMentionedBiomarkers(
 // ══════════════════════════════════════
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const startTime = Date.now();
 
@@ -403,24 +496,18 @@ serve(async (req) => {
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "");
       if (token !== anonKey) {
-        const userClient = createClient(
-          Deno.env.get("SUPABASE_URL")!, anonKey,
-          { global: { headers: { Authorization: authHeader } } }
-        );
+        const userClient = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, { global: { headers: { Authorization: authHeader } } });
         const { data: userData } = await userClient.auth.getUser(token);
         if (userData?.user) userId = userData.user.id;
       }
     }
-    console.log(`[analyze:request] userId=${userId || "anonymous"}`);
 
     const body = await req.json();
     const { attendance_id, patient_id, raw_text: providedRawText, bucket, storage_path, clinical_context } = body;
 
     if (!attendance_id && !patient_id) {
-      return new Response(
-        JSON.stringify({ ok: false, error_code: "MISSING_PARAMS", message: "attendance_id ou patient_id é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ ok: false, error_code: "MISSING_PARAMS", message: "attendance_id ou patient_id é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     let rawText = providedRawText || "";
@@ -428,17 +515,10 @@ serve(async (req) => {
     let extractionConfidence: "high" | "medium" | "low" = "medium";
     let extractionWarnings: string[] = [];
 
-    // If storage_path provided, call extract-file-text internally
+    // File extraction
     if (storage_path && bucket && !providedRawText) {
-      console.log(`[analyze:extract] Calling extract-file-text for ${storage_path}`);
-
       const extractResponse = await supabase.functions.invoke("extract-file-text", {
-        body: {
-          storage_path,
-          bucket,
-          mime_type: body.mime_type || "application/pdf",
-          file_name: body.file_name || storage_path.split("/").pop(),
-        },
+        body: { storage_path, bucket, mime_type: body.mime_type || "application/pdf", file_name: body.file_name || storage_path.split("/").pop() },
       });
 
       if (extractResponse.error || !extractResponse.data?.ok) {
@@ -450,15 +530,8 @@ serve(async (req) => {
           status: "failed", error_code: errData.error_code || "EXTRACTION_FAIL",
           error_debug: errData.debug || {}, warnings: errData.warnings || [],
         });
-
-        return new Response(
-          JSON.stringify({
-            ok: false, error_code: errData.error_code || "EXTRACTION_FAIL",
-            message: errData.message || "Falha na extração de texto",
-            extraction: { method: errData.method, warnings: errData.warnings || [] },
-          }),
-          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ ok: false, error_code: errData.error_code || "EXTRACTION_FAIL", message: errData.message || "Falha na extração" }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       rawText = extractResponse.data.raw_text;
@@ -467,64 +540,59 @@ serve(async (req) => {
       extractionWarnings = extractResponse.data.warnings || [];
     }
 
-    // ── Threshold check: MIN_TEXT_FOR_ANALYSIS = 200 ──
+    // Threshold check
     if (!rawText || rawText.trim().length < MIN_TEXT_FOR_ANALYSIS) {
       await persistRun(supabase, {
         attendance_id: attendance_id || null, patient_id: patient_id || null,
         user_id: userId, bucket, storage_path,
         extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
-        raw_text: rawText, status: "failed", error_code: "INSUFFICIENT_TEXT",
-        warnings: extractionWarnings,
+        raw_text: rawText, status: "failed", error_code: "INSUFFICIENT_TEXT", warnings: extractionWarnings,
       });
-
-      return new Response(
-        JSON.stringify({
-          ok: false, error_code: "INSUFFICIENT_TEXT",
-          message: `Texto extraído insuficiente (${rawText?.trim().length || 0} chars < ${MIN_TEXT_FOR_ANALYSIS}). Cole o texto manualmente.`,
-          extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
-        }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({
+        ok: false, error_code: "INSUFFICIENT_TEXT",
+        message: `Texto insuficiente (${rawText?.trim().length || 0} < ${MIN_TEXT_FOR_ANALYSIS} chars).`,
+      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Normalize
-    console.log(`[analyze:normalize] raw_text length=${rawText.length}`);
+    // Normalize (v2 fail-closed)
     const normalized = normalizeLabs(rawText);
-    console.log(`[analyze:normalized] labs=${normalized.labs.length} unmapped=${normalized.unmapped_lines.length}`);
+    console.log(`[analyze:normalized] total=${normalized.labs.length}`);
 
-    if (normalized.labs.length === 0) {
+    // Split interpretable vs blocked
+    const interpretableLabs = normalized.labs.filter(l => l.is_interpretable);
+    const blockedLabs = normalized.labs.filter(l => !l.is_interpretable);
+
+    console.log(`[analyze:safety] interpretable=${interpretableLabs.length} blocked=${blockedLabs.length}`);
+
+    // Minimum interpretable check
+    if (interpretableLabs.length < MIN_INTERPRETABLE_LABS) {
       await persistRun(supabase, {
         attendance_id: attendance_id || null, patient_id: patient_id || null,
         user_id: userId, bucket, storage_path,
         extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
         raw_text: rawText, normalized_json: normalized,
-        status: "failed", error_code: "NO_BIOMARKERS", warnings: extractionWarnings,
+        status: "failed", error_code: "INSUFFICIENT_INTERPRETABLE_LABS",
+        warnings: [...extractionWarnings, `Apenas ${interpretableLabs.length} biomarcadores interpretáveis (mín: ${MIN_INTERPRETABLE_LABS})`],
       });
-
-      return new Response(
-        JSON.stringify({
-          ok: false, error_code: "NO_BIOMARKERS",
-          message: "Não foi possível identificar biomarcadores no texto. Verifique o conteúdo ou cole manualmente.",
-          extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
-          normalized,
-        }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({
+        ok: false, error_code: "INSUFFICIENT_INTERPRETABLE_LABS",
+        message: `Apenas ${interpretableLabs.length} biomarcador(es) interpretável(is) (mínimo: ${MIN_INTERPRETABLE_LABS}). Revise os dados bloqueados.`,
+        normalized,
+        blocked_labs: blockedLabs.map(l => ({ name: l.name, value: l.value, unit: l.unit, blocking_reasons: l.blocking_reasons, source_line: l.source_line })),
+      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // LLM analysis with retry
+    // LLM analysis — only interpretable labs
+    const blockedSummary = blockedLabs.map(l => ({ name: l.name, reasons: l.blocking_reasons }));
     const extractionMeta = {
       method: extractionMethod, confidence: extractionConfidence,
-      warnings: extractionWarnings, labs_count: normalized.labs.length,
-      unmapped_count: normalized.unmapped_lines.length,
+      warnings: extractionWarnings, interpretable_count: interpretableLabs.length,
+      blocked_count: blockedLabs.length, total_count: normalized.labs.length,
     };
-
-    const context = clinical_context || {};
-    console.log(`[analyze:llm] Sending ${normalized.labs.length} labs to LLM`);
 
     let analysis: Record<string, unknown>;
     try {
-      analysis = await analyzeWithLLM(normalized, context, extractionMeta);
+      analysis = await analyzeWithLLM(interpretableLabs, blockedSummary, clinical_context || {}, extractionMeta);
     } catch (llmErr: any) {
       console.error("[analyze:llm-final-fail]", llmErr.message);
       await persistRun(supabase, {
@@ -535,80 +603,56 @@ serve(async (req) => {
         status: "failed", error_code: llmErr.message?.startsWith("LLM_PARSE") ? "LLM_PARSE_ERROR" : "LLM_ERROR",
         error_debug: { error: llmErr.message, retries: LLM_MAX_RETRIES },
         warnings: extractionWarnings,
-        model_meta: { model: "google/gemini-2.5-flash", duration_ms: Date.now() - startTime, prompt_version: 2 },
+        model_meta: { model: "google/gemini-2.5-flash", duration_ms: Date.now() - startTime, prompt_version: 3 },
       });
-
-      return new Response(
-        JSON.stringify({
-          ok: false, error_code: "LLM_ERROR",
-          message: `Falha na análise por IA após ${LLM_MAX_RETRIES} tentativas. Tente novamente.`,
-          extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
-          normalized,
-        }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({
+        ok: false, error_code: "LLM_ERROR",
+        message: `Falha na análise por IA após ${LLM_MAX_RETRIES} tentativas.`,
+        normalized,
+      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ── Validate LLM output vs normalized ──
-    const { cleaned: validatedAnalysis, validationAlerts } = validateAnalysisVsNormalized(analysis, normalized);
+    // Validate LLM output vs interpretable set
+    const { cleaned: validatedAnalysis, validationAlerts } = validateAnalysisVsInterpretable(analysis, interpretableLabs);
     if (validationAlerts.length > 0) {
-      console.log(`[analyze:validation] ${validationAlerts.length} alerts generated for phantom biomarkers`);
+      console.log(`[analyze:validation] ${validationAlerts.length} phantom biomarkers removed`);
     }
 
     const durationMs = Date.now() - startTime;
 
-    // Persist success
     await persistRun(supabase, {
       attendance_id: attendance_id || null, patient_id: patient_id || null,
       user_id: userId, bucket, storage_path,
       extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
       warnings: extractionWarnings, raw_text: rawText,
       normalized_json: normalized, analysis_json: validatedAnalysis,
-      model_meta: { model: "google/gemini-2.5-flash", duration_ms: durationMs, prompt_version: 2 },
+      model_meta: { model: "google/gemini-2.5-flash", duration_ms: durationMs, prompt_version: 3 },
       status: "success",
     });
 
-    console.log(`[analyze:done] duration=${durationMs}ms`);
+    return new Response(JSON.stringify({
+      ok: true,
+      extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
+      normalized,
+      analysis: validatedAnalysis,
+      safety: { interpretable: interpretableLabs.length, blocked: blockedLabs.length },
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
-        normalized,
-        analysis: validatedAnalysis,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (err: any) {
     console.error("[analyze:fatal]", err);
-    return new Response(
-      JSON.stringify({
-        ok: false,
-        error_code: "INTERNAL_ERROR",
-        message: err.message || "Erro interno na análise",
-        debug: { duration_ms: Date.now() - startTime },
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ ok: false, error_code: "INTERNAL_ERROR", message: err.message || "Erro interno" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
 
 // ══════════════════════════════════════
-// Persist helper — never throws
+// Persist helper
 // ══════════════════════════════════════
 
-async function persistRun(
-  supabase: ReturnType<typeof createClient>,
-  data: Record<string, unknown>
-) {
+async function persistRun(supabase: ReturnType<typeof createClient>, data: Record<string, unknown>) {
   try {
     const { error } = await supabase.from("lab_analysis_runs").insert(data);
-    if (error) {
-      console.error("[analyze:persist-error]", error);
-    } else {
-      console.log(`[analyze:persisted] status=${data.status} attendance=${data.attendance_id}`);
-    }
-  } catch (e: any) {
-    console.error("[analyze:persist-fatal]", e.message);
-  }
+    if (error) console.error("[analyze:persist-error]", error);
+    else console.log(`[analyze:persisted] status=${data.status}`);
+  } catch (e: any) { console.error("[analyze:persist-fatal]", e.message); }
 }
