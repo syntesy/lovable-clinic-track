@@ -111,20 +111,24 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth — accept Bearer token or apikey header (for service role / testing)
+    // Auth — accept Bearer user token, service role, or anon key (verify_jwt=false in config)
     const authHeader = req.headers.get("Authorization");
     const apiKey = req.headers.get("apikey");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
-    if (apiKey && apiKey === serviceRoleKey) {
-      // Service role access — skip user auth
-    } else if (authHeader?.startsWith("Bearer ")) {
+    const isServiceRole = apiKey && apiKey === serviceRoleKey;
+    const isAnonKey = apiKey && apiKey === anonKey;
+    const hasBearerToken = authHeader?.startsWith("Bearer ") && authHeader.replace("Bearer ", "") !== anonKey;
+
+    if (hasBearerToken) {
+      // Validate user token
       const supabaseAuth = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_ANON_KEY")!,
         { global: { headers: { Authorization: authHeader } } }
       );
-      const token = authHeader.replace("Bearer ", "");
+      const token = authHeader!.replace("Bearer ", "");
       const { data: userData, error: userErr } = await supabaseAuth.auth.getUser(token);
       if (userErr || !userData?.user) {
         return new Response(
@@ -132,7 +136,7 @@ serve(async (req) => {
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-    } else {
+    } else if (!isServiceRole && !isAnonKey) {
       return new Response(
         JSON.stringify({ ok: false, error_code: "UNAUTHORIZED", message: "Token não fornecido" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }

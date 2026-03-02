@@ -268,27 +268,31 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth — accept Bearer token or apikey header (for service role / testing)
+    // Auth — accept Bearer user token, service role, or anon key (verify_jwt=false)
     const authHeader = req.headers.get("Authorization");
     const apiKey = req.headers.get("apikey");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    const isServiceRole = apiKey && apiKey === serviceRoleKey;
+    const isAnonKey = apiKey && apiKey === anonKey;
+    const hasBearerToken = authHeader?.startsWith("Bearer ") && authHeader.replace("Bearer ", "") !== anonKey;
 
     let userId = "service-role";
     let supabase: ReturnType<typeof createClient>;
 
-    if (apiKey && apiKey === serviceRoleKey) {
-      // Service role access (internal/testing)
-      supabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        serviceRoleKey!
-      );
-    } else if (authHeader?.startsWith("Bearer ")) {
+    if (isServiceRole) {
+      supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey!);
+    } else if (isAnonKey && !hasBearerToken) {
+      // Anon key access for testing (verify_jwt=false)
+      supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey!);
+    } else if (hasBearerToken) {
       supabase = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader } } }
+        { global: { headers: { Authorization: authHeader! } } }
       );
-      const token = authHeader.replace("Bearer ", "");
+      const token = authHeader!.replace("Bearer ", "");
       const { data: userData, error: userErr } = await supabase.auth.getUser(token);
       if (userErr || !userData?.user) {
         return new Response(
