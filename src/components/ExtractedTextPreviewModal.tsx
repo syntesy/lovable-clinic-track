@@ -11,13 +11,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, CheckCircle2, Edit2, FileText, Send } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { AlertTriangle, CheckCircle2, Edit2, FileText, Send, ChevronDown, Eye, Clipboard } from "lucide-react";
+import { toast } from "sonner";
 
 interface ExtractedText {
   fileName: string;
   text: string;
   success: boolean;
   error?: string;
+  method?: string;
+  confidence?: string;
 }
 
 interface ExtractedTextPreviewModalProps {
@@ -30,6 +38,27 @@ interface ExtractedTextPreviewModalProps {
   manualText: string;
 }
 
+const METHOD_LABELS: Record<string, { label: string; className: string }> = {
+  PDF_TEXT: {
+    label: "Texto nativo (PDF)",
+    className: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
+  },
+  OCR_PDF: {
+    label: "OCR (PDF escaneado)",
+    className: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+  },
+  OCR_IMAGE: {
+    label: "OCR (Imagem)",
+    className: "bg-sky-500/10 text-sky-700 border-sky-500/30",
+  },
+};
+
+const CONFIDENCE_LABELS: Record<string, { label: string; className: string }> = {
+  high: { label: "Alta", className: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
+  medium: { label: "Média", className: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
+  low: { label: "Baixa", className: "bg-red-500/10 text-red-700 border-red-500/30" },
+};
+
 export function ExtractedTextPreviewModal({
   open,
   onOpenChange,
@@ -41,28 +70,24 @@ export function ExtractedTextPreviewModal({
 }: ExtractedTextPreviewModalProps) {
   const [editableText, setEditableText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-
-  // Initialize editable text when modal opens
-  useState(() => {
-    const combined = manualText 
-      ? `${manualText}\n\n--- EXTRAÍDO DE ARQUIVOS ---\n\n${consolidatedText}`
-      : consolidatedText;
-    setEditableText(combined);
-  });
+  const [showManualPaste, setShowManualPaste] = useState(false);
 
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
-      const combined = manualText 
+      const combined = manualText
         ? `${manualText}\n\n--- EXTRAÍDO DE ARQUIVOS ---\n\n${consolidatedText}`
         : consolidatedText;
       setEditableText(combined);
       setIsEditing(false);
+      setShowManualPaste(false);
     }
     onOpenChange(isOpen);
   };
 
-  const successCount = extractedTexts.filter(e => e.success).length;
-  const failCount = extractedTexts.filter(e => !e.success).length;
+  const successCount = extractedTexts.filter((e) => e.success).length;
+  const failCount = extractedTexts.filter((e) => !e.success).length;
+  const currentText = editableText || consolidatedText;
+  const canConfirm = currentText.trim().length >= 100;
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -77,18 +102,27 @@ export function ExtractedTextPreviewModal({
         <div className="space-y-4">
           {/* Status Summary */}
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
+            <Badge
+              variant="outline"
+              className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+            >
               <CheckCircle2 className="w-3 h-3 mr-1" />
               {successCount} arquivo(s) processado(s)
             </Badge>
             {failCount > 0 && (
-              <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/30">
+              <Badge
+                variant="outline"
+                className="bg-amber-500/10 text-amber-700 border-amber-500/30"
+              >
                 <AlertTriangle className="w-3 h-3 mr-1" />
                 {failCount} arquivo(s) com erro
               </Badge>
             )}
             {manualText && (
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              <Badge
+                variant="outline"
+                className="bg-primary/10 text-primary border-primary/30"
+              >
                 + Texto digitado
               </Badge>
             )}
@@ -127,6 +161,12 @@ export function ExtractedTextPreviewModal({
               </Button>
             </div>
 
+            {!canConfirm && currentText.trim().length > 0 && (
+              <p className="text-xs text-amber-600 mb-2">
+                Mínimo de 100 caracteres necessários ({currentText.trim().length}/100)
+              </p>
+            )}
+
             {isEditing ? (
               <Textarea
                 value={editableText}
@@ -137,44 +177,102 @@ export function ExtractedTextPreviewModal({
             ) : (
               <ScrollArea className="h-[300px] border rounded-md p-3 bg-muted/20">
                 <pre className="text-sm whitespace-pre-wrap font-mono">
-                  {editableText || consolidatedText || "Nenhum texto extraído"}
+                  {currentText || "Nenhum texto extraído"}
                 </pre>
               </ScrollArea>
             )}
           </div>
 
-          {/* Individual Files Status */}
+          {/* Individual Files Status with method badges */}
           {extractedTexts.length > 0 && (
             <div>
               <p className="text-sm font-medium mb-2">Detalhes por arquivo:</p>
-              <ScrollArea className="max-h-[150px]">
+              <ScrollArea className="max-h-[200px]">
                 <div className="space-y-2">
                   {extractedTexts.map((item, idx) => (
                     <div
                       key={idx}
                       className={`flex items-center justify-between p-2 rounded-md text-sm ${
-                        item.success 
-                          ? "bg-emerald-500/10 text-emerald-700" 
+                        item.success
+                          ? "bg-emerald-500/10 text-emerald-700"
                           : "bg-red-500/10 text-red-700"
                       }`}
                     >
-                      <span className="truncate">{item.fileName}</span>
-                      {item.success ? (
-                        <Badge variant="outline" className="bg-emerald-500/20 border-emerald-500/30">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          OK
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-red-500/20 border-red-500/30">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Erro
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="truncate">{item.fileName}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Method badge */}
+                        {item.method && METHOD_LABELS[item.method] && (
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${METHOD_LABELS[item.method].className}`}
+                          >
+                            {METHOD_LABELS[item.method].label}
+                          </Badge>
+                        )}
+                        {/* Confidence badge */}
+                        {item.confidence && CONFIDENCE_LABELS[item.confidence] && (
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${CONFIDENCE_LABELS[item.confidence].className}`}
+                          >
+                            {CONFIDENCE_LABELS[item.confidence].label}
+                          </Badge>
+                        )}
+                        {/* Status badge */}
+                        {item.success ? (
+                          <Badge
+                            variant="outline"
+                            className="bg-emerald-500/20 border-emerald-500/30"
+                          >
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            OK
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="bg-red-500/20 border-red-500/30"
+                          >
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Erro
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </ScrollArea>
             </div>
+          )}
+
+          {/* Manual paste fallback for failed extractions */}
+          {failCount > 0 && (
+            <Collapsible open={showManualPaste} onOpenChange={setShowManualPaste}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between">
+                  <span className="flex items-center gap-1">
+                    <Clipboard className="w-4 h-4" />
+                    Colar texto manualmente
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showManualPaste ? "rotate-180" : ""}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <Textarea
+                  placeholder="Cole aqui o texto do exame que não foi extraído automaticamente..."
+                  className="min-h-[120px] font-mono text-sm mt-2"
+                  onChange={(e) => {
+                    const pasted = e.target.value;
+                    if (pasted.trim()) {
+                      setEditableText(prev => 
+                        prev ? `${prev}\n\n--- COLADO MANUALMENTE ---\n\n${pasted}` : pasted
+                      );
+                    }
+                  }}
+                />
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </div>
 
@@ -182,9 +280,9 @@ export function ExtractedTextPreviewModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Voltar / Editar
           </Button>
-          <Button 
-            onClick={() => onConfirm(editableText || consolidatedText)}
-            disabled={!editableText && !consolidatedText}
+          <Button
+            onClick={() => onConfirm(currentText)}
+            disabled={!canConfirm}
           >
             <Send className="w-4 h-4 mr-2" />
             Confirmar e Enviar para Análise

@@ -43,6 +43,8 @@ interface ExtractedText {
   text: string;
   success: boolean;
   error?: string;
+  method?: string;
+  confidence?: string;
 }
 
 interface ExamGroup {
@@ -414,28 +416,72 @@ export default function TriagemBiologica() {
 
     setIsExtractingText(true);
     try {
-      const imageUrls = uploadedFiles.map(file => ({
-        url: file.url,
-        fileName: file.name
-      }));
+      const results: ExtractedText[] = [];
+      const allWarnings: string[] = [];
 
-      const { data, error } = await supabase.functions.invoke('triagem-prp', {
-        body: { 
-          action: "extract_text",
-          imageUrls 
+      // Process each file via centralized extract-file-text edge function
+      for (const file of uploadedFiles) {
+        try {
+          const mimeType = file.type === 'pdf' ? 'application/pdf' :
+            file.name.endsWith('.png') ? 'image/png' :
+            file.name.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+
+          const { data, error } = await supabase.functions.invoke('extract-file-text', {
+            body: {
+              storage_path: file.id,
+              bucket: 'exam-files',
+              mime_type: mimeType,
+              file_name: file.name,
+            }
+          });
+
+          if (error) throw error;
+
+          if (data.ok) {
+            results.push({
+              fileName: file.name,
+              text: data.raw_text,
+              success: true,
+              method: data.method,
+              confidence: data.confidence,
+            });
+            if (data.warnings?.length > 0) {
+              allWarnings.push(...data.warnings.map((w: string) => `${file.name}: ${w}`));
+            }
+          } else {
+            results.push({
+              fileName: file.name,
+              text: "",
+              success: false,
+              error: data.message || "Erro desconhecido",
+              method: data.method,
+            });
+            allWarnings.push(`${file.name}: ${data.message}`);
+          }
+        } catch (fileErr: any) {
+          console.error(`Error extracting ${file.name}:`, fileErr);
+          results.push({
+            fileName: file.name,
+            text: "",
+            success: false,
+            error: fileErr.message || "Erro ao processar arquivo",
+          });
         }
-      });
+      }
 
-      if (error) throw error;
+      setExtractedTexts(results);
 
-      setExtractedTexts(data.extractedTexts || []);
-      setConsolidatedText(data.consolidatedText || "");
-      setExtractionWarnings(data.warnings || []);
+      const successfulTexts = results.filter(r => r.success);
+      const consolidated = successfulTexts
+        .map(e => `=== ${e.fileName} ===\n${e.text}`)
+        .join("\n\n");
+      setConsolidatedText(consolidated);
+      setExtractionWarnings(allWarnings);
 
-      if (data.successCount === 0) {
+      if (successfulTexts.length === 0) {
         toast.error("Não foi possível extrair texto dos arquivos");
-      } else if (data.failCount > 0) {
-        toast.warning(`${data.successCount} de ${data.totalFiles} arquivo(s) processado(s)`);
+      } else if (successfulTexts.length < uploadedFiles.length) {
+        toast.warning(`${successfulTexts.length} de ${uploadedFiles.length} arquivo(s) processado(s)`);
       } else {
         toast.success("Texto extraído com sucesso!");
       }
