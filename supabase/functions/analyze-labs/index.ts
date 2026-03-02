@@ -414,11 +414,11 @@ serve(async (req) => {
     console.log(`[analyze:request] userId=${userId || "anonymous"}`);
 
     const body = await req.json();
-    const { attendance_id, raw_text: providedRawText, bucket, storage_path, clinical_context } = body;
+    const { attendance_id, patient_id, raw_text: providedRawText, bucket, storage_path, clinical_context } = body;
 
-    if (!attendance_id) {
+    if (!attendance_id && !patient_id) {
       return new Response(
-        JSON.stringify({ ok: false, error_code: "MISSING_PARAMS", message: "attendance_id é obrigatório" }),
+        JSON.stringify({ ok: false, error_code: "MISSING_PARAMS", message: "attendance_id ou patient_id é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -444,7 +444,8 @@ serve(async (req) => {
       if (extractResponse.error || !extractResponse.data?.ok) {
         const errData = extractResponse.data || {};
         await persistRun(supabase, {
-          attendance_id, user_id: userId, bucket, storage_path,
+          attendance_id: attendance_id || null, patient_id: patient_id || null,
+          user_id: userId, bucket, storage_path,
           extraction_method: errData.method || "UNKNOWN",
           status: "failed", error_code: errData.error_code || "EXTRACTION_FAIL",
           error_debug: errData.debug || {}, warnings: errData.warnings || [],
@@ -469,7 +470,8 @@ serve(async (req) => {
     // ── Threshold check: MIN_TEXT_FOR_ANALYSIS = 200 ──
     if (!rawText || rawText.trim().length < MIN_TEXT_FOR_ANALYSIS) {
       await persistRun(supabase, {
-        attendance_id, user_id: userId, bucket, storage_path,
+        attendance_id: attendance_id || null, patient_id: patient_id || null,
+        user_id: userId, bucket, storage_path,
         extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
         raw_text: rawText, status: "failed", error_code: "INSUFFICIENT_TEXT",
         warnings: extractionWarnings,
@@ -492,7 +494,8 @@ serve(async (req) => {
 
     if (normalized.labs.length === 0) {
       await persistRun(supabase, {
-        attendance_id, user_id: userId, bucket, storage_path,
+        attendance_id: attendance_id || null, patient_id: patient_id || null,
+        user_id: userId, bucket, storage_path,
         extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
         raw_text: rawText, normalized_json: normalized,
         status: "failed", error_code: "NO_BIOMARKERS", warnings: extractionWarnings,
@@ -525,7 +528,8 @@ serve(async (req) => {
     } catch (llmErr: any) {
       console.error("[analyze:llm-final-fail]", llmErr.message);
       await persistRun(supabase, {
-        attendance_id, user_id: userId, bucket, storage_path,
+        attendance_id: attendance_id || null, patient_id: patient_id || null,
+        user_id: userId, bucket, storage_path,
         extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
         raw_text: rawText, normalized_json: normalized,
         status: "failed", error_code: llmErr.message?.startsWith("LLM_PARSE") ? "LLM_PARSE_ERROR" : "LLM_ERROR",
@@ -555,7 +559,8 @@ serve(async (req) => {
 
     // Persist success
     await persistRun(supabase, {
-      attendance_id, user_id: userId, bucket, storage_path,
+      attendance_id: attendance_id || null, patient_id: patient_id || null,
+      user_id: userId, bucket, storage_path,
       extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
       warnings: extractionWarnings, raw_text: rawText,
       normalized_json: normalized, analysis_json: validatedAnalysis,
