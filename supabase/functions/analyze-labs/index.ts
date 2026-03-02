@@ -10,6 +10,16 @@ const corsHeaders = {
 const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
 // ══════════════════════════════════════
+// Pipeline Version Constants
+// ══════════════════════════════════════
+const PIPELINE_VERSION = {
+  parser: "normalizeLabs_v2",
+  edge: "analyzeLabs_v4",
+  prompt: "labs_prompt_v1.1.0",
+  model: "google/gemini-2.5-flash",
+};
+
+// ══════════════════════════════════════
 // Constants
 // ══════════════════════════════════════
 const MIN_TEXT_FOR_ANALYSIS = 200;
@@ -17,6 +27,32 @@ const MIN_INTERPRETABLE_LABS = 3;
 const LLM_MAX_RETRIES = 3;
 const LLM_RETRY_DELAYS = [1000, 3000, 7000];
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+// ══════════════════════════════════════
+// SHA-256 Hash (deterministic)
+// ══════════════════════════════════════
+
+function stableStringify(obj: unknown): string {
+  if (obj === null || obj === undefined) return JSON.stringify(obj);
+  if (Array.isArray(obj)) return '[' + obj.map(item => stableStringify(item)).join(',') + ']';
+  if (typeof obj === 'object') {
+    const sortedKeys = Object.keys(obj as Record<string, unknown>).sort();
+    const pairs = sortedKeys.map(key => {
+      const value = (obj as Record<string, unknown>)[key];
+      return JSON.stringify(key) + ':' + stableStringify(value);
+    });
+    return '{' + pairs.join(',') + '}';
+  }
+  return JSON.stringify(obj);
+}
+
+async function sha256Hash(data: unknown): Promise<string> {
+  const jsonStr = stableStringify(data);
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(jsonStr));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 // ══════════════════════════════════════
 // Unit Whitelist & Sanitization (mirror of client)
@@ -374,6 +410,7 @@ ESTRUTURA DE RESPOSTA (JSON estrito):
   "alerts": [{ "type": "safety|data_quality|clinical", "message": "descrição", "severity": "low|medium|high" }],
   "recommendations": ["recomendação condicional"],
   "regen_notes": ["nota para prática regenerativa"],
+  "confidence_label": "HIGH|MODERATE|LOW",
   "disclaimer": "Este relatório não substitui avaliação médica. Correlacionar com dados clínicos."
 }`;
 
@@ -398,7 +435,7 @@ ESTRUTURA DE RESPOSTA (JSON estrito):
         method: "POST",
         headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: PIPELINE_VERSION.model,
           messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userMessage }],
           max_tokens: 4000, temperature: 0.3,
           response_format: { type: "json_object" },
@@ -503,7 +540,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { attendance_id, patient_id, raw_text: providedRawText, bucket, storage_path, clinical_context } = body;
+    const { attendance_id, patient_id, raw_text: providedRawText, bucket, storage_path, clinical_context, manual_corrections } = body;
 
     if (!attendance_id && !patient_id) {
       return new Response(JSON.stringify({ ok: false, error_code: "MISSING_PARAMS", message: "attendance_id ou patient_id é obrigatório" }),
@@ -529,6 +566,7 @@ serve(async (req) => {
           extraction_method: errData.method || "UNKNOWN",
           status: "failed", error_code: errData.error_code || "EXTRACTION_FAIL",
           error_debug: errData.debug || {}, warnings: errData.warnings || [],
+          pipeline_version: PIPELINE_VERSION,
         });
         return new Response(JSON.stringify({ ok: false, error_code: errData.error_code || "EXTRACTION_FAIL", message: errData.message || "Falha na extração" }),
           { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -547,6 +585,7 @@ serve(async (req) => {
         user_id: userId, bucket, storage_path,
         extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
         raw_text: rawText, status: "failed", error_code: "INSUFFICIENT_TEXT", warnings: extractionWarnings,
+        pipeline_version: PIPELINE_VERSION,
       });
       return new Response(JSON.stringify({
         ok: false, error_code: "INSUFFICIENT_TEXT",
@@ -573,6 +612,7 @@ serve(async (req) => {
         raw_text: rawText, normalized_json: normalized,
         status: "failed", error_code: "INSUFFICIENT_INTERPRETABLE_LABS",
         warnings: [...extractionWarnings, `Apenas ${interpretableLabs.length} biomarcadores interpretáveis (mín: ${MIN_INTERPRETABLE_LABS})`],
+        pipeline_version: PIPELINE_VERSION,
       });
       return new Response(JSON.stringify({
         ok: false, error_code: "INSUFFICIENT_INTERPRETABLE_LABS",
@@ -590,6 +630,15 @@ serve(async (req) => {
       blocked_count: blockedLabs.length, total_count: normalized.labs.length,
     };
 
+    // Compute input_hash BEFORE calling LLM
+    const inputPayload = {
+      interpretable_labs: interpretableLabs,
+      blocked_labs_summary: blockedSummary,
+      clinical_context: clinical_context || {},
+      pipeline_version: PIPELINE_VERSION,
+    };
+    const inputHash = await sha256Hash(inputPayload);
+
     let analysis: Record<string, unknown>;
     try {
       analysis = await analyzeWithLLM(interpretableLabs, blockedSummary, clinical_context || {}, extractionMeta);
@@ -603,7 +652,8 @@ serve(async (req) => {
         status: "failed", error_code: llmErr.message?.startsWith("LLM_PARSE") ? "LLM_PARSE_ERROR" : "LLM_ERROR",
         error_debug: { error: llmErr.message, retries: LLM_MAX_RETRIES },
         warnings: extractionWarnings,
-        model_meta: { model: "google/gemini-2.5-flash", duration_ms: Date.now() - startTime, prompt_version: 3 },
+        pipeline_version: PIPELINE_VERSION,
+        input_hash: inputHash,
       });
       return new Response(JSON.stringify({
         ok: false, error_code: "LLM_ERROR",
@@ -620,22 +670,78 @@ serve(async (req) => {
 
     const durationMs = Date.now() - startTime;
 
-    await persistRun(supabase, {
-      attendance_id: attendance_id || null, patient_id: patient_id || null,
+    // Compute output_hash (content-only, no timestamps)
+    const outputPayload = {
+      normalized_json: normalized,
+      analysis_json: validatedAnalysis,
+      extraction_meta: extractionMeta,
+      pipeline_version: PIPELINE_VERSION,
+    };
+    const outputHash = await sha256Hash(outputPayload);
+
+    // Determine correction metadata
+    const wasManuallyCorreced = Array.isArray(manual_corrections) && manual_corrections.length > 0;
+    const correctionSummary = wasManuallyCorreced ? {
+      count: manual_corrections.length,
+      fields: [...new Set(manual_corrections.map((c: any) => c.field_name))],
+    } : null;
+
+    // Extract confidence label from LLM response
+    const confidenceLabel = (validatedAnalysis.confidence_label as string) || null;
+
+    // Persist the new run (always NEW, never overwrite)
+    const { data: insertedRun, error: insertError } = await supabase.from("lab_analysis_runs").insert({
+      attendance_id: attendance_id || null,
+      patient_id: patient_id || null,
       user_id: userId, bucket, storage_path,
-      extraction_method: extractionMethod, extraction_confidence: extractionConfidence,
-      warnings: extractionWarnings, raw_text: rawText,
-      normalized_json: normalized, analysis_json: validatedAnalysis,
-      model_meta: { model: "google/gemini-2.5-flash", duration_ms: durationMs, prompt_version: 3 },
+      extraction_method: extractionMethod,
+      extraction_confidence: extractionConfidence,
+      warnings: extractionWarnings,
+      raw_text: rawText,
+      normalized_json: normalized,
+      analysis_json: validatedAnalysis,
+      model_meta: { model: PIPELINE_VERSION.model, duration_ms: durationMs, prompt_version: PIPELINE_VERSION.prompt },
       status: "success",
-    });
+      pipeline_version: PIPELINE_VERSION,
+      input_hash: inputHash,
+      output_hash: outputHash,
+      was_manually_corrected: wasManuallyCorreced,
+      correction_summary: correctionSummary,
+      analysis_confidence_label: confidenceLabel,
+    }).select("id").single();
+
+    if (insertError) {
+      console.error("[analyze:persist-error]", insertError);
+    } else {
+      console.log(`[analyze:persisted] run_id=${insertedRun?.id} status=success`);
+
+      // Persist correction audit records if any
+      if (wasManuallyCorreced && insertedRun?.id && userId) {
+        const correctionRows = manual_corrections.map((c: any) => ({
+          run_id: insertedRun.id,
+          created_by: userId,
+          lab_name: c.lab_name,
+          field_name: c.field_name,
+          old_value: c.old_value ?? null,
+          new_value: c.new_value ?? null,
+          reason: c.reason ?? null,
+        }));
+        const { error: corrError } = await supabase.from("lab_analysis_corrections").insert(correctionRows);
+        if (corrError) console.error("[analyze:corrections-persist-error]", corrError);
+        else console.log(`[analyze:corrections-persisted] count=${correctionRows.length}`);
+      }
+    }
 
     return new Response(JSON.stringify({
       ok: true,
+      run_id: insertedRun?.id || null,
       extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
       normalized,
       analysis: validatedAnalysis,
       safety: { interpretable: interpretableLabs.length, blocked: blockedLabs.length },
+      pipeline_version: PIPELINE_VERSION,
+      hashes: { input: inputHash, output: outputHash },
+      was_manually_corrected: wasManuallyCorreced,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err: any) {
@@ -646,11 +752,12 @@ serve(async (req) => {
 });
 
 // ══════════════════════════════════════
-// Persist helper
+// Persist helper (for failure cases only)
 // ══════════════════════════════════════
 
 async function persistRun(supabase: ReturnType<typeof createClient>, data: Record<string, unknown>) {
   try {
+    if (!data.pipeline_version) data.pipeline_version = PIPELINE_VERSION;
     const { error } = await supabase.from("lab_analysis_runs").insert(data);
     if (error) console.error("[analyze:persist-error]", error);
     else console.log(`[analyze:persisted] status=${data.status}`);
