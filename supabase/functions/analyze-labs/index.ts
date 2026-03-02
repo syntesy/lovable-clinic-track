@@ -140,13 +140,13 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
           let refRange = "";
           const refMatch = line.match(REF_PATTERN);
           if (refMatch) {
-            refRange = refMatch[1].trim();
+            refRange = cleanRefRange(refMatch[1]);
           } else {
             const inlineRange = afterAlias.match(RANGE_INLINE_PATTERN);
             if (inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
             if (!refRange && i + 1 < lines.length) {
               const nextRef = lines[i + 1].match(REF_PATTERN) || lines[i + 1].match(RANGE_INLINE_PATTERN);
-              if (nextRef) refRange = nextRef[1]?.trim() || `${nextRef[1]}-${nextRef[2]}`;
+              if (nextRef) refRange = cleanRefRange(nextRef[1]?.trim() || `${nextRef[1]}-${nextRef[2]}`);
             }
           }
           if (!result.labs.some((l) => l.name === canonical)) {
@@ -166,7 +166,7 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
         const unit = genericMatch[3] || "";
         let refRange = "";
         const refMatch = line.match(REF_PATTERN);
-        if (refMatch) refRange = refMatch[1].trim();
+        if (refMatch) refRange = cleanRefRange(refMatch[1]);
         const inlineRange = line.match(RANGE_INLINE_PATTERN);
         if (!refRange && inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
         result.labs.push({ name, value: numValue, unit: unit.trim(), reference_range: refRange, flag: determineFlagFromRange(numValue, refRange) });
