@@ -3687,63 +3687,128 @@ export type Database = {
           },
         ]
       }
+      lab_analysis_corrections: {
+        Row: {
+          created_at: string
+          created_by: string
+          field_name: string
+          id: string
+          lab_name: string
+          new_value: string | null
+          old_value: string | null
+          reason: string | null
+          run_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          field_name: string
+          id?: string
+          lab_name: string
+          new_value?: string | null
+          old_value?: string | null
+          reason?: string | null
+          run_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          field_name?: string
+          id?: string
+          lab_name?: string
+          new_value?: string | null
+          old_value?: string | null
+          reason?: string | null
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_analysis_corrections_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "lab_analysis_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lab_analysis_runs: {
         Row: {
+          analysis_confidence_label: string | null
+          analysis_confidence_score: number | null
           analysis_json: Json | null
           attendance_id: string | null
           bucket: string | null
+          correction_summary: Json | null
           created_at: string
           error_code: string | null
           error_debug: Json | null
           extraction_confidence: string | null
           extraction_method: string | null
           id: string
+          input_hash: string | null
           model_meta: Json | null
           normalized_json: Json | null
+          output_hash: string | null
           patient_id: string | null
+          pipeline_version: Json
           raw_text: string | null
           status: string
           storage_path: string | null
           user_id: string | null
           warnings: Json | null
+          was_manually_corrected: boolean
         }
         Insert: {
+          analysis_confidence_label?: string | null
+          analysis_confidence_score?: number | null
           analysis_json?: Json | null
           attendance_id?: string | null
           bucket?: string | null
+          correction_summary?: Json | null
           created_at?: string
           error_code?: string | null
           error_debug?: Json | null
           extraction_confidence?: string | null
           extraction_method?: string | null
           id?: string
+          input_hash?: string | null
           model_meta?: Json | null
           normalized_json?: Json | null
+          output_hash?: string | null
           patient_id?: string | null
+          pipeline_version?: Json
           raw_text?: string | null
           status?: string
           storage_path?: string | null
           user_id?: string | null
           warnings?: Json | null
+          was_manually_corrected?: boolean
         }
         Update: {
+          analysis_confidence_label?: string | null
+          analysis_confidence_score?: number | null
           analysis_json?: Json | null
           attendance_id?: string | null
           bucket?: string | null
+          correction_summary?: Json | null
           created_at?: string
           error_code?: string | null
           error_debug?: Json | null
           extraction_confidence?: string | null
           extraction_method?: string | null
           id?: string
+          input_hash?: string | null
           model_meta?: Json | null
           normalized_json?: Json | null
+          output_hash?: string | null
           patient_id?: string | null
+          pipeline_version?: Json
           raw_text?: string | null
           status?: string
           storage_path?: string | null
           user_id?: string | null
           warnings?: Json | null
+          was_manually_corrected?: boolean
         }
         Relationships: [
           {
