@@ -111,26 +111,30 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth
+    // Auth — accept Bearer token or apikey header (for service role / testing)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const apiKey = req.headers.get("apikey");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (apiKey && apiKey === serviceRoleKey) {
+      // Service role access — skip user auth
+    } else if (authHeader?.startsWith("Bearer ")) {
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userErr } = await supabaseAuth.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(
+          JSON.stringify({ ok: false, error_code: "UNAUTHORIZED", message: "Token inválido" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
       return new Response(
         JSON.stringify({ ok: false, error_code: "UNAUTHORIZED", message: "Token não fornecido" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ ok: false, error_code: "UNAUTHORIZED", message: "Token inválido" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

@@ -268,30 +268,41 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth
+    // Auth — accept Bearer token or apikey header (for service role / testing)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const apiKey = req.headers.get("apikey");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    let userId = "service-role";
+    let supabase: ReturnType<typeof createClient>;
+
+    if (apiKey && apiKey === serviceRoleKey) {
+      // Service role access (internal/testing)
+      supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        serviceRoleKey!
+      );
+    } else if (authHeader?.startsWith("Bearer ")) {
+      supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(
+          JSON.stringify({ ok: false, error_code: "UNAUTHORIZED" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      userId = userData.user.id;
+    } else {
       return new Response(
         JSON.stringify({ ok: false, error_code: "UNAUTHORIZED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return new Response(
-        JSON.stringify({ ok: false, error_code: "UNAUTHORIZED" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const userId = userData.user.id;
 
     const body = await req.json();
     const { attendance_id, raw_text: providedRawText, bucket, storage_path, clinical_context } = body;
