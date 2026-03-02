@@ -18,6 +18,7 @@ import { ptBR } from "date-fns/locale";
 import { EditPatientModal } from "@/components/EditPatientModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
+import { PatientExamUploadAnalysis } from "@/components/patient/PatientExamUploadAnalysis";
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { Tables } from "@/integrations/supabase/types";
 import { getLatestClinicalRecord } from "@/lib/clinical-record-helpers";
@@ -631,37 +632,43 @@ const DetalhePaciente = () => {
                   </div>
                 </TabsContent>
 
-                {/* Exames Tab - HISTÓRICO APENAS */}
+                {/* Exames Tab - Upload + Análise + Histórico */}
                 <TabsContent value="exames" className="mt-8">
-                  <div className="max-w-3xl space-y-6">
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                      <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-primary" />
-                        Histórico de Exames
-                      </h3>
-                      
-                      {examDates.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <Filter className="w-4 h-4 text-muted-foreground" />
-                          <Select value={selectedExamDate} onValueChange={setSelectedExamDate}>
-                            <SelectTrigger className="w-[200px]">
-                              <SelectValue placeholder="Filtrar por data" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todas as datas</SelectItem>
-                              {examDates.map(date => (
-                                <SelectItem key={date} value={date}>
-                                  {format(new Date(date), "dd/MM/yyyy", { locale: ptBR })}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
+                  <div className="max-w-4xl space-y-6">
+                    <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-primary" />
+                      Exames do Paciente
+                    </h3>
+                    
+                    <PatientExamUploadAnalysis
+                      patientId={selectedPatientId!}
+                      patientName={selectedPatient?.full_name || "Paciente"}
+                    />
 
-                    {filteredExams && filteredExams.length > 0 ? (
+                    {/* Legacy blood_tests history */}
+                    {filteredExams && filteredExams.length > 0 && (
                       <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-base font-medium text-foreground">Registros Anteriores</h4>
+                          {examDates.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              <Filter className="w-4 h-4 text-muted-foreground" />
+                              <Select value={selectedExamDate} onValueChange={setSelectedExamDate}>
+                                <SelectTrigger className="w-[200px]">
+                                  <SelectValue placeholder="Filtrar por data" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">Todas as datas</SelectItem>
+                                  {examDates.map(date => (
+                                    <SelectItem key={date} value={date}>
+                                      {format(new Date(date), "dd/MM/yyyy", { locale: ptBR })}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
                         {filteredExams.map(exam => (
                           <Card key={exam.id} className="bg-card border-border">
                             <CardContent className="p-5">
@@ -686,13 +693,6 @@ const DetalhePaciente = () => {
                           </Card>
                         ))}
                       </div>
-                    ) : (
-                      <Card className="bg-card border-border">
-                        <CardContent className="py-16 text-center">
-                          <FileText className="w-14 h-14 text-muted-foreground mx-auto mb-5" />
-                          <p className="text-muted-foreground text-lg mb-4">Nenhum exame registrado</p>
-                        </CardContent>
-                      </Card>
                     )}
                   </div>
                 </TabsContent>
