@@ -15,13 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code, Ban, ArrowLeft } from "lucide-react";
+import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code, Ban, ArrowLeft, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { PrintPreviewModal, RequestedExam } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { Tables } from "@/integrations/supabase/types";
+import { LabAnalysisResults } from "@/components/LabAnalysisResults";
 import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 import { NextStepCard, mapQuestionnaireToPatientFactors } from "@/components/orthobio";
 import { 
