@@ -14,7 +14,7 @@ const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 // ══════════════════════════════════════
 const PIPELINE_VERSION = {
   parser: "normalizeLabs_v2",
-  edge: "analyzeLabs_v4",
+  edge: "analyzeLabs_v5",
   prompt: "labs_prompt_v1.1.0",
   model: "google/gemini-2.5-flash",
 };
