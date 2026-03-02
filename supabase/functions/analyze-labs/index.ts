@@ -452,6 +452,10 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
       const genericMatch = line.match(/^(.+?)[:=]\s*([\d]+[.,]?\d*)\s*([\w/%µμ^³²]+(?:\/[\w%µμ^³²]+)*)?/);
       if (genericMatch) {
         const name = genericMatch[1].trim();
+        if (isGenericOrNonClinicalLabel(name)) {
+          result.unmapped_lines.push(line);
+          continue;
+        }
         const numValue = parseNumber(genericMatch[2]);
         const rawUnit = genericMatch[3] || null;
         const { unit: sanitizedUnit, warning: unitWarning } = sanitizeUnit(rawUnit);
