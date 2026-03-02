@@ -130,9 +130,14 @@ const BIOMARKER_ALIASES: Record<string, string> = {
 // Value extraction pattern: captures number (with comma or dot decimal)
 const VALUE_PATTERN = /[:=]?\s*([\d]+[.,]?\d*)\s*([\w/%µμ]+(?:\/[\w%]+)?)?/;
 
-// Reference range pattern
-const REF_PATTERN = /(?:ref|referência|referencia|vr|v\.r\.|normal)[:\s]*([^\n(]+)/i;
+// Reference range pattern — clean trailing parens/whitespace
+const REF_PATTERN = /(?:ref|referência|referencia|vr|v\.r\.|normal)[:\s]*([^\n]+)/i;
 const RANGE_INLINE_PATTERN = /\(?\s*(\d+[.,]?\d*)\s*[-–a]\s*(\d+[.,]?\d*)\s*\)?/;
+
+/** Clean reference range string — remove trailing ) and whitespace */
+function cleanRefRange(raw: string): string {
+  return raw.replace(/\)+\s*$/, "").replace(/^\s*\(/, "").trim();
+}
 
 function parseNumber(str: string): number | null {
   const cleaned = str.replace(",", ".");
