@@ -1529,10 +1529,33 @@ export default function TriagemBiologica() {
 
               <Card className="bg-card/95 backdrop-blur border-border/50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Interpretação dos Exames</CardTitle>
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    Interpretação dos Exames
+                    {labAnalysisData && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setLabAnalysisData(null);
+                          setLabInterpretation("");
+                        }}
+                        className="ml-auto"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                        Nova análise
+                      </Button>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {labInterpretation ? (
+                  {labAnalysisData?.analysis ? (
+                    <LabAnalysisResults
+                      analysis={labAnalysisData.analysis}
+                      extractionMethod={labAnalysisData.extraction?.method}
+                      extractionConfidence={labAnalysisData.extraction?.confidence}
+                      labsCount={labAnalysisData.normalized?.labs?.length}
+                    />
+                  ) : labInterpretation ? (
                     <ScrollArea className="h-[500px] pr-4">
                       <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">
                         {labInterpretation}
@@ -1543,7 +1566,7 @@ export default function TriagemBiologica() {
                       <div>
                         <FlaskConical className="w-12 h-12 mx-auto mb-4 opacity-30" />
                         <p>Preencha os valores dos exames ou anexe arquivos para ver a interpretação.</p>
-                        <p className="mt-2 text-xs">Os resultados serão enviados ao Assistant para análise.</p>
+                        <p className="mt-2 text-xs">Os exames serão normalizados e enviados em JSON para análise estruturada.</p>
                       </div>
                     </div>
                   )}
