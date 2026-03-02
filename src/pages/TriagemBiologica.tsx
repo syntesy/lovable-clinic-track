@@ -249,6 +249,7 @@ export default function TriagemBiologica() {
     setExtractionWarnings([]);
     setLabResultsText("");
     setLabInterpretation("");
+    setLabAnalysisData(null);
     setAnalysisResult(null);
     setRawAnalysisJson("");
     setAnswers(initialAnswers);
@@ -517,68 +518,78 @@ export default function TriagemBiologica() {
     setIsAnalyzingLab(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('triagem-prp', {
-        body: { 
-          labResults: { 
-            rawText: finalText,
-            extractedFromImages: consolidatedText 
-          }, 
-          action: "lab_results" 
+      // Use the new analyze-labs edge function
+      const { data, error } = await supabase.functions.invoke('analyze-labs', {
+        body: {
+          attendance_id: latestScreening.id, // Use screening id as attendance ref
+          raw_text: finalText,
+          clinical_context: {
+            age: answers.idade,
+            sex: answers.sexo,
+            complaints: answers.diagnostico_suspeito,
+            diagnoses: [],
+            planned_procedure: answers.procedimento_considerado || null,
+            nsaid_recent: {
+              used: answers.medicamentos?.includes('aine_7dias') || false,
+              days_since_last_dose: null,
+            },
+          },
         }
       });
 
       if (error) throw error;
 
-      setLabInterpretation(data.analysis);
+      if (data.ok) {
+        setLabAnalysisData({
+          analysis: data.analysis,
+          extraction: data.extraction || {},
+          normalized: data.normalized,
+        });
+        setLabInterpretation(data.analysis?.summary || JSON.stringify(data.analysis, null, 2));
+      } else {
+        // Show error but keep any partial data
+        toast.error(data.message || "Erro na análise dos exames");
+        if (data.normalized) {
+          setLabAnalysisData({
+            analysis: null,
+            extraction: data.extraction || {},
+            normalized: data.normalized,
+          });
+        }
+        setLabInterpretation("");
+      }
 
+      // Also save to prp_lab_results for backward compatibility
       const attachedFilesInfo = uploadedFiles.map(f => ({
         id: f.id,
         name: f.name,
         uploadedAt: f.uploadedAt.toISOString()
       }));
 
-      const { data: insertedLabResult, error: saveError } = await supabase
+      const { error: saveError } = await supabase
         .from("prp_lab_results")
         .insert({
           screening_id: latestScreening.id,
           raw_text: labResultsText,
-          extracted_text: consolidatedText,
-          interpretation: data.analysis,
-          updated_classification: data.classification,
+          extracted_text: finalText,
+          interpretation: data.ok ? (data.analysis?.summary || JSON.stringify(data.analysis)) : null,
+          updated_classification: null,
           attached_files: attachedFilesInfo
-        })
-        .select('id')
-        .single();
+        });
 
-      if (saveError) throw saveError;
+      if (saveError) console.error("Error saving to prp_lab_results:", saveError);
 
-      if (data.classification) {
-        await supabase
-          .from("prp_screenings")
-          .update({ classification: data.classification })
-          .eq("id", latestScreening.id);
-      }
-
-      // Registry: Captura resultado de exames e score v2 (não-intrusivo, silencioso)
-      captureLabResult(
-        { interpretation: data.analysis, updated_classification: data.classification },
-        undefined,
-        'manual'
-      ).catch(() => {});
-
-      // Captura score com contexto triage_plus_labs
-      if (data.classification) {
-        captureScoreSnapshot(
-          0, // score value - se disponível
-          data.classification,
-          { interpretation: data.analysis },
-          [],
-          'triage_plus_labs'
+      // Registry captures
+      if (data.ok && data.analysis) {
+        captureLabResult(
+          { interpretation: data.analysis.summary, analysis: data.analysis },
+          undefined,
+          'automated'
         ).catch(() => {});
       }
 
       queryClient.invalidateQueries({ queryKey: ["prp_screenings", selectedPatientId] });
-      toast.success("Resultados analisados com sucesso!");
+      if (data.ok) toast.success("Exames analisados com sucesso!");
     } catch (error) {
       console.error("Error analyzing lab:", error);
       toast.error("Erro ao analisar resultados. Tente novamente.");
