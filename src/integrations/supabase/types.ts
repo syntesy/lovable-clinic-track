@@ -3690,7 +3690,7 @@ export type Database = {
       lab_analysis_runs: {
         Row: {
           analysis_json: Json | null
-          attendance_id: string
+          attendance_id: string | null
           bucket: string | null
           created_at: string
           error_code: string | null
@@ -3700,6 +3700,7 @@ export type Database = {
           id: string
           model_meta: Json | null
           normalized_json: Json | null
+          patient_id: string | null
           raw_text: string | null
           status: string
           storage_path: string | null
@@ -3708,7 +3709,7 @@ export type Database = {
         }
         Insert: {
           analysis_json?: Json | null
-          attendance_id: string
+          attendance_id?: string | null
           bucket?: string | null
           created_at?: string
           error_code?: string | null
@@ -3718,6 +3719,7 @@ export type Database = {
           id?: string
           model_meta?: Json | null
           normalized_json?: Json | null
+          patient_id?: string | null
           raw_text?: string | null
           status?: string
           storage_path?: string | null
@@ -3726,7 +3728,7 @@ export type Database = {
         }
         Update: {
           analysis_json?: Json | null
-          attendance_id?: string
+          attendance_id?: string | null
           bucket?: string | null
           created_at?: string
           error_code?: string | null
@@ -3736,6 +3738,7 @@ export type Database = {
           id?: string
           model_meta?: Json | null
           normalized_json?: Json | null
+          patient_id?: string | null
           raw_text?: string | null
           status?: string
           storage_path?: string | null
@@ -3748,6 +3751,13 @@ export type Database = {
             columns: ["attendance_id"]
             isOneToOne: false
             referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_analysis_runs_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
