@@ -184,6 +184,11 @@ export default function TriagemBiologica() {
   const [labResultsText, setLabResultsText] = useState("");
   const [isAnalyzingLab, setIsAnalyzingLab] = useState(false);
   const [labInterpretation, setLabInterpretation] = useState("");
+  const [labAnalysisData, setLabAnalysisData] = useState<{
+    analysis: any;
+    extraction: { method?: string; confidence?: string; warnings?: string[] };
+    normalized: any;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState("triagem");
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
   const [printPreviewType, setPrintPreviewType] = useState<"exams" | "orientations">("exams");
