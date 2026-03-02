@@ -3703,7 +3703,7 @@ export type Database = {
           raw_text: string | null
           status: string
           storage_path: string | null
-          user_id: string
+          user_id: string | null
           warnings: Json | null
         }
         Insert: {
@@ -3721,7 +3721,7 @@ export type Database = {
           raw_text?: string | null
           status?: string
           storage_path?: string | null
-          user_id?: string
+          user_id?: string | null
           warnings?: Json | null
         }
         Update: {
@@ -3739,7 +3739,7 @@ export type Database = {
           raw_text?: string | null
           status?: string
           storage_path?: string | null
-          user_id?: string
+          user_id?: string | null
           warnings?: Json | null
         }
         Relationships: [

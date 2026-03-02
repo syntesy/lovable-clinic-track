@@ -66,8 +66,12 @@ const BIOMARKER_ALIASES: Record<string, string> = {
 };
 
 const VALUE_PATTERN = /[:=]?\s*([\d]+[.,]?\d*)\s*([\w/%µμ]+(?:\/[\w%]+)?)?/;
-const REF_PATTERN = /(?:ref|referência|referencia|vr|v\.r\.|normal)[:\s]*([^\n(]+)/i;
+const REF_PATTERN = /(?:ref|referência|referencia|vr|v\.r\.|normal)[:\s]*([^\n]+)/i;
 const RANGE_INLINE_PATTERN = /\(?\s*(\d+[.,]?\d*)\s*[-–a]\s*(\d+[.,]?\d*)\s*\)?/;
+
+function cleanRefRange(raw: string): string {
+  return raw.replace(/\)+\s*$/, "").replace(/^\s*\(/, "").trim();
+}
 
 function parseNumber(str: string): number | null {
   const num = parseFloat(str.replace(",", "."));
@@ -136,13 +140,13 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
           let refRange = "";
           const refMatch = line.match(REF_PATTERN);
           if (refMatch) {
-            refRange = refMatch[1].trim();
+            refRange = cleanRefRange(refMatch[1]);
           } else {
             const inlineRange = afterAlias.match(RANGE_INLINE_PATTERN);
             if (inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
             if (!refRange && i + 1 < lines.length) {
               const nextRef = lines[i + 1].match(REF_PATTERN) || lines[i + 1].match(RANGE_INLINE_PATTERN);
-              if (nextRef) refRange = nextRef[1]?.trim() || `${nextRef[1]}-${nextRef[2]}`;
+              if (nextRef) refRange = cleanRefRange(nextRef[1]?.trim() || `${nextRef[1]}-${nextRef[2]}`);
             }
           }
           if (!result.labs.some((l) => l.name === canonical)) {
@@ -162,7 +166,7 @@ function normalizeLabs(rawText: string): NormalizedLabResult {
         const unit = genericMatch[3] || "";
         let refRange = "";
         const refMatch = line.match(REF_PATTERN);
-        if (refMatch) refRange = refMatch[1].trim();
+        if (refMatch) refRange = cleanRefRange(refMatch[1]);
         const inlineRange = line.match(RANGE_INLINE_PATTERN);
         if (!refRange && inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
         result.labs.push({ name, value: numValue, unit: unit.trim(), reference_range: refRange, flag: determineFlagFromRange(numValue, refRange) });
@@ -268,30 +272,25 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth
+    // Auth — use service role for DB operations, validate user token when available
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ ok: false, error_code: "UNAUTHORIZED" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return new Response(
-        JSON.stringify({ ok: false, error_code: "UNAUTHORIZED" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    let userId: string | null = null;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      if (token !== anonKey) {
+        const userClient = createClient(
+          Deno.env.get("SUPABASE_URL")!, anonKey,
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const { data: userData } = await userClient.auth.getUser(token);
+        if (userData?.user) userId = userData.user.id;
+      }
     }
-    const userId = userData.user.id;
+    console.log(`[analyze:request] userId=${userId || "anonymous"}`);
 
     const body = await req.json();
     const { attendance_id, raw_text: providedRawText, bucket, storage_path, clinical_context } = body;
