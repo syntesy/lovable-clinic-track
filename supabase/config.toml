@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.academy-generate-abstract]
 verify_jwt = false
+
+[functions.extract-file-text]
+verify_jwt = false
