@@ -397,6 +397,13 @@ export function normalizeLabs(rawText: string): NormalizedLabResult {
       const genericMatch = line.match(/^(.+?)[:=]\s*([\d]+[.,]?\d*)\s*([\w/%µμ^³²]+(?:\/[\w%µμ^³²]+)*)?/);
       if (genericMatch) {
         const name = genericMatch[1].trim();
+
+        // Block generic labels that are NOT biomarkers
+        if (isGenericOrNonClinicalLabel(name)) {
+          result.unmapped_lines.push(line);
+          continue;
+        }
+
         const numValue = parseNumber(genericMatch[2]);
         const rawUnit = genericMatch[3] || null;
         const { unit: sanitizedUnit, warning: unitWarning } = sanitizeUnit(rawUnit);
@@ -406,7 +413,6 @@ export function normalizeLabs(rawText: string): NormalizedLabResult {
         if (refMatch) refRange = cleanRefRange(refMatch[1]);
         const inlineRange = line.match(RANGE_INLINE_PATTERN);
         if (!refRange && inlineRange) refRange = `${inlineRange[1]}-${inlineRange[2]}`;
-
         const confidence = computeParserConfidence(numValue !== null, sanitizedUnit !== null, refRange !== null, false);
         const blocking_reasons: string[] = [];
         if (unitWarning) blocking_reasons.push(unitWarning);
