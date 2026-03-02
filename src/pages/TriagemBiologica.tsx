@@ -15,13 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code, Ban, ArrowLeft } from "lucide-react";
+import { Loader2, Printer, FileText, ClipboardList, FlaskConical, History, AlertTriangle, CheckCircle2, XCircle, Upload, Eye, Info, Stethoscope, ArrowRight, Code, Ban, ArrowLeft, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { PrintPreviewModal, RequestedExam } from "@/components/PrintPreviewModal";
 import { ExamFileUpload } from "@/components/ExamFileUpload";
 import { ExtractedTextPreviewModal } from "@/components/ExtractedTextPreviewModal";
 import { ScreeningDetailModal } from "@/components/ScreeningDetailModal";
 import { Tables } from "@/integrations/supabase/types";
+import { LabAnalysisResults } from "@/components/LabAnalysisResults";
 import { useRegistryEpisode } from "@/hooks/useRegistryEpisode";
 import { NextStepCard, mapQuestionnaireToPatientFactors } from "@/components/orthobio";
 import { 
@@ -183,6 +184,11 @@ export default function TriagemBiologica() {
   const [labResultsText, setLabResultsText] = useState("");
   const [isAnalyzingLab, setIsAnalyzingLab] = useState(false);
   const [labInterpretation, setLabInterpretation] = useState("");
+  const [labAnalysisData, setLabAnalysisData] = useState<{
+    analysis: any;
+    extraction: { method?: string; confidence?: string; warnings?: string[] };
+    normalized: any;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState("triagem");
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
   const [printPreviewType, setPrintPreviewType] = useState<"exams" | "orientations">("exams");
@@ -243,6 +249,7 @@ export default function TriagemBiologica() {
     setExtractionWarnings([]);
     setLabResultsText("");
     setLabInterpretation("");
+    setLabAnalysisData(null);
     setAnalysisResult(null);
     setRawAnalysisJson("");
     setAnswers(initialAnswers);
@@ -511,68 +518,78 @@ export default function TriagemBiologica() {
     setIsAnalyzingLab(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('triagem-prp', {
-        body: { 
-          labResults: { 
-            rawText: finalText,
-            extractedFromImages: consolidatedText 
-          }, 
-          action: "lab_results" 
+      // Use the new analyze-labs edge function
+      const { data, error } = await supabase.functions.invoke('analyze-labs', {
+        body: {
+          attendance_id: latestScreening.id, // Use screening id as attendance ref
+          raw_text: finalText,
+          clinical_context: {
+            age: answers.idade,
+            sex: answers.sexo,
+            complaints: answers.diagnostico_suspeito,
+            diagnoses: [],
+            planned_procedure: answers.procedimento_considerado || null,
+            nsaid_recent: {
+              used: answers.medicamentos?.includes('aine_7dias') || false,
+              days_since_last_dose: null,
+            },
+          },
         }
       });
 
       if (error) throw error;
 
-      setLabInterpretation(data.analysis);
+      if (data.ok) {
+        setLabAnalysisData({
+          analysis: data.analysis,
+          extraction: data.extraction || {},
+          normalized: data.normalized,
+        });
+        setLabInterpretation(data.analysis?.summary || JSON.stringify(data.analysis, null, 2));
+      } else {
+        // Show error but keep any partial data
+        toast.error(data.message || "Erro na análise dos exames");
+        if (data.normalized) {
+          setLabAnalysisData({
+            analysis: null,
+            extraction: data.extraction || {},
+            normalized: data.normalized,
+          });
+        }
+        setLabInterpretation("");
+      }
 
+      // Also save to prp_lab_results for backward compatibility
       const attachedFilesInfo = uploadedFiles.map(f => ({
         id: f.id,
         name: f.name,
         uploadedAt: f.uploadedAt.toISOString()
       }));
 
-      const { data: insertedLabResult, error: saveError } = await supabase
+      const { error: saveError } = await supabase
         .from("prp_lab_results")
         .insert({
           screening_id: latestScreening.id,
           raw_text: labResultsText,
-          extracted_text: consolidatedText,
-          interpretation: data.analysis,
-          updated_classification: data.classification,
+          extracted_text: finalText,
+          interpretation: data.ok ? (data.analysis?.summary || JSON.stringify(data.analysis)) : null,
+          updated_classification: null,
           attached_files: attachedFilesInfo
-        })
-        .select('id')
-        .single();
+        });
 
-      if (saveError) throw saveError;
+      if (saveError) console.error("Error saving to prp_lab_results:", saveError);
 
-      if (data.classification) {
-        await supabase
-          .from("prp_screenings")
-          .update({ classification: data.classification })
-          .eq("id", latestScreening.id);
-      }
-
-      // Registry: Captura resultado de exames e score v2 (não-intrusivo, silencioso)
-      captureLabResult(
-        { interpretation: data.analysis, updated_classification: data.classification },
-        undefined,
-        'manual'
-      ).catch(() => {});
-
-      // Captura score com contexto triage_plus_labs
-      if (data.classification) {
-        captureScoreSnapshot(
-          0, // score value - se disponível
-          data.classification,
-          { interpretation: data.analysis },
-          [],
-          'triage_plus_labs'
+      // Registry captures
+      if (data.ok && data.analysis) {
+        captureLabResult(
+          { interpretation: data.analysis.summary, analysis: data.analysis },
+          undefined,
+          'upload'
         ).catch(() => {});
       }
 
       queryClient.invalidateQueries({ queryKey: ["prp_screenings", selectedPatientId] });
-      toast.success("Resultados analisados com sucesso!");
+      if (data.ok) toast.success("Exames analisados com sucesso!");
     } catch (error) {
       console.error("Error analyzing lab:", error);
       toast.error("Erro ao analisar resultados. Tente novamente.");
@@ -1512,10 +1529,33 @@ export default function TriagemBiologica() {
 
               <Card className="bg-card/95 backdrop-blur border-border/50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Interpretação dos Exames</CardTitle>
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    Interpretação dos Exames
+                    {labAnalysisData && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setLabAnalysisData(null);
+                          setLabInterpretation("");
+                        }}
+                        className="ml-auto"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                        Nova análise
+                      </Button>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {labInterpretation ? (
+                  {labAnalysisData?.analysis ? (
+                    <LabAnalysisResults
+                      analysis={labAnalysisData.analysis}
+                      extractionMethod={labAnalysisData.extraction?.method}
+                      extractionConfidence={labAnalysisData.extraction?.confidence}
+                      labsCount={labAnalysisData.normalized?.labs?.length}
+                    />
+                  ) : labInterpretation ? (
                     <ScrollArea className="h-[500px] pr-4">
                       <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap">
                         {labInterpretation}
@@ -1526,7 +1566,7 @@ export default function TriagemBiologica() {
                       <div>
                         <FlaskConical className="w-12 h-12 mx-auto mb-4 opacity-30" />
                         <p>Preencha os valores dos exames ou anexe arquivos para ver a interpretação.</p>
-                        <p className="mt-2 text-xs">Os resultados serão enviados ao Assistant para análise.</p>
+                        <p className="mt-2 text-xs">Os exames serão normalizados e enviados em JSON para análise estruturada.</p>
                       </div>
                     </div>
                   )}

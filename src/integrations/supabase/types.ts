@@ -3687,6 +3687,71 @@ export type Database = {
           },
         ]
       }
+      lab_analysis_runs: {
+        Row: {
+          analysis_json: Json | null
+          attendance_id: string
+          bucket: string | null
+          created_at: string
+          error_code: string | null
+          error_debug: Json | null
+          extraction_confidence: string | null
+          extraction_method: string | null
+          id: string
+          model_meta: Json | null
+          normalized_json: Json | null
+          raw_text: string | null
+          status: string
+          storage_path: string | null
+          user_id: string
+          warnings: Json | null
+        }
+        Insert: {
+          analysis_json?: Json | null
+          attendance_id: string
+          bucket?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_debug?: Json | null
+          extraction_confidence?: string | null
+          extraction_method?: string | null
+          id?: string
+          model_meta?: Json | null
+          normalized_json?: Json | null
+          raw_text?: string | null
+          status?: string
+          storage_path?: string | null
+          user_id?: string
+          warnings?: Json | null
+        }
+        Update: {
+          analysis_json?: Json | null
+          attendance_id?: string
+          bucket?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_debug?: Json | null
+          extraction_confidence?: string | null
+          extraction_method?: string | null
+          id?: string
+          model_meta?: Json | null
+          normalized_json?: Json | null
+          raw_text?: string | null
+          status?: string
+          storage_path?: string | null
+          user_id?: string
+          warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_analysis_runs_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mac_protocols: {
         Row: {
           accumulated_treatment_time: number | null
