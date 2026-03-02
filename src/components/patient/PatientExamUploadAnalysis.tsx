@@ -11,12 +11,12 @@ import {
 import {
   Upload, FileText, Loader2, AlertCircle, CheckCircle2,
   XCircle, FlaskConical, ChevronDown, ChevronUp, Sparkles, Clock,
-  ShieldAlert, ShieldCheck, Edit3, RotateCcw
+  ShieldAlert, ShieldCheck, Edit3, RotateCcw, Hash, GitBranch, Pencil
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { normalizeLabs, type NormalizedLabItem } from "@/utils/normalizeLabs";
+import { type NormalizedLabItem } from "@/utils/normalizeLabs";
 
 interface PatientExamUploadAnalysisProps {
   patientId: string;
@@ -34,6 +34,23 @@ interface LabRun {
   error_code: string | null;
   warnings: any;
   storage_path: string | null;
+  pipeline_version: any;
+  input_hash: string | null;
+  output_hash: string | null;
+  was_manually_corrected: boolean;
+  correction_summary: any;
+  analysis_confidence_label: string | null;
+}
+
+interface CorrectionRecord {
+  id: string;
+  run_id: string;
+  created_at: string;
+  lab_name: string;
+  field_name: string;
+  old_value: string | null;
+  new_value: string | null;
+  reason: string | null;
 }
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
@@ -55,6 +72,12 @@ const BLOCKING_REASON_LABELS: Record<string, string> = {
   RANGE_REQUIRES_SEX: "Intervalo depende do sexo (não informado)",
 };
 
+const FIELD_LABELS: Record<string, string> = {
+  value: "Valor",
+  unit: "Unidade",
+  reference_range: "Referência",
+};
+
 export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExamUploadAnalysisProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,13 +88,14 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [editingLab, setEditingLab] = useState<{ runId: string; labIndex: number } | null>(null);
   const [editForm, setEditForm] = useState<{ value: string; unit: string; rangeMin: string; rangeMax: string }>({ value: "", unit: "", rangeMin: "", rangeMax: "" });
+  const [showCorrections, setShowCorrections] = useState<string | null>(null);
 
   const { data: labRuns, isLoading } = useQuery({
     queryKey: ["lab-analysis-runs", patientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lab_analysis_runs")
-        .select("id, created_at, status, extraction_method, extraction_confidence, normalized_json, analysis_json, error_code, warnings, storage_path")
+        .select("id, created_at, status, extraction_method, extraction_confidence, normalized_json, analysis_json, error_code, warnings, storage_path, pipeline_version, input_hash, output_hash, was_manually_corrected, correction_summary, analysis_confidence_label")
         .eq("patient_id", patientId)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -79,6 +103,22 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
       return data as LabRun[];
     },
     enabled: !!patientId,
+  });
+
+  // Fetch corrections for a specific run
+  const { data: corrections } = useQuery({
+    queryKey: ["lab-corrections", showCorrections],
+    queryFn: async () => {
+      if (!showCorrections) return [];
+      const { data, error } = await supabase
+        .from("lab_analysis_corrections")
+        .select("*")
+        .eq("run_id", showCorrections)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as CorrectionRecord[];
+    },
+    enabled: !!showCorrections,
   });
 
   const handleFileUploadAndAnalyze = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,7 +190,6 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
       rangeMin: "",
       rangeMax: "",
     });
-    // Try to parse existing range
     if (lab.reference_range) {
       const m = lab.reference_range.match(/([\d.]+)\s*[-–]\s*([\d.]+)/);
       if (m) { setEditForm(prev => ({ ...prev, rangeMin: m[1], rangeMax: m[2] })); }
@@ -163,11 +202,42 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
     const idx = editingLab.labIndex;
     if (idx < 0 || idx >= labs.length) return;
 
-    // Apply corrections
+    const originalLab = { ...labs[idx] };
     const lab = { ...labs[idx] };
-    if (editForm.value) lab.value = parseFloat(editForm.value.replace(",", "."));
-    if (editForm.unit) lab.unit = editForm.unit;
-    if (editForm.rangeMin && editForm.rangeMax) lab.reference_range = `${editForm.rangeMin}-${editForm.rangeMax}`;
+
+    // Build manual_corrections diff
+    const manualCorrections: Array<{ lab_name: string; field_name: string; old_value: string | null; new_value: string | null; reason: string }> = [];
+
+    if (editForm.value && parseFloat(editForm.value.replace(",", ".")) !== lab.value) {
+      manualCorrections.push({
+        lab_name: lab.name, field_name: "value",
+        old_value: lab.value?.toString() ?? null,
+        new_value: editForm.value,
+        reason: "Correção manual pelo profissional",
+      });
+      lab.value = parseFloat(editForm.value.replace(",", "."));
+    }
+    if (editForm.unit && editForm.unit !== lab.unit) {
+      manualCorrections.push({
+        lab_name: lab.name, field_name: "unit",
+        old_value: lab.unit ?? null,
+        new_value: editForm.unit,
+        reason: "Correção manual pelo profissional",
+      });
+      lab.unit = editForm.unit;
+    }
+    if (editForm.rangeMin && editForm.rangeMax) {
+      const newRange = `${editForm.rangeMin}-${editForm.rangeMax}`;
+      if (newRange !== lab.reference_range) {
+        manualCorrections.push({
+          lab_name: lab.name, field_name: "reference_range",
+          old_value: lab.reference_range ?? null,
+          new_value: newRange,
+          reason: "Correção manual pelo profissional",
+        });
+        lab.reference_range = newRange;
+      }
+    }
 
     // Recalculate interpretability
     lab.blocking_reasons = [];
@@ -186,7 +256,11 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
 
     try {
       const { data, error } = await supabase.functions.invoke("analyze-labs", {
-        body: { patient_id: patientId, raw_text: correctedText },
+        body: {
+          patient_id: patientId,
+          raw_text: correctedText,
+          manual_corrections: manualCorrections.length > 0 ? manualCorrections : undefined,
+        },
       });
       if (error || !data?.ok) toast.error(data?.message || "Erro na reanálise");
       else toast.success("Reanálise concluída com dados corrigidos!");
@@ -211,6 +285,15 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
       case "MANUAL": return "Texto manual";
       default: return method || "—";
     }
+  };
+
+  const getConfidenceBadge = (label: string | null) => {
+    if (!label) return null;
+    const colors = label === "HIGH" ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+      : label === "MODERATE" ? "bg-amber-500/10 text-amber-700 border-amber-500/30"
+      : "bg-red-500/10 text-red-700 border-red-500/30";
+    const text = label === "HIGH" ? "Alta" : label === "MODERATE" ? "Moderada" : "Baixa";
+    return <Badge variant="outline" className={`text-[10px] ${colors}`}>{text}</Badge>;
   };
 
   return (
@@ -270,6 +353,7 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
               const interpretable = allLabs.filter((l: any) => l.is_interpretable);
               const blocked = allLabs.filter((l: any) => !l.is_interpretable);
               const analysis = run.analysis_json;
+              const pv = run.pipeline_version;
 
               return (
                 <Card key={run.id} className="bg-card border-border">
@@ -283,6 +367,12 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
                           <div className="flex items-center gap-2 flex-wrap">
                             {getStatusBadge(run.status)}
                             <Badge variant="outline" className="text-xs">{getMethodLabel(run.extraction_method)}</Badge>
+                            {run.was_manually_corrected && (
+                              <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-700 border-blue-500/30 gap-1">
+                                <Pencil className="w-3 h-3" /> Corrigido
+                              </Badge>
+                            )}
+                            {run.analysis_confidence_label && getConfidenceBadge(run.analysis_confidence_label)}
                             {allLabs.length > 0 && (
                               <>
                                 <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-700 border-emerald-500/30 gap-1">
@@ -307,6 +397,77 @@ export function PatientExamUploadAnalysis({ patientId, patientName }: PatientExa
 
                     {isExpanded && (
                       <div className="mt-4 space-y-4 border-t border-border pt-4">
+                        {/* Pipeline Version & Hashes */}
+                        {pv && (
+                          <div className="p-3 bg-muted/20 rounded-md space-y-2">
+                            <h6 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                              <GitBranch className="w-3 h-3" /> Pipeline
+                            </h6>
+                            <div className="flex flex-wrap gap-2 text-[10px]">
+                              {pv.parser && <Badge variant="outline" className="text-[10px]">Parser: {pv.parser}</Badge>}
+                              {pv.edge && <Badge variant="outline" className="text-[10px]">Edge: {pv.edge}</Badge>}
+                              {pv.prompt && <Badge variant="outline" className="text-[10px]">Prompt: {pv.prompt}</Badge>}
+                              {pv.model && <Badge variant="outline" className="text-[10px]">Model: {pv.model}</Badge>}
+                            </div>
+                            {(run.input_hash || run.output_hash) && (
+                              <div className="flex flex-col gap-1 text-[10px] text-muted-foreground/70 font-mono">
+                                {run.input_hash && (
+                                  <span className="flex items-center gap-1" title={run.input_hash}>
+                                    <Hash className="w-3 h-3" /> Input: {run.input_hash.slice(0, 16)}…
+                                  </span>
+                                )}
+                                {run.output_hash && (
+                                  <span className="flex items-center gap-1" title={run.output_hash}>
+                                    <Hash className="w-3 h-3" /> Output: {run.output_hash.slice(0, 16)}…
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Manual Corrections Audit */}
+                        {run.was_manually_corrected && (
+                          <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-md space-y-2">
+                            <div className="flex items-center justify-between">
+                              <h6 className="text-xs font-medium text-blue-700 flex items-center gap-1">
+                                <Pencil className="w-3 h-3" /> Correções Aplicadas: {run.correction_summary?.count || "?"}
+                              </h6>
+                              <Button variant="ghost" size="sm" className="h-6 text-[10px]"
+                                onClick={() => setShowCorrections(showCorrections === run.id ? null : run.id)}>
+                                {showCorrections === run.id ? "Ocultar" : "Ver detalhes"}
+                              </Button>
+                            </div>
+                            {run.correction_summary?.fields && (
+                              <div className="flex gap-1 flex-wrap">
+                                {run.correction_summary.fields.map((f: string) => (
+                                  <Badge key={f} variant="outline" className="text-[10px] bg-blue-500/10 text-blue-700">
+                                    {FIELD_LABELS[f] || f}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            {showCorrections === run.id && corrections && corrections.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {corrections.map((c) => (
+                                  <div key={c.id} className="text-[10px] p-2 bg-background rounded border border-border space-y-0.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium">{c.lab_name} → {FIELD_LABELS[c.field_name] || c.field_name}</span>
+                                      <span className="text-muted-foreground">{format(new Date(c.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="text-red-600 line-through">{c.old_value || "vazio"}</span>
+                                      <span>→</span>
+                                      <span className="text-emerald-700 font-medium">{c.new_value || "vazio"}</span>
+                                    </div>
+                                    {c.reason && <p className="text-muted-foreground italic">{c.reason}</p>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Error */}
                         {run.status === "failed" && run.error_code && (
                           <div className="p-3 bg-destructive/10 rounded-md text-sm text-destructive">
