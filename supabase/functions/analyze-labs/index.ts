@@ -820,7 +820,7 @@ serve(async (req) => {
       raw_text: rawText,
       normalized_json: normalized,
       analysis_json: validatedAnalysis,
-      model_meta: { model: PIPELINE_VERSION.model, duration_ms: durationMs, prompt_version: PIPELINE_VERSION.prompt },
+      model_meta: { model: PIPELINE_VERSION.model, duration_ms: durationMs, prompt_version: PIPELINE_VERSION.prompt, prefilter_stats: prefilterResult.stats, excluded_lines_sample: prefilterResult.excluded_lines.slice(0, 20) },
       status: "success",
       pipeline_version: PIPELINE_VERSION,
       input_hash: inputHash,
