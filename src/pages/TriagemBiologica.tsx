@@ -584,7 +584,7 @@ export default function TriagemBiologica() {
         captureLabResult(
           { interpretation: data.analysis.summary, analysis: data.analysis },
           undefined,
-          'automated'
+          'upload'
         ).catch(() => {});
       }
 
