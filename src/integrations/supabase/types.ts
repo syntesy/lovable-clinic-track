@@ -833,10 +833,12 @@ export type Database = {
       }
       academy_paper_curation: {
         Row: {
+          auto_tags: Json | null
           cost_estimate_usd: number | null
           created_at: string
           curation_json: Json
           data_quality_warnings: Json | null
+          evidence_anchors: Json | null
           id: string
           llm_input_hash: string | null
           llm_output_hash: string | null
@@ -849,14 +851,17 @@ export type Database = {
           risco_vies: string | null
           schema_version: number
           score_metodologico: number | null
+          structured_version_used: number | null
           tokens_used: number | null
           validation_report: Json | null
         }
         Insert: {
+          auto_tags?: Json | null
           cost_estimate_usd?: number | null
           created_at?: string
           curation_json: Json
           data_quality_warnings?: Json | null
+          evidence_anchors?: Json | null
           id?: string
           llm_input_hash?: string | null
           llm_output_hash?: string | null
@@ -869,14 +874,17 @@ export type Database = {
           risco_vies?: string | null
           schema_version?: number
           score_metodologico?: number | null
+          structured_version_used?: number | null
           tokens_used?: number | null
           validation_report?: Json | null
         }
         Update: {
+          auto_tags?: Json | null
           cost_estimate_usd?: number | null
           created_at?: string
           curation_json?: Json
           data_quality_warnings?: Json | null
+          evidence_anchors?: Json | null
           id?: string
           llm_input_hash?: string | null
           llm_output_hash?: string | null
@@ -889,6 +897,7 @@ export type Database = {
           risco_vies?: string | null
           schema_version?: number
           score_metodologico?: number | null
+          structured_version_used?: number | null
           tokens_used?: number | null
           validation_report?: Json | null
         }
@@ -973,6 +982,9 @@ export type Database = {
           id: string
           is_scanned: boolean | null
           paper_id: string
+          source_route: string | null
+          structured_hash: string | null
+          structured_version: number
           updated_at: string | null
           word_count: number | null
         }
@@ -990,6 +1002,9 @@ export type Database = {
           id?: string
           is_scanned?: boolean | null
           paper_id: string
+          source_route?: string | null
+          structured_hash?: string | null
+          structured_version?: number
           updated_at?: string | null
           word_count?: number | null
         }
@@ -1007,6 +1022,9 @@ export type Database = {
           id?: string
           is_scanned?: boolean | null
           paper_id?: string
+          source_route?: string | null
+          structured_hash?: string | null
+          structured_version?: number
           updated_at?: string | null
           word_count?: number | null
         }
@@ -1022,6 +1040,7 @@ export type Database = {
       }
       academy_paper_ingestion: {
         Row: {
+          attempt_sequence: number
           created_at: string
           created_by: string
           duration_ms: number | null
@@ -1040,6 +1059,7 @@ export type Database = {
           warnings: string[] | null
         }
         Insert: {
+          attempt_sequence?: number
           created_at?: string
           created_by: string
           duration_ms?: number | null
@@ -1058,6 +1078,7 @@ export type Database = {
           warnings?: string[] | null
         }
         Update: {
+          attempt_sequence?: number
           created_at?: string
           created_by?: string
           duration_ms?: number | null

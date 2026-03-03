@@ -256,7 +256,7 @@ async function generateFingerprint(title: string, year: number | null, journal: 
 }
 
 /** Build current_structured canonical object from fulltext */
-function buildCurrentStructured(ft: FulltextStructured): Record<string, unknown> {
+function buildCurrentStructured(ft: FulltextStructured, sourceRoute = "pmc_xml"): Record<string, unknown> {
   return {
     abstract: ft.abstract || null,
     introduction: ft.introduction || null,
@@ -267,7 +267,7 @@ function buildCurrentStructured(ft: FulltextStructured): Record<string, unknown>
     quality_flags: ft.quality_flags,
     char_count: ft.char_count,
     word_count: ft.word_count,
-    source: "pmc_xml",
+    source: sourceRoute,
     updated_at: new Date().toISOString(),
   };
 }
@@ -490,6 +490,7 @@ serve(async (req) => {
                 abstract_source: "pmc_xml",
                 abstract_char_count: ftResult.abstract?.length || 0,
                 current_structured: currentStructured,
+                source_route: "pmc_xml",
               }, { onConflict: "paper_id" });
 
             const { data: pmcAttempt } = await supabase
@@ -518,10 +519,9 @@ serve(async (req) => {
             status: "fail", error_message: e.message, duration_ms: Date.now() - startTime,
             created_by: userId, retry_count: MAX_RETRIES,
           });
-          await supabase.from("academy_review_task").insert({
-            paper_id: paperId, reason: "parser_error", status: "open", created_by: userId,
-          });
-          warnings.push("PMC XML falhou. Review task criada. PDF fallback bloqueado.");
+          // PMC failure policy: do NOT use PDF fallback when PMCID exists
+          // Keep as ingesting — reconcile will retry or escalate after 5 attempts / 24h
+          warnings.push("PMC XML falhou. PDF fallback BLOQUEADO (PMCID existe). Reconcile irá retentar.");
         }
       }
 
