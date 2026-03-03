@@ -8,6 +8,8 @@
 // ---------------------------------------------------------
 export const PaperStatus = {
   INGESTING: 'ingesting',
+  NEEDS_INPUT: 'needs_input',
+  ERROR: 'error',
   DRAFT: 'draft',
   CURATING: 'curating',
   READY: 'ready',
