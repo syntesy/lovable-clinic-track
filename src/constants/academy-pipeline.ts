@@ -8,6 +8,8 @@
 // ---------------------------------------------------------
 export const PaperStatus = {
   INGESTING: 'ingesting',
+  NEEDS_INPUT: 'needs_input',
+  ERROR: 'error',
   DRAFT: 'draft',
   CURATING: 'curating',
   READY: 'ready',
@@ -155,6 +157,8 @@ export const PIPELINE_LIMITS = {
 // ---------------------------------------------------------
 export const PAPER_STATUS_LABELS: Record<PaperStatus, string> = {
   [PaperStatus.INGESTING]: 'Ingestão',
+  [PaperStatus.NEEDS_INPUT]: 'Aguardando input',
+  [PaperStatus.ERROR]: 'Erro',
   [PaperStatus.DRAFT]: 'Rascunho',
   [PaperStatus.CURATING]: 'Em curadoria',
   [PaperStatus.READY]: 'Pronto',

@@ -1020,10 +1020,13 @@ export type Database = {
           created_by: string
           duration_ms: number | null
           error_message: string | null
+          fulltext_structured: Json | null
           id: string
           paper_id: string | null
           parsed_fields: Json | null
+          raw_payload: Json | null
           raw_response_size: number | null
+          retry_count: number
           route_used: string
           source_identifier: string
           status: string
@@ -1034,10 +1037,13 @@ export type Database = {
           created_by: string
           duration_ms?: number | null
           error_message?: string | null
+          fulltext_structured?: Json | null
           id?: string
           paper_id?: string | null
           parsed_fields?: Json | null
+          raw_payload?: Json | null
           raw_response_size?: number | null
+          retry_count?: number
           route_used: string
           source_identifier: string
           status?: string
@@ -1048,10 +1054,13 @@ export type Database = {
           created_by?: string
           duration_ms?: number | null
           error_message?: string | null
+          fulltext_structured?: Json | null
           id?: string
           paper_id?: string | null
           parsed_fields?: Json | null
+          raw_payload?: Json | null
           raw_response_size?: number | null
+          retry_count?: number
           route_used?: string
           source_identifier?: string
           status?: string
@@ -8173,6 +8182,8 @@ export type Database = {
       outcome_timepoint: "baseline" | "m1" | "m3" | "m6" | "m12"
       paper_curation_status:
         | "ingesting"
+        | "needs_input"
+        | "error"
         | "draft"
         | "curating"
         | "ready"
@@ -8389,6 +8400,8 @@ export const Constants = {
       outcome_timepoint: ["baseline", "m1", "m3", "m6", "m12"],
       paper_curation_status: [
         "ingesting",
+        "needs_input",
+        "error",
         "draft",
         "curating",
         "ready",
