@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.analyze-labs]
 verify_jwt = false
+
+[functions.academy-reconcile-ingestion]
+verify_jwt = false
