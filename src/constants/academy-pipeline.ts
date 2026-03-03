@@ -154,6 +154,7 @@ export const PIPELINE_LIMITS = {
 // 7. Helper: human-readable labels (PT-BR)
 // ---------------------------------------------------------
 export const PAPER_STATUS_LABELS: Record<PaperStatus, string> = {
+  [PaperStatus.INGESTING]: 'Ingestão',
   [PaperStatus.DRAFT]: 'Rascunho',
   [PaperStatus.CURATING]: 'Em curadoria',
   [PaperStatus.READY]: 'Pronto',
