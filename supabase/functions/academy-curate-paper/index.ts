@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 // ═══════════════════════════════════════════════════════════
-// academy-curate-paper — AI curation pipeline (Etapa 4 v2)
-// Reads from current_structured, validates hard rules, publishes
+// academy-curate-paper — AI curation pipeline (Etapa 5)
+// Hard validation, evidence anchors, auto-tagging, versioning
 // ═══════════════════════════════════════════════════════════
 
 const corsHeaders = {
@@ -13,10 +13,12 @@ const corsHeaders = {
 };
 
 const AI_MODEL = "google/gemini-2.5-flash";
-const PROMPT_VERSION = "v2.1";
-const SCHEMA_VERSION = 2;
+const PROMPT_VERSION = "v3.0";
+const SCHEMA_VERSION = 3;
 const MAX_LLM_TEXT_CHARS = 250_000;
 const MIN_CHUNKS_FOR_CURATION = 5;
+
+// ── Schemas ──────────────────────────────────────────────
 
 const CURATION_SCHEMA = {
   type: "object",
@@ -52,15 +54,41 @@ const CURATION_SCHEMA = {
         required: ["domain", "name", "direction", "timeframe"],
       },
     },
+    evidence_anchors: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          field: { type: "string" },
+          section: { type: "string" },
+          snippet: { type: "string" },
+        },
+        required: ["field", "section", "snippet"],
+      },
+    },
+    auto_tags: {
+      type: "object",
+      properties: {
+        procedure: { type: "string" },
+        tissue: { type: "string" },
+        pathology: { type: "string" },
+        study_design: { type: "string" },
+        followup_class: { type: "string", enum: ["short", "medium", "long"] },
+      },
+      required: ["procedure", "tissue", "pathology", "study_design", "followup_class"],
+    },
   },
   required: [
     "tipo_estudo", "nivel_evidencia", "ano_publicacao", "tamanho_amostra_total",
     "intervencao", "comparador", "desfechos_primarios", "desfechos_secundarios",
     "follow_up_medio", "resultados_principais", "significancia_estatistica",
     "eventos_adversos", "risco_vies", "justificativa_risco_vies",
-    "score_metodologico", "aplicabilidade_clinica", "conclusao_pratica", "tags", "outcomes",
+    "score_metodologico", "aplicabilidade_clinica", "conclusao_pratica",
+    "tags", "outcomes", "evidence_anchors", "auto_tags",
   ],
 };
+
+// ── System prompt ────────────────────────────────────────
 
 const SYSTEM_PROMPT = `Você é um curador científico especialista em fisioterapia regenerativa e medicina ortobiológica.
 
@@ -78,7 +106,23 @@ REGRAS:
    - Se não identificar outcomes claros, use [{domain:"clinical", name:"Não identificado", direction:"unknown", timeframe:"unknown"}]
 7. Seja objetivo e factual.
 
+EVIDENCE ANCHORS (anti-alucinação):
+Forneça evidence_anchors obrigatórios para:
+- study_design: trecho do texto que indica o design do estudo
+- primary_outcome: trecho com o desfecho primário
+- population: trecho com descrição da população/amostra
+Cada anchor: { field, section (abstract|methods|results|discussion), snippet (máx 25 palavras) }
+
+AUTO_TAGS (classificação estruturada):
+- procedure: PRP | PRF | PPP | stem_cell | prolotherapy | other
+- tissue: tendon | cartilage | muscle | nerve | spine | bone | other
+- pathology: string normalizada (ex: "osteoartrite_joelho")
+- study_design: RCT | cohort | case_series | case_report | review | meta_analysis | other
+- followup_class: short (<3 meses) | medium (3-12 meses) | long (>12 meses)
+
 Responda APENAS usando a função fornecida.`;
+
+// ── Helpers ──────────────────────────────────────────────
 
 function generateRequestId(): string {
   return `req_cur_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
@@ -114,6 +158,8 @@ async function computeHash(text: string): Promise<string> {
   return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// ── Advanced Validation (Etapa 5) ────────────────────────
+
 interface ValidationResult {
   valid: boolean;
   errors: string[];
@@ -121,7 +167,11 @@ interface ValidationResult {
   hardFails: string[];
 }
 
-function validateCuration(data: any, paperTemplate: PaperTemplate): ValidationResult {
+const RCT_PATTERNS = /\b(randomized|randomised|rct|double[- ]blind|controlled trial|ensaio clínico randomizado|triplo[- ]cego)\b/i;
+const STAT_PATTERNS = /\b(p\s*[<>=]\s*0?\.\d+|confidence interval|hazard ratio|odds ratio|risk ratio|relative risk|NNT|intervalo de confiança)\b/i;
+const LOE_RCT_MIN = ["Ia", "Ib", "IIa"]; // acceptable for RCT
+
+function validateCuration(data: any, paperTemplate: PaperTemplate, fulltextRaw: string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
   const hardFails: string[] = [];
@@ -130,6 +180,8 @@ function validateCuration(data: any, paperTemplate: PaperTemplate): ValidationRe
   for (const field of CURATION_SCHEMA.required) {
     if (data[field] === undefined || data[field] === null) {
       if (field === "outcomes") warnings.push("outcomes ausente — fallback aplicado");
+      else if (field === "evidence_anchors") warnings.push("evidence_anchors ausente");
+      else if (field === "auto_tags") warnings.push("auto_tags ausente");
       else errors.push(`Campo obrigatório ausente: ${field}`);
     }
   }
@@ -164,8 +216,93 @@ function validateCuration(data: any, paperTemplate: PaperTemplate): ValidationRe
     }
   }
 
+  // ═══════════════════════════════════════════════
+  // 1.1 Study type coherence (RCT detection)
+  // ═══════════════════════════════════════════════
+  const fulltextLower = fulltextRaw.toLowerCase();
+  const textIndicatesRCT = RCT_PATTERNS.test(fulltextRaw);
+  const nivelEv = (data.nivel_evidencia || "").trim();
+
+  if (textIndicatesRCT) {
+    // If text clearly mentions RCT patterns but LoE is too low
+    const lowLevels = ["III", "IV", "V"];
+    if (lowLevels.includes(nivelEv)) {
+      hardFails.push(`Incoerência: texto indica RCT mas nível de evidência classificado como ${nivelEv}`);
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // 1.2 Statistical coherence
+  // ═══════════════════════════════════════════════
+  const hasStatTerms = STAT_PATTERNS.test(fulltextRaw);
+  const statDescription = (data.significancia_estatistica || "").trim();
+  if (hasStatTerms && statDescription.length < 10) {
+    warnings.push("STAT_METHOD_UNCLEAR: texto contém termos estatísticos mas curadoria não descreve análise");
+  }
+
+  // ═══════════════════════════════════════════════
+  // 1.3 N não inventado
+  // ═══════════════════════════════════════════════
+  const sampleN = Number(data.tamanho_amostra_total);
+  if (sampleN > 0) {
+    const nStr = String(sampleN);
+    // Check if the number appears in fulltext (anywhere)
+    if (!fulltextRaw.includes(nStr)) {
+      hardFails.push(`N inventado: tamanho_amostra_total (${sampleN}) não encontrado no texto`);
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // 1.4 Clinical outcomes mandatory for clinical studies
+  // ═══════════════════════════════════════════════
+  if (paperTemplate === "CLINICAL_COMPARATIVE" && data.outcomes && Array.isArray(data.outcomes)) {
+    const validOutcomes = data.outcomes.filter(
+      (o: any) => o?.name && o.name !== "Não identificado" && o?.direction && o.direction !== "unknown" && o?.timeframe
+    );
+    if (validOutcomes.length === 0) {
+      hardFails.push("Estudos clínicos comparativos requerem pelo menos 1 outcome com name, direction e timeframe");
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // 2. Evidence anchors validation
+  // ═══════════════════════════════════════════════
+  const anchors = data.evidence_anchors;
+  if (anchors && Array.isArray(anchors)) {
+    const requiredAnchorFields = ["study_design", "primary_outcome", "population"];
+    for (const field of requiredAnchorFields) {
+      const found = anchors.find((a: any) => a.field === field);
+      if (!found || !found.snippet || found.snippet.trim().length < 5) {
+        warnings.push(`ANCHOR_MISSING: evidence_anchor para '${field}' ausente ou vazio`);
+      } else if (found.snippet.split(/\s+/).length > 30) {
+        warnings.push(`ANCHOR_TOO_LONG: snippet de '${field}' excede 25 palavras`);
+      }
+    }
+  } else {
+    warnings.push("ANCHORS_ABSENT: evidence_anchors não fornecido pelo LLM");
+  }
+
+  // ═══════════════════════════════════════════════
+  // 6. Auto-tags validation
+  // ═══════════════════════════════════════════════
+  const autoTags = data.auto_tags;
+  if (autoTags && typeof autoTags === "object") {
+    if (!autoTags.tissue) warnings.push("AUTO_TAG_MISSING: tissue tag ausente");
+    if (!autoTags.procedure) warnings.push("AUTO_TAG_MISSING: procedure tag ausente");
+    const validFollowup = ["short", "medium", "long"];
+    if (autoTags.followup_class && !validFollowup.includes(autoTags.followup_class)) {
+      warnings.push(`AUTO_TAG_INVALID: followup_class '${autoTags.followup_class}' inválido`);
+    }
+  } else {
+    warnings.push("AUTO_TAGS_ABSENT: auto_tags não fornecido pelo LLM");
+  }
+
   return { valid: errors.length === 0 && hardFails.length === 0, errors, warnings, hardFails };
 }
+
+// ═══════════════════════════════════════════════════════════
+// MAIN HANDLER
+// ═══════════════════════════════════════════════════════════
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -215,7 +352,7 @@ serve(async (req) => {
 
     const { data: fulltextData } = await supabaseService
       .from("academy_paper_fulltext")
-      .select("current_structured, has_sufficient_text, char_count, word_count, chunk_count, extracted_text")
+      .select("current_structured, has_sufficient_text, char_count, word_count, chunk_count, extracted_text, structured_version, structured_hash, source_route")
       .eq("paper_id", paperId)
       .maybeSingle();
 
@@ -225,7 +362,6 @@ serve(async (req) => {
       });
     }
 
-    // Prefer current_structured, fallback to extracted_text + chunks
     const currentStructured = fulltextData.current_structured as any;
     const hasStructured = currentStructured && (currentStructured.abstract || currentStructured.methods || currentStructured.results);
 
@@ -236,7 +372,6 @@ serve(async (req) => {
       }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check chunk count (for non-structured fallback)
     if (!hasStructured && (fulltextData.chunk_count || 0) < MIN_CHUNKS_FOR_CURATION) {
       return new Response(JSON.stringify({
         error: `Chunks insuficientes (${fulltextData.chunk_count} < ${MIN_CHUNKS_FOR_CURATION}).`,
@@ -279,7 +414,6 @@ serve(async (req) => {
     let llmInput = "";
 
     if (hasStructured) {
-      // Segmented input: exclude references, include abstract+methods+results+discussion
       const sections = [];
       if (currentStructured.abstract) sections.push(`ABSTRACT:\n${currentStructured.abstract}`);
       if (currentStructured.introduction) sections.push(`INTRODUCTION:\n${currentStructured.introduction}`);
@@ -289,7 +423,6 @@ serve(async (req) => {
       if (currentStructured.conclusion) sections.push(`CONCLUSION:\n${currentStructured.conclusion}`);
       llmInput = sections.join("\n\n");
     } else {
-      // Fallback: use chunks from academy_chunks
       const { data: chunks } = await supabaseService
         .from("academy_chunks")
         .select("content, chunk_index")
@@ -304,7 +437,6 @@ serve(async (req) => {
       }
     }
 
-    // Truncate
     if (llmInput.length > MAX_LLM_TEXT_CHARS) {
       llmInput = llmInput.slice(0, MAX_LLM_TEXT_CHARS);
     }
@@ -382,9 +514,9 @@ ${llmInput}`;
     const paperTemplate = resolvePaperTemplate(curationData);
 
     // ═══════════════════════════════════════════
-    // VALIDATE with hard rules
+    // VALIDATE with hard rules (Etapa 5)
     // ═══════════════════════════════════════════
-    const validation = validateCuration(curationData, paperTemplate);
+    const validation = validateCuration(curationData, paperTemplate, llmInput);
 
     curationData.paper_template = paperTemplate;
     curationData.schema_version = SCHEMA_VERSION;
@@ -393,12 +525,10 @@ ${llmInput}`;
     let nextAction: string;
 
     if (validation.hardFails.length > 0) {
-      // Hard validation failed → NEEDS_REVIEW
       finalStatus = "needs_review";
       nextAction = "REVIEW";
       console.warn(`[curate:hard-fail] paperId=${paperId} fails=${validation.hardFails.join("; ")}`);
 
-      // Create review task
       await supabaseService.from("academy_review_task").insert({
         paper_id: paperId,
         reason: "qa_flag",
@@ -406,12 +536,11 @@ ${llmInput}`;
         created_by: userId || "00000000-0000-0000-0000-000000000000",
       });
     } else {
-      // Validation passed → PUBLISHED
       finalStatus = "published";
       nextAction = "NONE";
     }
 
-    // Persist curation
+    // Persist curation with new fields
     const { error: insertErr } = await supabaseService
       .from("academy_paper_curation")
       .upsert({
@@ -435,6 +564,10 @@ ${llmInput}`;
         llm_output_hash: llmOutputHash,
         model: AI_MODEL,
         prompt_version: PROMPT_VERSION,
+        // Etapa 5 new fields
+        auto_tags: curationData.auto_tags || null,
+        evidence_anchors: curationData.evidence_anchors || null,
+        structured_version_used: fulltextData.structured_version || 1,
       }, { onConflict: "paper_id" });
 
     if (insertErr) throw new Error(`Erro ao salvar curadoria: ${insertErr.message}`);
@@ -443,7 +576,7 @@ ${llmInput}`;
     await supabaseService.from("academy_papers").update({ curation_status: finalStatus }).eq("id", paperId);
 
     const durationMs = Date.now() - startTime;
-    console.log(`[curate:done] paperId=${paperId} status=${finalStatus} template=${paperTemplate} nivel=${curationData.nivel_evidencia} score=${curationData.score_metodologico} hardFails=${validation.hardFails.length} duration=${durationMs}ms`);
+    console.log(`[curate:done] paperId=${paperId} status=${finalStatus} template=${paperTemplate} nivel=${curationData.nivel_evidencia} score=${curationData.score_metodologico} hardFails=${validation.hardFails.length} warnings=${validation.warnings.length} duration=${durationMs}ms`);
 
     // Log
     await supabaseService.from("academy_ai_logs").insert({
@@ -457,6 +590,7 @@ ${llmInput}`;
         has_structured: hasStructured,
         force,
         input_hash: llmInputHash,
+        structured_version: fulltextData.structured_version,
       },
       output: {
         nivel_evidencia: curationData.nivel_evidencia,
@@ -469,6 +603,8 @@ ${llmInput}`;
         validation: validation,
         final_status: finalStatus,
         output_hash: llmOutputHash,
+        auto_tags: curationData.auto_tags,
+        evidence_anchors_count: curationData.evidence_anchors?.length,
       },
       status: "success",
       duration_ms: durationMs,
@@ -486,6 +622,9 @@ ${llmInput}`;
       score_metodologico: curationData.score_metodologico,
       risco_vies: curationData.risco_vies,
       outcomes_count: curationData.outcomes?.length,
+      auto_tags: curationData.auto_tags,
+      evidence_anchors_count: curationData.evidence_anchors?.length,
+      structured_version_used: fulltextData.structured_version,
       validation: {
         valid: validation.valid,
         hard_fails: validation.hardFails,
