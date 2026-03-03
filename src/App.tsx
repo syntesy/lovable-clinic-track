@@ -114,6 +114,7 @@ import {
   AcademyTrilhasPage, AcademyMigrationsPage, ReghenEvidenceMethodPage, AcademyPipelineHealthPage,
   AcademyReviewQueuePage, AcademyPaperDetailPage,
 } from "./pages/academy";
+import AcademyPipelineMetricsPage from "./pages/academy/AcademyPipelineMetricsPage";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
 import { ProtocolsList, ProtocolDetail, ProtocolEdit, ProtocolCreate, ConformidadeDashboard } from "./pages/governance";
@@ -720,6 +721,7 @@ const App = () => (
           <Route path="/academy/admin/pipeline-health" element={<ProtectedRoute><EduLayout><AcademyPipelineHealthPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/review-queue" element={<ProtectedRoute><EduLayout><AcademyReviewQueuePage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/paper/:paperId" element={<ProtectedRoute><EduLayout><AcademyPaperDetailPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/admin/metrics" element={<ProtectedRoute><EduLayout><AcademyPipelineMetricsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/migrations" element={<ProtectedRoute><EduLayout><AcademyMigrationsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/about/reghen-evidence-method" element={<ProtectedRoute><EduLayout><ReghenEvidenceMethodPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/trilhas" element={<ProtectedRoute><EduLayout><AcademyTrilhasPage /></EduLayout></ProtectedRoute>} />
