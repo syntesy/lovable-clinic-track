@@ -850,6 +850,7 @@ export type Database = {
           schema_version: number
           score_metodologico: number | null
           tokens_used: number | null
+          validation_report: Json | null
         }
         Insert: {
           cost_estimate_usd?: number | null
@@ -869,6 +870,7 @@ export type Database = {
           schema_version?: number
           score_metodologico?: number | null
           tokens_used?: number | null
+          validation_report?: Json | null
         }
         Update: {
           cost_estimate_usd?: number | null
@@ -888,6 +890,7 @@ export type Database = {
           schema_version?: number
           score_metodologico?: number | null
           tokens_used?: number | null
+          validation_report?: Json | null
         }
         Relationships: [
           {
@@ -963,6 +966,7 @@ export type Database = {
           char_count: number | null
           chunk_count: number | null
           created_at: string | null
+          current_structured: Json | null
           extracted_text: string
           extraction_method: string | null
           has_sufficient_text: boolean | null
@@ -979,6 +983,7 @@ export type Database = {
           char_count?: number | null
           chunk_count?: number | null
           created_at?: string | null
+          current_structured?: Json | null
           extracted_text: string
           extraction_method?: string | null
           has_sufficient_text?: boolean | null
@@ -995,6 +1000,7 @@ export type Database = {
           char_count?: number | null
           chunk_count?: number | null
           created_at?: string | null
+          current_structured?: Json | null
           extracted_text?: string
           extraction_method?: string | null
           has_sufficient_text?: boolean | null
@@ -1022,6 +1028,7 @@ export type Database = {
           error_message: string | null
           fulltext_structured: Json | null
           id: string
+          job_id: string | null
           paper_id: string | null
           parsed_fields: Json | null
           raw_payload: Json | null
@@ -1039,6 +1046,7 @@ export type Database = {
           error_message?: string | null
           fulltext_structured?: Json | null
           id?: string
+          job_id?: string | null
           paper_id?: string | null
           parsed_fields?: Json | null
           raw_payload?: Json | null
@@ -1056,6 +1064,7 @@ export type Database = {
           error_message?: string | null
           fulltext_structured?: Json | null
           id?: string
+          job_id?: string | null
           paper_id?: string | null
           parsed_fields?: Json | null
           raw_payload?: Json | null
@@ -8187,6 +8196,7 @@ export type Database = {
         | "draft"
         | "curating"
         | "ready"
+        | "needs_review"
         | "published"
         | "rejected"
         | "archived"
@@ -8405,6 +8415,7 @@ export const Constants = {
         "draft",
         "curating",
         "ready",
+        "needs_review",
         "published",
         "rejected",
         "archived",
