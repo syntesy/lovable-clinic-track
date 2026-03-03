@@ -833,43 +833,61 @@ export type Database = {
       }
       academy_paper_curation: {
         Row: {
+          cost_estimate_usd: number | null
           created_at: string
           curation_json: Json
           data_quality_warnings: Json | null
           id: string
+          llm_input_hash: string | null
+          llm_output_hash: string | null
+          model: string | null
           nivel_evidencia: string | null
           paper_id: string
           paper_template: string
+          prompt_version: string | null
           request_id: string | null
           risco_vies: string | null
           schema_version: number
           score_metodologico: number | null
+          tokens_used: number | null
         }
         Insert: {
+          cost_estimate_usd?: number | null
           created_at?: string
           curation_json: Json
           data_quality_warnings?: Json | null
           id?: string
+          llm_input_hash?: string | null
+          llm_output_hash?: string | null
+          model?: string | null
           nivel_evidencia?: string | null
           paper_id: string
           paper_template?: string
+          prompt_version?: string | null
           request_id?: string | null
           risco_vies?: string | null
           schema_version?: number
           score_metodologico?: number | null
+          tokens_used?: number | null
         }
         Update: {
+          cost_estimate_usd?: number | null
           created_at?: string
           curation_json?: Json
           data_quality_warnings?: Json | null
           id?: string
+          llm_input_hash?: string | null
+          llm_output_hash?: string | null
+          model?: string | null
           nivel_evidencia?: string | null
           paper_id?: string
           paper_template?: string
+          prompt_version?: string | null
           request_id?: string | null
           risco_vies?: string | null
           schema_version?: number
           score_metodologico?: number | null
+          tokens_used?: number | null
         }
         Relationships: [
           {
@@ -996,6 +1014,59 @@ export type Database = {
           },
         ]
       }
+      academy_paper_ingestion: {
+        Row: {
+          created_at: string
+          created_by: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          paper_id: string | null
+          parsed_fields: Json | null
+          raw_response_size: number | null
+          route_used: string
+          source_identifier: string
+          status: string
+          warnings: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          paper_id?: string | null
+          parsed_fields?: Json | null
+          raw_response_size?: number | null
+          route_used: string
+          source_identifier: string
+          status?: string
+          warnings?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          paper_id?: string | null
+          parsed_fields?: Json | null
+          raw_response_size?: number | null
+          route_used?: string
+          source_identifier?: string
+          status?: string
+          warnings?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_paper_ingestion_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_paper_revisions: {
         Row: {
           action: string
@@ -1052,6 +1123,7 @@ export type Database = {
           curation_status: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at: string | null
           doi: string | null
+          error_code: string | null
           evidence_label: string | null
           evidence_notes: string | null
           evidence_score: number | null
@@ -1062,13 +1134,16 @@ export type Database = {
           import_payload: Json | null
           import_source: Database["public"]["Enums"]["paper_import_source"]
           journal: string | null
+          locked_for_processing: boolean
           mesh_terms: string[] | null
           pmid: string | null
+          processing_started_at: string | null
           published_at: string | null
           published_by: string | null
           title: string
           tsv: unknown
           updated_at: string
+          version: number
           warnings: string[] | null
           year: number | null
         }
@@ -1083,6 +1158,7 @@ export type Database = {
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          error_code?: string | null
           evidence_label?: string | null
           evidence_notes?: string | null
           evidence_score?: number | null
@@ -1093,13 +1169,16 @@ export type Database = {
           import_payload?: Json | null
           import_source?: Database["public"]["Enums"]["paper_import_source"]
           journal?: string | null
+          locked_for_processing?: boolean
           mesh_terms?: string[] | null
           pmid?: string | null
+          processing_started_at?: string | null
           published_at?: string | null
           published_by?: string | null
           title: string
           tsv?: unknown
           updated_at?: string
+          version?: number
           warnings?: string[] | null
           year?: number | null
         }
@@ -1114,6 +1193,7 @@ export type Database = {
           curation_status?: Database["public"]["Enums"]["paper_curation_status"]
           deleted_at?: string | null
           doi?: string | null
+          error_code?: string | null
           evidence_label?: string | null
           evidence_notes?: string | null
           evidence_score?: number | null
@@ -1124,13 +1204,16 @@ export type Database = {
           import_payload?: Json | null
           import_source?: Database["public"]["Enums"]["paper_import_source"]
           journal?: string | null
+          locked_for_processing?: boolean
           mesh_terms?: string[] | null
           pmid?: string | null
+          processing_started_at?: string | null
           published_at?: string | null
           published_by?: string | null
           title?: string
           tsv?: unknown
           updated_at?: string
+          version?: number
           warnings?: string[] | null
           year?: number | null
         }
@@ -1388,6 +1471,56 @@ export type Database = {
           query?: string
         }
         Relationships: []
+      }
+      academy_review_task: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          id: string
+          paper_id: string
+          reason: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          paper_id: string
+          reason: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          paper_id?: string
+          reason?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_review_task_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       academy_subscription_posts: {
         Row: {
