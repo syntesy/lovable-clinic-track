@@ -51,3 +51,5 @@ export { default as AcademyPipelineHealthPage } from './AcademyPipelineHealthPag
 export { default as AcademyTrilhasPage } from './AcademyTrilhasPage';
 export { default as AcademyMigrationsPage } from './AcademyMigrationsPage';
 export { default as ReghenEvidenceMethodPage } from './ReghenEvidenceMethodPage';
+export { default as AcademyReviewQueuePage } from './AcademyReviewQueuePage';
+export { default as AcademyPaperDetailPage } from './AcademyPaperDetailPage';
