@@ -1389,6 +1389,56 @@ export type Database = {
         }
         Relationships: []
       }
+      academy_review_task: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          id: string
+          paper_id: string
+          reason: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          paper_id: string
+          reason: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          paper_id?: string
+          reason?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_review_task_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "academy_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_subscription_posts: {
         Row: {
           attachments: Json | null
