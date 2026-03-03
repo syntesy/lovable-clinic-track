@@ -7,6 +7,7 @@
 // 1. Paper Status (mirrors DB enum paper_curation_status)
 // ---------------------------------------------------------
 export const PaperStatus = {
+  INGESTING: 'ingesting',
   DRAFT: 'draft',
   CURATING: 'curating',
   READY: 'ready',
@@ -24,6 +25,8 @@ export const SourceType = {
   PMID: 'pmid',
   DOI: 'doi',
   MANUAL: 'manual',
+  URL: 'url',
+  PDF_UPLOAD: 'pdf_upload',
 } as const;
 
 export type SourceType = (typeof SourceType)[keyof typeof SourceType];
@@ -151,6 +154,7 @@ export const PIPELINE_LIMITS = {
 // 7. Helper: human-readable labels (PT-BR)
 // ---------------------------------------------------------
 export const PAPER_STATUS_LABELS: Record<PaperStatus, string> = {
+  [PaperStatus.INGESTING]: 'Ingestão',
   [PaperStatus.DRAFT]: 'Rascunho',
   [PaperStatus.CURATING]: 'Em curadoria',
   [PaperStatus.READY]: 'Pronto',

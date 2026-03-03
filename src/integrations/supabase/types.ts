@@ -8172,13 +8172,14 @@ export type Database = {
       mentor_status: "pending_review" | "approved" | "rejected" | "suspended"
       outcome_timepoint: "baseline" | "m1" | "m3" | "m6" | "m12"
       paper_curation_status:
+        | "ingesting"
         | "draft"
         | "curating"
         | "ready"
         | "published"
         | "rejected"
         | "archived"
-      paper_import_source: "pmid" | "doi" | "manual"
+      paper_import_source: "pmid" | "doi" | "manual" | "url" | "pdf_upload"
       protocol_status: "draft" | "active" | "archived"
       protocol_type: "REGEN_BASE" | "DERIVED" | "INSTITUTIONAL"
       safety_checklist_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
@@ -8387,6 +8388,7 @@ export const Constants = {
       mentor_status: ["pending_review", "approved", "rejected", "suspended"],
       outcome_timepoint: ["baseline", "m1", "m3", "m6", "m12"],
       paper_curation_status: [
+        "ingesting",
         "draft",
         "curating",
         "ready",
@@ -8394,7 +8396,7 @@ export const Constants = {
         "rejected",
         "archived",
       ],
-      paper_import_source: ["pmid", "doi", "manual"],
+      paper_import_source: ["pmid", "doi", "manual", "url", "pdf_upload"],
       protocol_status: ["draft", "active", "archived"],
       protocol_type: ["REGEN_BASE", "DERIVED", "INSTITUTIONAL"],
       safety_checklist_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
