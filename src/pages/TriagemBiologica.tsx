@@ -353,7 +353,7 @@ export default function TriagemBiologica() {
         red_flags_present: (answers.red_flags?.length || 0) > 0,
         red_flags_list: answers.red_flags || [],
         medications_flags_json: {
-          NSAID_recent: answers.medicamentos?.includes('aine_7_dias') || false,
+          NSAID_recent: answers.medicamentos?.includes('aine_7dias') || false,
           steroid_oral_recent: answers.medicamentos?.includes('corticoide_oral_30_dias') || false,
           steroid_infiltration_recent: answers.medicamentos?.includes('infiltracao_3_meses') || false,
           anticoagulant: answers.medicamentos?.includes('anticoagulante') || false,

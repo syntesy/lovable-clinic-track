@@ -263,7 +263,7 @@ export function buildRegenCanonicalFromTriagem(
     
     // MEDICAÇÕES
     medications: {
-      nsaid_recent_14d: medicamentos.includes("aine_7_dias") ? "yes" : "unknown",
+      nsaid_recent_14d: medicamentos.includes("aine_7dias") ? "yes" : "unknown",
       days_since_last_nsaid: null,
       steroid_recent: (medicamentos.includes("corticoide_oral_30_dias") || medicamentos.includes("infiltracao_3_meses")) ? "yes" : "unknown",
       steroid_route: medicamentos.includes("infiltracao_3_meses") ? "local_infiltration" : 
