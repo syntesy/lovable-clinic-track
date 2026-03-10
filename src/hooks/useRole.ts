@@ -27,7 +27,7 @@ async function checkUserRoles(
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .in("role", requiredRoles);
+      .in("role", [...requiredRoles]);
 
     return !error && !!data && data.length > 0;
   } catch (err) {
