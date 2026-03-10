@@ -11,7 +11,7 @@ import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import { Loader2, ShieldX } from "lucide-react";
 
-const REQUIRED_ROLES = ["admin"];
+const REQUIRED_ROLES = ["admin"] as const;
 
 interface RequireGovernanceRoleProps {
   children: React.ReactNode;
