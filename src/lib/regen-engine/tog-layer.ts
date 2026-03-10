@@ -29,6 +29,20 @@ const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     priority: "low",
   },
 
+  FORMER_SMOKER_GT_12M: {
+    category: "lifestyle",
+    title: "Ex-fumante há mais de 12 meses",
+    description: "Recuperação biológica bem avançada após cessação do tabagismo. Impacto negativo no solo biológico significativamente reduzido após este período.",
+    priority: "low",
+  },
+
+  SMOKING_STATUS_UNKNOWN: {
+    category: "general",
+    title: "Status de tabagismo não informado",
+    description: "Informação sobre tabagismo não disponível. Considerar questionar o paciente antes do procedimento para avaliação completa do risco biológico.",
+    priority: "low",
+  },
+
   // Medicações
   NSAID_RECENT_14D: {
     category: "medication",
