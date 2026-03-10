@@ -36,7 +36,7 @@ async function checkUserRoles(
   }
 }
 
-export function useRole(requiredRoles: AppRole[]): UseRoleResult {
+export function useRole(requiredRoles: readonly AppRole[]): UseRoleResult {
   const [hasAccess, setHasAccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
