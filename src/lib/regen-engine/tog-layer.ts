@@ -43,6 +43,13 @@ export const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     priority: "low",
   },
 
+  FORMER_SMOKER_UNKNOWN_DURATION: {
+    category: "lifestyle",
+    title: "Ex-fumante — tempo de cessação desconhecido",
+    description: "Paciente relata ser ex-fumante, mas o tempo desde a cessação não foi informado. Considerar questionar para melhor avaliação do risco biológico.",
+    priority: "medium",
+  },
+
   // Medicações
   NSAID_RECENT_14D: {
     category: "medication",
