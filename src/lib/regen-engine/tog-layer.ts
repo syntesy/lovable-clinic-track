@@ -29,6 +29,20 @@ const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     priority: "low",
   },
 
+  FORMER_SMOKER_GT_12M: {
+    category: "lifestyle",
+    title: "Ex-fumante há mais de 12 meses",
+    description: "Recuperação biológica bem avançada após cessação do tabagismo. Impacto negativo no solo biológico significativamente reduzido após este período.",
+    priority: "low",
+  },
+
+  SMOKING_STATUS_UNKNOWN: {
+    category: "general",
+    title: "Status de tabagismo não informado",
+    description: "Informação sobre tabagismo não disponível. Considerar questionar o paciente antes do procedimento para avaliação completa do risco biológico.",
+    priority: "low",
+  },
+
   // Medicações
   NSAID_RECENT_14D: {
     category: "medication",
@@ -160,6 +174,12 @@ const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     category: "general",
     title: "Sintomas crônicos",
     description: "Sintomas de longa duração podem indicar alterações estruturais estabelecidas.",
+    priority: "low",
+  },
+  LOW_PAIN_LTE_2: {
+    category: "general",
+    title: "Dor de baixa intensidade (≤ 2/10)",
+    description: "Dor muito leve pode indicar benefício clínico questionável para procedimentos regenerativos. Reavaliar indicação e expectativas do paciente.",
     priority: "low",
   },
   SEVERE_PAIN_GTE_9: {
