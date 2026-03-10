@@ -8,7 +8,7 @@
 import { BRSOutput, TOGOutput, Guidance } from "@/types/regen-engine";
 
 // Mapeamento de reason_codes para orientações
-const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
+export const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
   // Tabagismo
   CURRENT_SMOKER: {
     category: "lifestyle",
