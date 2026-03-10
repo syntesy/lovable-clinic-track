@@ -1,83 +1,26 @@
 /**
- * RequireGovernanceRole - Guard para rotas que exigem role 'admin' ou 'governance'
+ * RequireGovernanceRole - Guard para rotas que exigem role 'admin'
  * 
  * Usado para proteger páginas do Evidence Engine Dashboard e Governança.
- * Usuários com role 'user' ou 'professional' apenas são redirecionados para /pacientes.
+ * Nota: Atualmente aceita apenas 'admin'. Quando o enum app_role for
+ * estendido com 'governance', adicionar à lista REQUIRED_ROLES.
  */
 
-import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Session } from "@supabase/supabase-js";
+import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import { Loader2, ShieldX } from "lucide-react";
+
+const REQUIRED_ROLES = ["admin"];
 
 interface RequireGovernanceRoleProps {
   children: React.ReactNode;
 }
 
 export function RequireGovernanceRole({ children }: RequireGovernanceRoleProps) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { hasAccess, isLoading, session } = useRole(REQUIRED_ROLES);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const checkGovernanceRole = async (userId: string) => {
-      try {
-        // Check if user has 'admin' role (governance access)
-        // Note: governance/council roles require DB enum extension
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId)
-          .eq("role", "admin");
-
-        if (mounted) {
-          setHasAccess(!error && data && data.length > 0);
-        }
-      } catch (err) {
-        console.error("[RequireGovernanceRole] Error checking role:", err);
-        if (mounted) {
-          setHasAccess(false);
-        }
-      }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (mounted) {
-          setSession(session);
-          if (session?.user?.id) {
-            await checkGovernanceRole(session.user.id);
-          } else {
-            setHasAccess(false);
-          }
-          setLoading(false);
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (mounted) {
-        setSession(session);
-        if (session?.user?.id) {
-          await checkGovernanceRole(session.user.id);
-        } else {
-          setHasAccess(false);
-        }
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
