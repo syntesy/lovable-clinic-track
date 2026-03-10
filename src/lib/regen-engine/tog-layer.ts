@@ -195,6 +195,12 @@ export const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     description: "Dor muito intensa pode indicar fase aguda. Considerar controle da dor e reavaliação.",
     priority: "high",
   },
+  HIGH_PAIN_7_8: {
+    category: "general",
+    title: "Dor moderada-alta (7-8/10)",
+    description: "Dor significativa. Considerar controle adequado da dor e avaliar fase do processo.",
+    priority: "medium",
+  },
 };
 
 // Disclaimer obrigatório
