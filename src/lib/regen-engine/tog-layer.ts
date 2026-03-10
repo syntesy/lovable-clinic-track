@@ -176,6 +176,12 @@ const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     description: "Sintomas de longa duração podem indicar alterações estruturais estabelecidas.",
     priority: "low",
   },
+  LOW_PAIN_LTE_2: {
+    category: "general",
+    title: "Dor de baixa intensidade (≤ 2/10)",
+    description: "Dor muito leve pode indicar benefício clínico questionável para procedimentos regenerativos. Reavaliar indicação e expectativas do paciente.",
+    priority: "low",
+  },
   SEVERE_PAIN_GTE_9: {
     category: "general",
     title: "Dor intensa",

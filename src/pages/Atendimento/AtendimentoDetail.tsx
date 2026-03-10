@@ -1199,7 +1199,7 @@ const AtendimentoDetail = () => {
         patientName={patient?.full_name || "Carregando..."}
         status={currentStatus}
         fileCount={files.length}
-        onSave={!isClosed ? () => {/* TODO */} : undefined}
+        onSave={undefined}
         onGenerateReport={handleGenerateReport}
         onConclude={handleConclude}
         isConcluding={closeAttendance.isPending}
