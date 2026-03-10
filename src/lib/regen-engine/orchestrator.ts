@@ -187,7 +187,7 @@ export function extractEngineOutputs(
  *    - Expected: safety.block = true, crs/die/brs/tog/pee = null
  * 
  * 2. TESTE NSAID RECENT
- *    - Input: medications.nsaid_recent_7d = "yes"
+ *    - Input: medications.nsaid_recent_14d = "yes"
  *    - Expected: PRP eligibility !== "Recommended"
  *    - reason_code inclui "NSAID_RECENT_7D"
  * 
