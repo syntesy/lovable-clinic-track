@@ -93,10 +93,11 @@ export function PatientAuthProvider({ children }: { children: ReactNode }) {
       };
 
       setSession(newSession);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      // SECURITY: Ofuscação com btoa para reduzir exposição em sessionStorage
+      sessionStorage.setItem(SESSION_KEY, btoa(JSON.stringify({
         session: newSession,
         expiresAt: Date.now() + SESSION_TIMEOUT
-      }));
+      })));
 
       // Registrar evento de login
       await supabase.from('patient_events').insert({
