@@ -65,19 +65,6 @@ export const STEP_UI_CONFIG: Record<string, { label: string; icon: string }> = {
   report: { label: 'Relatório', icon: 'file-text' },
 };
 
-/**
- * @deprecated Use getStepsForAttendance from domain/attendanceFlow instead
- * Kept for backward compatibility
- */
-export function getVisibleSteps(involvesOrthobiologics: boolean): AttendanceStepConfig[] {
-  const { getStepsForAttendance } = require('@/domain/attendanceFlow');
-  const stepIds = getStepsForAttendance({ involves_orthobiologics: involvesOrthobiologics });
-  return stepIds.map((id: string) => ({
-    id,
-    ...(STEP_UI_CONFIG[id] || { label: id, icon: 'file-text' }),
-  }));
-}
-
 // Helper to format attendance title
 export function formatAttendanceTitle(createdAt: string): string {
   const date = new Date(createdAt);

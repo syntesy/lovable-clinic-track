@@ -24,10 +24,13 @@ export function PatientAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Recuperar sessão do sessionStorage
+    // SECURITY: Dados ofuscados com btoa/atob para reduzir exposição direta.
+    // TODO SECURITY: Avaliar migração para httpOnly cookies via Auth para compliance LGPD completo.
     const stored = sessionStorage.getItem(SESSION_KEY);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
+        const decoded = atob(stored);
+        const parsed = JSON.parse(decoded);
         const now = Date.now();
         if (parsed.expiresAt && parsed.expiresAt > now) {
           setSession(parsed.session);
@@ -90,10 +93,11 @@ export function PatientAuthProvider({ children }: { children: ReactNode }) {
       };
 
       setSession(newSession);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      // SECURITY: Ofuscação com btoa para reduzir exposição em sessionStorage
+      sessionStorage.setItem(SESSION_KEY, btoa(JSON.stringify({
         session: newSession,
         expiresAt: Date.now() + SESSION_TIMEOUT
-      }));
+      })));
 
       // Registrar evento de login
       await supabase.from('patient_events').insert({
