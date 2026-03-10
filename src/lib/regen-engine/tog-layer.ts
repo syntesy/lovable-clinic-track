@@ -8,7 +8,7 @@
 import { BRSOutput, TOGOutput, Guidance } from "@/types/regen-engine";
 
 // Mapeamento de reason_codes para orientações
-const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
+export const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
   // Tabagismo
   CURRENT_SMOKER: {
     category: "lifestyle",
@@ -41,6 +41,13 @@ const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     title: "Status de tabagismo não informado",
     description: "Informação sobre tabagismo não disponível. Considerar questionar o paciente antes do procedimento para avaliação completa do risco biológico.",
     priority: "low",
+  },
+
+  FORMER_SMOKER_UNKNOWN_DURATION: {
+    category: "lifestyle",
+    title: "Ex-fumante — tempo de cessação desconhecido",
+    description: "Paciente relata ser ex-fumante, mas o tempo desde a cessação não foi informado. Considerar questionar para melhor avaliação do risco biológico.",
+    priority: "medium",
   },
 
   // Medicações
@@ -187,6 +194,12 @@ const GUIDANCE_MAP: Record<string, Omit<Guidance, "code">> = {
     title: "Dor intensa",
     description: "Dor muito intensa pode indicar fase aguda. Considerar controle da dor e reavaliação.",
     priority: "high",
+  },
+  HIGH_PAIN_7_8: {
+    category: "general",
+    title: "Dor moderada-alta (7-8/10)",
+    description: "Dor significativa. Considerar controle adequado da dor e avaliar fase do processo.",
+    priority: "medium",
   },
 };
 
