@@ -20,7 +20,7 @@ interface UseRoleResult {
 
 async function checkUserRoles(
   userId: string,
-  requiredRoles: AppRole[]
+  requiredRoles: readonly AppRole[]
 ): Promise<boolean> {
   try {
     const { data, error } = await supabase
