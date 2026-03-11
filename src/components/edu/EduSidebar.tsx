@@ -35,6 +35,7 @@ const teacherMenuItems = [
 
 const directorMenuItems = [
   { title: "Console", url: "/edu/director/console", icon: LayoutDashboard },
+  { title: "Fila de Curadoria", url: "/academy/admin/curador", icon: ClipboardList },
 ];
 
 const adminMenuItems = [

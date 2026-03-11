@@ -37,6 +37,13 @@ const AcademyHome = () => {
       color: "bg-teal-500/10 text-teal-600",
     },
     {
+      title: "Pulso Científico",
+      description: "Artigos curados pelo Agente Científico Reghen, organizados por relevância clínica.",
+      icon: FlaskConical,
+      href: "/academy/biblioteca",
+      color: "bg-teal-500/10 text-teal-600",
+    },
+    {
       title: "Quero mentoria clínica",
       description: "Conecte-se com especialistas para discutir seus casos",
       icon: Users,
