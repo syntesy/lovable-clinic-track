@@ -26,6 +26,7 @@ const teacherMenuItems = [
   { title: "Turmas", url: "/edu/teacher/cohorts", icon: Users },
   { title: "Módulos", url: "/edu/teacher/modules", icon: BookOpen },
   { title: "Conteúdos", url: "/edu/teacher/learning-objects", icon: FileText },
+  { title: "Curadoria Científica", url: "/academy/admin/curador", icon: Microscope },
   { title: "Casos Clínicos", url: "/edu/teacher/cases", icon: FlaskConical },
   { title: "Checkpoints", url: "/edu/teacher/checkpoints", icon: ClipboardList },
   { title: "Decision Lab", url: "/edu/teacher/decision-lab", icon: FlaskConical },
