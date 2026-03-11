@@ -17,6 +17,7 @@ const studentMenuItems = [
   { title: "Dashboard", url: "/edu", icon: LayoutDashboard },
   { title: "Minhas Turmas", url: "/edu/cohorts", icon: BookOpen },
   { title: "Meu Progresso", url: "/edu/progress", icon: BarChart3 },
+  { title: "Biblioteca Científica", url: "/academy/biblioteca", icon: FlaskConical },
   { title: "Reghen Evidence Method™", url: "/academy/about/reghen-evidence-method", icon: ShieldCheck },
 ];
 
