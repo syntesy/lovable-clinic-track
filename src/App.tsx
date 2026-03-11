@@ -723,6 +723,7 @@ const App = () => (
           <Route path="/academy/admin/paper/:paperId" element={<ProtectedRoute><EduLayout><AcademyPaperDetailPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/metrics" element={<ProtectedRoute><EduLayout><AcademyPipelineMetricsPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/admin/migrations" element={<ProtectedRoute><EduLayout><AcademyMigrationsPage /></EduLayout></ProtectedRoute>} />
+          <Route path="/academy/admin/curador" element={<ProtectedRoute><EduLayout><CuratorPanel /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/about/reghen-evidence-method" element={<ProtectedRoute><EduLayout><ReghenEvidenceMethodPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/trilhas" element={<ProtectedRoute><EduLayout><AcademyTrilhasPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/colecoes/:id" element={<ProtectedRoute><EduLayout><AcademyCollectionDetailPage /></EduLayout></ProtectedRoute>} />
