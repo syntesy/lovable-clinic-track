@@ -1,0 +1,205 @@
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Button } from '@/components/ui/button'
+import { ExternalLink, Star } from 'lucide-react'
+
+interface CurationCardProps {
+  article: {
+    id: string
+    title: string
+    authors: string
+    journal: string
+    doi?: string
+    publicado?: string
+    nivel_evidencia: string
+    tipo_estudo: string
+    resumo_executivo: string
+    aplicacao_clinica: string
+    achados_principais: string
+    limitacoes: string
+    metodologia_destaque: string
+    score_relevancia: number
+    score_breakdown?: any
+    classificacao: string
+    leitura_essencial: boolean
+    tags: string[]
+    created_at: string
+  }
+  compact?: boolean
+}
+
+const CLASSIFICACAO_CONFIG: Record<string, { emoji: string; label: string; color: string; bg: string }> = {
+  leitura_essencial:   { emoji: '🔴', label: 'Leitura Essencial',   color: 'text-red-700',    bg: 'bg-red-50 border-red-200' },
+  leitura_recomendada: { emoji: '🟠', label: 'Leitura Recomendada', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
+  leitura_opcional:    { emoji: '🟡', label: 'Leitura Opcional',    color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
+  referencia:          { emoji: '🟢', label: 'Referência',          color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
+  contexto:            { emoji: '⚪', label: 'Contexto',            color: 'text-gray-600',   bg: 'bg-gray-50 border-gray-200' },
+}
+
+const NIVEL_COLORS: Record<string, string> = {
+  '1': 'bg-purple-100 text-purple-800',
+  '2': 'bg-blue-100 text-blue-800',
+  '3': 'bg-teal-100 text-teal-800',
+  '4': 'bg-yellow-100 text-yellow-800',
+  '5': 'bg-gray-100 text-gray-700',
+}
+
+function getNivelColor(nivel: string): string {
+  const num = nivel?.match(/\d/)?.[0] || '5'
+  return NIVEL_COLORS[num] || NIVEL_COLORS['5']
+}
+
+function ScoreStars({ score }: { score: number }) {
+  const filled = Math.round(score / 2)
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${i < filled ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`}
+        />
+      ))}
+      <span className="ml-1 text-sm font-medium text-muted-foreground">{score?.toFixed(1)}/10</span>
+    </div>
+  )
+}
+
+function parseLines(text: string): string[] {
+  if (!text) return []
+  return text.split('\n').filter(l => l.trim())
+}
+
+export function CurationCard({ article, compact = false }: CurationCardProps) {
+  const config = CLASSIFICACAO_CONFIG[article.classificacao] || CLASSIFICACAO_CONFIG['contexto']
+
+  return (
+    <Card className={`overflow-hidden border ${config.bg}`}>
+      {/* Header */}
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold leading-tight text-foreground line-clamp-2">
+              {article.title}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground line-clamp-1">
+              {article.authors} • {article.journal}
+            </p>
+          </div>
+
+          {/* Score badge */}
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <div className="text-2xl font-bold text-foreground">{article.score_relevancia?.toFixed(1)}</div>
+            <div className="text-lg">{config.emoji}</div>
+          </div>
+        </div>
+
+        {/* Badges */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Badge className={getNivelColor(article.nivel_evidencia)}>
+            {article.nivel_evidencia}
+          </Badge>
+          <Badge variant="outline">
+            {article.tipo_estudo}
+          </Badge>
+          <Badge variant="secondary">
+            {config.emoji} {config.label}
+          </Badge>
+        </div>
+
+        <ScoreStars score={article.score_relevancia} />
+      </CardHeader>
+
+      <CardContent className="pt-0">
+        {/* Resumo executivo */}
+        <Accordion type="multiple" defaultValue={['resumo']}>
+          <AccordionItem value="resumo">
+            <AccordionTrigger className="text-sm font-medium">
+              📋 Resumo Executivo
+            </AccordionTrigger>
+            <AccordionContent>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {article.resumo_executivo}
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+
+          {!compact && (
+            <>
+              <AccordionItem value="aplicacao">
+                <AccordionTrigger className="text-sm font-medium">
+                  🎯 Aplicação Clínica Prática
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ul className="space-y-1">
+                    {parseLines(article.aplicacao_clinica).map((item, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                        <span className="text-primary shrink-0">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="achados">
+                <AccordionTrigger className="text-sm font-medium">
+                  📊 Achados Principais
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {article.achados_principais}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="limitacoes">
+                <AccordionTrigger className="text-sm font-medium">
+                  ⚠️ Limitações
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ul className="space-y-1">
+                    {parseLines(article.limitacoes).map((item, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                        <span className="text-destructive shrink-0">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            </>
+          )}
+        </Accordion>
+
+        {/* Tags */}
+        {article.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-4">
+            {article.tags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+          <span className="text-xs text-muted-foreground">
+            Curado em {new Date(article.created_at).toLocaleDateString('pt-BR')}
+          </span>
+          {article.doi && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs gap-1"
+              onClick={() => window.open(`https://doi.org/${article.doi}`, '_blank')}
+            >
+              Ver artigo original <ExternalLink className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
