@@ -156,21 +156,73 @@ Retorne APENAS um objeto JSON válido. Sem markdown, sem backticks, sem texto fo
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
+
+const ALLOWED_ROLES = ['admin', 'admin_academy', 'teacher']
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
 
   const startTime = Date.now()
 
   try {
-    const supabase = createClient(
+    // ─── JWT Authentication ───
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized — token ausente' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const anonClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token)
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized — token inválido' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const userId = claimsData.claims.sub as string
+
+    // ─── Role validation ───
+    const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
+
+    const { data: roles } = await serviceClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+
+    const { data: academyRoles } = await serviceClient
+      .from('academy_user_roles')
+      .select('role')
+      .eq('user_id', userId)
+
+    const allRoles = [
+      ...(roles || []).map((r: any) => r.role),
+      ...(academyRoles || []).map((r: any) => r.role),
+    ]
+
+    const hasPermission = allRoles.some(r => ALLOWED_ROLES.includes(r))
+    if (!hasPermission) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden — role insuficiente para curadoria' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     const { queue_id, pdf_base64, abstract_only, abstract_text, metadata } = await req.json()
 
@@ -184,7 +236,7 @@ serve(async (req) => {
 
     // Atualiza status para processing
     if (queue_id) {
-      await supabase
+      await serviceClient
         .from('academy_curation_queue')
         .update({ status: 'processing', updated_at: new Date().toISOString() })
         .eq('id', queue_id)
@@ -198,7 +250,6 @@ serve(async (req) => {
     const messageContent: any[] = []
 
     if (pdf_base64) {
-      // PDF direto — Claude lê nativamente sem extração de texto
       messageContent.push({
         type: 'document',
         source: {
@@ -208,7 +259,6 @@ serve(async (req) => {
         }
       })
     } else {
-      // Apenas abstract em texto
       messageContent.push({
         type: 'text',
         text: `Abstract do artigo:\n\n${abstract_text}`
@@ -229,7 +279,7 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: messageContent }]
@@ -268,7 +318,7 @@ serve(async (req) => {
     const score_final = Math.round(scoreCalculado * 10) / 10
 
     // Salva o artigo curado
-    const { data: article, error: insertError } = await supabase
+    const { data: article, error: insertError } = await serviceClient
       .from('academy_curated_articles')
       .insert({
         queue_id: queue_id || null,
@@ -309,14 +359,14 @@ serve(async (req) => {
 
     // Atualiza fila para curated
     if (queue_id) {
-      await supabase
+      await serviceClient
         .from('academy_curation_queue')
         .update({ status: 'curated', updated_at: new Date().toISOString() })
         .eq('id', queue_id)
     }
 
     // Registra log de execução
-    await supabase.from('academy_agent_logs').insert({
+    await serviceClient.from('academy_agent_logs').insert({
       run_type: 'curate',
       status: 'success',
       articles_curated: 1,
@@ -339,11 +389,11 @@ serve(async (req) => {
 
     // Registra erro no log
     try {
-      const supabase = createClient(
+      const serviceClient = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       )
-      await supabase.from('academy_agent_logs').insert({
+      await serviceClient.from('academy_agent_logs').insert({
         run_type: 'curate',
         status: 'error',
         error_details: error.message,
