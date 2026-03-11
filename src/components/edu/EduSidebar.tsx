@@ -1,4 +1,4 @@
-import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList, Microscope, ShieldCheck, Activity } from 'lucide-react';
+import { GraduationCap, BookOpen, Users, Settings, LayoutDashboard, FlaskConical, FileText, BarChart3, UserCog, ClipboardList, Microscope, ShieldCheck, Activity, Library } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useCurrentInstitution } from '@/hooks/useEduMembership';
 import {
@@ -17,6 +17,7 @@ const studentMenuItems = [
   { title: "Dashboard", url: "/edu", icon: LayoutDashboard },
   { title: "Minhas Turmas", url: "/edu/cohorts", icon: BookOpen },
   { title: "Meu Progresso", url: "/edu/progress", icon: BarChart3 },
+  { title: "Biblioteca Científica", url: "/academy/biblioteca", icon: FlaskConical },
   { title: "Reghen Evidence Method™", url: "/academy/about/reghen-evidence-method", icon: ShieldCheck },
 ];
 
@@ -25,6 +26,7 @@ const teacherMenuItems = [
   { title: "Turmas", url: "/edu/teacher/cohorts", icon: Users },
   { title: "Módulos", url: "/edu/teacher/modules", icon: BookOpen },
   { title: "Conteúdos", url: "/edu/teacher/learning-objects", icon: FileText },
+  { title: "Curadoria Científica", url: "/academy/admin/curador", icon: Microscope },
   { title: "Casos Clínicos", url: "/edu/teacher/cases", icon: FlaskConical },
   { title: "Checkpoints", url: "/edu/teacher/checkpoints", icon: ClipboardList },
   { title: "Decision Lab", url: "/edu/teacher/decision-lab", icon: FlaskConical },
@@ -33,6 +35,7 @@ const teacherMenuItems = [
 
 const directorMenuItems = [
   { title: "Console", url: "/edu/director/console", icon: LayoutDashboard },
+  { title: "Fila de Curadoria", url: "/academy/admin/curador", icon: ClipboardList },
 ];
 
 const adminMenuItems = [
