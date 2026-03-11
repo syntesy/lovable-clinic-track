@@ -1,0 +1,11 @@
+-- Migration 0003: Academy Curation Module — Queue, Curated Articles, Keywords, Agent Logs
+-- Rollback:
+--   DROP TABLE IF EXISTS public.academy_agent_logs CASCADE;
+--   DROP TABLE IF EXISTS public.academy_curated_articles CASCADE;
+--   DROP TABLE IF EXISTS public.academy_curation_queue CASCADE;
+--   DROP TABLE IF EXISTS public.academy_search_keywords CASCADE;
+
+-- Applied via Lovable Cloud migrations (2026-03-11)
+-- 4 tables: academy_curation_queue, academy_curated_articles, academy_search_keywords, academy_agent_logs
+-- 5 indexes, RLS enabled on all tables, policies using has_role() for admin access
+-- 8 seed keywords inserted into academy_search_keywords
