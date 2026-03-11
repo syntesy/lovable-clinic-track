@@ -112,7 +112,7 @@ import {
   AcademyFeedPage, AcademyCollectionsPage, AcademyCollectionDetailPage, AcademyNotificationsPage,
   EvidenceCentralPage, AcademyAiTestsPage, AcademyWatchlistsPage, AcademyPdfHealthPage,
   AcademyTrilhasPage, AcademyMigrationsPage, ReghenEvidenceMethodPage, AcademyPipelineHealthPage,
-  AcademyReviewQueuePage, AcademyPaperDetailPage,
+  AcademyReviewQueuePage, AcademyPaperDetailPage, CuratorPanel,
 } from "./pages/academy";
 import AcademyPipelineMetricsPage from "./pages/academy/AcademyPipelineMetricsPage";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
