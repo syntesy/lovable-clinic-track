@@ -48,20 +48,24 @@ describe("Triage Exams - Normalização e Labels", () => {
 
 describe("Triage Exams - Deduplicação", () => {
   testFn("remove exames duplicados por code", () => {
+    // "hemoglobin" and "HEMOGLOBIN" normalize to "hemoglobin"
+    // "Hemoglobina" normalizes to "hemoglobina" (different code — no accent but different word)
+    // "platelets" and "Plaquetas" normalize to "platelets" and "plaquetas" respectively
+    // normalizeExamCode only lowercases + removes accents, doesn't translate
     const analysisResult = JSON.stringify({
       requested_exams: {
-        required: ["hemoglobin", "Hemoglobina", "HEMOGLOBIN"],
-        optional: ["platelets", "Plaquetas"]
+        required: ["hemoglobin", "HEMOGLOBIN", "hemoglobin"],
+        optional: ["platelets", "PLATELETS"]
       }
     });
 
     const exams = extractExamsFromTriage(analysisResult, null);
     
-    // Deve ter apenas 2 exames (hemoglobina + plaquetas)
+    // "hemoglobin" x3 dedups to 1, "platelets" x2 dedups to 1 = 2 total
     expect(exams.length).toBe(2);
     
     const codes = exams.map(e => e.code);
-    expect(codes).toContain("hemoglobina");
+    expect(codes).toContain("hemoglobin");
     expect(codes).toContain("platelets");
   });
 

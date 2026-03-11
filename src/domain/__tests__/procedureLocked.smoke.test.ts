@@ -89,7 +89,9 @@ describe('Procedure-Locked Smoke Tests', () => {
 
       const content = fs.readFileSync(filePath, 'utf-8');
       
-      expect(content).toContain("from '@/domain/orthoBioProcedures'");
+      // Support both single and double quote import styles
+      expect(content).toMatch(/from\s+['"]@\/domain\/orthoBioProcedures['"]/);
+
       expect(content).toContain('generateOrthoBioPlan');
     });
 
