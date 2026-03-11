@@ -7,6 +7,7 @@ import {
   Users, 
   BookOpen, 
   Microscope, 
+  FlaskConical,
   TrendingUp, 
   Calendar, 
   ArrowRight,
