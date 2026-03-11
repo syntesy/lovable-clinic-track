@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_agent_logs: {
+        Row: {
+          articles_curated: number | null
+          articles_found: number | null
+          created_at: string | null
+          duration_ms: number | null
+          error_details: string | null
+          id: string
+          run_type: string | null
+          status: string | null
+        }
+        Insert: {
+          articles_curated?: number | null
+          articles_found?: number | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_details?: string | null
+          id?: string
+          run_type?: string | null
+          status?: string | null
+        }
+        Update: {
+          articles_curated?: number | null
+          articles_found?: number | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_details?: string | null
+          id?: string
+          run_type?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       academy_ai_logs: {
         Row: {
           action: string
@@ -390,6 +423,179 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      academy_curated_articles: {
+        Row: {
+          achados_principais: string | null
+          aplicacao_clinica: string | null
+          authors: Json | null
+          classificacao: string | null
+          conexoes_temas: string | null
+          created_at: string | null
+          curated_by_ai: boolean | null
+          doi: string | null
+          full_curation_markdown: string | null
+          id: string
+          journal: string | null
+          leitura_essencial: boolean | null
+          limitacoes: string | null
+          metodologia_destaque: string | null
+          nivel_evidencia: string | null
+          published_date: string | null
+          queue_id: string | null
+          resultado_principal: string | null
+          resumo_executivo: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          score_breakdown: Json | null
+          score_relevancia: number | null
+          source: string | null
+          tags: string[] | null
+          tipo_estudo: string | null
+          title: string
+          updated_at: string | null
+          visible_academy: boolean | null
+          visible_reghen_feed: boolean | null
+        }
+        Insert: {
+          achados_principais?: string | null
+          aplicacao_clinica?: string | null
+          authors?: Json | null
+          classificacao?: string | null
+          conexoes_temas?: string | null
+          created_at?: string | null
+          curated_by_ai?: boolean | null
+          doi?: string | null
+          full_curation_markdown?: string | null
+          id?: string
+          journal?: string | null
+          leitura_essencial?: boolean | null
+          limitacoes?: string | null
+          metodologia_destaque?: string | null
+          nivel_evidencia?: string | null
+          published_date?: string | null
+          queue_id?: string | null
+          resultado_principal?: string | null
+          resumo_executivo?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score_breakdown?: Json | null
+          score_relevancia?: number | null
+          source?: string | null
+          tags?: string[] | null
+          tipo_estudo?: string | null
+          title: string
+          updated_at?: string | null
+          visible_academy?: boolean | null
+          visible_reghen_feed?: boolean | null
+        }
+        Update: {
+          achados_principais?: string | null
+          aplicacao_clinica?: string | null
+          authors?: Json | null
+          classificacao?: string | null
+          conexoes_temas?: string | null
+          created_at?: string | null
+          curated_by_ai?: boolean | null
+          doi?: string | null
+          full_curation_markdown?: string | null
+          id?: string
+          journal?: string | null
+          leitura_essencial?: boolean | null
+          limitacoes?: string | null
+          metodologia_destaque?: string | null
+          nivel_evidencia?: string | null
+          published_date?: string | null
+          queue_id?: string | null
+          resultado_principal?: string | null
+          resumo_executivo?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score_breakdown?: Json | null
+          score_relevancia?: number | null
+          source?: string | null
+          tags?: string[] | null
+          tipo_estudo?: string | null
+          title?: string
+          updated_at?: string | null
+          visible_academy?: boolean | null
+          visible_reghen_feed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_curated_articles_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "academy_curation_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_curation_queue: {
+        Row: {
+          abstract: string | null
+          authors: Json | null
+          created_at: string | null
+          doi: string | null
+          error_message: string | null
+          full_text_type: string | null
+          full_text_url: string | null
+          id: string
+          journal: string | null
+          keywords: string[] | null
+          pdf_storage_path: string | null
+          pmcid: string | null
+          pmid: string | null
+          published_date: string | null
+          source: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          abstract?: string | null
+          authors?: Json | null
+          created_at?: string | null
+          doi?: string | null
+          error_message?: string | null
+          full_text_type?: string | null
+          full_text_url?: string | null
+          id?: string
+          journal?: string | null
+          keywords?: string[] | null
+          pdf_storage_path?: string | null
+          pmcid?: string | null
+          pmid?: string | null
+          published_date?: string | null
+          source?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          abstract?: string | null
+          authors?: Json | null
+          created_at?: string | null
+          doi?: string | null
+          error_message?: string | null
+          full_text_type?: string | null
+          full_text_url?: string | null
+          id?: string
+          journal?: string | null
+          keywords?: string[] | null
+          pdf_storage_path?: string | null
+          pmcid?: string | null
+          pmid?: string | null
+          published_date?: string | null
+          source?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          uploaded_by?: string
+        }
+        Relationships: []
       }
       academy_disputes: {
         Row: {
@@ -1560,6 +1766,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      academy_search_keywords: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          keyword: string
+          keyword_en: string | null
+          last_searched_at: string | null
+          priority: number | null
+          specialty: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          keyword: string
+          keyword_en?: string | null
+          last_searched_at?: string | null
+          priority?: number | null
+          specialty?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          keyword?: string
+          keyword_en?: string | null
+          last_searched_at?: string | null
+          priority?: number | null
+          specialty?: string | null
+        }
+        Relationships: []
       }
       academy_subscription_posts: {
         Row: {
