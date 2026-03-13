@@ -306,6 +306,37 @@ serve(async (req) => {
       throw new Error(`Falha ao parsear JSON da curadoria: ${rawText.slice(0, 300)}`)
     }
 
+    // ─── Verificação anti-duplicata por DOI ───
+    const curatedDoi = curation.doi || metadata?.doi || null
+    if (curatedDoi) {
+      const { data: existing } = await serviceClient
+        .from('academy_curated_articles')
+        .select('id, title')
+        .eq('doi', curatedDoi)
+        .maybeSingle()
+
+      if (existing) {
+        if (queue_id) {
+          await serviceClient
+            .from('academy_curation_queue')
+            .update({ status: 'curated', updated_at: new Date().toISOString() })
+            .eq('id', queue_id)
+        }
+        return new Response(
+          JSON.stringify({
+            success: true,
+            article_id: existing.id,
+            score: null,
+            classificacao: null,
+            titulo: existing.title,
+            duplicate: true,
+            message: 'Artigo já existe na biblioteca (mesmo DOI)'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
     // Recalcula score pelo peso correto (não confia apenas no Claude)
     const sb = curation.score_breakdown
     const scoreCalculado = (
