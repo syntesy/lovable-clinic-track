@@ -67,7 +67,7 @@ export function useProductArticlesWithDetails(productId: string | undefined) {
       if (error) throw error;
       if (!links?.length) return [];
 
-      // Get article details (no summary_full)
+      // TODO: migrate to academy_curated_articles when join table FKs are updated
       const articleIds = links.map((l: any) => l.article_id);
       const { data: articles, error: err2 } = await supabase
         .from("academy_articles")
