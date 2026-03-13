@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAcademyCuration } from '@/hooks/useAcademyCuration'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
