@@ -16,6 +16,14 @@ export default function CuratorPanel() {
   const [doi, setDoi] = useState('')
   const [title, setTitle] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    const doiParam = searchParams.get('doi')
+    const titleParam = searchParams.get('title')
+    if (doiParam) setDoi(doiParam)
+    if (titleParam) setTitle(titleParam)
+  }, [searchParams])
 
   const handleFile = (f: File) => {
     if (!f.name.endsWith('.pdf')) {
