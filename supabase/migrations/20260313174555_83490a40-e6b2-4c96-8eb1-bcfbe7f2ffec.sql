@@ -1,0 +1,1 @@
+COMMENT ON TABLE academy_articles IS 'DEPRECATED — use academy_curated_articles';
