@@ -232,7 +232,7 @@ export default function AcademyPapersAdminPage() {
               <h1 className="text-2xl font-bold text-foreground">Papers Científicos</h1>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Importação oficial via PubMed/DOI • Curadoria assistida por IA • Auditoria completa
+              Importação oficial via PubMed/DOI • Curadoria com Reghen Evidence Method™ • Auditoria completa
             </p>
           </div>
           <div className="flex gap-2">

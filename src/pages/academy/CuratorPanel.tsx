@@ -157,7 +157,7 @@ export default function CuratorPanel() {
               {isProcessing ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
               ) : (
-                <><FlaskConical className="h-4 w-4 mr-2" /> Iniciar Curadoria com IA</>
+                <><FlaskConical className="h-4 w-4 mr-2" /> Iniciar Curadoria com Reghen Evidence Method™</>
               )}
             </Button>
           </CardContent>

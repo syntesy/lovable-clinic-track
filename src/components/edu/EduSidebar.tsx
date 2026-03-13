@@ -42,7 +42,7 @@ const adminMenuItems = [
   { title: "Membros", url: "/edu/admin/members", icon: Users },
   { title: "Matrículas", url: "/edu/admin/enrollments", icon: UserCog },
   { title: "Biblioteca Científica", url: "/academy/admin/biblioteca", icon: BookOpen },
-  { title: "Papers & Curadoria IA", url: "/academy/admin/papers", icon: Microscope },
+  { title: "Papers & Curadoria REM™", url: "/academy/admin/papers", icon: Microscope },
   { title: "Painel do Curador", url: "/academy/admin/curador", icon: FlaskConical },
   { title: "Pipeline Health", url: "/academy/admin/pipeline-health", icon: Activity },
   { title: "Configurações", url: "/edu/admin/settings", icon: Settings },

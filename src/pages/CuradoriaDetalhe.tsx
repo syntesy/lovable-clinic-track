@@ -562,7 +562,7 @@ export default function CuradoriaDetalhe() {
             className="shadow-lg gap-2"
           >
             <Bot className="h-4 w-4" />
-            Gerar Curadoria (IA)
+            Curadoria com Reghen Evidence Method™
           </Button>
         </div>
       )}
