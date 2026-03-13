@@ -471,7 +471,7 @@ export default function CuradoriaDetalhe() {
                 ) : (
                   <>
                     <Bot className="h-4 w-4" />
-                    Gerar Curadoria (IA)
+                    Curadoria com Reghen Evidence Method™
                   </>
                 )}
               </Button>
