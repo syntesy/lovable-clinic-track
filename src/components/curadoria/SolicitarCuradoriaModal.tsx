@@ -127,9 +127,9 @@ export function SolicitarCuradoriaModal({
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-start gap-3">
             <Bot className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-400">Curadoria assistida por IA</p>
+              <p className="font-medium text-blue-400">Curadoria com Reghen Evidence Method™</p>
               <p className="text-muted-foreground text-xs mt-1">
-                Um rascunho será gerado automaticamente e enviado para revisão por especialistas.
+                Um rascunho será gerado automaticamente pelo REM™ e enviado para revisão por especialistas.
               </p>
             </div>
           </div>

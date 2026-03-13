@@ -598,7 +598,7 @@ export function PaperDetailModal({
                       ) : (
                         <Sparkles className="w-4 h-4" />
                       )}
-                      Gerar Curadoria com IA
+                      Curadoria com Reghen Evidence Method™
                     </Button>
                   </div>
                 )}

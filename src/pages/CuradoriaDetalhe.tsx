@@ -453,8 +453,8 @@ export default function CuradoriaDetalhe() {
                   Ainda não existe curadoria para este artigo
                 </h3>
                 <p className="text-muted-foreground max-w-md">
-                  Gere uma curadoria estruturada usando IA para extrair os principais 
-                  insights clínicos deste artigo.
+                   Gere uma curadoria estruturada com o Reghen Evidence Method™ para extrair os principais 
+                   insights clínicos deste artigo.
                 </p>
               </div>
               <Button 
@@ -471,7 +471,7 @@ export default function CuradoriaDetalhe() {
                 ) : (
                   <>
                     <Bot className="h-4 w-4" />
-                    Gerar Curadoria (IA)
+                    Curadoria com Reghen Evidence Method™
                   </>
                 )}
               </Button>
@@ -562,7 +562,7 @@ export default function CuradoriaDetalhe() {
             className="shadow-lg gap-2"
           >
             <Bot className="h-4 w-4" />
-            Gerar Curadoria (IA)
+            Curadoria com Reghen Evidence Method™
           </Button>
         </div>
       )}

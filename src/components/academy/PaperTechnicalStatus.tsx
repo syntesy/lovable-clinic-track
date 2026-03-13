@@ -253,7 +253,7 @@ export function PaperTechnicalStatus({
               onClick={handleRegenerateCuration}
             >
               {regenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-              {curationStatus === "ready" ? "Regerar Curadoria" : "Gerar Curadoria"}
+              {curationStatus === "ready" ? "Regerar Curadoria REM™" : "Curadoria com REM™"}
             </Button>
           </div>
         )}

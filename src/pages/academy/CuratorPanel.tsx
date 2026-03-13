@@ -63,7 +63,7 @@ export default function CuratorPanel() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Painel do Curador</h1>
-          <p className="text-sm text-muted-foreground">Reghen Academy — Curadoria Científica com IA</p>
+          <p className="text-sm text-muted-foreground">Reghen Academy — Curadoria com Reghen Evidence Method™</p>
         </div>
       </div>
 
@@ -157,7 +157,7 @@ export default function CuratorPanel() {
               {isProcessing ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
               ) : (
-                <><FlaskConical className="h-4 w-4 mr-2" /> Iniciar Curadoria com IA</>
+                <><FlaskConical className="h-4 w-4 mr-2" /> Iniciar Curadoria com Reghen Evidence Method™</>
               )}
             </Button>
           </CardContent>

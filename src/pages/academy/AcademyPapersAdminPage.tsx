@@ -171,7 +171,7 @@ export default function AcademyPapersAdminPage() {
 
   const handleGenerateCuration = async (paper: AcademyPaper) => {
     try {
-      toast.info("Gerando curadoria com IA...");
+      toast.info("Gerando curadoria com Reghen Evidence Method™...");
       const result = await curationMutation.mutateAsync(paper.id);
       toast.success("Curadoria gerada com sucesso!");
       if (result.warnings?.length > 0) {
@@ -207,7 +207,7 @@ export default function AcademyPapersAdminPage() {
 
   const handleReprocessCuration = async (paperId: string) => {
     try {
-      toast.info("Reprocessando curadoria com IA...");
+      toast.info("Reprocessando curadoria com Reghen Evidence Method™...");
       const result = await curationMutation.mutateAsync(paperId);
       toast.success("Curadoria reprocessada com sucesso!");
       if (result.warnings?.length > 0) {
@@ -232,7 +232,7 @@ export default function AcademyPapersAdminPage() {
               <h1 className="text-2xl font-bold text-foreground">Papers Científicos</h1>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Importação oficial via PubMed/DOI • Curadoria assistida por IA • Auditoria completa
+              Importação oficial via PubMed/DOI • Curadoria com Reghen Evidence Method™ • Auditoria completa
             </p>
           </div>
           <div className="flex gap-2">
