@@ -171,7 +171,7 @@ export default function AcademyPapersAdminPage() {
 
   const handleGenerateCuration = async (paper: AcademyPaper) => {
     try {
-      toast.info("Gerando curadoria com IA...");
+      toast.info("Gerando curadoria com Reghen Evidence Method™...");
       const result = await curationMutation.mutateAsync(paper.id);
       toast.success("Curadoria gerada com sucesso!");
       if (result.warnings?.length > 0) {
