@@ -147,7 +147,7 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
                   📊 Achados Principais
                 </AccordionTrigger>
                 <AccordionContent>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
+                  <p className="text-sm leading-relaxed text-foreground/80">
                     {article.achados_principais}
                   </p>
                 </AccordionContent>
