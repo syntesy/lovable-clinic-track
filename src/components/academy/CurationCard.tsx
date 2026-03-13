@@ -29,12 +29,12 @@ interface CurationCardProps {
   compact?: boolean
 }
 
-const CLASSIFICACAO_CONFIG: Record<string, { emoji: string; label: string; color: string; bg: string }> = {
-  leitura_essencial:   { emoji: '🔴', label: 'Leitura Essencial',   color: 'text-red-400',      bg: 'bg-card border-red-500/30' },
-  leitura_recomendada: { emoji: '🟠', label: 'Leitura Recomendada', color: 'text-orange-400',   bg: 'bg-card border-orange-500/30' },
-  leitura_opcional:    { emoji: '🟡', label: 'Leitura Opcional',    color: 'text-yellow-400',   bg: 'bg-card border-yellow-500/30' },
-  referencia:          { emoji: '🟢', label: 'Referência',          color: 'text-emerald-400',  bg: 'bg-card border-emerald-500/30' },
-  contexto:            { emoji: '⚪', label: 'Contexto',            color: 'text-muted-foreground', bg: 'bg-card border-border' },
+const CLASSIFICACAO_CONFIG: Record<string, { emoji: string; label: string; sublabel: string; color: string; bg: string }> = {
+  leitura_essencial:   { emoji: '🟢', label: 'Leitura Essencial',       sublabel: 'Evidência sólida — leitura obrigatória',   color: 'text-green-700',  bg: 'bg-green-50 border-green-300' },
+  leitura_recomendada: { emoji: '🔵', label: 'Leitura Recomendada',     sublabel: 'Alta relevância clínica',                  color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-300' },
+  leitura_opcional:    { emoji: '🟡', label: 'Leitura Opcional',        sublabel: 'Relevante para especialistas',             color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-300' },
+  referencia:          { emoji: '🟠', label: 'Referência Bibliográfica', sublabel: 'Valor de contextualização',                color: 'text-orange-700', bg: 'bg-orange-50 border-orange-300' },
+  contexto:            { emoji: '🔴', label: 'Contexto',                sublabel: 'Evidência preliminar ou periférica',       color: 'text-red-700',    bg: 'bg-red-50 border-red-300' },
 }
 
 const NIVEL_COLORS: Record<string, string> = {
@@ -88,9 +88,15 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
           </div>
 
           {/* Score badge */}
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="text-2xl font-bold text-foreground">{article.score_relevancia?.toFixed(1)}</div>
-            <div className="text-lg">{config.emoji}</div>
+          <div className="flex flex-col items-center shrink-0">
+            <div className="text-center">
+              <div className="text-2xl font-black text-teal-600">
+                {article.score_relevancia?.toFixed(1)}
+                <span className="text-sm font-normal text-gray-400">/10</span>
+              </div>
+              <div className="text-[10px] text-gray-500 mt-0.5">relevância clínica</div>
+            </div>
+            <div className="text-lg mt-1">{config.emoji}</div>
           </div>
         </div>
 
@@ -102,8 +108,9 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
           <Badge variant="outline">
             {article.tipo_estudo}
           </Badge>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="flex items-center gap-1">
             {config.emoji} {config.label}
+            <span className="text-[10px] font-normal text-muted-foreground hidden sm:inline">— {config.sublabel}</span>
           </Badge>
         </div>
 
