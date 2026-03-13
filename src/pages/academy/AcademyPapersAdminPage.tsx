@@ -386,6 +386,22 @@ export default function AcademyPapersAdminPage() {
                             Arquivar
                           </Button>
                         )}
+                        {(paper.curation_status === "draft" || paper.curation_status === "error") && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-orange-600 border-orange-300 hover:bg-orange-50 gap-1"
+                            onClick={() => handleReprocessCuration(paper.id)}
+                            disabled={curationMutation.isPending}
+                          >
+                            {curationMutation.isPending ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-3 h-3" />
+                            )}
+                            Reprocessar curadoria
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
