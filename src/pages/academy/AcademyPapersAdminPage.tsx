@@ -35,6 +35,7 @@ import {
   Archive,
   Upload,
   Microscope,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -201,6 +202,19 @@ export default function AcademyPapersAdminPage() {
       }
     } catch (err: any) {
       toast.error(err.message || "Erro ao alterar status.");
+    }
+  };
+
+  const handleReprocessCuration = async (paperId: string) => {
+    try {
+      toast.info("Reprocessando curadoria com IA...");
+      const result = await curationMutation.mutateAsync(paperId);
+      toast.success("Curadoria reprocessada com sucesso!");
+      if (result.warnings?.length > 0) {
+        result.warnings.forEach((w: string) => toast.warning(w));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao reprocessar curadoria.");
     }
   };
 
@@ -383,6 +397,22 @@ export default function AcademyPapersAdminPage() {
                           <Button variant="outline" size="sm" onClick={() => handleStatusChange(paper, "archived")} className="gap-1">
                             <Archive className="w-3 h-3" />
                             Arquivar
+                          </Button>
+                        )}
+                        {(paper.curation_status === "draft" || paper.curation_status === "error") && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-orange-600 border-orange-300 hover:bg-orange-50 gap-1"
+                            onClick={() => handleReprocessCuration(paper.id)}
+                            disabled={curationMutation.isPending}
+                          >
+                            {curationMutation.isPending ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-3 h-3" />
+                            )}
+                            Reprocessar curadoria
                           </Button>
                         )}
                       </div>

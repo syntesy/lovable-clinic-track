@@ -67,7 +67,7 @@ export function useProductArticlesWithDetails(productId: string | undefined) {
       if (error) throw error;
       if (!links?.length) return [];
 
-      // Get article details (no summary_full)
+      // TODO: migrate to academy_curated_articles when join table FKs are updated
       const articleIds = links.map((l: any) => l.article_id);
       const { data: articles, error: err2 } = await supabase
         .from("academy_articles")
@@ -248,6 +248,7 @@ export function useLessonArticlesWithDetails(lessonId: string | undefined) {
       if (error) throw error;
       if (!links?.length) return [];
 
+      // TODO: migrate to academy_curated_articles when join table FKs are updated
       const articleIds = links.map((l: any) => l.article_id);
       const { data: articles, error: err2 } = await supabase
         .from("academy_articles")
@@ -330,20 +331,46 @@ export function useSearchPublishedArticles(search: string) {
     enabled: search.length >= 2,
     queryFn: async () => {
       let query = supabase
-        .from("academy_articles")
-        .select("id, title, authors, journal, year, study_type, pubmed_url, doi_url")
-        .eq("is_published", true)
-        .is("deleted_at", null)
-        .order("year", { ascending: false })
+        .from("academy_curated_articles")
+        .select("id, title, authors, journal, doi, tipo_estudo, tags, published_date, created_at")
+        .eq("visible_academy", true)
+        .order("created_at", { ascending: false })
         .limit(20);
 
       if (search.trim()) {
-        query = query.or(`title.ilike.%${search}%,authors.ilike.%${search}%`);
+        query = query.ilike("title", `%${search}%`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data ?? [];
+
+      // Map to shape expected by consumers
+      return (data ?? []).map((row: any) => {
+        let year = 0;
+        if (row.published_date) {
+          const parsed = new Date(row.published_date);
+          if (!isNaN(parsed.getTime())) year = parsed.getFullYear();
+        }
+        let authorsStr: string | null = null;
+        if (row.authors) {
+          if (typeof row.authors === "string") authorsStr = row.authors;
+          else if (Array.isArray(row.authors)) authorsStr = row.authors.join(", ");
+        }
+        let doiUrl: string | null = null;
+        if (row.doi) {
+          doiUrl = row.doi.startsWith("http") ? row.doi : `https://doi.org/${row.doi}`;
+        }
+        return {
+          id: row.id,
+          title: row.title,
+          authors: authorsStr,
+          journal: row.journal ?? null,
+          year,
+          study_type: row.tipo_estudo ?? "Outro",
+          pubmed_url: null,
+          doi_url: doiUrl,
+        };
+      });
     },
     staleTime: 10_000,
   });

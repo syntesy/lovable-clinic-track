@@ -83,6 +83,7 @@ export function useCollectionArticles(collectionId: string | null) {
 
       if (!data?.length) return [];
 
+      // TODO: migrate to academy_curated_articles when join table FKs are updated
       const articleIds = data.map((d: any) => d.article_id);
       const { data: articles, error: err2 } = await supabase
         .from("academy_articles")
