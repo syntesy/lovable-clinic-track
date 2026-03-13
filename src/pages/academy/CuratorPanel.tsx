@@ -63,7 +63,7 @@ export default function CuratorPanel() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Painel do Curador</h1>
-          <p className="text-sm text-muted-foreground">Reghen Academy — Curadoria Científica com IA</p>
+          <p className="text-sm text-muted-foreground">Reghen Academy — Curadoria com Reghen Evidence Method™</p>
         </div>
       </div>
 
