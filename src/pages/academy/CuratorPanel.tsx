@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAcademyCuration } from '@/hooks/useAcademyCuration'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +16,14 @@ export default function CuratorPanel() {
   const [doi, setDoi] = useState('')
   const [title, setTitle] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    const doiParam = searchParams.get('doi')
+    const titleParam = searchParams.get('title')
+    if (doiParam) setDoi(doiParam)
+    if (titleParam) setTitle(titleParam)
+  }, [searchParams])
 
   const handleFile = (f: File) => {
     if (!f.name.endsWith('.pdf')) {
