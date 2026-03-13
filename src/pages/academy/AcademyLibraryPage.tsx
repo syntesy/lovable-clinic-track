@@ -287,7 +287,7 @@ export default function AcademyLibraryPage() {
                             }}
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
-                            PubMed
+                            {article.pubmed_url ? "PubMed" : "DOI"}
                           </Button>
                         )}
                       </div>
