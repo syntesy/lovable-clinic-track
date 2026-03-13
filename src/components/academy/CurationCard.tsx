@@ -88,9 +88,15 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
           </div>
 
           {/* Score badge */}
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="text-2xl font-bold text-foreground">{article.score_relevancia?.toFixed(1)}</div>
-            <div className="text-lg">{config.emoji}</div>
+          <div className="flex flex-col items-center shrink-0">
+            <div className="text-center">
+              <div className="text-2xl font-black text-teal-600">
+                {article.score_relevancia?.toFixed(1)}
+                <span className="text-sm font-normal text-gray-400">/10</span>
+              </div>
+              <div className="text-[10px] text-gray-500 mt-0.5">relevância clínica</div>
+            </div>
+            <div className="text-lg mt-1">{config.emoji}</div>
           </div>
         </div>
 
