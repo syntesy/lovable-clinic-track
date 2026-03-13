@@ -363,6 +363,20 @@ export default function AcademyPapersAdminPage() {
                               <XCircle className="w-3 h-3" />
                               Rejeitar
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-teal-600 border-teal-300 hover:bg-teal-50 gap-1"
+                              onClick={() => {
+                                const params = new URLSearchParams();
+                                if (paper.doi) params.set('doi', paper.doi);
+                                if (paper.title) params.set('title', paper.title);
+                                navigate(`/academy/admin/curador?${params.toString()}`);
+                              }}
+                            >
+                              <Microscope className="w-3 h-3" />
+                              Aprofundar com Claude
+                            </Button>
                           </>
                         )}
                         {paper.curation_status === "published" && (
