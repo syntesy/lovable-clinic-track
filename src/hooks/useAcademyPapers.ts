@@ -184,6 +184,100 @@ export function useUpdatePaperStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         updateData.published_by = user?.id;
         updateData.published_at = new Date().toISOString();
+
+        // Sync to academy_curated_articles so it appears in the Scientific Library
+        try {
+          const curationJson = (paperForScore as any).curation_data;
+          const remLayers = curationJson?.reghen_evidence_method?.layers;
+          
+          // Get full paper data for sync
+          const { data: fullPaper } = await supabase
+            .from("academy_papers")
+            .select("title, authors, journal, doi, year, abstract_text, evidence_score")
+            .eq("id", paperId)
+            .single();
+
+          // Get curation row for structured data
+          const { data: curationRow } = await supabase
+            .from("academy_paper_curation" as any)
+            .select("curation_json, nivel_evidencia, score_metodologico, risco_vies")
+            .eq("paper_id", paperId)
+            .maybeSingle();
+
+          const cj = (curationRow as any)?.curation_json || {};
+
+          // Determine classificacao from score
+          const score = cj.score_metodologico || (curationRow as any)?.score_metodologico || 5;
+          let classificacao = "contexto";
+          if (score >= 9) classificacao = "leitura_essencial";
+          else if (score >= 7) classificacao = "leitura_recomendada";
+          else if (score >= 5) classificacao = "leitura_opcional";
+          else if (score >= 3) classificacao = "referencia";
+
+          // Build tags from curation data
+          const tags: string[] = [];
+          if (Array.isArray(cj.tags)) {
+            tags.push(...cj.tags.map((t: string) => t.startsWith("#") ? t : `#${t}`));
+          }
+
+          const curatedArticle = {
+            title: fullPaper?.title || "",
+            authors: fullPaper?.authors || null,
+            journal: fullPaper?.journal || cj.journal || null,
+            doi: fullPaper?.doi || null,
+            tipo_estudo: cj.tipo_estudo || "Outro",
+            nivel_evidencia: cj.nivel_evidencia || (curationRow as any)?.nivel_evidencia || null,
+            resumo_executivo: cj.conclusao_pratica || cj.resultados_principais || null,
+            aplicacao_clinica: cj.aplicabilidade_clinica || null,
+            achados_principais: cj.resultados_principais || null,
+            limitacoes: cj.justificativa_risco_vies || null,
+            metodologia_destaque: cj.intervencao ? `${cj.intervencao} vs ${cj.comparador || "N/A"}` : null,
+            resultado_principal: cj.resultados_principais || null,
+            score_relevancia: score,
+            classificacao,
+            leitura_essencial: classificacao === "leitura_essencial",
+            tags,
+            visible_academy: true,
+            visible_reghen_feed: true,
+            published_date: fullPaper?.year ? `${fullPaper.year}-01-01` : null,
+            reviewed_by: user?.id || null,
+            reviewed_at: new Date().toISOString(),
+            source: "system_papers",
+          };
+
+          // Check for existing by DOI or title
+          let existingId: string | null = null;
+          if (fullPaper?.doi) {
+            const { data: byDoi } = await supabase
+              .from("academy_curated_articles")
+              .select("id")
+              .eq("doi", fullPaper.doi)
+              .maybeSingle();
+            existingId = byDoi?.id || null;
+          }
+          if (!existingId) {
+            const { data: byTitle } = await supabase
+              .from("academy_curated_articles")
+              .select("id")
+              .eq("title", fullPaper?.title || "")
+              .maybeSingle();
+            existingId = byTitle?.id || null;
+          }
+
+          if (existingId) {
+            await supabase
+              .from("academy_curated_articles")
+              .update(curatedArticle)
+              .eq("id", existingId);
+          } else {
+            await supabase
+              .from("academy_curated_articles")
+              .insert(curatedArticle);
+          }
+        } catch (syncErr) {
+          console.error("Failed to sync to library:", syncErr);
+          // Don't block publish — sync is best-effort
+        }
       }
 
       const { error } = await supabase
