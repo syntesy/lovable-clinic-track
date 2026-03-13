@@ -30,11 +30,11 @@ interface CurationCardProps {
 }
 
 const CLASSIFICACAO_CONFIG: Record<string, { emoji: string; label: string; sublabel: string; color: string; bg: string }> = {
-  leitura_essencial:   { emoji: '🟢', label: 'Leitura Essencial',       sublabel: 'Evidência sólida — leitura obrigatória',   color: 'text-green-700',  bg: 'bg-green-50 border-green-300' },
-  leitura_recomendada: { emoji: '🔵', label: 'Leitura Recomendada',     sublabel: 'Alta relevância clínica',                  color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-300' },
-  leitura_opcional:    { emoji: '🟡', label: 'Leitura Opcional',        sublabel: 'Relevante para especialistas',             color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-300' },
-  referencia:          { emoji: '🟠', label: 'Referência Bibliográfica', sublabel: 'Valor de contextualização',                color: 'text-orange-700', bg: 'bg-orange-50 border-orange-300' },
-  contexto:            { emoji: '🔴', label: 'Contexto',                sublabel: 'Evidência preliminar ou periférica',       color: 'text-red-700',    bg: 'bg-red-50 border-red-300' },
+  leitura_essencial:   { emoji: '🟢', label: 'Leitura Essencial',       sublabel: 'Evidência sólida — leitura obrigatória',   color: 'text-emerald-400',  bg: 'bg-card border-emerald-500/30' },
+  leitura_recomendada: { emoji: '🔵', label: 'Leitura Recomendada',     sublabel: 'Alta relevância clínica',                  color: 'text-blue-400',     bg: 'bg-card border-blue-500/30' },
+  leitura_opcional:    { emoji: '🟡', label: 'Leitura Opcional',        sublabel: 'Relevante para especialistas',             color: 'text-yellow-400',   bg: 'bg-card border-yellow-500/30' },
+  referencia:          { emoji: '🟠', label: 'Referência Bibliográfica', sublabel: 'Valor de contextualização',                color: 'text-orange-400',   bg: 'bg-card border-orange-500/30' },
+  contexto:            { emoji: '🔴', label: 'Contexto',                sublabel: 'Evidência preliminar ou periférica',       color: 'text-red-400',      bg: 'bg-card border-red-500/30' },
 }
 
 const NIVEL_COLORS: Record<string, string> = {
