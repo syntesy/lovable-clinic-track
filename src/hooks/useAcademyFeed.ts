@@ -7,7 +7,51 @@ type ArticlePreview = Pick<AcademyArticle,
   "interventions" | "pathologies" | "summary_short" | "pubmed_url" | "doi_url" | "created_at"
 >;
 
-const LISTING_FIELDS = "id, title, authors, journal, year, study_type, interventions, pathologies, summary_short, pubmed_url, doi_url, created_at";
+/**
+ * Maps a curated article row to the ArticlePreview shape used by feed components.
+ */
+function mapCuratedToPreview(row: any): ArticlePreview {
+  let year = 0;
+  if (row.published_date) {
+    const parsed = new Date(row.published_date);
+    if (!isNaN(parsed.getTime())) year = parsed.getFullYear();
+  }
+  if (!year && row.created_at) {
+    year = new Date(row.created_at).getFullYear();
+  }
+
+  const tags: string[] = (row.tags ?? []).map((t: string) => t.replace(/^#/, ""));
+
+  let authorsStr: string | null = null;
+  if (row.authors) {
+    if (typeof row.authors === "string") authorsStr = row.authors;
+    else if (Array.isArray(row.authors)) authorsStr = row.authors.join(", ");
+  }
+
+  let doiUrl: string | null = null;
+  if (row.doi) {
+    doiUrl = row.doi.startsWith("http") ? row.doi : `https://doi.org/${row.doi}`;
+  }
+
+  return {
+    id: row.id,
+    title: row.title,
+    authors: authorsStr,
+    journal: row.journal ?? null,
+    year,
+    study_type: row.tipo_estudo ?? "Outro",
+    interventions: tags.filter(t => ["PRP","BMAC","SVF"].includes(t)),
+    pathologies: tags.filter(t => ["osteoartrite","tendinopatia"].includes(t)),
+    summary_short: row.resumo_executivo
+      ? row.resumo_executivo.slice(0, 200) + (row.resumo_executivo.length > 200 ? "…" : "")
+      : "Resumo não disponível",
+    pubmed_url: null,
+    doi_url: doiUrl,
+    created_at: row.created_at ?? "",
+  };
+}
+
+const CURATED_FIELDS = "id, title, authors, journal, doi, tipo_estudo, tags, resumo_executivo, score_relevancia, created_at, published_date";
 
 export function useFeedNewArticles(limit = 10) {
   return useQuery({
@@ -16,15 +60,14 @@ export function useFeedNewArticles(limit = 10) {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const { data, error } = await supabase
-        .from("academy_articles")
-        .select(LISTING_FIELDS)
-        .eq("is_published", true)
-        .is("deleted_at", null)
+        .from("academy_curated_articles")
+        .select(CURATED_FIELDS)
+        .eq("visible_academy", true)
         .gte("created_at", thirtyDaysAgo.toISOString())
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return (data ?? []) as unknown as ArticlePreview[];
+      return (data ?? []).map(mapCuratedToPreview);
     },
   });
 }
@@ -43,30 +86,23 @@ export function useFeedForYou(limit = 10) {
 
       if (!follows?.length) return [] as ArticlePreview[];
 
-      const interventions = follows.filter((f: any) => f.topic_type === "intervention").map((f: any) => f.topic_value);
-      const pathologies = follows.filter((f: any) => f.topic_type === "pathology").map((f: any) => f.topic_value);
-      const keywords = follows.filter((f: any) => f.topic_type === "keyword").map((f: any) => f.topic_value);
+      // Build tag-based filter from follows
+      const allTags = follows.map((f: any) => `#${f.topic_value}`);
 
       let query = supabase
-        .from("academy_articles")
-        .select(LISTING_FIELDS)
-        .eq("is_published", true)
-        .is("deleted_at", null);
+        .from("academy_curated_articles")
+        .select(CURATED_FIELDS)
+        .eq("visible_academy", true);
 
-      const orFilters: string[] = [];
-      if (interventions.length) orFilters.push(`interventions.ov.{${interventions.join(",")}}`);
-      if (pathologies.length) orFilters.push(`pathologies.ov.{${pathologies.join(",")}}`);
-      if (keywords.length) orFilters.push(`keywords.ov.{${keywords.join(",")}}`);
-
-      if (orFilters.length) {
-        query = query.or(orFilters.join(","));
+      if (allTags.length) {
+        query = query.overlaps("tags", allTags);
       }
 
       const { data, error } = await query
-        .order("year", { ascending: false })
+        .order("score_relevancia", { ascending: false, nullsFirst: false })
         .limit(limit);
       if (error) throw error;
-      return (data ?? []) as unknown as ArticlePreview[];
+      return (data ?? []).map(mapCuratedToPreview);
     },
   });
 }
