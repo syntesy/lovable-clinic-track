@@ -205,6 +205,19 @@ export default function AcademyPapersAdminPage() {
     }
   };
 
+  const handleReprocessCuration = async (paperId: string) => {
+    try {
+      toast.info("Reprocessando curadoria com IA...");
+      const result = await curationMutation.mutateAsync(paperId);
+      toast.success("Curadoria reprocessada com sucesso!");
+      if (result.warnings?.length > 0) {
+        result.warnings.forEach((w: string) => toast.warning(w));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao reprocessar curadoria.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
