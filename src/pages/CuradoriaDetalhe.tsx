@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useInterval } from "@/hooks/useInterval";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -150,36 +151,32 @@ export default function CuradoriaDetalhe() {
     checkPdf();
   }, [showOriginal, article, pdfChecked]);
 
-  // Polling for active job
-  useEffect(() => {
-    if (!activeJob || !["queued", "running"].includes(activeJob.status)) return;
+  // Polling for active job — usa useInterval para cleanup automático garantido
+  const isJobActive = !!activeJob && ["queued", "running"].includes(activeJob.status);
 
-    const interval = setInterval(async () => {
-      const { data: jobData } = await supabase
-        .from("curation_jobs")
-        .select("*")
-        .eq("id", activeJob.id)
-        .single();
+  useInterval(useCallback(async () => {
+    if (!activeJob) return;
 
-      if (jobData) {
-        const job = jobData as CurationJob;
-        setActiveJob(job);
+    const { data: jobData } = await supabase
+      .from("curation_jobs")
+      .select("*")
+      .eq("id", activeJob.id)
+      .single();
 
-        // If job completed, refresh all data
-        if (job.status === "done" || job.status === "error") {
-          clearInterval(interval);
-          fetchData();
-          if (job.status === "done") {
-            toast.success("Curadoria gerada com sucesso!");
-          } else if (job.error_message) {
-            toast.error(`Erro: ${job.error_message}`);
-          }
+    if (jobData) {
+      const job = jobData as CurationJob;
+      setActiveJob(job);
+
+      if (job.status === "done" || job.status === "error") {
+        fetchData();
+        if (job.status === "done") {
+          toast.success("Curadoria gerada com sucesso!");
+        } else if (job.error_message) {
+          toast.error(`Erro: ${job.error_message}`);
         }
       }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [activeJob, fetchData]);
+    }
+  }, [activeJob, fetchData]), isJobActive ? 2000 : null);
 
   const handleGenerateCuration = async () => {
     if (!id || isGenerating) return;
@@ -279,10 +276,10 @@ export default function CuradoriaDetalhe() {
                 {article.authors} · {article.year} · {article.journal}
               </p>
               <div className="flex flex-wrap gap-2">
-                {article.tags?.map((tag, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="secondary" 
+                {article.tags?.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
                     className="text-xs bg-secondary/50"
                   >
                     {tag}

@@ -9,6 +9,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 // Types
 interface RegistryCase {
@@ -114,7 +115,7 @@ export function useObservationalRegistry(patientId?: string, screeningId?: strin
         .maybeSingle();
 
       if (error) {
-        console.error('[ObservationalRegistry] Fetch error:', error);
+        logger.error('[ObservationalRegistry] Fetch error:', error);
         return null;
       }
 
@@ -125,7 +126,7 @@ export function useObservationalRegistry(patientId?: string, screeningId?: strin
 
       return data as RegistryCase | null;
     } catch (err) {
-      console.error('[ObservationalRegistry] Fetch exception:', err);
+      logger.error('[ObservationalRegistry] Fetch exception:', err);
       return null;
     }
   }, [patientId]);

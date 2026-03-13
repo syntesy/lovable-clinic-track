@@ -36,6 +36,9 @@ export default function SessionTimeout({
   const countdownRef = useRef<number | null>(null);
   const sessionStartRef = useRef<number>(Date.now());
   const lastActivityRef = useRef<number>(Date.now());
+  // Refs para leitura sem adicionar às dependências do useEffect de atividade
+  const showWarningRef = useRef(false);
+  const isLockedRef = useRef(false);
 
   const timeoutMs = timeoutMinutes * 60 * 1000;
   const warningMs = warningMinutes * 60 * 1000;
@@ -127,6 +130,10 @@ export default function SessionTimeout({
     return true;
   }, [resetTimers]);
 
+  // Mantém refs sincronizadas sem re-executar o efeito de atividade
+  useEffect(() => { showWarningRef.current = showWarning; }, [showWarning]);
+  useEffect(() => { isLockedRef.current = isLocked; }, [isLocked]);
+
   // Eventos de atividade do usuário
   useEffect(() => {
     const activityEvents = [
@@ -139,7 +146,8 @@ export default function SessionTimeout({
     ];
 
     const handleActivity = () => {
-      if (!showWarning && !isLocked) {
+      // Usa refs para não recriar este efeito quando o diálogo abre/fecha
+      if (!showWarningRef.current && !isLockedRef.current) {
         const now = Date.now();
         // Só reseta se passou mais de 1 segundo desde a última atividade
         if (now - lastActivityRef.current > 1000) {
@@ -152,7 +160,7 @@ export default function SessionTimeout({
       document.addEventListener(event, handleActivity, { passive: true });
     });
 
-    // Iniciar timers
+    // Iniciar timers na montagem
     resetTimers();
 
     return () => {
@@ -161,7 +169,7 @@ export default function SessionTimeout({
       });
       clearAllTimers();
     };
-  }, [resetTimers, clearAllTimers, showWarning, isLocked]);
+  }, [resetTimers, clearAllTimers]);
 
   // Detectar fechamento da aba/navegador
   useEffect(() => {

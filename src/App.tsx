@@ -121,10 +121,23 @@ import { ProtocolsList, ProtocolDetail, ProtocolEdit, ProtocolCreate, Conformida
 import { RequireGovernanceAccess } from "./components/governance/RequireGovernanceAccess";
 import DevRlsTest from "./pages/DevRlsTest";
 import EvidenceDashboardPage from "./pages/reghen/EvidenceDashboardPage";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5,   // 5 min — dados considerados frescos
+      gcTime: 1000 * 60 * 10,     // 10 min — cache mantido em memória
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <PatientAuthProvider>
@@ -765,6 +778,7 @@ const App = () => (
       </PatientAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
