@@ -207,7 +207,7 @@ export default function AcademyPapersAdminPage() {
 
   const handleReprocessCuration = async (paperId: string) => {
     try {
-      toast.info("Reprocessando curadoria com IA...");
+      toast.info("Reprocessando curadoria com Reghen Evidence Method™...");
       const result = await curationMutation.mutateAsync(paperId);
       toast.success("Curadoria reprocessada com sucesso!");
       if (result.warnings?.length > 0) {
