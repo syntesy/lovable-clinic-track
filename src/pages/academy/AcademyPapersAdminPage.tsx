@@ -34,6 +34,7 @@ import {
   XCircle,
   Archive,
   Upload,
+  Microscope,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
