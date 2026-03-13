@@ -118,7 +118,7 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
               📋 Resumo Executivo
             </AccordionTrigger>
             <AccordionContent>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-foreground/80">
                 {article.resumo_executivo}
               </p>
             </AccordionContent>
