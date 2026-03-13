@@ -108,8 +108,9 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
           <Badge variant="outline">
             {article.tipo_estudo}
           </Badge>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="flex items-center gap-1">
             {config.emoji} {config.label}
+            <span className="text-[10px] font-normal text-muted-foreground hidden sm:inline">— {config.sublabel}</span>
           </Badge>
         </div>
 
