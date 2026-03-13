@@ -30,19 +30,19 @@ interface CurationCardProps {
 }
 
 const CLASSIFICACAO_CONFIG: Record<string, { emoji: string; label: string; color: string; bg: string }> = {
-  leitura_essencial:   { emoji: '🔴', label: 'Leitura Essencial',   color: 'text-red-700',    bg: 'bg-red-50 border-red-200' },
-  leitura_recomendada: { emoji: '🟠', label: 'Leitura Recomendada', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
-  leitura_opcional:    { emoji: '🟡', label: 'Leitura Opcional',    color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
-  referencia:          { emoji: '🟢', label: 'Referência',          color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
-  contexto:            { emoji: '⚪', label: 'Contexto',            color: 'text-gray-600',   bg: 'bg-gray-50 border-gray-200' },
+  leitura_essencial:   { emoji: '🔴', label: 'Leitura Essencial',   color: 'text-red-400',      bg: 'bg-card border-red-500/30' },
+  leitura_recomendada: { emoji: '🟠', label: 'Leitura Recomendada', color: 'text-orange-400',   bg: 'bg-card border-orange-500/30' },
+  leitura_opcional:    { emoji: '🟡', label: 'Leitura Opcional',    color: 'text-yellow-400',   bg: 'bg-card border-yellow-500/30' },
+  referencia:          { emoji: '🟢', label: 'Referência',          color: 'text-emerald-400',  bg: 'bg-card border-emerald-500/30' },
+  contexto:            { emoji: '⚪', label: 'Contexto',            color: 'text-muted-foreground', bg: 'bg-card border-border' },
 }
 
 const NIVEL_COLORS: Record<string, string> = {
-  '1': 'bg-purple-100 text-purple-800',
-  '2': 'bg-blue-100 text-blue-800',
-  '3': 'bg-teal-100 text-teal-800',
-  '4': 'bg-yellow-100 text-yellow-800',
-  '5': 'bg-gray-100 text-gray-700',
+  '1': 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  '2': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  '3': 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+  '4': 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+  '5': 'bg-muted text-muted-foreground border-border',
 }
 
 function getNivelColor(nivel: string): string {
@@ -118,7 +118,7 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
               📋 Resumo Executivo
             </AccordionTrigger>
             <AccordionContent>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-foreground/80">
                 {article.resumo_executivo}
               </p>
             </AccordionContent>
@@ -133,7 +133,7 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
                 <AccordionContent>
                   <ul className="space-y-1">
                     {parseLines(article.aplicacao_clinica).map((item, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                      <li key={i} className="flex gap-2 text-sm text-foreground/80">
                         <span className="text-primary shrink-0">•</span>
                         <span>{item}</span>
                       </li>
@@ -147,7 +147,7 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
                   📊 Achados Principais
                 </AccordionTrigger>
                 <AccordionContent>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
+                  <p className="text-sm leading-relaxed text-foreground/80">
                     {article.achados_principais}
                   </p>
                 </AccordionContent>
@@ -160,7 +160,7 @@ export function CurationCard({ article, compact = false }: CurationCardProps) {
                 <AccordionContent>
                   <ul className="space-y-1">
                     {parseLines(article.limitacoes).map((item, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                      <li key={i} className="flex gap-2 text-sm text-foreground/80">
                         <span className="text-destructive shrink-0">•</span>
                         <span>{item}</span>
                       </li>
