@@ -43,6 +43,7 @@ export type FlagType =
   | "A_CRP_MILD"
   | "A_CRP_HIGH"
   | "A_MEDS_GRAY_WINDOW"
+  | "A_MEDS_DATE_MISSING"
   | "B_COMPLETE_RUPTURE"
   | "B_COLLAPSE"
   | "B_LOW_REGEN"

@@ -170,7 +170,21 @@ export function calculateFisioRegenScore(data: FisioRegenFormData): ComputedResu
   // A5: Medicações janela cinzenta (0-5)
   let A5 = 5;
   let hasGrayWindow = false;
-  
+
+  // Verifica se algum medicamento foi declarado sem data — conservadoramente penaliza
+  const checkMissingDate = (usesMed: boolean, dateStr: string | null): boolean => {
+    return usesMed && !dateStr;
+  };
+
+  if (checkMissingDate(data.use_aspirin, data.last_aspirin_date) ||
+      checkMissingDate(data.use_nsaid_nonselective, data.last_nsaid_nonselective_date) ||
+      checkMissingDate(data.use_p2y12, data.last_p2y12_date) ||
+      checkMissingDate(data.use_systemic_corticosteroid, data.last_systemic_corticosteroid_date) ||
+      checkMissingDate(data.use_local_corticosteroid_target, data.last_local_corticosteroid_target_date)) {
+    triggered_flags.push("A_MEDS_DATE_MISSING");
+    hasGrayWindow = true; // Conservador: sem data → aplica penalidade de janela cinza
+  }
+
   const checkGrayWindow = (usesMed: boolean, dateStr: string | null, criticalDays: number) => {
     if (usesMed) {
       const days = daysSince(dateStr);

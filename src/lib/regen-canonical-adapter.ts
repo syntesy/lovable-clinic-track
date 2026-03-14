@@ -111,8 +111,28 @@ function parseLabValue(
   }
 
   const raw = rawValue.trim();
-  // Remove caracteres não numéricos exceto ponto e vírgula
-  const normalized = raw.replace(",", ".").replace(/[^\d.]/g, "");
+  // Normaliza separador decimal: vírgula → ponto
+  const withDot = raw.replace(",", ".");
+  // Remove caracteres não numéricos exceto ponto
+  const cleaned = withDot.replace(/[^\d.]/g, "");
+  // Rejeita formatos ambíguos com múltiplos pontos (ex: "1.234.567")
+  const dotCount = (cleaned.match(/\./g) || []).length;
+  if (dotCount > 1) {
+    alerts.push({
+      field: `labs.${labKey}`,
+      alert_type: "parse_error",
+      message: `Formato numérico ambíguo "${raw}" — use apenas um separador decimal`,
+      timestamp: new Date().toISOString(),
+    });
+    return {
+      raw_value: raw,
+      parsed_value: null,
+      unit: LAB_UNITS[labKey] || null,
+      parsed_ok: false,
+      notes: `Formato ambíguo: "${raw}". Insira o valor com um único separador decimal (ex: 1234.5 ou 1234,5)`,
+    };
+  }
+  const normalized = cleaned;
   const parsed = parseFloat(normalized);
 
   if (isNaN(parsed)) {
@@ -350,6 +370,21 @@ export function buildRegenCanonicalFromTriagem(
 }
 
 /**
+ * Retorna valor representativo de PCR (mg/L) baseado no status qualitativo do wizard.
+ * Usado como ponte quando não há valor numérico disponível.
+ * Retorna null para "not_available" (não deve sintetizar).
+ */
+function getCrpEstimateFromStatus(crpStatus: string): number | null {
+  switch (crpStatus) {
+    case "normal":       return 3;   // Representativo: ≤5 mg/L (sem penalidade no BRS)
+    case "mild":         return 7;   // Representativo: 5–10 mg/L (ELEVATED_CRP -8)
+    case "high":         return 15;  // Representativo: >10 mg/L (HIGH_CRP -15)
+    case "not_available":
+    default:             return null;
+  }
+}
+
+/**
  * Mescla campos do FisioRegenScore Wizard para o canônico
  * (4 novos campos: quit_bucket, hypertension, dyslipidemia, tissue_type)
  */
@@ -395,7 +430,28 @@ export function mergeWizardFieldsToCanonical(
   if (wizardData.regen_tissue_type && wizardData.regen_tissue_type !== "unknown") {
     merged.diagnosis.tissue_type = wizardData.regen_tissue_type as RegenTissueType;
   }
-  
+
+  // Ponte CRP: se wizard tem crp_status e não há valor numérico no canonical, estimar
+  if (wizardData.crp_status && !canonical.labs.crp.raw_value) {
+    const crpEstimate = getCrpEstimateFromStatus(wizardData.crp_status);
+    if (crpEstimate !== null) {
+      merged.labs = { ...canonical.labs };
+      merged.labs.crp = {
+        raw_value: `~${crpEstimate} (estimado de "${wizardData.crp_status}")`,
+        parsed_value: crpEstimate,
+        unit: "mg/L",
+        parsed_ok: true,
+        notes: `Valor estimado do status qualitativo "${wizardData.crp_status}". Solicitar PCR numérico para precisão.`,
+      };
+      merged.data_quality_alerts.push({
+        field: "labs.crp",
+        alert_type: "derived",
+        message: `PCR numérico ausente — valor estimado do status "${wizardData.crp_status}" (${crpEstimate} mg/L)`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
   // Atualizar timestamp
   merged.captured_at = new Date().toISOString();
   

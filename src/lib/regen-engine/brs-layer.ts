@@ -273,13 +273,24 @@ function getLabPenalties(
 
 function getBRSConfidence(validLabs: Set<string>, dieOutput: DIEOutput): "High" | "Medium" | "Low" {
   const essentialLabs = ["hemoglobin", "platelets", "leukocytes"];
+
+  // Labs com validade conhecida (VALID ou CAUTION) — excluem UNKNOWN (sem data de coleta)
+  const confirmedValidLabs = new Set(
+    dieOutput.lab_recommendations
+      .filter(r => r.status === "USE" && r.validity !== "UNKNOWN")
+      .map(r => r.lab_code)
+  );
+
+  const essentialConfirmed = essentialLabs.filter(lab => confirmedValidLabs.has(lab)).length;
   const essentialPresent = essentialLabs.filter(lab => validLabs.has(lab)).length;
 
-  if (essentialPresent === 3) {
+  // Alta confiança só com labs de data conhecida e dentro da validade
+  if (essentialConfirmed === 3) {
     return "High";
-  } else if (essentialPresent >= 2) {
-    return "Medium";
-  } else {
-    return "Low";
   }
+  // Média confiança: 2+ labs confirmados, ou 3 labs presentes mas sem data
+  if (essentialConfirmed >= 2 || essentialPresent === 3) {
+    return "Medium";
+  }
+  return "Low";
 }
