@@ -6,7 +6,7 @@
  * - Navigation guards
  * - Step validation
  * 
- * Flow: Avaliação Clínica → Triagem (opcional) → Plano Terapêutico → Anexos → Relatório
+ * Flow: Avaliação Clínica → Plano Terapêutico → Triagem (opcional) → Anexos → Relatório
  */
 
 // =============================================================================
@@ -39,7 +39,7 @@ export const BASE_STEPS: AttendanceStepId[] = ['clinical', 'plan', 'attachments'
 /**
  * Complete steps including triage (for orthobiologic attendances)
  */
-export const FULL_STEPS: AttendanceStepId[] = ['clinical', 'triage', 'plan', 'attachments', 'report'];
+export const FULL_STEPS: AttendanceStepId[] = ['clinical', 'plan', 'triage', 'attachments', 'report'];
 
 /**
  * Initial step for any new attendance
@@ -186,9 +186,9 @@ export function validateStepForAttendance(
     return normalized;
   }
   
-  // If triage was requested but not allowed, go to plan
+  // If triage was requested but not allowed, go to attachments (plan precedes triage)
   if (normalized === 'triage') {
-    return 'plan';
+    return 'attachments';
   }
   
   return INITIAL_STEP;

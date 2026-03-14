@@ -63,19 +63,19 @@ const EPI_US_GUIDED_OPTIONS = [
   { value: "UNKNOWN", label: "Não informado" },
 ] as const;
 
-const PHYSIO_TYPE_OPTIONS = [
-  { value: "CONVENTIONAL", label: "Convencional" },
-  { value: "EXERCISE", label: "Exercício terapêutico estruturado" },
-  { value: "MANUAL", label: "Terapia manual" },
-  { value: "INVASIVE", label: "Fisioterapia invasiva" },
-  { value: "UNKNOWN", label: "Não informado" },
+const PHYSIO_DURATION_OPTIONS = [
+  { value: "LT_1M",  label: "< 1 mês" },
+  { value: "M1_3",   label: "1–3 meses" },
+  { value: "M3_6",   label: "3–6 meses" },
+  { value: "GT_6M",  label: "> 6 meses" },
 ] as const;
 
-const PHYSIO_DURATION_OPTIONS = [
-  { value: "LT_4W", label: "< 4 semanas" },
-  { value: "M1_3", label: "1–3 meses" },
-  { value: "GT_3M", label: "> 3 meses" },
-  { value: "UNKNOWN", label: "Não informado" },
+const NSAID_TIME_OPTIONS = [
+  { value: "LT_24H",   label: "< 24h" },
+  { value: "D1_3",     label: "1–3 dias" },
+  { value: "D4_7",     label: "4–7 dias" },
+  { value: "GT_7D",    label: "> 7 dias" },
+  { value: "NOT_USED", label: "Não utilizou" },
 ] as const;
 
 export interface PreviousTreatmentsState {
@@ -87,8 +87,9 @@ export interface PreviousTreatmentsState {
   orthobiologicPrevType: string;
   orthobiologicPrevOtherText: string;
   epiUsGuided: string;
-  physioType: string;
+  physioType: string;   // mantido no banco; não exibido na UI
   physioDuration: string;
+  nsaidTimeBucket: string;
 }
 
 interface PreviousTreatmentsCardProps {
@@ -102,6 +103,7 @@ interface PreviousTreatmentsCardProps {
   laserValidationError?: string | null;
   orthobiologicPrevValidationError?: string | null;
   orthobiologicPrevOtherValidationError?: string | null;
+  nsaidTimeBucketValidationError?: string | null;
 }
 
 export function PreviousTreatmentsCard({
@@ -115,8 +117,14 @@ export function PreviousTreatmentsCard({
   laserValidationError = null,
   orthobiologicPrevValidationError = null,
   orthobiologicPrevOtherValidationError = null,
+  nsaidTimeBucketValidationError = null,
 }: PreviousTreatmentsCardProps) {
-  const { treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided, physioType, physioDuration } = value;
+  const {
+    treatments, lastTreatmentTimeBucket, otherText,
+    shockwaveType, laserIntensity, orthobiologicPrevType,
+    orthobiologicPrevOtherText, epiUsGuided, physioDuration,
+    nsaidTimeBucket,
+  } = value;
 
   const handleTreatmentToggle = useCallback(
     (treatmentValue: string, checked: boolean) => {
@@ -132,18 +140,22 @@ export function PreviousTreatmentsCard({
         }
       }
 
-      const newOtherText = next.includes("OTHER") ? otherText : "";
-      const newShockwaveType = next.includes("SHOCKWAVE") ? shockwaveType : "";
-      const newLaserIntensity = next.includes("LASER") ? laserIntensity : "";
-      const newOrthobiologicPrevType = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevType : "";
-      const newOrthobiologicPrevOtherText = next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevOtherText : "";
-      const newEpiUsGuided = next.includes("EPI") ? epiUsGuided : "";
-      const newPhysioType = next.includes("PHYSIOTHERAPY") ? physioType : "";
-      const newPhysioDuration = next.includes("PHYSIOTHERAPY") ? physioDuration : "";
-
-      onChange({ treatments: next, lastTreatmentTimeBucket, otherText: newOtherText, shockwaveType: newShockwaveType, laserIntensity: newLaserIntensity, orthobiologicPrevType: newOrthobiologicPrevType, orthobiologicPrevOtherText: newOrthobiologicPrevOtherText, epiUsGuided: newEpiUsGuided, physioType: newPhysioType, physioDuration: newPhysioDuration });
+      onChange({
+        ...value,
+        treatments: next,
+        otherText: next.includes("OTHER") ? otherText : "",
+        shockwaveType: next.includes("SHOCKWAVE") ? shockwaveType : "",
+        laserIntensity: next.includes("LASER") ? laserIntensity : "",
+        orthobiologicPrevType: next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevType : "",
+        orthobiologicPrevOtherText: next.includes("ORTHOBIOLOGIC_PREV") ? orthobiologicPrevOtherText : "",
+        epiUsGuided: next.includes("EPI") ? epiUsGuided : "",
+        physioDuration: next.includes("PHYSIOTHERAPY") ? physioDuration : "",
+        nsaidTimeBucket: next.includes("NSAIDS") ? nsaidTimeBucket : "",
+      });
     },
-    [treatments, lastTreatmentTimeBucket, otherText, shockwaveType, laserIntensity, orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided, physioType, physioDuration, onChange]
+    [value, treatments, otherText, shockwaveType, laserIntensity,
+     orthobiologicPrevType, orthobiologicPrevOtherText, epiUsGuided,
+     physioDuration, nsaidTimeBucket, onChange]
   );
 
   return (
@@ -174,47 +186,52 @@ export function PreviousTreatmentsCard({
           ))}
         </div>
 
-        {/* PHYSIOTHERAPY type + duration dropdowns (optional) */}
+        {/* PHYSIOTHERAPY — apenas duração */}
         {treatments.includes("PHYSIOTHERAPY") && (
-          <div className="space-y-3 pl-6">
-            <div className="space-y-1.5">
-              <Label className="text-sm">Tipo de fisioterapia predominante</Label>
-              <Select
-                value={physioType}
-                onValueChange={(v) => onChange({ ...value, physioType: v })}
-                disabled={disabled}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {PHYSIO_TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm">Duração aproximada</Label>
-              <Select
-                value={physioDuration}
-                onValueChange={(v) => onChange({ ...value, physioDuration: v })}
-                disabled={disabled}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {PHYSIO_DURATION_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-1.5 pl-6">
+            <Label className="text-sm">Tempo de fisioterapia</Label>
+            <Select
+              value={physioDuration}
+              onValueChange={(v) => onChange({ ...value, physioDuration: v })}
+              disabled={disabled}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {PHYSIO_DURATION_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* NSAIDS — tempo desde o último uso */}
+        {treatments.includes("NSAIDS") && (
+          <div className="space-y-1.5 pl-6">
+            <Label className="text-sm">Tempo desde o último uso de AINE</Label>
+            <Select
+              value={nsaidTimeBucket}
+              onValueChange={(v) => onChange({ ...value, nsaidTimeBucket: v })}
+              disabled={disabled}
+            >
+              <SelectTrigger className={nsaidTimeBucketValidationError ? "border-destructive" : ""}>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {NSAID_TIME_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {nsaidTimeBucketValidationError && (
+              <p className="text-sm text-destructive">{nsaidTimeBucketValidationError}</p>
+            )}
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList, ArrowLeftRight, BarChart3, Target, Beaker, ScrollText } from "lucide-react";
+import { Users, Bot, BookOpen, ShieldCheck, FileText, Settings, Handshake, CreditCard, UserCog, FlaskConical, Scale, Database, TrendingUp, Shield, CalendarDays, ClipboardList, ArrowLeftRight, BarChart3, Target, Beaker, ScrollText, Stethoscope } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -30,6 +30,7 @@ const menuGroups = [
   {
     label: "EVIDÊNCIA & RESULTADOS",
     items: [
+      { title: "Dashboard Clínico", url: "/insights/clinical", icon: Stethoscope },
       { title: "Minha Performance", url: "/insights/performance", icon: Target },
       { title: "Padrões Clínicos", url: "/insights", icon: BarChart3 },
     ],

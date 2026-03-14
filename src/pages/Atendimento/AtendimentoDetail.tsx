@@ -73,6 +73,7 @@ const AtendimentoDetail = () => {
   const [laserValidationError, setLaserValidationError] = useState<string | null>(null);
   const [orthobiologicPrevValidationError, setOrthobiologicPrevValidationError] = useState<string | null>(null);
   const [orthobiologicPrevOtherValidationError, setOrthobiologicPrevOtherValidationError] = useState<string | null>(null);
+  const [nsaidTimeBucketValidationError, setNsaidTimeBucketValidationError] = useState<string | null>(null);
   const [previousTreatments, setPreviousTreatments] = useState<PreviousTreatmentsState>({
     treatments: [],
     lastTreatmentTimeBucket: "",
@@ -84,6 +85,7 @@ const AtendimentoDetail = () => {
     epiUsGuided: "",
     physioType: "",
     physioDuration: "",
+    nsaidTimeBucket: "",
   });
 
   const [pathologyState, setPathologyState] = useState<PathologyState>(INITIAL_PATHOLOGY_STATE);
@@ -138,6 +140,7 @@ const AtendimentoDetail = () => {
       const orthobiologicPrev = details?.orthobiologic_prev as Record<string, unknown> | null;
       const epi = details?.epi as Record<string, unknown> | null;
       const physio = details?.physiotherapy as Record<string, unknown> | null;
+      const nsaids = details?.nsaids as Record<string, unknown> | null;
       setPreviousTreatments({
         treatments: dbPreviousTreatments.treatments ?? [],
         lastTreatmentTimeBucket: dbPreviousTreatments.last_treatment_time_bucket ?? "",
@@ -149,6 +152,7 @@ const AtendimentoDetail = () => {
         epiUsGuided: (epi?.us_guided as string) ?? "",
         physioType: (physio?.type as string) ?? "",
         physioDuration: (physio?.duration as string) ?? "",
+        nsaidTimeBucket: (nsaids?.time_bucket as string) ?? "",
       });
     }
   }, [dbPreviousTreatments]);
@@ -499,6 +503,13 @@ const AtendimentoDetail = () => {
     }
     setOrthobiologicPrevOtherValidationError(null);
 
+    // Validation: if NSAIDS is selected, nsaidTimeBucket is required
+    if (previousTreatments.treatments.includes("NSAIDS") && !previousTreatments.nsaidTimeBucket) {
+      setNsaidTimeBucketValidationError("Selecione o tempo desde o último uso de AINE.");
+      return;
+    }
+    setNsaidTimeBucketValidationError(null);
+
     // Build details JSONB
     const details: Record<string, unknown> = {};
     if (previousTreatments.treatments.includes("OTHER") && previousTreatments.otherText.trim()) {
@@ -520,11 +531,11 @@ const AtendimentoDetail = () => {
     if (previousTreatments.treatments.includes("EPI") && previousTreatments.epiUsGuided) {
       details.epi = { us_guided: previousTreatments.epiUsGuided };
     }
-    if (previousTreatments.treatments.includes("PHYSIOTHERAPY") && (previousTreatments.physioType || previousTreatments.physioDuration)) {
-      const physio: Record<string, string> = {};
-      if (previousTreatments.physioType) physio.type = previousTreatments.physioType;
-      if (previousTreatments.physioDuration) physio.duration = previousTreatments.physioDuration;
-      details.physiotherapy = physio;
+    if (previousTreatments.treatments.includes("PHYSIOTHERAPY") && previousTreatments.physioDuration) {
+      details.physiotherapy = { duration: previousTreatments.physioDuration };
+    }
+    if (previousTreatments.treatments.includes("NSAIDS") && previousTreatments.nsaidTimeBucket) {
+      details.nsaids = { time_bucket: previousTreatments.nsaidTimeBucket };
     }
 
     // NONE enforcement
@@ -550,9 +561,11 @@ const AtendimentoDetail = () => {
       await queryClient.invalidateQueries({
         queryKey: ["attendance-previous-treatments", attendanceId],
       });
+      // Avança automaticamente para o Plano Terapêutico
+      setCurrentStep("plan");
     } catch (e) {
       logError("previous_treatments.save.error", { attendanceId });
-      toast.error("Erro ao salvar tratamentos prévios");
+      toast.error("Não foi possível salvar. Tente novamente.");
     } finally {
       setIsSavingTreatments(false);
     }
@@ -621,7 +634,7 @@ const AtendimentoDetail = () => {
     setIsExportingPdf(true);
 
     try {
-      navigate(`/relatorio/${clinicalRecord.id}`);
+      navigate(`/relatorios/visualizar/${attendance.patient_id}?recordId=${clinicalRecord.id}`);
 
       const ms = Math.round(performance.now() - t0);
       logInfo("report.generate.success", {
@@ -659,8 +672,8 @@ const AtendimentoDetail = () => {
     const ms = Math.round(performance.now() - t0);
     persistReportMetadata('preview', recordId, ms);
 
-    navigate(`/relatorio/${clinicalRecord.id}`);
-  }, [clinicalRecord, attendanceId, navigate, persistReportMetadata]);
+    navigate(`/relatorios/visualizar/${attendance?.patient_id}?recordId=${clinicalRecord.id}`);
+  }, [clinicalRecord, attendanceId, attendance, navigate, persistReportMetadata]);
 
   // Handle conclude attendance
   const handleConclude = async () => {
@@ -669,6 +682,23 @@ const AtendimentoDetail = () => {
       return;
     }
     await closeAttendance.mutateAsync(attendance.id);
+
+    // Marca o evento clínico do dia como atendido (best-effort, não bloqueia)
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const eventDate = new Date(attendance.created_at).toISOString().slice(0, 10);
+        await supabase
+          .from("clinical_scheduled_events")
+          .update({ attended: true, attended_at: new Date().toISOString() })
+          .eq("patient_id", attendance.patient_id)
+          .eq("user_id", user.id)
+          .eq("event_date", eventDate)
+          .eq("attended", false);
+      }
+    } catch {
+      // falha silenciosa — não impede a conclusão do atendimento
+    }
   };
 
   // Derive topic_key from attendance pathology + intervention type
@@ -769,54 +799,6 @@ const AtendimentoDetail = () => {
       case "clinical":
         return (
           <div className="space-y-6">
-            {/* Attendance Type Selector */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4" />
-                  Tipo de Atendimento
-                </CardTitle>
-                <CardDescription>
-                  Selecione se este atendimento envolve terapias ortobiológicas. Isso habilita a Triagem específica (opcional).
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup
-                  value={attendance.involves_orthobiologics ? "orthobiologic" : "non-orthobiologic"}
-                  onValueChange={(value) => {
-                    if (isClosed) return;
-                    const isOrtho = value === "orthobiologic";
-                    updateAttendanceType.mutate({
-                      attendanceId: attendance.id,
-                      involvesOrthobiologics: isOrtho
-                    });
-                  }}
-                  disabled={isClosed || updateAttendanceType.isPending}
-                  className="flex flex-col sm:flex-row gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="orthobiologic" id="orthobiologic" />
-                    <Label htmlFor="orthobiologic" className="cursor-pointer">
-                      <span className="font-medium">Ortobiológico</span>
-                      <span className="text-muted-foreground text-sm ml-2">(com Triagem)</span>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="non-orthobiologic" id="non-orthobiologic" />
-                    <Label htmlFor="non-orthobiologic" className="cursor-pointer">
-                      <span className="font-medium">Não Ortobiológico</span>
-                      <span className="text-muted-foreground text-sm ml-2">(sem Triagem)</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-                {attendance.involves_orthobiologics && (
-                  <p className="text-sm text-muted-foreground mt-3">
-                    ✓ Triagem disponível (opcional). Você pode realizá-la agora ou depois.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Clinical Assessment Card */}
             <Card>
               <CardHeader>
@@ -882,6 +864,7 @@ const AtendimentoDetail = () => {
                 setLaserValidationError(null);
                 setOrthobiologicPrevValidationError(null);
                 setOrthobiologicPrevOtherValidationError(null);
+                setNsaidTimeBucketValidationError(null);
               }}
               onSave={handleSavePreviousTreatments}
               disabled={isClosed}
@@ -891,6 +874,7 @@ const AtendimentoDetail = () => {
               laserValidationError={laserValidationError}
               orthobiologicPrevValidationError={orthobiologicPrevValidationError}
               orthobiologicPrevOtherValidationError={orthobiologicPrevOtherValidationError}
+              nsaidTimeBucketValidationError={nsaidTimeBucketValidationError}
             />
 
             {/* Evidence Panel (Reghen Evidence Method™) */}
@@ -934,7 +918,7 @@ const AtendimentoDetail = () => {
                         <FlaskConical className="w-4 h-4 mr-2" />
                         Iniciar Triagem
                       </Button>
-                      <Button variant="outline" onClick={() => setCurrentStep("plan")}>
+                      <Button variant="outline" onClick={() => setCurrentStep("attachments")}>
                         Pular Triagem
                       </Button>
                     </div>
@@ -948,6 +932,54 @@ const AtendimentoDetail = () => {
       case "plan":
         return (
           <div className="space-y-6">
+            {/* Attendance Type Selector */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FlaskConical className="w-4 h-4" />
+                  Tipo de Atendimento
+                </CardTitle>
+                <CardDescription>
+                  Selecione se este atendimento envolve terapias ortobiológicas. Isso habilita a Triagem específica (opcional).
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={attendance.involves_orthobiologics ? "orthobiologic" : "non-orthobiologic"}
+                  onValueChange={(value) => {
+                    if (isClosed) return;
+                    const isOrtho = value === "orthobiologic";
+                    updateAttendanceType.mutate({
+                      attendanceId: attendance.id,
+                      involvesOrthobiologics: isOrtho
+                    });
+                  }}
+                  disabled={isClosed || updateAttendanceType.isPending}
+                  className="flex flex-col sm:flex-row gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="orthobiologic" id="orthobiologic" />
+                    <Label htmlFor="orthobiologic" className="cursor-pointer">
+                      <span className="font-medium">Ortobiológico</span>
+                      <span className="text-muted-foreground text-sm ml-2">(com Triagem)</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="non-orthobiologic" id="non-orthobiologic" />
+                    <Label htmlFor="non-orthobiologic" className="cursor-pointer">
+                      <span className="font-medium">Não Ortobiológico</span>
+                      <span className="text-muted-foreground text-sm ml-2">(sem Triagem)</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {attendance.involves_orthobiologics && (
+                  <p className="text-sm text-muted-foreground mt-3">
+                    ✓ Triagem disponível na próxima etapa (opcional).
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -961,12 +993,9 @@ const AtendimentoDetail = () => {
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button onClick={() => {
-                    // Check diagnosis_stage before allowing procedure
                     const diagStage = (dbAttendancePathology as any)?.diagnosis_stage;
                     if (diagStage !== 'CONFIRMED') {
-                      toast.error("Para iniciar um procedimento, registre o diagnóstico confirmado por imagem.");
-                      setIsConfirmedDiagnosisVisible(true);
-                      setCurrentStep("clinical");
+                      toast.error("Registre o diagnóstico confirmado por imagem antes de adicionar um procedimento.");
                       return;
                     }
                     setIsAddProcedureOpen(true);

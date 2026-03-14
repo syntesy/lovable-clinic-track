@@ -82,7 +82,7 @@ import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
 import DailyDashboard from "./pages/DailyDashboard";
 import AnaliseResultados from "./pages/AnaliseResultados";
 import { AtendimentosList, AtendimentoDetail, NovoAtendimento } from "./pages/Atendimento";
-import { CollectiveDashboard, PerformanceDashboard } from "./pages/Insights";
+import { CollectiveDashboard, PerformanceDashboard, ClinicalDashboard } from "./pages/Insights";
 // Patient Portal Pages - Single Function (Followup only)
 import PatientLogin from "./pages/patient/PatientLogin";
 import PatientHome from "./pages/patient/PatientHome";
@@ -483,6 +483,17 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <PerformanceDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Clinical Dashboard - Orthobiologics */}
+          <Route
+            path="/insights/clinical"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ClinicalDashboard />
                 </Layout>
               </ProtectedRoute>
             }

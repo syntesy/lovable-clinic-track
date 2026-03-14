@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -377,23 +377,35 @@ export function ConfirmedDiagnosisCard({
           </Alert>
         )}
 
-        {/* EVA (Pain) */}
+        {/* EVA (Pain) — botões 0–10 */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
             Dor – EVA (0–10)
-            <span className="text-muted-foreground font-normal ml-2">
-              {value.evaPain != null ? value.evaPain : "—"}
-            </span>
+            {value.evaPain != null && (
+              <span className="text-muted-foreground font-normal ml-2">
+                selecionado: {value.evaPain}
+              </span>
+            )}
           </Label>
-          <Slider
-            min={0}
-            max={10}
-            step={1}
-            value={[value.evaPain ?? 0]}
-            onValueChange={([v]) => onChange({ ...value, evaPain: v })}
-            disabled={disabled}
-            className="py-2"
-          />
+          <div className="flex gap-1 flex-wrap">
+            {Array.from({ length: 11 }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange({ ...value, evaPain: i })}
+                className={cn(
+                  "w-9 h-9 rounded-md text-sm font-medium border transition-colors",
+                  value.evaPain === i
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border hover:border-primary/50 text-foreground",
+                  disabled && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {i}
+              </button>
+            ))}
+          </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0 – Sem dor</span>
             <span>10 – Pior dor</span>
@@ -404,22 +416,34 @@ export function ConfirmedDiagnosisCard({
         <div className="space-y-2">
           <Label className="text-sm font-medium">
             Função – IFN (0–10)
-            <span className="text-muted-foreground font-normal ml-2">
-              {value.ifnFunction != null ? value.ifnFunction : "—"}
-            </span>
+            {value.ifnFunction != null && (
+              <span className="text-muted-foreground font-normal ml-2">
+                selecionado: {value.ifnFunction}
+              </span>
+            )}
           </Label>
           <p className="text-xs text-muted-foreground italic">
             Em uma escala de 0 a 10, quanto essa condição limita sua função nas atividades do dia a dia?
           </p>
-          <Slider
-            min={0}
-            max={10}
-            step={1}
-            value={[value.ifnFunction ?? 0]}
-            onValueChange={([v]) => onChange({ ...value, ifnFunction: v })}
-            disabled={disabled}
-            className="py-2"
-          />
+          <div className="flex gap-1 flex-wrap">
+            {Array.from({ length: 11 }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange({ ...value, ifnFunction: i })}
+                className={cn(
+                  "w-9 h-9 rounded-md text-sm font-medium border transition-colors",
+                  value.ifnFunction === i
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border hover:border-primary/50 text-foreground",
+                  disabled && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {i}
+              </button>
+            ))}
+          </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0 – Sem limitação</span>
             <span>10 – Limitação total</span>

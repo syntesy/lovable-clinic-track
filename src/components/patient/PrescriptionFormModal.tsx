@@ -3,11 +3,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Heart, Pill, Sparkles } from 'lucide-react';
+import { Loader2, Heart, Pill, Sparkles, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -24,15 +25,50 @@ const prescriptionTypes = [
   { value: 'suplementacoes', label: 'Suplementações', icon: Sparkles, description: 'Vitaminas e suplementação' },
 ];
 
+// ─── Tipos estruturados para medicações / suplementações ────────────────────
+
+interface DrugItem { name: string; dose: string; frequency: string; duration: string; }
+const EMPTY_DRUG: DrugItem = { name: '', dose: '', frequency: '', duration: '' };
+
 export function PrescriptionFormModal({ open, onOpenChange, patientId, patientName }: PrescriptionFormModalProps) {
   const queryClient = useQueryClient();
   const [prescriptionType, setPrescriptionType] = useState('');
-  const [content, setContent] = useState('');
+  // cuidados_gerais
+  const [orientacoes, setOrientacoes] = useState('');
+  // medicacoes / suplementacoes
+  const [items, setItems] = useState<DrugItem[]>([{ ...EMPTY_DRUG }]);
   const [notes, setNotes] = useState('');
   const [isVisibleToPatient, setIsVisibleToPatient] = useState(true);
   const [prescriptionDate] = useState(new Date());
 
   const selectedTypeLabel = prescriptionTypes.find(t => t.value === prescriptionType)?.label || 'Prescrição';
+
+  function updateItem(index: number, field: keyof DrugItem, val: string) {
+    setItems(prev => prev.map((it, i) => i === index ? { ...it, [field]: val } : it));
+  }
+  function addItem() { setItems(prev => [...prev, { ...EMPTY_DRUG }]); }
+  function removeItem(index: number) { setItems(prev => prev.filter((_, i) => i !== index)); }
+
+  /** Monta o campo `content` a partir dos campos estruturados */
+  function buildContent(): string {
+    if (prescriptionType === 'cuidados_gerais') return orientacoes.trim();
+    return items
+      .filter(it => it.name.trim())
+      .map((it, i) => {
+        const parts = [`${i + 1}. ${it.name.trim()}`];
+        if (it.dose)      parts.push(`Dose: ${it.dose}`);
+        if (it.frequency) parts.push(`Frequência: ${it.frequency}`);
+        if (it.duration)  parts.push(`Duração: ${it.duration}`);
+        return parts.join(' | ');
+      })
+      .join('\n');
+  }
+
+  function handleChangePrescriptionType(type: string) {
+    setPrescriptionType(type);
+    setOrientacoes('');
+    setItems([{ ...EMPTY_DRUG }]);
+  }
 
   const createPrescriptionMutation = useMutation({
     mutationFn: async () => {
@@ -44,7 +80,7 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
         professional_id: user.id,
         prescription_type: prescriptionType,
         title: selectedTypeLabel,
-        content,
+        content: buildContent(),
         notes: notes || null,
         is_visible_to_patient: isVisibleToPatient
       });
@@ -64,7 +100,8 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
 
   const resetForm = () => {
     setPrescriptionType('');
-    setContent('');
+    setOrientacoes('');
+    setItems([{ ...EMPTY_DRUG }]);
     setNotes('');
     setIsVisibleToPatient(true);
   };
@@ -76,7 +113,7 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
       toast.error('Selecione o tipo de prescrição');
       return;
     }
-    if (!content.trim()) {
+    if (!buildContent()) {
       toast.error('Informe o conteúdo da prescrição');
       return;
     }
@@ -120,10 +157,10 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
                   <button
                     key={type.value}
                     type="button"
-                    onClick={() => setPrescriptionType(type.value)}
+                    onClick={() => handleChangePrescriptionType(type.value)}
                     className={`p-4 rounded-lg border-2 text-left transition-all ${
-                      isSelected 
-                        ? 'border-primary bg-primary/10' 
+                      isSelected
+                        ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
                     }`}
                   >
@@ -140,25 +177,80 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
             </div>
           </div>
 
-          {/* Conteúdo */}
-          <div className="space-y-2">
-            <Textarea
-              id="content"
-              placeholder={
-                prescriptionType === 'cuidados_gerais' 
-                  ? 'Descreva os cuidados gerais...\n\nExemplo:\n- Repouso relativo\n- Evitar atividades de impacto\n- Aplicar gelo local por 15 min, 3x ao dia' 
-                  : prescriptionType === 'medicacoes'
-                  ? 'Descreva a prescrição medicamentosa...\n\nExemplo:\n1. Medicamento X - 500mg - 1x ao dia por 7 dias\n2. Medicamento Y - 200mg - 2x ao dia por 5 dias'
-                  : prescriptionType === 'suplementacoes'
-                  ? 'Descreva a suplementação...\n\nExemplo:\n1. Vitamina D3 - 5000 UI - 1x ao dia\n2. Ômega 3 - 1000mg - 2x ao dia\n3. Colágeno tipo II - 40mg - em jejum'
-                  : 'Descreva o conteúdo da prescrição...'
-              }
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={10}
-              className="resize-none"
-            />
-          </div>
+          {/* Conteúdo dinâmico por tipo */}
+          {prescriptionType === 'cuidados_gerais' && (
+            <div className="space-y-2">
+              <Label>Orientações *</Label>
+              <Textarea
+                placeholder={'Descreva os cuidados gerais...\n\nExemplo:\n- Repouso relativo\n- Evitar atividades de impacto\n- Aplicar gelo local por 15 min, 3x ao dia'}
+                value={orientacoes}
+                onChange={(e) => setOrientacoes(e.target.value)}
+                rows={8}
+                className="resize-none"
+              />
+            </div>
+          )}
+
+          {(prescriptionType === 'medicacoes' || prescriptionType === 'suplementacoes') && (
+            <div className="space-y-3">
+              <Label>
+                {prescriptionType === 'medicacoes' ? 'Medicamentos *' : 'Suplementos *'}
+              </Label>
+              {items.map((item, idx) => (
+                <div key={idx} className="rounded-lg border border-border p-3 space-y-2 relative">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        {prescriptionType === 'medicacoes' ? 'Medicamento' : 'Suplemento'} *
+                      </Label>
+                      <Input
+                        placeholder={prescriptionType === 'medicacoes' ? 'Ex: Ibuprofeno' : 'Ex: Vitamina D3'}
+                        value={item.name}
+                        onChange={(e) => updateItem(idx, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Dose</Label>
+                      <Input
+                        placeholder={prescriptionType === 'medicacoes' ? 'Ex: 600mg' : 'Ex: 5000 UI'}
+                        value={item.dose}
+                        onChange={(e) => updateItem(idx, 'dose', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Frequência</Label>
+                      <Input
+                        placeholder="Ex: 2x ao dia"
+                        value={item.frequency}
+                        onChange={(e) => updateItem(idx, 'frequency', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Duração</Label>
+                      <Input
+                        placeholder="Ex: 7 dias"
+                        value={item.duration}
+                        onChange={(e) => updateItem(idx, 'duration', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(idx)}
+                      className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={addItem} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                Adicionar item
+              </Button>
+            </div>
+          )}
 
           {/* Observações */}
           <div className="space-y-2">
@@ -195,7 +287,7 @@ export function PrescriptionFormModal({ open, onOpenChange, patientId, patientNa
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={createPrescriptionMutation.isPending || !prescriptionType || !content}
+            disabled={createPrescriptionMutation.isPending || !prescriptionType || !buildContent()}
           >
             {createPrescriptionMutation.isPending ? (
               <>
