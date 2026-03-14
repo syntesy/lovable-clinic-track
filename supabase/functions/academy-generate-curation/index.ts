@@ -29,7 +29,7 @@ NORMALIZAÇÃO DE TAGS:
 
 Responda SEMPRE usando a função fornecida.`;
 
-const AI_MODEL = "google/gemini-2.5-flash";
+const AI_MODEL = "claude-sonnet-4-6-20251101";
 
 // Compute evidence score from structured layers
 function computeScoreFromLayers(layers: any): { score: number; breakdown: any } {
@@ -171,137 +171,131 @@ ${paper.mesh_terms?.length ? `MeSH TERMS: ${paper.mesh_terms.join(", ")}` : ""}
 ${paper.doi ? `DOI: ${paper.doi}` : ""}
 ${paper.pmid ? `PMID: ${paper.pmid}` : ""}`;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const toolSchema = {
+      name: "generate_paper_curation",
+      description: "Gera curadoria estruturada usando Reghen Evidence Method™ com 7 camadas obrigatórias",
+      input_schema: {
+        type: "object",
+        properties: {
+          study_type: { type: "string", description: "Tipo de estudo (ECR, Revisão Sistemática, Coorte, etc.)" },
+          population: { type: "string", description: "População estudada" },
+          intervention: { type: "string", description: "Intervenção principal" },
+          comparison: { type: "string", description: "Grupo comparador" },
+          outcomes_principais: { type: "string", description: "Desfechos principais" },
+          summary_short: { type: "string", description: "Resumo curto (2-3 frases)" },
+          summary_full_md: { type: "string", description: "Resumo completo em markdown" },
+          effect_direction: { type: "string", description: "Direção do efeito (positivo/neutro/negativo/inconclusivo)" },
+          limitations: { type: "array", items: { type: "string" }, description: "Limitações do estudo" },
+          follow_up: { type: "string", description: "Período de seguimento" },
+          level_inference: { type: "string", description: "Nível de evidência inferido" },
+          keywords_norm: { type: "array", items: { type: "string" } },
+          interventions_norm: { type: "array", items: { type: "string" } },
+          pathologies_norm: { type: "array", items: { type: "string" } },
+          warnings: { type: "array", items: { type: "string" } },
+          layer_1_structure: {
+            type: "object",
+            description: "Camada 1 — Estrutura Clínica (PICO estendido)",
+            properties: {
+              population: { type: "string" },
+              intervention: { type: "string" },
+              comparison: { type: "string" },
+              outcomes: {
+                type: "object",
+                properties: {
+                  clinical: { type: "array", items: { type: "string" }, description: "Desfechos clínicos (dor, função)" },
+                  functional: { type: "array", items: { type: "string" }, description: "Desfechos funcionais (ADM, força)" },
+                  biological: { type: "array", items: { type: "string" }, description: "Biomarcadores (IL-6, VEGF, etc.)" },
+                },
+              },
+            },
+          },
+          layer_2_methodology: {
+            type: "object",
+            description: "Camada 2 — Metodologia",
+            properties: {
+              study_type: { type: "string", enum: ["meta", "systematic_review", "rct", "cohort", "case_control", "case_series", "animal", "in_vitro", "other"] },
+              is_human: { type: "boolean" },
+              follow_up_months: { type: "number" },
+              sample_size: { type: "number" },
+            },
+          },
+          layer_3_reliability: {
+            type: "object",
+            description: "Camada 3 — Confiabilidade",
+            properties: {
+              randomized: { type: "boolean" },
+              control_group: { type: "boolean" },
+              blinded: { type: "boolean" },
+              follow_up_adequate: { type: "boolean" },
+              methodology_clarity: { type: "string", enum: ["high", "moderate", "low", "unclear"] },
+            },
+          },
+          layer_4_applicability: {
+            type: "object",
+            description: "Camada 4 — Aplicabilidade Clínica",
+            properties: {
+              classification: { type: "string", enum: ["high", "moderate", "limited", "experimental"] },
+              justification: { type: "string" },
+            },
+          },
+          layer_5_limitations: {
+            type: "array",
+            description: "Camada 5 — Limitações Estruturadas",
+            items: {
+              type: "object",
+              properties: {
+                category: { type: "string", enum: ["methodological", "statistical", "sample", "follow_up", "generalization", "surrogate"] },
+                description: { type: "string" },
+              },
+              required: ["category", "description"],
+            },
+          },
+          layer_6_consistency: {
+            type: "object",
+            description: "Camada 6 — Consistência com Literatura",
+            properties: {
+              classification: { type: "string", enum: ["confirmatory", "complementary", "divergent", "isolated"] },
+              notes: { type: "string" },
+            },
+          },
+          layer_7_educational: {
+            type: "object",
+            description: "Camada 7 — Aplicação Educacional",
+            properties: {
+              didactic_summary: { type: "string" },
+              guided_reading: { type: "string" },
+              trail_level: { type: "string", enum: ["meta", "rct", "observational"] },
+            },
+          },
+        },
+        required: ["study_type", "summary_short", "warnings", "layer_1_structure", "layer_2_methodology", "layer_3_reliability", "layer_4_applicability", "layer_5_limitations", "layer_6_consistency", "layer_7_educational"],
+      },
+    };
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: AI_MODEL,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "generate_paper_curation",
-              description: "Gera curadoria estruturada usando Reghen Evidence Method™ com 7 camadas obrigatórias",
-              parameters: {
-                type: "object",
-                properties: {
-                  // Legacy fields (kept for backward compatibility)
-                  study_type: { type: "string", description: "Tipo de estudo (ECR, Revisão Sistemática, Coorte, etc.)" },
-                  population: { type: "string", description: "População estudada" },
-                  intervention: { type: "string", description: "Intervenção principal" },
-                  comparison: { type: "string", description: "Grupo comparador" },
-                  outcomes_principais: { type: "string", description: "Desfechos principais" },
-                  summary_short: { type: "string", description: "Resumo curto (2-3 frases)" },
-                  summary_full_md: { type: "string", description: "Resumo completo em markdown" },
-                  effect_direction: { type: "string", description: "Direção do efeito (positivo/neutro/negativo/inconclusivo)" },
-                  limitations: { type: "array", items: { type: "string" }, description: "Limitações do estudo (texto livre)" },
-                  follow_up: { type: "string", description: "Período de seguimento" },
-                  level_inference: { type: "string", description: "Nível de evidência inferido" },
-                  keywords_norm: { type: "array", items: { type: "string" } },
-                  interventions_norm: { type: "array", items: { type: "string" } },
-                  pathologies_norm: { type: "array", items: { type: "string" } },
-                  warnings: { type: "array", items: { type: "string" } },
-
-                  // Reghen Evidence Method™ 7 layers
-                  layer_1_structure: {
-                    type: "object",
-                    description: "Camada 1 — Estrutura Clínica (PICO estendido)",
-                    properties: {
-                      population: { type: ["string", "null"] },
-                      intervention: { type: ["string", "null"] },
-                      comparison: { type: ["string", "null"] },
-                      outcomes: {
-                        type: "object",
-                        properties: {
-                          clinical: { type: "array", items: { type: "string" }, description: "Desfechos clínicos (dor, função, etc.)" },
-                          functional: { type: "array", items: { type: "string" }, description: "Desfechos funcionais (ADM, força, etc.)" },
-                          biological: { type: "array", items: { type: "string" }, description: "Biomarcadores (IL-6, VEGF, etc.)" },
-                        },
-                      },
-                    },
-                  },
-                  layer_2_methodology: {
-                    type: "object",
-                    description: "Camada 2 — Metodologia",
-                    properties: {
-                      study_type: { type: "string", enum: ["meta", "systematic_review", "rct", "cohort", "case_control", "case_series", "animal", "in_vitro", "other"] },
-                      is_human: { type: ["boolean", "null"] },
-                      follow_up_months: { type: ["number", "null"] },
-                      sample_size: { type: ["number", "null"] },
-                    },
-                  },
-                  layer_3_reliability: {
-                    type: "object",
-                    description: "Camada 3 — Confiabilidade",
-                    properties: {
-                      randomized: { type: ["boolean", "null"] },
-                      control_group: { type: ["boolean", "null"] },
-                      blinded: { type: ["boolean", "null"] },
-                      follow_up_adequate: { type: ["boolean", "null"] },
-                      methodology_clarity: { type: ["string", "null"], enum: ["high", "moderate", "low", "unclear", null] },
-                    },
-                  },
-                  layer_4_applicability: {
-                    type: "object",
-                    description: "Camada 4 — Aplicabilidade Clínica",
-                    properties: {
-                      classification: { type: ["string", "null"], enum: ["high", "moderate", "limited", "experimental", null] },
-                      justification: { type: ["string", "null"] },
-                    },
-                  },
-                  layer_5_limitations: {
-                    type: "array",
-                    description: "Camada 5 — Limitações Estruturadas",
-                    items: {
-                      type: "object",
-                      properties: {
-                        category: { type: "string", enum: ["methodological", "statistical", "sample", "follow_up", "generalization", "surrogate"] },
-                        description: { type: "string" },
-                      },
-                      required: ["category", "description"],
-                    },
-                  },
-                  layer_6_consistency: {
-                    type: "object",
-                    description: "Camada 6 — Consistência com Literatura",
-                    properties: {
-                      classification: { type: ["string", "null"], enum: ["confirmatory", "complementary", "divergent", "isolated", null] },
-                      notes: { type: ["string", "null"] },
-                    },
-                  },
-                  layer_7_educational: {
-                    type: "object",
-                    description: "Camada 7 — Aplicação Educacional",
-                    properties: {
-                      didactic_summary: { type: ["string", "null"] },
-                      guided_reading: { type: ["string", "null"] },
-                      trail_level: { type: ["string", "null"], enum: ["meta", "rct", "observational", null] },
-                    },
-                  },
-                },
-                required: ["study_type", "summary_short", "warnings", "layer_1_structure", "layer_2_methodology", "layer_3_reliability", "layer_4_applicability", "layer_5_limitations", "layer_6_consistency", "layer_7_educational"],
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "generate_paper_curation" } },
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userPrompt }],
+        tools: [toolSchema],
+        tool_choice: { type: "tool", name: "generate_paper_curation" },
       }),
     });
 
     if (!response.ok) {
       const status = response.status;
       const errText = await response.text();
-      console.error("AI gateway error:", status, errText);
+      console.error("Anthropic API error:", status, errText);
 
       if (status === 429) {
         await supabaseAuth.from("academy_papers").update({ curation_status: "draft" }).eq("id", paper_id);
@@ -310,23 +304,16 @@ ${paper.pmid ? `PMID: ${paper.pmid}` : ""}`;
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (status === 402) {
-        await supabaseAuth.from("academy_papers").update({ curation_status: "draft" }).eq("id", paper_id);
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Entre em contato com o suporte." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`Erro na API de IA (status ${status})`);
+      throw new Error(`Erro na API Anthropic (status ${status})`);
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall || toolCall.function.name !== "generate_paper_curation") {
+    const toolUse = data.content?.find((c: any) => c.type === "tool_use" && c.name === "generate_paper_curation");
+    if (!toolUse) {
       throw new Error("Resposta inesperada da IA");
     }
 
-    const curationData = JSON.parse(toolCall.function.arguments);
+    const curationData = toolUse.input;
 
     // Build reghen_evidence_method structure
     const layers = {
