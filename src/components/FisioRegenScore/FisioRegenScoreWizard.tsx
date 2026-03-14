@@ -220,7 +220,7 @@ export function FisioRegenScoreWizard({
               <FileText className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-xl">FISIOREGEN SCORE</CardTitle>
+              <CardTitle className="text-xl">REGENSCORE</CardTitle>
               <CardDescription>
                 Passo {step + 1} de {totalSteps}: {STEP_TITLES[step]}
               </CardDescription>

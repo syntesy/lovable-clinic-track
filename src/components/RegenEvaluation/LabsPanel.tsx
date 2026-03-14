@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Save, FlaskConical, CheckCircle2, AlertTriangle, XCircle, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  REQUIRED_CRITICAL_LABS, 
+import {
+  REQUIRED_CRITICAL_LABS,
   CRITICAL_LAB_LABELS,
   RequiredCriticalLab,
   ValidatedLabData
@@ -20,12 +20,16 @@ import {
 import { computeDIE } from "@/lib/regen-engine";
 import { RegenCanonical, RegenLabValue, defaultLabValue } from "@/types/regen-canonical";
 import { CriticalLabsChecklist } from "./CriticalLabsChecklist";
+import { LabUploadPanel } from "./LabUploadPanel";
+import { LabReviewModal } from "./LabReviewModal";
+import { MappedCanonicalLabs } from "@/lib/mapAnalyzeLabsToCanonical";
 
 interface LabsPanelProps {
   screeningId: string;
+  patientId?: string;
   canonical: RegenCanonical | null;
-  labsValidated?: Record<string, { 
-    status: string; 
+  labsValidated?: Record<string, {
+    status: string;
     value?: number | null;
     date?: string | null;
     validity_days?: number;
@@ -42,12 +46,35 @@ interface LabInputState {
 
 export function LabsPanel({
   screeningId,
+  patientId,
   canonical,
   labsValidated,
   labsCollectedDate,
   onSave,
   disabled = false
 }: LabsPanelProps) {
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [pendingMappedLabs, setPendingMappedLabs] = useState<MappedCanonicalLabs | null>(null);
+
+  const handleLabsExtracted = (mapped: MappedCanonicalLabs) => {
+    setPendingMappedLabs(mapped);
+    setReviewModalOpen(true);
+  };
+
+  const handleConfirmLabs = (confirmedLabs: RegenCanonical["labs"]) => {
+    // Pré-preenche os campos do formulário com os valores revisados
+    const updated: Record<string, LabInputState> = {};
+    REQUIRED_CRITICAL_LABS.forEach((lab) => {
+      const labValue = confirmedLabs[lab as keyof typeof confirmedLabs];
+      updated[lab] = {
+        value: (labValue as RegenLabValue)?.raw_value ?? "",
+        date: confirmedLabs.collected_date ?? collectedDate,
+      };
+    });
+    setLabs((prev) => ({ ...prev, ...updated } as Record<RequiredCriticalLab, LabInputState>));
+    if (confirmedLabs.collected_date) setCollectedDate(confirmedLabs.collected_date);
+  };
+
   const [labs, setLabs] = useState<Record<RequiredCriticalLab, LabInputState>>(() => {
     const initial: Record<string, LabInputState> = {};
     REQUIRED_CRITICAL_LABS.forEach(lab => {
@@ -216,7 +243,7 @@ export function LabsPanel({
   return (
     <Card className={allLabsValid ? "border-green-500/50" : ""}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <FlaskConical className="w-5 h-5 text-primary" />
@@ -229,6 +256,13 @@ export function LabsPanel({
               Exames críticos obrigatórios para Score Definitivo
             </CardDescription>
           </div>
+          <LabUploadPanel
+            screeningId={screeningId}
+            patientId={patientId}
+            existingMappedLabs={pendingMappedLabs}
+            onLabsExtracted={handleLabsExtracted}
+            disabled={disabled}
+          />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -300,6 +334,13 @@ export function LabsPanel({
           </Button>
         </div>
       </CardContent>
+
+      <LabReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        mappedLabs={pendingMappedLabs}
+        onConfirm={handleConfirmLabs}
+      />
     </Card>
   );
 }

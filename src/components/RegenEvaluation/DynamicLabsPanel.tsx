@@ -32,6 +32,9 @@ import {
   ClipboardList
 } from "lucide-react";
 import { ExamRequestModal } from "./ExamRequestModal";
+import { LabUploadPanel } from "./LabUploadPanel";
+import { LabReviewModal } from "./LabReviewModal";
+import { MappedCanonicalLabs } from "@/lib/mapAnalyzeLabsToCanonical";
 import {
   Tooltip,
   TooltipContent,
@@ -54,11 +57,12 @@ import { ExamGroup } from "@/types/screening";
 
 interface DynamicLabsPanelProps {
   screeningId: string;
+  patientId?: string;
   canonical: RegenCanonical | null;
   analysisResult: string | null;
   recommendedExams: ExamGroup[] | unknown[] | null;
-  labsValidated?: Record<string, { 
-    status: string; 
+  labsValidated?: Record<string, {
+    status: string;
     value?: number | null;
     date?: string | null;
     validity_days?: number;
@@ -154,6 +158,7 @@ function ExamInputMicroBadge({ exam }: { exam: TriageExamItem }) {
 
 export function DynamicLabsPanel({
   screeningId,
+  patientId,
   canonical,
   analysisResult,
   recommendedExams,
@@ -164,6 +169,31 @@ export function DynamicLabsPanel({
   patientName
 }: DynamicLabsPanelProps) {
   const [examModalOpen, setExamModalOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [pendingMappedLabs, setPendingMappedLabs] = useState<MappedCanonicalLabs | null>(null);
+
+  const handleLabsExtracted = (mapped: MappedCanonicalLabs) => {
+    setPendingMappedLabs(mapped);
+    setReviewModalOpen(true);
+  };
+
+  const handleConfirmLabs = (confirmedLabs: RegenCanonical["labs"]) => {
+    // Pré-preenche os inputs com os valores revisados
+    setLabs((prev) => {
+      const updated = { ...prev };
+      triageExams.forEach((exam) => {
+        const labValue = confirmedLabs[exam.code as keyof typeof confirmedLabs];
+        if (labValue && typeof labValue === "object" && "raw_value" in labValue) {
+          updated[exam.code] = {
+            value: (labValue as RegenLabValue).raw_value ?? "",
+            date: confirmedLabs.collected_date ?? collectedDate,
+          };
+        }
+      });
+      return updated;
+    });
+    if (confirmedLabs.collected_date) setCollectedDate(confirmedLabs.collected_date);
+  };
   // Extrair exames da triagem (fonte única de verdade)
   const triageExams = useMemo(() => {
     const exams = extractExamsFromTriage(analysisResult, recommendedExams);
@@ -404,7 +434,14 @@ export function DynamicLabsPanel({
               Exames definidos pela Triagem de Ortobiológicos
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <LabUploadPanel
+              screeningId={screeningId}
+              patientId={patientId}
+              existingMappedLabs={pendingMappedLabs}
+              onLabsExtracted={handleLabsExtracted}
+              disabled={disabled}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -565,6 +602,14 @@ export function DynamicLabsPanel({
         onOpenChange={setExamModalOpen}
         patientName={patientName}
         recommendedExams={updatedTriageExams.map(e => e.code)}
+      />
+
+      {/* Modal de Revisão de Exames extraídos do PDF */}
+      <LabReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        mappedLabs={pendingMappedLabs}
+        onConfirm={handleConfirmLabs}
       />
     </Card>
   );

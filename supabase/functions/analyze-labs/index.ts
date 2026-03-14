@@ -9,6 +9,75 @@ const corsHeaders = {
 const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
 // ══════════════════════════════════════
+// Canonical Labs Mapping
+// ══════════════════════════════════════
+
+const ANALYZE_TO_CANONICAL: Record<string, string> = {
+  "Hemoglobina": "hemoglobin",
+  "Hematócrito": "hematocrit",
+  "Leucócitos":  "leukocytes",
+  "Plaquetas":   "platelets",
+  "PCR":         "crp",
+  "Ferritina":   "ferritin",
+  "Glicose":     "glucose",
+  "HbA1c":       "hba1c",
+};
+
+const EXPECTED_UNITS: Record<string, string> = {
+  hemoglobin: "g/dL",
+  hematocrit: "%",
+  leukocytes: "mil/mm³",
+  platelets:  "mil/mm³",
+  crp:        "mg/L",
+  ferritin:   "ng/mL",
+  glucose:    "mg/dL",
+  hba1c:      "%",
+};
+
+interface MappedLabField {
+  raw_value: string | null;
+  parsed_value: number | null;
+  unit: string | null;
+  parsed_ok: boolean;
+  notes: string | null;
+  confidence: "high" | "medium" | "low" | "not_found";
+}
+
+function buildCanonicalLabs(
+  normalizedLabs: NormalizedLabItem[],
+  collectedDate: string | null
+): Record<string, MappedLabField | string | null> {
+  const byName = new Map<string, NormalizedLabItem>();
+  for (const lab of normalizedLabs) byName.set(lab.name, lab);
+
+  const canonical: Record<string, MappedLabField | string | null> = {};
+
+  for (const [analyzeName, canonicalKey] of Object.entries(ANALYZE_TO_CANONICAL)) {
+    const lab = byName.get(analyzeName);
+    if (!lab) {
+      canonical[canonicalKey] = {
+        raw_value: null, parsed_value: null, unit: EXPECTED_UNITS[canonicalKey] ?? null,
+        parsed_ok: false, notes: "Não encontrado no documento", confidence: "not_found",
+      };
+      continue;
+    }
+    const notes: string[] = [];
+    if (lab.blocking_reasons.length > 0) notes.push(`Bloqueios: ${lab.blocking_reasons.join(", ")}`);
+    canonical[canonicalKey] = {
+      raw_value: lab.value !== null ? String(lab.value) : null,
+      parsed_value: lab.value,
+      unit: lab.unit ?? EXPECTED_UNITS[canonicalKey] ?? null,
+      parsed_ok: lab.value !== null && lab.is_interpretable,
+      notes: notes.join(" | ") || null,
+      confidence: lab.is_interpretable ? lab.parser_confidence : "low",
+    };
+  }
+
+  canonical["collected_date"] = collectedDate;
+  return canonical;
+}
+
+// ══════════════════════════════════════
 // Pipeline Version Constants
 // ══════════════════════════════════════
 const PIPELINE_VERSION = {
@@ -851,12 +920,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    const canonicalLabs = buildCanonicalLabs(normalized.labs, normalized.collection_date);
+
     return new Response(JSON.stringify({
       ok: true,
       run_id: insertedRun?.id || null,
       extraction: { method: extractionMethod, confidence: extractionConfidence, warnings: extractionWarnings },
       normalized,
       analysis: validatedAnalysis,
+      canonical_labs: canonicalLabs,
       safety: { interpretable: interpretableLabs.length, blocked: blockedLabs.length, prefilter_excluded: prefilterResult.stats.excluded },
       prefilter_stats: prefilterResult.stats,
       excluded_lines_sample: prefilterResult.excluded_lines.slice(0, 20),
