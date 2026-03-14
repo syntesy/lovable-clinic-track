@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { extractText } from "https://esm.sh/unpdf@0.12.1";
 
@@ -143,7 +142,7 @@ function extractPdfSections(fulltext: string): Record<string, string | null> {
   return sections;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

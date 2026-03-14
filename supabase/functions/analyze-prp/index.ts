@@ -1,5 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { checkRateLimit, createRateLimitResponse, getRateLimitHeaders } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
@@ -100,7 +98,7 @@ PRP não cria regeneração.
 PRP apenas amplifica a capacidade biológica existente.
 Seu papel é ajudar o clínico a decidir com segurança.`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

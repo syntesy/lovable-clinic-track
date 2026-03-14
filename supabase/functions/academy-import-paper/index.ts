@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -120,7 +119,7 @@ function parseInput(input: string): { type: "pmid" | "doi"; value: string } {
   throw new Error("Entrada inválida. Forneça um PMID, URL do PubMed, DOI ou URL do DOI.");
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
