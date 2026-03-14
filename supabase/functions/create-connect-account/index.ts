@@ -34,7 +34,7 @@ serve(async (req) => {
     const user = userData.user;
 
     const { action } = await req.json();
-    const origin = req.headers.get("origin") || "https://lovable-clinic-track.lovable.app";
+    const origin = req.headers.get("origin") || "https://www.reghen.com.br";
 
     // Check if teacher profile exists
     const { data: existing } = await supabase

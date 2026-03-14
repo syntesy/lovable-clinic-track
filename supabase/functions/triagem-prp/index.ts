@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const assistantId = Deno.env.get('ASSISTANT_TRIAGEM_PRP_ID');
-const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -317,10 +317,10 @@ Deno.serve(async (req) => {
   }
 });
 
-// Handle OCR/Vision text extraction using Lovable AI
+// Handle OCR/Vision text extraction using Anthropic AI
 async function handleTextExtraction(imageUrls: string[]): Promise<Response> {
-  if (!lovableApiKey) {
-    throw new Error("LOVABLE_API_KEY não está configurada");
+  if (!anthropicApiKey) {
+    throw new Error("ANTHROPIC_API_KEY não está configurada");
   }
 
   if (!imageUrls || imageUrls.length === 0) {
@@ -342,11 +342,31 @@ async function handleTextExtraction(imageUrls: string[]): Promise<Response> {
     try {
       console.log(`Processing: ${fileName}`);
       
-      const content: any[] = [
-        {
-          type: "text",
-          text: `Você é um especialista em OCR e extração de dados de exames laboratoriais.
-          
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": anthropicApiKey!,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6-20251101",
+          max_tokens: 4000,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "url",
+                    url,
+                  },
+                },
+                {
+                  type: "text",
+                  text: `Você é um especialista em OCR e extração de dados de exames laboratoriais.
+
 TAREFA: Extraia TODOS os valores de exames laboratoriais desta imagem de forma estruturada.
 
 FORMATO DE SAÍDA:
@@ -360,29 +380,11 @@ Hemoglobina: 12.5 g/dL (Ref: 12-16)
 Hematócrito: 38% (Ref: 36-44)
 Ferritina: 45 ng/mL (Ref: 20-200)
 
-Extraia agora os resultados da imagem:`
-        },
-        {
-          type: "image_url",
-          image_url: { url }
-        }
-      ];
-
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${lovableApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            {
-              role: "user",
-              content
+Extraia agora os resultados da imagem:`,
+                },
+              ],
             }
           ],
-          max_tokens: 4000,
         }),
       });
 
@@ -420,7 +422,7 @@ Extraia agora os resultados da imagem:`
       }
 
       const data = await response.json();
-      const extractedText = data.choices?.[0]?.message?.content || "";
+      const extractedText = data.content?.[0]?.text || "";
       
       console.log(`Extracted text from ${fileName}: ${extractedText.substring(0, 100)}...`);
 

@@ -153,7 +153,7 @@ serve(async (req) => {
     console.log(`Created pending enrollment: ${enrollment.id}`);
 
     // Create Stripe checkout session
-    const origin = req.headers.get("origin") || "https://lovable-clinic-track.lovable.app";
+    const origin = req.headers.get("origin") || "https://www.reghen.com.br";
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const OPENAI_EMBEDDING_MODEL = "text-embedding-3-small";
-const AI_MODEL = "google/gemini-2.5-flash";
+const AI_MODEL = "claude-sonnet-4-6-20251101";
 const TOP_K_HYBRID = 30;
 const TOP_K_FINAL = 10;
 const MIN_SIMILARITY = 0.25;
@@ -400,19 +400,21 @@ ${contextParts.join("\n\n---\n\n")}
 
 Responda seguindo o formato obrigatório. Se os trechos não contêm informação suficiente, diga explicitamente.`;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: AI_MODEL,
+        max_tokens: 4096,
+        system: RAG_SYSTEM_PROMPT,
         messages: [
-          { role: "system", content: RAG_SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
         ],
       }),
@@ -439,7 +441,7 @@ Responda seguindo o formato obrigatório. Se os trechos não contêm informaçã
     }
 
     const aiData = await aiResponse.json();
-    const answerMd = aiData.choices?.[0]?.message?.content || "Erro ao gerar resposta.";
+    const answerMd = aiData.content?.[0]?.text || "Erro ao gerar resposta.";
 
     const result = {
       answer_md: answerMd,

@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AI_MODEL = "google/gemini-2.5-flash";
+const AI_MODEL = "claude-sonnet-4-6-20251101";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -182,8 +182,8 @@ Deno.serve(async (req) => {
         shortSummary = "Evidência insuficiente na biblioteca para este tópico.";
         summaryStatus = "insufficient";
       } else {
-        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-        if (LOVABLE_API_KEY) {
+        const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+        if (ANTHROPIC_API_KEY) {
           try {
             const paperDescriptions = topPapers
               .map(
@@ -193,19 +193,18 @@ Deno.serve(async (req) => {
               .join("\n\n");
 
             const aiResponse = await fetch(
-              "https://ai.gateway.lovable.dev/v1/chat/completions",
+              "https://api.anthropic.com/v1/messages",
               {
                 method: "POST",
                 headers: {
-                  Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                  "x-api-key": ANTHROPIC_API_KEY!,
+                  "anthropic-version": "2023-06-01",
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                   model: AI_MODEL,
-                  messages: [
-                    {
-                      role: "system",
-                      content: `Você é um sistema de síntese científica do Reghen Evidence Method™.
+                  max_tokens: 4096,
+                  system: `Você é um sistema de síntese científica do Reghen Evidence Method™.
 
 REGRAS OBRIGATÓRIAS:
 1. Gere uma síntese curta (2-5 linhas) EXCLUSIVAMENTE baseada nos títulos, resumos e perfis de evidência dos artigos listados abaixo.
@@ -217,7 +216,7 @@ REGRAS OBRIGATÓRIAS:
 7. Responda em português.
 
 Se os resumos não contiverem informação suficiente para uma síntese, responda EXATAMENTE: "Evidência insuficiente na biblioteca para este tópico."`,
-                    },
+                  messages: [
                     {
                       role: "user",
                       content: `Tópico: "${topic_key}"\n\nArtigos disponíveis:\n\n${paperDescriptions}\n\nGere a síntese grounded.`,
@@ -229,7 +228,7 @@ Se os resumos não contiverem informação suficiente para uma síntese, respond
 
             if (aiResponse.ok) {
               const aiData = await aiResponse.json();
-              shortSummary = aiData.choices?.[0]?.message?.content || "";
+              shortSummary = aiData.content?.[0]?.text || "";
               summaryStatus = shortSummary ? "success" : "fail";
             } else {
               summaryStatus = "fail";

@@ -61,7 +61,7 @@ serve(async (req) => {
     let customerId: string | undefined;
     if (customers.data.length > 0) customerId = customers.data[0].id;
 
-    const origin = req.headers.get("origin") || "https://lovable-clinic-track.lovable.app";
+    const origin = req.headers.get("origin") || "https://www.reghen.com.br";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

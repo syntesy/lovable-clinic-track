@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
 // ══════════════════════════════════════
 // Pipeline Version Constants
@@ -15,7 +15,7 @@ const PIPELINE_VERSION = {
   parser: "normalizeLabs_v2",
   edge: "analyzeLabs_v5",
   prompt: "labs_prompt_v1.1.0",
-  model: "google/gemini-2.5-flash",
+  model: "claude-sonnet-4-6-20251101",
 };
 
 // ══════════════════════════════════════
@@ -496,7 +496,7 @@ async function analyzeWithLLM(
   clinicalContext: Record<string, unknown>,
   extractionMeta: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  if (!lovableApiKey) throw new Error("LOVABLE_API_KEY não configurada");
+  if (!anthropicApiKey) throw new Error("ANTHROPIC_API_KEY não configurada");
 
   const labNames = interpretableLabs.map(l => `- ${l.name}: ${l.value} ${l.unit || ""} (ref: ${l.reference_range || "padrão"}, status: ${l.flag})`).join("\n");
 
@@ -546,14 +546,14 @@ ESTRUTURA DE RESPOSTA (JSON estrito):
         await sleep(delay);
       }
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
+        headers: { "x-api-key": anthropicApiKey!, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: PIPELINE_VERSION.model,
-          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userMessage }],
-          max_tokens: 4000, temperature: 0.3,
-          response_format: { type: "json_object" },
+          model: "claude-sonnet-4-6-20251101",
+          max_tokens: 4000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userMessage }],
         }),
       });
 
@@ -568,7 +568,7 @@ ESTRUTURA DE RESPOSTA (JSON estrito):
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || "{}";
+      const content = data.content?.[0]?.text || "{}";
       const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
       let parsed: Record<string, unknown>;

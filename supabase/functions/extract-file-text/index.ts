@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
 const SUPPORTED_TYPES = new Set([
   "application/pdf",
@@ -56,14 +56,35 @@ async function ocrWithVision(
   mimeType: string,
   context: string
 ): Promise<string> {
-  if (!lovableApiKey) {
-    throw new Error("LOVABLE_API_KEY não configurada");
+  if (!anthropicApiKey) {
+    throw new Error("ANTHROPIC_API_KEY não configurada");
   }
 
-  const content: any[] = [
-    {
-      type: "text",
-      text: `Você é um especialista em OCR e extração de texto.
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": anthropicApiKey!,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 8000,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mimeType,
+                data: base64Data,
+              },
+            },
+            {
+              type: "text",
+              text: `Você é um especialista em OCR e extração de texto.
 
 TAREFA: Extraia TODO o texto visível ${context}.
 
@@ -74,25 +95,10 @@ REGRAS:
 - NÃO invente ou complete dados
 - Para exames laboratoriais, mantenha: nome do exame, valor, unidade e referência
 - Retorne APENAS o texto extraído, sem comentários extras`,
-    },
-    {
-      type: "image_url",
-      image_url: {
-        url: `data:${mimeType};base64,${base64Data}`,
-      },
-    },
-  ];
-
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [{ role: "user", content }],
-      max_tokens: 8000,
+            },
+          ],
+        },
+      ],
     }),
   });
 
@@ -110,7 +116,7 @@ REGRAS:
   }
 
   const data = await response.json();
-  return sanitizeText(data.choices?.[0]?.message?.content || "");
+  return sanitizeText(data.content?.[0]?.text || "");
 }
 
 Deno.serve(async (req) => {

@@ -245,9 +245,9 @@ async function runCurationJob(
     // Step 2: Call AI to generate structured curation
     console.log("Calling AI to generate curation...");
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
     const systemPrompt = `Você é um especialista em análise crítica de literatura científica na área de fisioterapia regenerativa e medicina ortobiológica.
@@ -278,70 +278,69 @@ Gere uma curadoria estruturada completa para este artigo.`;
 
     await updateJob(supabase, jobId, { progress: 40 });
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "claude-sonnet-4-6-20251101",
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
         tools: [
           {
-            type: "function",
-            function: {
-              name: "generate_structured_curation",
-              description: "Gera uma curadoria estruturada de artigo científico",
-              parameters: {
-                type: "object",
-                properties: {
-                  objective: { type: "string", description: "Objetivo principal do estudo" },
-                  design: { type: "string", description: "Desenho do estudo" },
-                  population: { type: "string", description: "População estudada" },
-                  sample_size: { type: "string", description: "Tamanho da amostra" },
-                  intervention: { type: "string", description: "Intervenção estudada" },
-                  comparator: { type: "string", description: "Grupo controle ou comparador" },
-                  outcomes_primary: { type: "string", description: "Desfechos primários" },
-                  outcomes_secondary: { type: "string", description: "Desfechos secundários" },
-                  results_key: { type: "string", description: "Principais achados" },
-                  adverse_events: { type: "string", description: "Eventos adversos" },
-                  limitations: { type: "string", description: "Limitações do estudo" },
-                  authors_conclusion: { type: "string", description: "Conclusão dos autores" },
-                  evidence_level: { 
-                    type: "string", 
-                    enum: ["ia", "ib", "iia", "iib", "iii", "iv", "v"],
-                    description: "Nível de evidência" 
-                  },
-                  bias_risk: { 
-                    type: "string", 
-                    enum: ["baixo", "moderado", "alto", "muito_alto", "incerto"],
-                    description: "Risco de viés" 
-                  },
-                  applicability: { 
-                    type: "string", 
-                    enum: ["alta", "moderada", "baixa", "muito_baixa", "nao_aplicavel"],
-                    description: "Aplicabilidade clínica" 
-                  },
-                  clinical_takeaways: { 
-                    type: "array",
-                    items: { type: "string" },
-                    description: "3-5 pontos-chave para a prática clínica" 
-                  },
-                  practice_impact: { 
-                    type: "string", 
-                    description: "Impacto na prática clínica" 
-                  }
+            name: "generate_structured_curation",
+            description: "Gera uma curadoria estruturada de artigo científico",
+            input_schema: {
+              type: "object",
+              properties: {
+                objective: { type: "string", description: "Objetivo principal do estudo" },
+                design: { type: "string", description: "Desenho do estudo" },
+                population: { type: "string", description: "População estudada" },
+                sample_size: { type: "string", description: "Tamanho da amostra" },
+                intervention: { type: "string", description: "Intervenção estudada" },
+                comparator: { type: "string", description: "Grupo controle ou comparador" },
+                outcomes_primary: { type: "string", description: "Desfechos primários" },
+                outcomes_secondary: { type: "string", description: "Desfechos secundários" },
+                results_key: { type: "string", description: "Principais achados" },
+                adverse_events: { type: "string", description: "Eventos adversos" },
+                limitations: { type: "string", description: "Limitações do estudo" },
+                authors_conclusion: { type: "string", description: "Conclusão dos autores" },
+                evidence_level: {
+                  type: "string",
+                  enum: ["ia", "ib", "iia", "iib", "iii", "iv", "v"],
+                  description: "Nível de evidência"
                 },
-                required: ["objective", "results_key", "clinical_takeaways", "practice_impact", "evidence_level", "bias_risk", "applicability"]
-              }
+                bias_risk: {
+                  type: "string",
+                  enum: ["baixo", "moderado", "alto", "muito_alto", "incerto"],
+                  description: "Risco de viés"
+                },
+                applicability: {
+                  type: "string",
+                  enum: ["alta", "moderada", "baixa", "muito_baixa", "nao_aplicavel"],
+                  description: "Aplicabilidade clínica"
+                },
+                clinical_takeaways: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "3-5 pontos-chave para a prática clínica"
+                },
+                practice_impact: {
+                  type: "string",
+                  description: "Impacto na prática clínica"
+                }
+              },
+              required: ["objective", "results_key", "clinical_takeaways", "practice_impact", "evidence_level", "bias_risk", "applicability"]
             }
           }
         ],
-        tool_choice: { type: "function", function: { name: "generate_structured_curation" } }
+        tool_choice: { type: "tool", name: "generate_structured_curation" }
       }),
     });
 
@@ -354,15 +353,17 @@ Gere uma curadoria estruturada completa para este artigo.`;
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    
-    if (!toolCall || toolCall.function.name !== "generate_structured_curation") {
+
+    // Extract the tool use result (Anthropic format)
+    const toolUse = data.content?.find((block: any) => block.type === "tool_use" && block.name === "generate_structured_curation");
+
+    if (!toolUse) {
       throw new Error("Resposta inesperada da IA");
     }
 
     await updateJob(supabase, jobId, { progress: 70 });
 
-    const curationData = JSON.parse(toolCall.function.arguments);
+    const curationData = toolUse.input;
     console.log("AI response received, validating...");
 
     // Step 3: Validate and normalize data

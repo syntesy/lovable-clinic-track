@@ -93,7 +93,7 @@ serve(async (req) => {
     // 20% application fee
     const applicationFeeAmount = Math.round(product.price_cents * 0.20);
 
-    const origin = req.headers.get("origin") || "https://lovable-clinic-track.lovable.app";
+    const origin = req.headers.get("origin") || "https://www.reghen.com.br";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

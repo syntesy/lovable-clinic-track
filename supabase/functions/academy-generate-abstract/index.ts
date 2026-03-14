@@ -136,10 +136,10 @@ Deno.serve(async (req) => {
     const truncatedSource = sourceText.slice(0, 8000);
     const title = paper?.title || "Artigo científico";
 
-    // Use Lovable AI gateway (same as academy-curate-paper)
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY não configurada.", request_id: requestId }), {
+    // Use Anthropic API
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY não configurada.", request_id: requestId }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -161,20 +161,20 @@ Paper title: ${title}
 Source text (excerpt):
 ${truncatedSource}`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "claude-sonnet-4-6-20251101",
+        max_tokens: 500,
+        system: "You are a scientific abstract writer. Output ONLY the abstract text.",
         messages: [
-          { role: "system", content: "You are a scientific abstract writer. Output ONLY the abstract text." },
           { role: "user", content: prompt },
         ],
-        temperature: 0.3,
-        max_tokens: 500,
       }),
     });
 
@@ -184,7 +184,7 @@ ${truncatedSource}`;
     }
 
     const aiData = await aiResponse.json();
-    const generatedAbstract = aiData?.choices?.[0]?.message?.content?.trim() || "";
+    const generatedAbstract = aiData?.content?.[0]?.text?.trim() || "";
 
     if (!generatedAbstract || generatedAbstract.length < 50) {
       throw new Error("Abstract gerado é muito curto ou vazio.");
