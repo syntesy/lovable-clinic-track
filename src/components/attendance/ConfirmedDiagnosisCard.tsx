@@ -21,6 +21,8 @@ import {
   type StructuralModel,
   INITIAL_PATHOLOGY_STATE,
 } from "./PathologyCard";
+import { PathologyCharacterizationSection } from "./PathologyCharacterizationSection";
+import type { PathologyCharacterizationProfile } from "@/config/pathologyCharacterization";
 
 // ── Structural options (reused from PathologyCard) ──────────
 
@@ -128,6 +130,10 @@ interface ConfirmedDiagnosisCardProps {
   hypothesisCategoryId: string | null;
   hypothesisPathologyId: string | null;
   hypothesisCustomLabel: string;
+  /** Scientific characterization (optional) */
+  characterizationValues?: Record<string, string>;
+  onCharacterizationChange?: (values: Record<string, string>) => void;
+  characterizationProfile?: PathologyCharacterizationProfile | null;
 }
 
 export function ConfirmedDiagnosisCard({
@@ -141,6 +147,9 @@ export function ConfirmedDiagnosisCard({
   hypothesisCategoryId,
   hypothesisPathologyId,
   hypothesisCustomLabel,
+  characterizationValues = {},
+  onCharacterizationChange,
+  characterizationProfile = null,
 }: ConfirmedDiagnosisCardProps) {
   const { data: categories = [] } = useQuery({
     queryKey: ["pathology-categories"],
@@ -224,8 +233,17 @@ export function ConfirmedDiagnosisCard({
     if (value.tearPercentage != null) parts.push(`Ruptura: ${value.tearPercentage}%`);
     if (value.evaPain != null) parts.push(`EVA: ${value.evaPain}/10`);
     if (value.ifnFunction != null) parts.push(`IFN: ${value.ifnFunction}/10`);
+    // Characterization fields
+    if (characterizationProfile) {
+      characterizationProfile.fields.forEach(f => {
+        if (characterizationValues[f.key]) {
+          const opt = f.options.find(o => o.value === characterizationValues[f.key]);
+          parts.push(`${f.label}: ${opt?.label || characterizationValues[f.key]}`);
+        }
+      });
+    }
     return parts;
-  }, [value, pathologyLabel, categoryLabel, activeModel]);
+  }, [value, pathologyLabel, categoryLabel, activeModel, characterizationProfile, characterizationValues]);
 
   // Not visible: show the trigger button
   if (!isVisible) {
@@ -369,12 +387,21 @@ export function ConfirmedDiagnosisCard({
         )}
 
         {activeModel === "NONE" && (
-          <Alert className="border-border bg-muted/30">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              Esta patologia não requer classificação estrutural.
-            </AlertDescription>
-          </Alert>
+          characterizationProfile && onCharacterizationChange ? (
+            <PathologyCharacterizationSection
+              profile={characterizationProfile}
+              values={characterizationValues}
+              onChange={onCharacterizationChange}
+              disabled={disabled}
+            />
+          ) : (
+            <Alert className="border-border bg-muted/30">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Esta patologia não requer classificação estrutural.
+              </AlertDescription>
+            </Alert>
+          )
         )}
 
         {/* EVA (Pain) — botões 0–10 */}

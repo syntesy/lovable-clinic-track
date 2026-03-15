@@ -114,6 +114,7 @@ const VisualizarRelatorio = () => {
         ifn_function: number | null;
         diagnosis_stage: string | null;
         clinical_observation: string | null;
+        characterization_json: Record<string, unknown> | null;
         pathology_label?: string | null;
         category_label?: string | null;
       } | null = null;
@@ -134,12 +135,17 @@ const VisualizarRelatorio = () => {
         // Fetch pathology data
         const { data: apData } = await supabase
           .from("attendance_pathology")
-          .select("category_id, pathology_id, custom_pathology_label, severity_model, structural_model, structural_grade, structural_group, imaging_method, tear_percentage, disc_level_enum, disc_location_enum, eva_pain, ifn_function, diagnosis_stage, clinical_observation")
+          .select("category_id, pathology_id, custom_pathology_label, severity_model, structural_model, structural_grade, structural_group, imaging_method, tear_percentage, disc_level_enum, disc_location_enum, eva_pain, ifn_function, diagnosis_stage, clinical_observation, characterization_json")
           .eq("attendance_id", crRaw.attendance_id)
           .maybeSingle();
-        
+
         if (apData) {
-          pathologyData = { ...apData, pathology_label: null, category_label: null };
+          pathologyData = {
+            ...apData,
+            characterization_json: (apData as any).characterization_json ?? null,
+            pathology_label: null,
+            category_label: null,
+          };
           
           // Fetch pathology label
           if (apData.pathology_id) {
@@ -576,6 +582,30 @@ const VisualizarRelatorio = () => {
                           <span className="font-medium">{pd.ifn_function ?? "—"}/10</span>
                         </div>
                       </div>
+
+                      {/* Characterization JSON */}
+                      {pd.characterization_json && (() => {
+                        const cj = pd.characterization_json as any;
+                        if (!cj?.fields?.length) return null;
+                        return (
+                          <div className="space-y-1 border-t border-border/50 pt-2">
+                            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                              Caracterização Científica — {cj.protocol}
+                            </div>
+                            {(cj.fields as Array<{ label: string; value: string; scientific_mapping: string }>).map((f, i) => (
+                              <div key={i}>
+                                <span className="text-muted-foreground text-sm">{f.label}: </span>
+                                <span className="text-sm font-medium capitalize">{f.value}</span>
+                                {f.scientific_mapping && (
+                                  <span className="text-xs text-muted-foreground ml-2 italic">
+                                    ({f.scientific_mapping})
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

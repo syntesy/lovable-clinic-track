@@ -44,6 +44,12 @@ import {
   hasClinicalRecordMinimumData,
   ClinicalRecordBasic
 } from "@/services/clinicalRecordsService";
+import {
+  resolveCharacterizationProfile,
+  buildCharacterizationJson,
+  hydrateCharacterizationValues,
+  type PathologyCharacterizationProfile,
+} from "@/config/pathologyCharacterization";
 
 // Import existing components for steps (reusing, not changing logic)
 import { AvaliacaoRegenapp } from "@/components/RegenEvaluation";
@@ -91,6 +97,7 @@ const AtendimentoDetail = () => {
   const [pathologyState, setPathologyState] = useState<PathologyState>(INITIAL_PATHOLOGY_STATE);
   const [hypothesisState, setHypothesisState] = useState<HypothesisState>(INITIAL_HYPOTHESIS_STATE);
   const [isConfirmedDiagnosisVisible, setIsConfirmedDiagnosisVisible] = useState(false);
+  const [characterizationValues, setCharacterizationValues] = useState<Record<string, string>>({});
 
   // Plan step modals
   const [isAddProcedureOpen, setIsAddProcedureOpen] = useState(false);
@@ -184,6 +191,7 @@ const AtendimentoDetail = () => {
     setPathologyState(INITIAL_PATHOLOGY_STATE);
     setHypothesisState(INITIAL_HYPOTHESIS_STATE);
     setIsConfirmedDiagnosisVisible(false);
+    setCharacterizationValues({});
   }, [attendanceId]);
 
   useEffect(() => {
@@ -219,6 +227,12 @@ const AtendimentoDetail = () => {
       // If already confirmed, show the confirmed card
       if (diagStage === "CONFIRMED") {
         setIsConfirmedDiagnosisVisible(true);
+      }
+
+      // Hydrate characterization values if present
+      const charJson = (dbAttendancePathology as any).characterization_json;
+      if (charJson) {
+        setCharacterizationValues(hydrateCharacterizationValues(charJson));
       }
     }
 
@@ -420,8 +434,24 @@ const AtendimentoDetail = () => {
       return;
     }
 
+    // Validate required characterization fields (if profile is resolved)
+    if (characterizationProfile) {
+      const missingRequired = characterizationProfile.fields.find(
+        f => f.required && !f.advancedOnly && !characterizationValues[f.key]
+      );
+      if (missingRequired) {
+        toast.error(`Selecione "${missingRequired.label}" na caracterização científica.`);
+        return;
+      }
+    }
+
     // When structural_model is NONE, ensure all structural fields are null
     const isStructural = structuralModel && structuralModel !== "NONE";
+
+    // Build characterization JSON payload
+    const characterizationJson = characterizationProfile
+      ? buildCharacterizationJson(characterizationProfile, characterizationValues)
+      : null;
 
     const payload = {
       attendance_id: attendanceId,
@@ -442,6 +472,7 @@ const AtendimentoDetail = () => {
       disc_location_enum: isStructural && structuralModel === "DISC_HERNIATION_TYPE" ? discLocationEnum : null,
       eva_pain: evaPain,
       ifn_function: ifnFunction,
+      characterization_json: characterizationJson,
     };
 
     setIsSavingPathology(true);
@@ -704,19 +735,35 @@ const AtendimentoDetail = () => {
   // Derive topic_key from attendance pathology + intervention type
   const createEvidenceLink = useCreateEvidenceLink();
 
-  // Fetch pathology label if needed
-  const { data: pathologyLabel } = useQuery({
-    queryKey: ["pathology-label", dbAttendancePathology?.pathology_id],
+  // Fetch pathology label + code for evidence linking and profile resolution
+  const { data: pathologyMeta } = useQuery({
+    queryKey: ["pathology-meta", dbAttendancePathology?.pathology_id],
     queryFn: async () => {
       if (!dbAttendancePathology?.pathology_id) return null;
       const { data } = await supabase
         .from("pathologies")
-        .select("label")
+        .select("label, code")
         .eq("id", dbAttendancePathology.pathology_id)
         .single();
-      return data?.label || null;
+      return data || null;
     },
-    enabled: !!dbAttendancePathology?.pathology_id && !dbAttendancePathology?.custom_pathology_label,
+    enabled: !!dbAttendancePathology?.pathology_id,
+  });
+  const pathologyLabel = pathologyMeta?.label || null;
+
+  // Fetch category label + code for profile resolution
+  const { data: categoryMeta } = useQuery({
+    queryKey: ["category-meta", dbAttendancePathology?.category_id],
+    queryFn: async () => {
+      if (!dbAttendancePathology?.category_id) return null;
+      const { data } = await supabase
+        .from("pathology_categories")
+        .select("label, code")
+        .eq("id", dbAttendancePathology.category_id)
+        .single();
+      return data || null;
+    },
+    enabled: !!dbAttendancePathology?.category_id,
   });
   
   const topicKey = useMemo(() => {
@@ -726,6 +773,17 @@ const AtendimentoDetail = () => {
     const intervention = attendance?.involves_orthobiologics ? "PRP" : "FISIOTERAPIA";
     return buildTopicKey(intervention, pathLabel);
   }, [dbAttendancePathology, pathologyLabel, attendance?.involves_orthobiologics]);
+
+  // Resolve characterization profile from pathology metadata
+  const characterizationProfile = useMemo((): PathologyCharacterizationProfile | null => {
+    if (!dbAttendancePathology) return null;
+    return resolveCharacterizationProfile(
+      pathologyMeta?.code,
+      categoryMeta?.code,
+      dbAttendancePathology.custom_pathology_label || pathologyMeta?.label,
+      categoryMeta?.label,
+    );
+  }, [dbAttendancePathology, pathologyMeta, categoryMeta]);
 
   // Auto-create evidence link when topic_key changes
   useEffect(() => {
@@ -852,6 +910,9 @@ const AtendimentoDetail = () => {
               hypothesisCategoryId={hypothesisState.categoryId}
               hypothesisPathologyId={hypothesisState.pathologyId}
               hypothesisCustomLabel={hypothesisState.customLabel}
+              characterizationValues={characterizationValues}
+              onCharacterizationChange={setCharacterizationValues}
+              characterizationProfile={characterizationProfile}
             />
 
             {/* Previous Treatments Card */}
