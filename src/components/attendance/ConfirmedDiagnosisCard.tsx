@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,10 @@ import {
   INITIAL_PATHOLOGY_STATE,
 } from "./PathologyCard";
 import { PathologyCharacterizationSection } from "./PathologyCharacterizationSection";
-import type { PathologyCharacterizationProfile } from "@/config/pathologyCharacterization";
+import {
+  resolveCharacterizationProfile,
+  type PathologyCharacterizationProfile,
+} from "@/config/pathologyCharacterization";
 
 // ── Structural options (reused from PathologyCard) ──────────
 
@@ -133,7 +136,8 @@ interface ConfirmedDiagnosisCardProps {
   /** Scientific characterization (optional) */
   characterizationValues?: Record<string, string>;
   onCharacterizationChange?: (values: Record<string, string>) => void;
-  characterizationProfile?: PathologyCharacterizationProfile | null;
+  /** Called when the resolved profile changes (so parent can validate) */
+  onProfileChange?: (profile: PathologyCharacterizationProfile | null) => void;
 }
 
 export function ConfirmedDiagnosisCard({
@@ -149,7 +153,7 @@ export function ConfirmedDiagnosisCard({
   hypothesisCustomLabel,
   characterizationValues = {},
   onCharacterizationChange,
-  characterizationProfile = null,
+  onProfileChange,
 }: ConfirmedDiagnosisCardProps) {
   const { data: categories = [] } = useQuery({
     queryKey: ["pathology-categories"],
@@ -194,6 +198,22 @@ export function ConfirmedDiagnosisCard({
 
   const isCervical = selectedPathology?.code === "DISC_HERNIATION_CERVICAL";
   const discLevels = isCervical ? DISC_LEVELS_CERVICAL : DISC_LEVELS_LUMBAR;
+
+  // Resolve characterization profile locally — uses data already loaded by this component
+  const selectedCategory = categories.find((c) => c.id === effectiveCategoryId);
+  const characterizationProfile = useMemo(() => {
+    return resolveCharacterizationProfile(
+      selectedPathology?.code,
+      selectedCategory?.code,
+      selectedPathology?.label || effectiveCustomLabel,
+      selectedCategory?.label,
+    );
+  }, [selectedPathology, selectedCategory, effectiveCustomLabel]);
+
+  // Notify parent when resolved profile changes (for save validation)
+  useEffect(() => {
+    onProfileChange?.(characterizationProfile);
+  }, [characterizationProfile, onProfileChange]);
 
   const showTearPercentage = activeModel === "TENDON_STRUCTURAL_INTEGRITY" &&
     (value.structuralGrade === "GRADE_II" || value.structuralGrade === "GRADE_III");

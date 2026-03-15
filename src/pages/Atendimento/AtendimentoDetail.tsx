@@ -45,7 +45,6 @@ import {
   ClinicalRecordBasic
 } from "@/services/clinicalRecordsService";
 import {
-  resolveCharacterizationProfile,
   buildCharacterizationJson,
   hydrateCharacterizationValues,
   type PathologyCharacterizationProfile,
@@ -751,20 +750,6 @@ const AtendimentoDetail = () => {
   });
   const pathologyLabel = pathologyMeta?.label || null;
 
-  // Fetch category label + code for profile resolution
-  const { data: categoryMeta } = useQuery({
-    queryKey: ["category-meta", dbAttendancePathology?.category_id],
-    queryFn: async () => {
-      if (!dbAttendancePathology?.category_id) return null;
-      const { data } = await supabase
-        .from("pathology_categories")
-        .select("label, code")
-        .eq("id", dbAttendancePathology.category_id)
-        .single();
-      return data || null;
-    },
-    enabled: !!dbAttendancePathology?.category_id,
-  });
   
   const topicKey = useMemo(() => {
     if (!dbAttendancePathology) return null;
@@ -774,16 +759,8 @@ const AtendimentoDetail = () => {
     return buildTopicKey(intervention, pathLabel);
   }, [dbAttendancePathology, pathologyLabel, attendance?.involves_orthobiologics]);
 
-  // Resolve characterization profile from pathology metadata
-  const characterizationProfile = useMemo((): PathologyCharacterizationProfile | null => {
-    if (!dbAttendancePathology) return null;
-    return resolveCharacterizationProfile(
-      pathologyMeta?.code,
-      categoryMeta?.code,
-      dbAttendancePathology.custom_pathology_label || pathologyMeta?.label,
-      categoryMeta?.label,
-    );
-  }, [dbAttendancePathology, pathologyMeta, categoryMeta]);
+  // Profile is resolved inside ConfirmedDiagnosisCard and reported back via callback
+  const [characterizationProfile, setCharacterizationProfile] = useState<PathologyCharacterizationProfile | null>(null);
 
   // Auto-create evidence link when topic_key changes
   useEffect(() => {
@@ -912,7 +889,7 @@ const AtendimentoDetail = () => {
               hypothesisCustomLabel={hypothesisState.customLabel}
               characterizationValues={characterizationValues}
               onCharacterizationChange={setCharacterizationValues}
-              characterizationProfile={characterizationProfile}
+              onProfileChange={setCharacterizationProfile}
             />
 
             {/* Previous Treatments Card */}
