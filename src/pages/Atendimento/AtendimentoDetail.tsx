@@ -460,7 +460,7 @@ const AtendimentoDetail = () => {
       custom_pathology_label: isCustom ? trimmedCustom : null,
       clinical_observation: hypothesisState.clinicalObservation?.trim() || null,
       diagnosis_stage: "CONFIRMED",
-      severity_model: structuralModel || "UNKNOWN",
+      severity_model: "UNKNOWN",
       severity_scale_id: null as string | null,
       severity_value: isStructural ? structuralGrade : null,
       structural_model: structuralModel || "NONE",
