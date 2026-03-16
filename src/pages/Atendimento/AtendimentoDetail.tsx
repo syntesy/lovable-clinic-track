@@ -7,7 +7,6 @@ import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock, Stethoscope,
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logInfo, logWarn, logError } from "@/lib/telemetry";
@@ -16,9 +15,7 @@ import {
   useAttendanceFiles,
   useAttendanceRecords,
   useCloseAttendance,
-  useUpdateAttendanceType
 } from "@/hooks/useAttendance";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AttendanceStepper,
   AttendanceHeader,
@@ -26,6 +23,7 @@ import {
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
 import { BloodTestsManualCard } from "@/components/attendance/BloodTestsManualCard";
+import { OrtobiologicAptitudeCard } from "@/components/attendance/OrtobiologicAptitudeCard";
 import { PreviousTreatmentsCard, type PreviousTreatmentsState } from "@/components/attendance/PreviousTreatmentsCard";
 import { type PathologyState, INITIAL_PATHOLOGY_STATE } from "@/components/attendance/PathologyCard";
 import { DiagnosticHypothesisCard, type HypothesisState, INITIAL_HYPOTHESIS_STATE } from "@/components/attendance/DiagnosticHypothesisCard";
@@ -118,9 +116,6 @@ const AtendimentoDetail = () => {
   // Close attendance mutation
   const closeAttendance = useCloseAttendance();
   
-  // Update attendance type mutation
-  const updateAttendanceType = useUpdateAttendanceType();
-
   // Check if attendance is closed
   const isClosed = isAttendanceClosed(attendance ?? null);
 
@@ -916,13 +911,19 @@ const AtendimentoDetail = () => {
               onProfileChange={setCharacterizationProfile}
             />
 
-            {/* Exames de Sangue — Pré-PRP (visível quando diagnóstico está aberto) */}
+            {/* Exames de Sangue + Score REGHEN (visível quando diagnóstico está aberto) */}
             {isConfirmedDiagnosisVisible && attendanceId && (
-              <BloodTestsManualCard
-                attendanceId={attendanceId}
-                nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
-                disabled={isClosed}
-              />
+              <>
+                <BloodTestsManualCard
+                  attendanceId={attendanceId}
+                  nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+                  disabled={isClosed}
+                />
+                <OrtobiologicAptitudeCard
+                  attendanceId={attendanceId}
+                  nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+                />
+              </>
             )}
 
             {/* Previous Treatments Card */}
@@ -1004,54 +1005,6 @@ const AtendimentoDetail = () => {
       case "plan":
         return (
           <div className="space-y-6">
-            {/* Attendance Type Selector */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4" />
-                  Tipo de Atendimento
-                </CardTitle>
-                <CardDescription>
-                  Selecione se este atendimento envolve terapias ortobiológicas. Isso habilita a Triagem específica (opcional).
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup
-                  value={attendance.involves_orthobiologics ? "orthobiologic" : "non-orthobiologic"}
-                  onValueChange={(value) => {
-                    if (isClosed) return;
-                    const isOrtho = value === "orthobiologic";
-                    updateAttendanceType.mutate({
-                      attendanceId: attendance.id,
-                      involvesOrthobiologics: isOrtho
-                    });
-                  }}
-                  disabled={isClosed || updateAttendanceType.isPending}
-                  className="flex flex-col sm:flex-row gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="orthobiologic" id="orthobiologic" />
-                    <Label htmlFor="orthobiologic" className="cursor-pointer">
-                      <span className="font-medium">Ortobiológico</span>
-                      <span className="text-muted-foreground text-sm ml-2">(com Triagem)</span>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="non-orthobiologic" id="non-orthobiologic" />
-                    <Label htmlFor="non-orthobiologic" className="cursor-pointer">
-                      <span className="font-medium">Não Ortobiológico</span>
-                      <span className="text-muted-foreground text-sm ml-2">(sem Triagem)</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-                {attendance.involves_orthobiologics && (
-                  <p className="text-sm text-muted-foreground mt-3">
-                    ✓ Triagem disponível na próxima etapa (opcional).
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1173,10 +1126,7 @@ const AtendimentoDetail = () => {
       case "report": {
         const hasRecord = !!clinicalRecord;
         const hasMinData = hasClinicalRecordMinimumData(clinicalRecord as ClinicalRecordBasic | null);
-        const canGenerateReport =
-          hasRecord &&
-          hasMinData &&
-          (attendance?.involves_orthobiologics ? currentStatus === "S3" : true);
+        const canGenerateReport = hasRecord && hasMinData;
 
         return (
           <div className="space-y-6">
