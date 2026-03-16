@@ -94,6 +94,8 @@ const AtendimentoDetail = () => {
     physioType: "",
     physioDuration: "",
     nsaidTimeBucket: "",
+    nsaidUsageDuration: "",
+    corticoidTimeBucket: "",
   });
 
   const [pathologyState, setPathologyState] = useState<PathologyState>(INITIAL_PATHOLOGY_STATE);
@@ -162,6 +164,8 @@ const AtendimentoDetail = () => {
         physioType: (physio?.type as string) ?? "",
         physioDuration: (physio?.duration as string) ?? "",
         nsaidTimeBucket: (nsaids?.time_bucket as string) ?? "",
+        nsaidUsageDuration: (nsaids?.usage_duration as string) ?? "",
+        corticoidTimeBucket: ((details?.corticosteroid_ia as Record<string, unknown>)?.time_bucket as string) ?? "",
       });
     }
   }, [dbPreviousTreatments]);
@@ -573,8 +577,14 @@ const AtendimentoDetail = () => {
     if (previousTreatments.treatments.includes("PHYSIOTHERAPY") && previousTreatments.physioDuration) {
       details.physiotherapy = { duration: previousTreatments.physioDuration };
     }
-    if (previousTreatments.treatments.includes("NSAIDS") && previousTreatments.nsaidTimeBucket) {
-      details.nsaids = { time_bucket: previousTreatments.nsaidTimeBucket };
+    if (previousTreatments.treatments.includes("NSAIDS")) {
+      const nsaidsDetail: Record<string, string> = {};
+      if (previousTreatments.nsaidTimeBucket) nsaidsDetail.time_bucket = previousTreatments.nsaidTimeBucket;
+      if (previousTreatments.nsaidUsageDuration) nsaidsDetail.usage_duration = previousTreatments.nsaidUsageDuration;
+      if (Object.keys(nsaidsDetail).length) details.nsaids = nsaidsDetail;
+    }
+    if (previousTreatments.treatments.includes("CORTICOSTEROID_IA") && previousTreatments.corticoidTimeBucket) {
+      details.corticosteroid_ia = { time_bucket: previousTreatments.corticoidTimeBucket };
     }
 
     // NONE enforcement

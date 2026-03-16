@@ -79,6 +79,23 @@ const NSAID_TIME_OPTIONS = [
   { value: "NOT_USED", label: "Não utilizou" },
 ] as const;
 
+const NSAID_USAGE_DURATION_OPTIONS = [
+  { value: "LT_1M",    label: "< 1 mês" },
+  { value: "M1_3",     label: "1–3 meses" },
+  { value: "M3_6",     label: "3–6 meses" },
+  { value: "GT_6M",    label: "> 6 meses" },
+  { value: "CHRONIC",  label: "Uso crônico (> 1 ano)" },
+] as const;
+
+const CORTICOID_TIME_OPTIONS = [
+  { value: "LT_1M",    label: "< 1 mês" },
+  { value: "M1_3",     label: "1–3 meses" },
+  { value: "M3_6",     label: "3–6 meses" },
+  { value: "M6_12",    label: "6–12 meses" },
+  { value: "GT_1Y",    label: "> 1 ano" },
+  { value: "UNKNOWN",  label: "Não lembra" },
+] as const;
+
 export interface PreviousTreatmentsState {
   treatments: string[];
   lastTreatmentTimeBucket: string;
@@ -91,6 +108,8 @@ export interface PreviousTreatmentsState {
   physioType: string;   // mantido no banco; não exibido na UI
   physioDuration: string;
   nsaidTimeBucket: string;
+  nsaidUsageDuration: string;
+  corticoidTimeBucket: string;
 }
 
 interface PreviousTreatmentsCardProps {
@@ -126,7 +145,7 @@ export function PreviousTreatmentsCard({
     treatments, lastTreatmentTimeBucket, otherText,
     shockwaveType, laserIntensity, orthobiologicPrevType,
     orthobiologicPrevOtherText, epiUsGuided, physioDuration,
-    nsaidTimeBucket,
+    nsaidTimeBucket, nsaidUsageDuration, corticoidTimeBucket,
   } = value;
 
   const handleTreatmentToggle = useCallback(
@@ -154,6 +173,8 @@ export function PreviousTreatmentsCard({
         epiUsGuided: next.includes("EPI") ? epiUsGuided : "",
         physioDuration: next.includes("PHYSIOTHERAPY") ? physioDuration : "",
         nsaidTimeBucket: next.includes("NSAIDS") ? nsaidTimeBucket : "",
+        nsaidUsageDuration: next.includes("NSAIDS") ? nsaidUsageDuration : "",
+        corticoidTimeBucket: next.includes("CORTICOSTEROID_IA") ? corticoidTimeBucket : "",
       });
     },
     [value, treatments, otherText, shockwaveType, laserIntensity,
@@ -212,29 +233,73 @@ export function PreviousTreatmentsCard({
           </div>
         )}
 
-        {/* NSAIDS — tempo desde o último uso */}
+        {/* NSAIDS — tempo desde o último uso + duração do uso */}
         {treatments.includes("NSAIDS") && (
+          <div className="space-y-3 pl-6">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Tempo desde o último uso de AINE</Label>
+              <Select
+                value={nsaidTimeBucket}
+                onValueChange={(v) => onChange({ ...value, nsaidTimeBucket: v })}
+                disabled={disabled}
+              >
+                <SelectTrigger className={nsaidTimeBucketValidationError ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {NSAID_TIME_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {nsaidTimeBucketValidationError && (
+                <p className="text-sm text-destructive">{nsaidTimeBucketValidationError}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Duração do uso da medicação</Label>
+              <Select
+                value={nsaidUsageDuration}
+                onValueChange={(v) => onChange({ ...value, nsaidUsageDuration: v })}
+                disabled={disabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {NSAID_USAGE_DURATION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        {/* CORTICOSTEROID_IA — tempo desde a última aplicação */}
+        {treatments.includes("CORTICOSTEROID_IA") && (
           <div className="space-y-1.5 pl-6">
-            <Label className="text-sm">Tempo desde o último uso de AINE</Label>
+            <Label className="text-sm">Tempo desde a última aplicação de corticoide</Label>
             <Select
-              value={nsaidTimeBucket}
-              onValueChange={(v) => onChange({ ...value, nsaidTimeBucket: v })}
+              value={corticoidTimeBucket}
+              onValueChange={(v) => onChange({ ...value, corticoidTimeBucket: v })}
               disabled={disabled}
             >
-              <SelectTrigger className={nsaidTimeBucketValidationError ? "border-destructive" : ""}>
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                {NSAID_TIME_OPTIONS.map((opt) => (
+                {CORTICOID_TIME_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {nsaidTimeBucketValidationError && (
-              <p className="text-sm text-destructive">{nsaidTimeBucketValidationError}</p>
-            )}
           </div>
         )}
 
