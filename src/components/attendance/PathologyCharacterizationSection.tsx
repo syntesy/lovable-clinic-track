@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, FlaskConical, Info } from 'lucide-react';
+import { FlaskConical, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -94,11 +93,6 @@ export function PathologyCharacterizationSection({
   onChange,
   disabled = false,
 }: PathologyCharacterizationSectionProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const requiredFields = profile.fields.filter(f => !f.advancedOnly);
-  const advancedFields = profile.fields.filter(f => f.advancedOnly);
-
   function handleSelect(key: string, value: string) {
     onChange({ ...values, [key]: value });
   }
@@ -130,8 +124,8 @@ export function PathologyCharacterizationSection({
         </span>
       </div>
 
-      {/* Required fields */}
-      {requiredFields.map(field => (
+      {/* All fields rendered inline — no collapsible */}
+      {profile.fields.map(field => (
         <FieldBlock
           key={field.key}
           field={field}
@@ -140,37 +134,6 @@ export function PathologyCharacterizationSection({
           disabled={disabled}
         />
       ))}
-
-      {/* Advanced fields (collapsible) */}
-      {advancedFields.length > 0 && (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(v => !v)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors text-sm font-medium"
-          >
-            <span>Detalhamento científico (opcional)</span>
-            {showAdvanced ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-          </button>
-          {showAdvanced && (
-            <div className="p-3 space-y-4">
-              {advancedFields.map(field => (
-                <FieldBlock
-                  key={field.key}
-                  field={field}
-                  values={values}
-                  onChange={handleSelect}
-                  disabled={disabled}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
