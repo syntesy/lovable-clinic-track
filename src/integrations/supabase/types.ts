@@ -2265,6 +2265,7 @@ export type Database = {
           last_report_generated_at: string | null
           last_report_record_id: string | null
           last_report_type: string | null
+          manual_blood_tests: Record<string, unknown> | null
           patient_id: string
           title: string | null
           user_id: string
@@ -2281,6 +2282,7 @@ export type Database = {
           last_report_generated_at?: string | null
           last_report_record_id?: string | null
           last_report_type?: string | null
+          manual_blood_tests?: Record<string, unknown> | null
           patient_id: string
           title?: string | null
           user_id: string
@@ -2297,6 +2299,7 @@ export type Database = {
           last_report_generated_at?: string | null
           last_report_record_id?: string | null
           last_report_type?: string | null
+          manual_blood_tests?: Record<string, unknown> | null
           patient_id?: string
           title?: string | null
           user_id?: string

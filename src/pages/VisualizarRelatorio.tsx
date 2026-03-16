@@ -127,6 +127,7 @@ const VisualizarRelatorio = () => {
         .select("attendance_id")
         .eq("id", recordIdFromQuery!)
         .maybeSingle();
+      let manualBloodTests: Record<string, unknown> | null = null;
       if (crRaw?.attendance_id) {
         const { data: ptData } = await supabase
           .from("attendance_previous_treatments")
@@ -134,6 +135,13 @@ const VisualizarRelatorio = () => {
           .eq("attendance_id", crRaw.attendance_id)
           .maybeSingle();
         previousTreatments = ptData;
+
+        const { data: sessionData } = await supabase
+          .from("attendance_sessions")
+          .select("manual_blood_tests")
+          .eq("id", crRaw.attendance_id)
+          .maybeSingle();
+        manualBloodTests = (sessionData?.manual_blood_tests as Record<string, unknown>) ?? null;
 
         // Fetch pathology data
         const { data: apData } = await supabase
@@ -180,6 +188,7 @@ const VisualizarRelatorio = () => {
         labAnalysisRuns: labAnalysisRuns || [],
         previousTreatments,
         pathologyData,
+        manualBloodTests,
       };
     },
   });
@@ -811,6 +820,36 @@ const VisualizarRelatorio = () => {
                 <p className="mt-1 font-semibold">{patientReport.labAnalysisRuns.length} análise(s)</p>
               </div>
             </div>
+
+            {/* Manual Blood Tests */}
+            {patientReport.manualBloodTests && (
+              <div className="border border-border rounded-lg p-5 print:p-4 space-y-3 mb-6">
+                <h3 className="font-semibold text-base">Exames de Sangue — Valores Manuais</h3>
+                {(patientReport.manualBloodTests as any).collected_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Registrado em {format(new Date((patientReport.manualBloodTests as any).collected_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
+                  {[
+                    { key: "platelets", label: "Plaquetas", unit: "x10³/µL" },
+                    { key: "hemoglobin", label: "Hemoglobina", unit: "g/dL" },
+                    { key: "leukocytes", label: "Leucócitos", unit: "x10³/µL" },
+                    { key: "hematocrit", label: "Hematócrito", unit: "%" },
+                    { key: "crp", label: "PCR", unit: "mg/L" },
+                    { key: "ferritin", label: "Ferritina", unit: "ng/mL" },
+                    { key: "glucose", label: "Glicemia", unit: "mg/dL" },
+                  ]
+                    .filter(({ key }) => (patientReport.manualBloodTests as any)[key] != null)
+                    .map(({ key, label, unit }) => (
+                      <div key={key} className="border border-border rounded px-3 py-2">
+                        <p className="text-xs text-muted-foreground">{label}</p>
+                        <p className="font-semibold">{(patientReport.manualBloodTests as any)[key]} <span className="font-normal text-xs">{unit}</span></p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
 
             {/* Lab Analysis Results */}
             {patientReport.labAnalysisRuns.length > 0 && (

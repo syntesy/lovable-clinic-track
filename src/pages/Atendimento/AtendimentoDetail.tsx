@@ -25,6 +25,7 @@ import {
   AttendanceDocumentsStep,
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
+import { BloodTestsManualCard } from "@/components/attendance/BloodTestsManualCard";
 import { PreviousTreatmentsCard, type PreviousTreatmentsState } from "@/components/attendance/PreviousTreatmentsCard";
 import { type PathologyState, INITIAL_PATHOLOGY_STATE } from "@/components/attendance/PathologyCard";
 import { DiagnosticHypothesisCard, type HypothesisState, INITIAL_HYPOTHESIS_STATE } from "@/components/attendance/DiagnosticHypothesisCard";
@@ -1150,6 +1151,13 @@ const AtendimentoDetail = () => {
       case "attachments":
         return (
           <div className="space-y-6">
+            {attendanceId && (
+              <BloodTestsManualCard
+                attendanceId={attendanceId}
+                nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+                disabled={isClosed}
+              />
+            )}
             {attendanceId && attendance?.patient_id && (
               <AttendanceDocumentsStep
                 attendanceId={attendanceId}
