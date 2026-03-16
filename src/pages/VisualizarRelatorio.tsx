@@ -824,7 +824,7 @@ const VisualizarRelatorio = () => {
             {/* Manual Blood Tests */}
             {patientReport.manualBloodTests && (
               <div className="border border-border rounded-lg p-5 print:p-4 space-y-3 mb-6">
-                <h3 className="font-semibold text-base">Exames de Sangue — Valores Manuais</h3>
+                <h3 className="font-semibold text-base">Exames de Sangue — Pré-PRP</h3>
                 {(patientReport.manualBloodTests as any).collected_at && (
                   <p className="text-xs text-muted-foreground">
                     Registrado em {format(new Date((patientReport.manualBloodTests as any).collected_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
@@ -832,19 +832,21 @@ const VisualizarRelatorio = () => {
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
                   {[
-                    { key: "platelets", label: "Plaquetas", unit: "x10³/µL" },
-                    { key: "hemoglobin", label: "Hemoglobina", unit: "g/dL" },
-                    { key: "leukocytes", label: "Leucócitos", unit: "x10³/µL" },
-                    { key: "hematocrit", label: "Hematócrito", unit: "%" },
-                    { key: "crp", label: "PCR", unit: "mg/L" },
-                    { key: "ferritin", label: "Ferritina", unit: "ng/mL" },
-                    { key: "glucose", label: "Glicemia", unit: "mg/dL" },
+                    { key: "platelets",  label: "Plaquetas",         unit: "x10³/µL", ref: "≥200" },
+                    { key: "hemoglobin", label: "Hemoglobina",        unit: "g/dL",    ref: "≥12" },
+                    { key: "leukocytes", label: "Leucócitos",         unit: "x10³/µL", ref: "4–10" },
+                    { key: "hematocrit", label: "Hematócrito",        unit: "%",       ref: "≥35%" },
+                    { key: "crp",        label: "PCR",                unit: "mg/L",    ref: "<3" },
+                    { key: "ferritin",   label: "Ferritina",          unit: "ng/mL",   ref: "≥50" },
+                    { key: "glucose",    label: "Glicemia Jejum",     unit: "mg/dL",   ref: "<100" },
+                    { key: "vitamin_d",  label: "Vitamina D (25-OH)", unit: "ng/mL",   ref: "40–60" },
                   ]
                     .filter(({ key }) => (patientReport.manualBloodTests as any)[key] != null)
-                    .map(({ key, label, unit }) => (
+                    .map(({ key, label, unit, ref }) => (
                       <div key={key} className="border border-border rounded px-3 py-2">
                         <p className="text-xs text-muted-foreground">{label}</p>
                         <p className="font-semibold">{(patientReport.manualBloodTests as any)[key]} <span className="font-normal text-xs">{unit}</span></p>
+                        <p className="text-[10px] text-muted-foreground">Ref. PRP: {ref}</p>
                       </div>
                     ))}
                 </div>
