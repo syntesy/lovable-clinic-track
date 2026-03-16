@@ -50,7 +50,7 @@ async function extractPdfNativeText(pdfBytes: Uint8Array): Promise<{ text: strin
   return { text, pages: pages.length };
 }
 
-/** Use Gemini Vision to OCR an image or scanned PDF */
+/** Use Claude Vision/Document API to OCR an image or scanned PDF */
 async function ocrWithVision(
   base64Data: string,
   mimeType: string,
@@ -60,13 +60,23 @@ async function ocrWithVision(
     throw new Error("ANTHROPIC_API_KEY não configurada");
   }
 
+  const isPdf = mimeType === "application/pdf";
+
+  // PDFs use document type (beta); images use image type
+  const contentSource = isPdf
+    ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64Data } }
+    : { type: "image", source: { type: "base64", media_type: mimeType, data: base64Data } };
+
+  const headers: Record<string, string> = {
+    "x-api-key": anthropicApiKey!,
+    "anthropic-version": "2023-06-01",
+    "Content-Type": "application/json",
+  };
+  if (isPdf) headers["anthropic-beta"] = "pdfs-2024-09-25";
+
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: {
-      "x-api-key": anthropicApiKey!,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 8000,
@@ -74,14 +84,7 @@ async function ocrWithVision(
         {
           role: "user",
           content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mimeType,
-                data: base64Data,
-              },
-            },
+            contentSource,
             {
               type: "text",
               text: `Você é um especialista em OCR e extração de texto.
