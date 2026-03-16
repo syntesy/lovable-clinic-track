@@ -73,6 +73,9 @@ const AtendimentoDetail = () => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isSavingTreatments, setIsSavingTreatments] = useState(false);
   const [isSavingPathology, setIsSavingPathology] = useState(false);
+  const [isSavedHypothesis, setIsSavedHypothesis] = useState(false);
+  const [isSavedDiagnosis, setIsSavedDiagnosis] = useState(false);
+  const [isSavedTreatments, setIsSavedTreatments] = useState(false);
   const [treatmentsValidationError, setTreatmentsValidationError] = useState<string | null>(null);
   const [shockwaveValidationError, setShockwaveValidationError] = useState<string | null>(null);
   const [laserValidationError, setLaserValidationError] = useState<string | null>(null);
@@ -374,6 +377,8 @@ const AtendimentoDetail = () => {
       if (error) throw error;
 
       toast.success("Hipótese diagnóstica salva.");
+      setIsSavedHypothesis(true);
+      setTimeout(() => setIsSavedHypothesis(false), 3000);
       await queryClient.invalidateQueries({
         queryKey: ["attendance-pathology", attendanceId],
       });
@@ -484,6 +489,8 @@ const AtendimentoDetail = () => {
       if (error) throw error;
 
       toast.success("Diagnóstico confirmado salvo.");
+      setIsSavedDiagnosis(true);
+      setTimeout(() => setIsSavedDiagnosis(false), 3000);
       await queryClient.invalidateQueries({
         queryKey: ["attendance-pathology", attendanceId],
       });
@@ -590,6 +597,8 @@ const AtendimentoDetail = () => {
       if (error) throw error;
 
       toast.success("Tratamentos prévios salvos");
+      setIsSavedTreatments(true);
+      setTimeout(() => setIsSavedTreatments(false), 3000);
       await queryClient.invalidateQueries({
         queryKey: ["attendance-previous-treatments", attendanceId],
       });
@@ -875,6 +884,7 @@ const AtendimentoDetail = () => {
               onSave={handleSaveHypothesis}
               disabled={isClosed}
               isSaving={isSavingPathology}
+              isSaved={isSavedHypothesis}
             />
 
             {/* Diagnóstico Confirmado (Imagem) */}
@@ -884,6 +894,7 @@ const AtendimentoDetail = () => {
               onSave={handleSavePathology}
               disabled={isClosed}
               isSaving={isSavingPathology}
+              isSaved={isSavedDiagnosis}
               isVisible={isConfirmedDiagnosisVisible}
               onRequestOpen={() => setIsConfirmedDiagnosisVisible(true)}
               hypothesisCategoryId={hypothesisState.categoryId}
@@ -909,6 +920,7 @@ const AtendimentoDetail = () => {
               onSave={handleSavePreviousTreatments}
               disabled={isClosed}
               isSaving={isSavingTreatments}
+              isSaved={isSavedTreatments}
               validationError={treatmentsValidationError}
               shockwaveValidationError={shockwaveValidationError}
               laserValidationError={laserValidationError}

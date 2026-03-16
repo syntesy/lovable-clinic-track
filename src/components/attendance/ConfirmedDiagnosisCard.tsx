@@ -127,6 +127,7 @@ interface ConfirmedDiagnosisCardProps {
   onSave?: () => void;
   disabled?: boolean;
   isSaving?: boolean;
+  isSaved?: boolean;
   isVisible: boolean;
   onRequestOpen: () => void;
   /** Category/pathology pre-filled from hypothesis */
@@ -146,6 +147,7 @@ export function ConfirmedDiagnosisCard({
   onSave,
   disabled = false,
   isSaving = false,
+  isSaved = false,
   isVisible,
   onRequestOpen,
   hypothesisCategoryId,
@@ -510,9 +512,11 @@ export function ConfirmedDiagnosisCard({
         {/* Save */}
         {onSave && !disabled && (
           <div className="flex justify-end pt-2">
-            <Button onClick={onSave} disabled={isSaving} className="gap-2">
+            <Button onClick={onSave} disabled={isSaving} className={cn("gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700 border-green-600")}>
               {isSaving ? (
                 <><Loader2 className="h-4 w-4 animate-spin" />Salvando...</>
+              ) : isSaved ? (
+                <><CheckCircle2 className="h-4 w-4" />Salvo!</>
               ) : (
                 <><Save className="h-4 w-4" />Salvar Diagnóstico Confirmado</>
               )}

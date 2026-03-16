@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Lightbulb, Loader2, Save } from "lucide-react";
+import { Lightbulb, Loader2, Save, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface HypothesisState {
   categoryId: string | null;
@@ -35,9 +36,10 @@ interface DiagnosticHypothesisCardProps {
   onSave?: () => void;
   disabled?: boolean;
   isSaving?: boolean;
+  isSaved?: boolean;
 }
 
-export function DiagnosticHypothesisCard({ value, onChange, onSave, disabled = false, isSaving = false }: DiagnosticHypothesisCardProps) {
+export function DiagnosticHypothesisCard({ value, onChange, onSave, disabled = false, isSaving = false, isSaved = false }: DiagnosticHypothesisCardProps) {
   const { data: categories = [] } = useQuery({
     queryKey: ["pathology-categories"],
     queryFn: async () => {
@@ -212,9 +214,11 @@ export function DiagnosticHypothesisCard({ value, onChange, onSave, disabled = f
         {/* Salvar */}
         {onSave && !disabled && (
           <div className="flex justify-end pt-2">
-            <Button onClick={onSave} disabled={isSaving} className="gap-2">
+            <Button onClick={onSave} disabled={isSaving} className={cn("gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700 border-green-600")}>
               {isSaving ? (
                 <><Loader2 className="h-4 w-4 animate-spin" />Salvando...</>
+              ) : isSaved ? (
+                <><CheckCircle2 className="h-4 w-4" />Salvo!</>
               ) : (
                 <><Save className="h-4 w-4" />Salvar Hipótese</>
               )}

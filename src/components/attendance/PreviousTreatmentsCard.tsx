@@ -4,7 +4,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, Save } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -98,6 +99,7 @@ interface PreviousTreatmentsCardProps {
   onSave?: () => Promise<void>;
   disabled?: boolean;
   isSaving?: boolean;
+  isSaved?: boolean;
   validationError?: string | null;
   shockwaveValidationError?: string | null;
   laserValidationError?: string | null;
@@ -112,6 +114,7 @@ export function PreviousTreatmentsCard({
   onSave,
   disabled = false,
   isSaving = false,
+  isSaved = false,
   validationError = null,
   shockwaveValidationError = null,
   laserValidationError = null,
@@ -415,14 +418,13 @@ export function PreviousTreatmentsCard({
 
         {/* Save button */}
         {onSave && !disabled && (
-          <Button onClick={onSave} disabled={isSaving} className="w-full">
+          <Button onClick={onSave} disabled={isSaving} className={cn("w-full gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700 border-green-600")}>
             {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Salvando...
-              </>
+              <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</>
+            ) : isSaved ? (
+              <><CheckCircle2 className="w-4 h-4" />Salvo!</>
             ) : (
-              "Salvar Tratamentos Prévios"
+              <><Save className="w-4 h-4" />Salvar Tratamentos Prévios</>
             )}
           </Button>
         )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, Save } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +33,7 @@ export function ClinicalAssessmentInline({
   const [physicalExam, setPhysicalExam] = useState("");
   const [clinicalDiagnosis, setClinicalDiagnosis] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   // Track if we've already auto-opened to prevent loops
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
@@ -80,6 +82,8 @@ export function ClinicalAssessmentInline({
       if (error) throw error;
 
       toast.success("Avaliação clínica salva");
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
       await onSaved();
       setIsEditing(false);
     } catch (e) {
@@ -170,14 +174,13 @@ export function ClinicalAssessmentInline({
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button onClick={handleSave} disabled={isSaving} className={cn("gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700 border-green-600")}>
           {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Salvando...
-            </>
+            <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</>
+          ) : isSaved ? (
+            <><CheckCircle2 className="w-4 h-4" />Salvo!</>
           ) : (
-            "Salvar"
+            <><Save className="w-4 h-4" />Salvar</>
           )}
         </Button>
         <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
