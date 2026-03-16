@@ -898,7 +898,7 @@ const AtendimentoDetail = () => {
               isSaved={isSavedHypothesis}
             />
 
-            {/* Diagnóstico Confirmado (Imagem) */}
+            {/* Confirmação do Diagnóstico */}
             <ConfirmedDiagnosisCard
               value={pathologyState}
               onChange={setPathologyState}
@@ -915,6 +915,15 @@ const AtendimentoDetail = () => {
               onCharacterizationChange={setCharacterizationValues}
               onProfileChange={setCharacterizationProfile}
             />
+
+            {/* Exames de Sangue — Pré-PRP (visível quando diagnóstico está aberto) */}
+            {isConfirmedDiagnosisVisible && attendanceId && (
+              <BloodTestsManualCard
+                attendanceId={attendanceId}
+                nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+                disabled={isClosed}
+              />
+            )}
 
             {/* Previous Treatments Card */}
             <PreviousTreatmentsCard
@@ -1151,13 +1160,6 @@ const AtendimentoDetail = () => {
       case "attachments":
         return (
           <div className="space-y-6">
-            {attendanceId && (
-              <BloodTestsManualCard
-                attendanceId={attendanceId}
-                nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
-                disabled={isClosed}
-              />
-            )}
             {attendanceId && attendance?.patient_id && (
               <AttendanceDocumentsStep
                 attendanceId={attendanceId}
