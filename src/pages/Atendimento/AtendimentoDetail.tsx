@@ -407,8 +407,8 @@ const AtendimentoDetail = () => {
       return;
     }
 
-    // Structural validation
-    if (structuralModel && structuralModel !== "NONE") {
+    // Structural validation (skip when using characterization system)
+    if (!characterizationProfile && structuralModel && structuralModel !== "NONE") {
       if (!structuralGrade) {
         toast.error("Selecione a classificação estrutural.");
         return;
