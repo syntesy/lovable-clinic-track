@@ -379,7 +379,8 @@ const AtendimentoDetail = () => {
       });
     } catch (e) {
       console.error("hypothesis.save.error", e);
-      toast.error("Não foi possível salvar. Revise os campos.");
+      const msg = (e as any)?.message || String(e);
+      toast.error(`Erro ao salvar hipótese: ${msg}`);
     } finally {
       setIsSavingPathology(false);
     }
@@ -488,7 +489,8 @@ const AtendimentoDetail = () => {
       });
     } catch (e) {
       console.error("confirmed_diagnosis.save.error", e);
-      toast.error("Não foi possível salvar. Revise os campos.");
+      const msg = (e as any)?.message || String(e);
+      toast.error(`Erro ao salvar diagnóstico: ${msg}`);
     } finally {
       setIsSavingPathology(false);
     }
