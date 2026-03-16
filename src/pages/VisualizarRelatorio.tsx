@@ -91,10 +91,13 @@ const VisualizarRelatorio = () => {
         .select("*")
         .eq("patient_id", id);
 
-      const { data: bloodTests } = await supabase
-        .from("blood_tests")
-        .select("*")
-        .eq("patient_id", id);
+      const { data: labAnalysisRuns } = await supabase
+        .from("lab_analysis_runs")
+        .select("id, created_at, status, analysis_json, normalized_json, extraction_method, analysis_confidence_label, warnings")
+        .eq("patient_id", id)
+        .eq("status", "success")
+        .order("created_at", { ascending: false })
+        .limit(5);
 
       // Fetch previous treatments and pathology if clinical record has an attendance_id
       let previousTreatments = null;
@@ -174,7 +177,7 @@ const VisualizarRelatorio = () => {
         sessions: sessions || [],
         ultrasoundImages: ultrasoundImages || [],
         thermographyImages: thermographyImages || [],
-        bloodTests: bloodTests || [],
+        labAnalysisRuns: labAnalysisRuns || [],
         previousTreatments,
         pathologyData,
       };
@@ -794,7 +797,7 @@ const VisualizarRelatorio = () => {
             <h2 className="text-xl font-semibold text-foreground mb-4 print:text-lg">
               Exames e Documentação
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:gap-3 print:text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:gap-3 print:text-sm mb-6">
               <div className="border border-border rounded-lg p-4 print:p-3">
                 <span className="text-muted-foreground font-medium">Ultrassom:</span>
                 <p className="mt-1 font-semibold">{patientReport.ultrasoundImages.length} imagem(s)</p>
@@ -804,10 +807,93 @@ const VisualizarRelatorio = () => {
                 <p className="mt-1 font-semibold">{patientReport.thermographyImages.length} imagem(s)</p>
               </div>
               <div className="border border-border rounded-lg p-4 print:p-3">
-                <span className="text-muted-foreground font-medium">Exames de Sangue:</span>
-                <p className="mt-1 font-semibold">{patientReport.bloodTests.length} exame(s)</p>
+                <span className="text-muted-foreground font-medium">Exames de Sangue (IA):</span>
+                <p className="mt-1 font-semibold">{patientReport.labAnalysisRuns.length} análise(s)</p>
               </div>
             </div>
+
+            {/* Lab Analysis Results */}
+            {patientReport.labAnalysisRuns.length > 0 && (
+              <div className="space-y-6">
+                {patientReport.labAnalysisRuns.map((run: any, idx: number) => {
+                  const analysis = run.analysis_json as any;
+                  const normalized = run.normalized_json as any;
+                  if (!analysis) return null;
+                  return (
+                    <div key={run.id} className="border border-border rounded-lg p-5 print:p-4 space-y-4">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <h3 className="font-semibold text-base">
+                          Análise Laboratorial {patientReport.labAnalysisRuns.length > 1 ? `#${idx + 1}` : ""}
+                        </h3>
+                        <div className="flex gap-2 items-center text-xs text-muted-foreground">
+                          <span>{format(new Date(run.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                          {run.analysis_confidence_label && (
+                            <span className={`px-2 py-0.5 rounded font-medium ${
+                              run.analysis_confidence_label === "HIGH" ? "bg-green-100 text-green-800" :
+                              run.analysis_confidence_label === "MODERATE" ? "bg-yellow-100 text-yellow-800" :
+                              "bg-red-100 text-red-800"
+                            }`}>
+                              Confiança: {run.analysis_confidence_label === "HIGH" ? "Alta" : run.analysis_confidence_label === "MODERATE" ? "Moderada" : "Baixa"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Summary */}
+                      {analysis.summary && (
+                        <p className="text-sm text-foreground">{analysis.summary}</p>
+                      )}
+
+                      {/* Regen Notes — most relevant for orthobiologics */}
+                      {analysis.regen_notes && (
+                        <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-md p-3 print:p-2">
+                          <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase mb-1">Medicina Regenerativa / Ortobiológicos</p>
+                          <p className="text-sm text-foreground">{analysis.regen_notes}</p>
+                        </div>
+                      )}
+
+                      {/* Alerts */}
+                      {analysis.alerts && analysis.alerts.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase">Alertas Clínicos</p>
+                          <ul className="space-y-1">
+                            {analysis.alerts.map((alert: any, i: number) => (
+                              <li key={i} className={`text-sm flex gap-2 items-start rounded px-2 py-1 ${
+                                alert.severity === "high" || alert.type === "safety"
+                                  ? "bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-300"
+                                  : "bg-yellow-50 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-300"
+                              }`}>
+                                <span className="mt-0.5">⚠</span>
+                                <span>{typeof alert === "string" ? alert : alert.message || alert.text || JSON.stringify(alert)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Key biomarkers */}
+                      {normalized?.labs && normalized.labs.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Biomarcadores Interpretados ({normalized.labs.filter((l: any) => l.blocking_reasons?.length === 0).length})</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 print:gap-1 text-xs">
+                            {normalized.labs
+                              .filter((l: any) => l.blocking_reasons?.length === 0)
+                              .slice(0, 12)
+                              .map((lab: any, i: number) => (
+                                <div key={i} className="border border-border rounded px-2 py-1.5">
+                                  <p className="font-medium truncate">{lab.name}</p>
+                                  <p className="text-muted-foreground">{lab.value} {lab.unit}</p>
+                                  {lab.reference_range && <p className="text-muted-foreground text-[10px]">Ref: {lab.reference_range}</p>}
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* Rodapé */}
