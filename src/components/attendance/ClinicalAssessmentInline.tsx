@@ -90,10 +90,7 @@ export function ClinicalAssessmentInline({
   if (isClosed) {
     return (
       <div className="space-y-5">
-        <div className="grid sm:grid-cols-2 gap-5">
-          <FieldView label="Queixa Principal" value={clinicalRecord.chief_complaint} />
-          <FieldView label="Diagnóstico Clínico" value={clinicalRecord.clinical_diagnosis} />
-        </div>
+        <FieldView label="Queixa Principal" value={clinicalRecord.chief_complaint} />
         <FieldView label="Anamnese" value={clinicalRecord.anamnesis} multiline />
         <FieldView label="Exame Físico" value={clinicalRecord.physical_exam} multiline />
       </div>
@@ -102,28 +99,15 @@ export function ClinicalAssessmentInline({
 
   return (
     <div className="space-y-5">
-      {/* Row 1: Queixa + Diagnóstico Clínico (shorter fields) */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium">
-            Queixa Principal
-          </Label>
-          <Textarea
-            value={chiefComplaint}
-            onChange={(e) => setChiefComplaint(e.target.value)}
-            placeholder="Descreva a queixa principal do paciente..."
-            className="min-h-[80px] resize-none"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium">Diagnóstico Clínico</Label>
-          <Textarea
-            value={clinicalDiagnosis}
-            onChange={(e) => setClinicalDiagnosis(e.target.value)}
-            placeholder="Impressão diagnóstica clínica..."
-            className="min-h-[80px] resize-none"
-          />
-        </div>
+      {/* Row 1: Queixa Principal */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">Queixa Principal</Label>
+        <Textarea
+          value={chiefComplaint}
+          onChange={(e) => setChiefComplaint(e.target.value)}
+          placeholder="Descreva a queixa principal do paciente..."
+          className="min-h-[80px] resize-none"
+        />
       </div>
 
       {/* Row 2: Anamnese (long) */}
