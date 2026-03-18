@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, AlertCircle, FlaskConical, Lock, Clock, Stethoscope, ClipboardList, Plus, Lightbulb, ShieldCheck, TestTube, Activity, Pill, BookOpen } from "lucide-react";
+import { Loader2, AlertCircle, FlaskConical, Lock, Clock, Stethoscope, ClipboardList, Plus, Lightbulb, ShieldCheck, TestTube, Activity, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -928,11 +928,10 @@ const AtendimentoDetail = () => {
               />
             </section>
 
-            {/* ── 4 & 5: Exames + Score ── */}
+            {/* ── 4. Exames de Sangue ── */}
             {isConfirmedDiagnosisVisible && attendanceId && (
               <>
                 <div className="border-t border-border" />
-
                 <section id="sec-blood">
                   <SectionHeader n={4} icon={TestTube} title="Exames de Sangue — Pré-PRP" />
                   <BloodTestsManualCard
@@ -941,24 +940,14 @@ const AtendimentoDetail = () => {
                     disabled={isClosed}
                   />
                 </section>
-
-                <div className="border-t border-border" />
-
-                <section id="sec-aptitude">
-                  <SectionHeader n={5} icon={Activity} title="Score REGHEN — Aptidão Ortobiológica" />
-                  <OrtobiologicAptitudeCard
-                    attendanceId={attendanceId}
-                    nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
-                  />
-                </section>
               </>
             )}
 
             <div className="border-t border-border" />
 
-            {/* ── 6. Tratamentos Prévios ── */}
+            {/* ── 5. Tratamentos Prévios ── */}
             <section id="sec-treatments">
-              <SectionHeader n={6} icon={Pill} title="Tratamentos Prévios" />
+              <SectionHeader n={5} icon={Pill} title="Tratamentos Prévios" />
               <PreviousTreatmentsCard
                 value={previousTreatments}
                 onChange={(v) => {
@@ -983,16 +972,15 @@ const AtendimentoDetail = () => {
               />
             </section>
 
-            {/* ── 7. Evidência Científica ── */}
-            {attendanceId && (
+            {/* ── 6. Score REGHEN — último ── */}
+            {isConfirmedDiagnosisVisible && attendanceId && (
               <>
                 <div className="border-t border-border" />
-                <section id="sec-evidence">
-                  <SectionHeader n={7} icon={BookOpen} title="Evidência Científica" />
-                  <EvidencePanel
+                <section id="sec-aptitude">
+                  <SectionHeader n={6} icon={Activity} title="Score REGHEN — Aptidão Ortobiológica" />
+                  <OrtobiologicAptitudeCard
                     attendanceId={attendanceId}
-                    topicKey={topicKey}
-                    isClosed={isClosed}
+                    nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
                   />
                 </section>
               </>

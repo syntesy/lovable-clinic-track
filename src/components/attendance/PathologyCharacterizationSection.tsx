@@ -1,6 +1,5 @@
-import { FlaskConical, Info } from 'lucide-react';
+import { FlaskConical, Info, CheckCircle2, Circle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -18,9 +17,9 @@ interface PathologyCharacterizationSectionProps {
 }
 
 const hintColorMap = {
-  favorable: 'text-green-600 dark:text-green-400',
-  conditional: 'text-yellow-600 dark:text-yellow-400',
-  adverse: 'text-red-600 dark:text-red-400',
+  favorable: 'text-green-500',
+  conditional: 'text-yellow-500',
+  adverse: 'text-red-500',
 } as const;
 
 function FieldBlock({
@@ -34,52 +33,77 @@ function FieldBlock({
   onChange: (key: string, value: string) => void;
   disabled: boolean;
 }) {
-  const selectedOption = field.options.find(o => o.value === values[field.key]);
+  const selectedValue = values[field.key];
+  const selectedOption = field.options.find(o => o.value === selectedValue);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1.5">
-        <Label className="text-sm font-medium">
-          {field.label}
-          {field.required && <span className="text-destructive ml-0.5">*</span>}
-        </Label>
-        {field.tooltipText && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-[240px]">
-                <p className="text-xs">{field.tooltipText}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+    <div className="space-y-3">
+      {/* Field header */}
+      <div className="space-y-0.5">
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-foreground">
+            {field.label}
+            {field.required && <span className="text-destructive ml-0.5">*</span>}
+          </p>
+          {field.tooltipText && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[240px]">
+                  <p className="text-xs">{field.tooltipText}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        {field.description && (
+          <p className="text-xs text-muted-foreground leading-snug">{field.description}</p>
+        )}
+        {!selectedValue && (
+          <p className="text-xs text-muted-foreground/60 italic">Selecione uma opção abaixo</p>
         )}
       </div>
-      {field.description && (
-        <p className="text-xs text-muted-foreground">{field.description}</p>
-      )}
-      <div className="flex flex-wrap gap-2">
-        {field.options.map(option => (
-          <button
-            key={option.value}
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(field.key, option.value)}
-            className={cn(
-              'px-3 py-1.5 rounded-md text-sm font-medium border transition-colors',
-              values[field.key] === option.value
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-background border-border hover:border-primary/50 text-foreground',
-              disabled && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
+
+      {/* Options as radio-style cards */}
+      <div className="space-y-2">
+        {field.options.map(option => {
+          const isSelected = selectedValue === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(field.key, option.value)}
+              className={cn(
+                'w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 text-left transition-all',
+                isSelected
+                  ? 'border-primary bg-primary/5 text-foreground'
+                  : 'border-border bg-background hover:border-primary/40 hover:bg-muted/30 text-muted-foreground hover:text-foreground',
+                disabled && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              {isSelected
+                ? <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                : <Circle className="w-4 h-4 shrink-0 text-muted-foreground/40" />
+              }
+              <span className={cn('text-sm font-medium', isSelected && 'text-foreground')}>
+                {option.label}
+              </span>
+              {isSelected && option.scoringHint && (
+                <span className={cn('text-xs ml-auto', hintColorMap[option.scoringHint.type])}>
+                  {option.scoringHint.text}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
+
+      {/* Hint for selected option */}
       {selectedOption?.scoringHint && (
-        <p className={cn('text-xs italic', hintColorMap[selectedOption.scoringHint.type])}>
+        <p className={cn('text-xs', hintColorMap[selectedOption.scoringHint.type])}>
           {selectedOption.scoringHint.text}
         </p>
       )}
@@ -98,7 +122,7 @@ export function PathologyCharacterizationSection({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Protocol badge */}
       <div className="flex items-center gap-2 flex-wrap">
         <TooltipProvider>
@@ -119,13 +143,11 @@ export function PathologyCharacterizationSection({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <span className="text-xs text-muted-foreground">
-          Caracterização científica da patologia
-        </span>
+        <span className="text-xs text-muted-foreground">Caracterização científica da patologia</span>
       </div>
 
-      {/* Fields in 2-col grid when there are multiple */}
-      <div className={profile.fields.length > 1 ? "grid md:grid-cols-2 gap-5" : "space-y-4"}>
+      {/* Fields in 2-col grid when multiple */}
+      <div className={profile.fields.length > 1 ? "grid md:grid-cols-2 gap-8" : "space-y-6"}>
         {profile.fields.map(field => (
           <FieldBlock
             key={field.key}

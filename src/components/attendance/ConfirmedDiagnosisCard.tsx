@@ -123,52 +123,42 @@ function deriveKLGroup(grade: string): string | null {
   }
 }
 
-// ── Scale button ─────────────────────────────────────────────
+// ── Scale label helpers ───────────────────────────────────────
 
-function ScaleButton({
-  value,
-  index,
-  selected,
-  colorFn,
-  disabled,
-  onClick,
-}: {
-  value: number;
-  index: number;
-  selected: boolean;
-  colorFn: (i: number) => { bg: string; text: string; ring: string };
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  const colors = colorFn(index);
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        "flex-1 min-w-0 h-11 rounded-lg text-sm font-bold border-2 transition-all",
-        selected
-          ? `${colors.bg} ${colors.text} ${colors.ring} border-transparent shadow-sm scale-105`
-          : "bg-card border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-        disabled && "opacity-50 cursor-not-allowed"
-      )}
-    >
-      {value}
-    </button>
-  );
-}
+const EVA_LABELS: Record<number, string> = {
+  0: "0 — Sem dor",
+  1: "1 — Dor muito leve",
+  2: "2 — Dor leve",
+  3: "3 — Dor leve a moderada",
+  4: "4 — Dor moderada",
+  5: "5 — Dor moderada intensa",
+  6: "6 — Dor intensa",
+  7: "7 — Dor muito intensa",
+  8: "8 — Dor severa",
+  9: "9 — Dor quase insuportável",
+  10: "10 — Pior dor imaginável",
+};
 
-function getEvaColors(i: number) {
-  if (i === 0) return { bg: "bg-green-500", text: "text-white", ring: "ring-2 ring-green-400" };
-  if (i <= 3) return { bg: "bg-emerald-400", text: "text-white", ring: "ring-2 ring-emerald-300" };
-  if (i <= 5) return { bg: "bg-yellow-400", text: "text-white", ring: "ring-2 ring-yellow-300" };
-  if (i <= 7) return { bg: "bg-orange-500", text: "text-white", ring: "ring-2 ring-orange-400" };
-  return { bg: "bg-red-600", text: "text-white", ring: "ring-2 ring-red-500" };
-}
+const IFN_LABELS: Record<number, string> = {
+  0: "0 — Sem limitação",
+  1: "1 — Limitação mínima",
+  2: "2 — Limitação leve",
+  3: "3 — Leve a moderada",
+  4: "4 — Limitação moderada",
+  5: "5 — Moderada a intensa",
+  6: "6 — Limitação intensa",
+  7: "7 — Muito limitante",
+  8: "8 — Severamente limitante",
+  9: "9 — Quase incapacitante",
+  10: "10 — Limitação total",
+};
 
-function getIfnColors(i: number) {
-  return getEvaColors(i); // same scale
+function scaleColor(i: number | null) {
+  if (i == null) return "";
+  if (i <= 2) return "text-green-500";
+  if (i <= 4) return "text-yellow-500";
+  if (i <= 6) return "text-orange-500";
+  return "text-red-500";
 }
 
 // ── Subsection divider ────────────────────────────────────────
@@ -456,84 +446,55 @@ export function ConfirmedDiagnosisCard({
 
       {/* ── Block C: Avaliação Funcional ── */}
       <SubSection label="Avaliação Funcional">
-        <div className="grid sm:grid-cols-2 gap-8">
+        <div className="grid sm:grid-cols-2 gap-6">
           {/* EVA */}
           <div className="space-y-2">
-            <div className="flex items-baseline justify-between">
+            <div className="space-y-0.5">
               <Label className="text-sm font-semibold">Escala de Dor – EVA</Label>
-              {value.evaPain != null ? (
-                <span className={cn(
-                  "text-3xl font-black tabular-nums",
-                  value.evaPain <= 3 ? "text-green-500" :
-                  value.evaPain <= 5 ? "text-yellow-500" :
-                  value.evaPain <= 7 ? "text-orange-500" : "text-red-600"
-                )}>
-                  {value.evaPain}
-                  <span className="text-sm font-normal text-muted-foreground">/10</span>
-                </span>
-              ) : (
-                <span className="text-sm text-muted-foreground italic">Não avaliado</span>
-              )}
+              <p className="text-xs text-muted-foreground">Intensidade da dor relatada pelo paciente</p>
             </div>
-            <div className="flex gap-1">
-              {Array.from({ length: 11 }, (_, i) => (
-                <ScaleButton
-                  key={i}
-                  value={i}
-                  index={i}
-                  selected={value.evaPain === i}
-                  colorFn={getEvaColors}
-                  disabled={disabled}
-                  onClick={() => onChange({ ...value, evaPain: i })}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-              <span>Sem dor</span>
-              <span>Pior imaginável</span>
-            </div>
+            <Select
+              value={value.evaPain != null ? String(value.evaPain) : ""}
+              onValueChange={(v) => onChange({ ...value, evaPain: parseInt(v, 10) })}
+              disabled={disabled}
+            >
+              <SelectTrigger className={cn(value.evaPain != null && scaleColor(value.evaPain), "font-medium")}>
+                <SelectValue placeholder="Selecione o nível de dor..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 11 }, (_, i) => (
+                  <SelectItem key={i} value={String(i)}>
+                    <span className={cn("font-medium", scaleColor(i))}>{EVA_LABELS[i]}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* IFN */}
           <div className="space-y-2">
-            <div className="flex items-baseline justify-between">
+            <div className="space-y-0.5">
               <Label className="text-sm font-semibold">Limitação Funcional – IFN</Label>
-              {value.ifnFunction != null ? (
-                <span className={cn(
-                  "text-3xl font-black tabular-nums",
-                  value.ifnFunction <= 3 ? "text-green-500" :
-                  value.ifnFunction <= 5 ? "text-yellow-500" :
-                  value.ifnFunction <= 7 ? "text-orange-500" : "text-red-600"
-                )}>
-                  {value.ifnFunction}
-                  <span className="text-sm font-normal text-muted-foreground">/10</span>
-                </span>
-              ) : (
-                <span className="text-sm text-muted-foreground italic">Não avaliado</span>
-              )}
+              <p className="text-xs text-muted-foreground">Impacto nas atividades do dia a dia</p>
             </div>
-            <div className="flex gap-1">
-              {Array.from({ length: 11 }, (_, i) => (
-                <ScaleButton
-                  key={i}
-                  value={i}
-                  index={i}
-                  selected={value.ifnFunction === i}
-                  colorFn={getIfnColors}
-                  disabled={disabled}
-                  onClick={() => onChange({ ...value, ifnFunction: i })}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-              <span>Sem limitação</span>
-              <span>Limitação total</span>
-            </div>
+            <Select
+              value={value.ifnFunction != null ? String(value.ifnFunction) : ""}
+              onValueChange={(v) => onChange({ ...value, ifnFunction: parseInt(v, 10) })}
+              disabled={disabled}
+            >
+              <SelectTrigger className={cn(value.ifnFunction != null && scaleColor(value.ifnFunction), "font-medium")}>
+                <SelectValue placeholder="Selecione o nível de limitação..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 11 }, (_, i) => (
+                  <SelectItem key={i} value={String(i)}>
+                    <span className={cn("font-medium", scaleColor(i))}>{IFN_LABELS[i]}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2 mt-2">
-          IFN — Em uma escala de 0 a 10, quanto esta condição limita as atividades do dia a dia?
-        </p>
       </SubSection>
 
       {/* ── Save ── */}
