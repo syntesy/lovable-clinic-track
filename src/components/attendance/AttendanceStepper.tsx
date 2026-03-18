@@ -1,12 +1,13 @@
 import { useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { 
-  Stethoscope, 
-  FlaskConical, 
-  ClipboardList, 
+import {
+  Stethoscope,
+  FlaskConical,
+  ClipboardList,
   FileText,
   Check,
-  Paperclip
+  Paperclip,
+  Dna,
 } from "lucide-react";
 import { 
   getStepsForAttendance, 
@@ -23,6 +24,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'clipboard-list': ClipboardList,
   'paperclip': Paperclip,
   'file-text': FileText,
+  'dna': Dna,
 };
 
 interface AttendanceStepperProps {

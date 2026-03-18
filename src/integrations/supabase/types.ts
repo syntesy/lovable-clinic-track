@@ -2254,6 +2254,7 @@ export type Database = {
       }
       attendance_sessions: {
         Row: {
+          biological_soil_data: Record<string, unknown> | null
           closed_at: string | null
           closed_by: string | null
           created_at: string
@@ -2271,6 +2272,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          biological_soil_data?: Record<string, unknown> | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
@@ -2288,6 +2290,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          biological_soil_data?: Record<string, unknown> | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string

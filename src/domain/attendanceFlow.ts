@@ -1,12 +1,12 @@
 /**
  * Attendance Flow Domain Contract
- * 
+ *
  * Single source of truth for:
  * - Step definitions and order
  * - Navigation guards
  * - Step validation
- * 
- * Flow: Avaliação Clínica → Plano Terapêutico → Triagem (opcional) → Anexos → Relatório
+ *
+ * Flow: Avaliação Clínica → Solo Biológico → Plano Terapêutico → Anexos → Relatório
  */
 
 // =============================================================================
@@ -17,7 +17,7 @@
  * All possible step IDs in the attendance flow.
  * 'triage' is only visible when attendance.involves_orthobiologics === true
  */
-export type AttendanceStepId = 'clinical' | 'triage' | 'plan' | 'attachments' | 'report';
+export type AttendanceStepId = 'clinical' | 'biological' | 'triage' | 'plan' | 'attachments' | 'report';
 
 /**
  * Minimal attendance shape needed for step calculations
@@ -32,14 +32,14 @@ export interface AttendanceForFlow {
 
 /**
  * Base steps that are always present (triage excluded).
- * Triage is inserted dynamically when involves_orthobiologics === true
+ * Biological soil step is always included.
  */
-export const BASE_STEPS: AttendanceStepId[] = ['clinical', 'plan', 'attachments', 'report'];
+export const BASE_STEPS: AttendanceStepId[] = ['clinical', 'biological', 'plan', 'attachments', 'report'];
 
 /**
  * Complete steps including triage (for orthobiologic attendances)
  */
-export const FULL_STEPS: AttendanceStepId[] = ['clinical', 'plan', 'triage', 'attachments', 'report'];
+export const FULL_STEPS: AttendanceStepId[] = ['clinical', 'biological', 'plan', 'triage', 'attachments', 'report'];
 
 /**
  * Initial step for any new attendance
@@ -49,7 +49,7 @@ export const INITIAL_STEP: AttendanceStepId = 'clinical';
 /**
  * Set of all valid step IDs for fast lookup
  */
-const ALL_VALID_STEPS = new Set<string>(FULL_STEPS);
+const ALL_VALID_STEPS = new Set<string>(['clinical', 'biological', 'triage', 'plan', 'attachments', 'report']);
 
 // =============================================================================
 // STEP CALCULATION

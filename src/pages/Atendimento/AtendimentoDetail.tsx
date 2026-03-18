@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, AlertCircle, FlaskConical, Lock, Clock, Stethoscope, ClipboardList, Plus, Lightbulb, ShieldCheck, TestTube, Activity, Pill } from "lucide-react";
+import { Loader2, AlertCircle, FlaskConical, Lock, Clock, Stethoscope, ClipboardList, Plus, Lightbulb, ShieldCheck, Activity, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,7 +22,7 @@ import {
   AttendanceDocumentsStep,
 } from "@/components/attendance";
 import { ClinicalAssessmentInline } from "@/components/attendance/ClinicalAssessmentInline";
-import { BloodTestsManualCard } from "@/components/attendance/BloodTestsManualCard";
+import { BiologicalSoilStep } from "@/components/attendance/BiologicalSoilStep";
 import { OrtobiologicAptitudeCard } from "@/components/attendance/OrtobiologicAptitudeCard";
 import { PreviousTreatmentsCard, type PreviousTreatmentsState } from "@/components/attendance/PreviousTreatmentsCard";
 import { type PathologyState, INITIAL_PATHOLOGY_STATE } from "@/components/attendance/PathologyCard";
@@ -928,26 +928,11 @@ const AtendimentoDetail = () => {
               />
             </section>
 
-            {/* ── 4. Exames de Sangue ── */}
-            {isConfirmedDiagnosisVisible && attendanceId && (
-              <>
-                <div className="border-t border-border" />
-                <section id="sec-blood">
-                  <SectionHeader n={4} icon={TestTube} title="Exames de Sangue — Pré-PRP" />
-                  <BloodTestsManualCard
-                    attendanceId={attendanceId}
-                    nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
-                    disabled={isClosed}
-                  />
-                </section>
-              </>
-            )}
-
             <div className="border-t border-border" />
 
-            {/* ── 5. Tratamentos Prévios ── */}
+            {/* ── 4. Tratamentos Prévios ── */}
             <section id="sec-treatments">
-              <SectionHeader n={5} icon={Pill} title="Tratamentos Prévios" />
+              <SectionHeader n={4} icon={Pill} title="Tratamentos Prévios" />
               <PreviousTreatmentsCard
                 value={previousTreatments}
                 onChange={(v) => {
@@ -972,12 +957,12 @@ const AtendimentoDetail = () => {
               />
             </section>
 
-            {/* ── 6. Score REGHEN — último ── */}
+            {/* ── 5. Score REGHEN — último ── */}
             {isConfirmedDiagnosisVisible && attendanceId && (
               <>
                 <div className="border-t border-border" />
                 <section id="sec-aptitude">
-                  <SectionHeader n={6} icon={Activity} title="Score REGHEN — Aptidão Ortobiológica" />
+                  <SectionHeader n={5} icon={Activity} title="Score REGHEN — Aptidão Ortobiológica" />
                   <OrtobiologicAptitudeCard
                     attendanceId={attendanceId}
                     nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
@@ -988,6 +973,23 @@ const AtendimentoDetail = () => {
           </div>
         );
       }
+
+      case "biological":
+        return (
+          <div className="space-y-2">
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground">
+                Avaliação do ambiente biológico do paciente para terapias regenerativas.
+                Preencha os marcadores disponíveis — todos os campos são opcionais.
+              </p>
+            </div>
+            {isClosed && renderClosedAlert()}
+            <BiologicalSoilStep
+              attendanceId={attendanceId!}
+              disabled={isClosed}
+            />
+          </div>
+        );
 
       case "triage":
         return (

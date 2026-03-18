@@ -58,11 +58,12 @@ export {
 // Step UI configuration (labels, icons)
 // Follows the domain contract order
 export const STEP_UI_CONFIG: Record<string, { label: string; icon: string }> = {
-  clinical: { label: 'Avaliação Clínica', icon: 'stethoscope' },
-  triage: { label: 'Triagem', icon: 'flask-conical' },
-  plan: { label: 'Plano Terapêutico', icon: 'clipboard-list' },
-  attachments: { label: 'Anexos', icon: 'paperclip' },
-  report: { label: 'Relatório', icon: 'file-text' },
+  clinical:   { label: 'Avaliação Clínica',  icon: 'stethoscope' },
+  biological: { label: 'Solo Biológico',     icon: 'dna' },
+  triage:     { label: 'Triagem',            icon: 'flask-conical' },
+  plan:       { label: 'Plano Terapêutico',  icon: 'clipboard-list' },
+  attachments:{ label: 'Anexos',             icon: 'paperclip' },
+  report:     { label: 'Relatório',          icon: 'file-text' },
 };
 
 // Helper to format attendance title
