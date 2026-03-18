@@ -9,6 +9,12 @@ import { supabase } from '@/integrations/supabase/client';
 export type OutcomeTimepoint = 'baseline' | 'm1' | 'm3' | 'm6' | 'm12';
 export type FunctionScaleType = 'WOMAC' | 'KOOS' | 'ODI' | 'NDI' | 'DASH' | 'VISA_A' | 'OUTRA';
 
+export type ClinicalOutcomeClassification =
+  | 'very_favorable'
+  | 'favorable'
+  | 'partial'
+  | 'limited';
+
 export interface PatientReportedOutcome {
   id: string;
   attendance_id: string;
@@ -17,6 +23,11 @@ export interface PatientReportedOutcome {
   pain_score: number | null;
   function_scale_type: FunctionScaleType | null;
   function_score: number | null;
+  // Classification layer (computed by DB trigger — additive, read-only from hook)
+  clinical_outcome_classification: ClinicalOutcomeClassification | null;
+  clinical_outcome_classification_reason: string | null;
+  delta_eva: number | null;
+  delta_ifn: number | null;
   submitted_at: string;
   created_at: string;
 }

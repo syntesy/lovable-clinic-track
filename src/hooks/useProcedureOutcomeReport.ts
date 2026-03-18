@@ -12,6 +12,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateNormalizedFunctionDelta } from '@/lib/function-scale-map';
+import {
+  classifyClinicalOutcome,
+  type ClinicalOutcomeClassificationValue,
+} from '@/domain/clinicalOutcomeClassification';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -65,6 +69,8 @@ export interface CaseDetail {
   functionScaleType: string | null;
   protocolTitle: string | null;
   adverseEvent: boolean;
+  // 4-level clinical outcome classification (additive layer — interpretation only)
+  clinicalOutcomeClassification: ClinicalOutcomeClassificationValue | null;
 }
 
 export interface ProcedureOutcomeReport {
@@ -306,17 +312,26 @@ async function fetchReport(scope: ReportScope, params: OutcomeReportParams): Pro
     if (df !== null) deltaFunctions.push(df);
 
     if (scope === 'CLINIC') {
+      const baselineFn = mc.baseline.function_score != null ? Number(mc.baseline.function_score) : null;
+      const followupFn = mc.followup.function_score != null ? Number(mc.followup.function_score) : null;
+      const outcomeClass = classifyClinicalOutcome({
+        baseline_eva: mc.baseline.pain_score,
+        followup_eva: mc.followup.pain_score,
+        baseline_ifn: baselineFn,
+        followup_ifn: followupFn,
+      });
       cases.push({
         attendanceId: mc.attendanceId,
         baselinePain: mc.baseline.pain_score!,
         followupPain: mc.followup.pain_score!,
         deltaPain: dp,
-        baselineFunction: mc.baseline.function_score ? Number(mc.baseline.function_score) : null,
-        followupFunction: mc.followup.function_score ? Number(mc.followup.function_score) : null,
+        baselineFunction: baselineFn,
+        followupFunction: followupFn,
         deltaFunction: df,
         functionScaleType: scaleType || null,
         protocolTitle: null,
         adverseEvent: mc.followup.adverse_event,
+        clinicalOutcomeClassification: outcomeClass.classification,
       });
     }
   }

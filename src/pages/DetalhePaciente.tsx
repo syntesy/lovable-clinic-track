@@ -92,15 +92,15 @@ const DetalhePaciente = () => {
     enabled: !!selectedPatientId
   });
 
-  // Fetch sessions (historical)
+  // Fetch sessions (historical) — reads from attendance_sessions (current system)
   const { data: sessions } = useQuery({
     queryKey: ["patient-sessions", selectedPatientId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("treatment_sessions")
-        .select("*")
+        .from("attendance_sessions")
+        .select("id, created_at, title, closed_at, involves_orthobiologics")
         .eq("patient_id", selectedPatientId)
-        .order("session_date", { ascending: false });
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -600,22 +600,34 @@ const DetalhePaciente = () => {
                     <div className="space-y-4">
                       {sessions && sessions.length > 0 ? (
                         sessions.map(session => (
-                          <Card key={session.id} className="bg-card border-border">
+                          <Card
+                            key={session.id}
+                            className="bg-card border-border hover:border-primary/40 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/atendimentos/${session.id}`)}
+                          >
                             <CardContent className="p-6">
-                              <div className="flex items-start gap-5">
-                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-lg flex-shrink-0">
-                                  {session.session_number}
+                              <div className="flex items-center gap-5">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <Activity className="w-4 h-4 text-primary" />
                                 </div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Calendar className="w-4 h-4" />
-                                    <span className="text-sm">
-                                      {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                <div className="flex-1 space-y-1">
+                                  <p className="text-sm font-medium text-foreground">
+                                    {session.title || format(new Date(session.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                                  </p>
+                                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {format(new Date(session.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                                     </span>
+                                    {session.involves_orthobiologics && (
+                                      <Badge variant="outline" className="text-[10px] py-0">Ortobiológico</Badge>
+                                    )}
                                   </div>
-                                  <p className="text-foreground">{session.clinical_observations || "Sem observações"}</p>
-                                  {session.vas_on_day && <p className="text-sm text-muted-foreground">EVA: {session.vas_on_day}</p>}
                                 </div>
+                                <Badge variant={session.closed_at ? "secondary" : "outline"} className="text-xs shrink-0">
+                                  {session.closed_at ? "Encerrado" : "Em andamento"}
+                                </Badge>
+                                <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
                               </div>
                             </CardContent>
                           </Card>

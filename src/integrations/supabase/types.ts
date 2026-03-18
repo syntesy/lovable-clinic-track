@@ -5277,7 +5277,11 @@ export type Database = {
           adverse_event_description: string | null
           attendance_id: string
           clinic_id: string | null
+          clinical_outcome_classification: 'very_favorable' | 'favorable' | 'partial' | 'limited' | null
+          clinical_outcome_classification_reason: string | null
           created_at: string
+          delta_eva: number | null
+          delta_ifn: number | null
           function_scale_type: string | null
           function_score: number | null
           global_change: string | null
@@ -5295,7 +5299,11 @@ export type Database = {
           adverse_event_description?: string | null
           attendance_id: string
           clinic_id?: string | null
+          clinical_outcome_classification?: 'very_favorable' | 'favorable' | 'partial' | 'limited' | null
+          clinical_outcome_classification_reason?: string | null
           created_at?: string
+          delta_eva?: number | null
+          delta_ifn?: number | null
           function_scale_type?: string | null
           function_score?: number | null
           global_change?: string | null
@@ -5313,7 +5321,11 @@ export type Database = {
           adverse_event_description?: string | null
           attendance_id?: string
           clinic_id?: string | null
+          clinical_outcome_classification?: 'very_favorable' | 'favorable' | 'partial' | 'limited' | null
+          clinical_outcome_classification_reason?: string | null
           created_at?: string
+          delta_eva?: number | null
+          delta_ifn?: number | null
           function_scale_type?: string | null
           function_score?: number | null
           global_change?: string | null

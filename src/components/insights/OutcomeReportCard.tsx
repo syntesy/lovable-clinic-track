@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ClinicalOutcomeBadge } from '@/components/ui/ClinicalOutcomeBadge';
 import { Info, TrendingDown, TrendingUp, Activity, Users, AlertTriangle, BarChart3, ArrowDown } from 'lucide-react';
 import {
   type ProcedureOutcomeReport,
@@ -258,6 +259,7 @@ export function OutcomeReportCard({ data, isLoading, error, scope, params }: Pro
                     <th className="text-left py-2 px-2">EVA {tpLabel}</th>
                     <th className="text-center py-2 px-2">Δ Dor</th>
                     <th className="text-center py-2 px-2">Δ Função</th>
+                    <th className="text-left py-2 px-2">Desfecho Clínico</th>
                     <th className="text-left py-2 px-2">Protocolo</th>
                     <th className="text-center py-2 px-2">EA</th>
                   </tr>
@@ -278,6 +280,9 @@ export function OutcomeReportCard({ data, isLoading, error, scope, params }: Pro
                             {c.deltaFunction > 0 ? '+' : ''}{c.deltaFunction.toFixed(1)}
                           </span>
                         ) : '—'}
+                      </td>
+                      <td className="py-2 px-2">
+                        <ClinicalOutcomeBadge classification={c.clinicalOutcomeClassification} />
                       </td>
                       <td className="py-2 px-2 max-w-[200px] truncate">{c.protocolTitle || '—'}</td>
                       <td className="text-center py-2 px-2">
