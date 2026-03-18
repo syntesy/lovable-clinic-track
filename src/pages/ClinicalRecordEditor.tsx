@@ -49,7 +49,6 @@ export default function ClinicalRecordEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
-  const [isFinalizing, setIsFinalizing] = useState(false);
 
   // Redirect if no recordId (guardrai: não abrir sem ID específico)
   useEffect(() => {
@@ -58,6 +57,17 @@ export default function ClinicalRecordEditor() {
       navigate(`/patients/${patientId}/records`, { replace: true });
     }
   }, [recordId, patientId, navigate]);
+
+  // Reset form state when navigating to a different record.
+  // React Router reuses this component instance between records of the same patient,
+  // so without this reset the previous record's data stays visible while the new one loads.
+  useEffect(() => {
+    setChiefComplaint("");
+    setAnamnesis("");
+    setPhysicalExam("");
+    setClinicalDiagnosis("");
+    setHasChanges(false);
+  }, [recordId]);
 
   // Fetch patient
   const { data: patient, isLoading: loadingPatient } = useQuery({
