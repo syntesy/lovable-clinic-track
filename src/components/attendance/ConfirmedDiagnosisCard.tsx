@@ -1,10 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -17,14 +15,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
-  ShieldCheck,
   Loader2,
   Save,
   ImageIcon,
   Info,
   CheckCircle2,
-  Stethoscope,
-  Activity,
 } from "lucide-react";
 import {
   type PathologyState,
@@ -128,30 +123,61 @@ function deriveKLGroup(grade: string): string | null {
   }
 }
 
-// EVA color scale
-function evaColor(i: number) {
-  if (i <= 2) return "bg-green-500 border-green-500 text-white";
-  if (i <= 4) return "bg-yellow-400 border-yellow-400 text-white";
-  if (i <= 6) return "bg-orange-500 border-orange-500 text-white";
-  return "bg-red-600 border-red-600 text-white";
-}
+// ── Scale button ─────────────────────────────────────────────
 
-// IFN color scale (reversed — 0 is best)
-function ifnColor(i: number) {
-  if (i <= 2) return "bg-green-500 border-green-500 text-white";
-  if (i <= 4) return "bg-yellow-400 border-yellow-400 text-white";
-  if (i <= 6) return "bg-orange-500 border-orange-500 text-white";
-  return "bg-red-600 border-red-600 text-white";
-}
-
-// ── Section header helper ────────────────────────────────────
-
-function SectionHeader({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
+function ScaleButton({
+  value,
+  index,
+  selected,
+  colorFn,
+  disabled,
+  onClick,
+}: {
+  value: number;
+  index: number;
+  selected: boolean;
+  colorFn: (i: number) => { bg: string; text: string; ring: string };
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const colors = colorFn(index);
   return (
-    <div className="flex items-center gap-2">
-      <Icon className="w-4 h-4 text-primary flex-shrink-0" />
-      <span className="text-sm font-semibold text-foreground">{title}</span>
-      <div className="flex-1 h-px bg-border ml-1" />
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "flex-1 min-w-0 h-11 rounded-lg text-sm font-bold border-2 transition-all",
+        selected
+          ? `${colors.bg} ${colors.text} ${colors.ring} border-transparent shadow-sm scale-105`
+          : "bg-card border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      {value}
+    </button>
+  );
+}
+
+function getEvaColors(i: number) {
+  if (i === 0) return { bg: "bg-green-500", text: "text-white", ring: "ring-2 ring-green-400" };
+  if (i <= 3) return { bg: "bg-emerald-400", text: "text-white", ring: "ring-2 ring-emerald-300" };
+  if (i <= 5) return { bg: "bg-yellow-400", text: "text-white", ring: "ring-2 ring-yellow-300" };
+  if (i <= 7) return { bg: "bg-orange-500", text: "text-white", ring: "ring-2 ring-orange-400" };
+  return { bg: "bg-red-600", text: "text-white", ring: "ring-2 ring-red-500" };
+}
+
+function getIfnColors(i: number) {
+  return getEvaColors(i); // same scale
+}
+
+// ── Subsection divider ────────────────────────────────────────
+
+function SubSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+      {children}
     </div>
   );
 }
@@ -275,296 +301,259 @@ export function ConfirmedDiagnosisCard({
   // ── Collapsed state ─────────────────────────────────────
   if (!isVisible) {
     return (
-      <Card className="border-dashed">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-            Confirmação do Diagnóstico
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Alert className="border-border bg-muted/30">
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              Registre o diagnóstico confirmado após exame de imagem (US, RM, RX).
-            </AlertDescription>
-          </Alert>
-          {!disabled && (
-            <Button variant="outline" onClick={onRequestOpen} className="gap-2 w-full sm:w-auto">
-              <ImageIcon className="h-4 w-4" />
-              Registrar confirmação do diagnóstico
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border-2 border-dashed border-border bg-muted/20 p-6 space-y-3">
+        <Alert className="border-border bg-transparent">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            Registre o diagnóstico confirmado após exame de imagem (US, RM, RX).
+          </AlertDescription>
+        </Alert>
+        {!disabled && (
+          <Button variant="outline" onClick={onRequestOpen} className="gap-2">
+            <ImageIcon className="h-4 w-4" />
+            Registrar confirmação do diagnóstico
+          </Button>
+        )}
+      </div>
     );
   }
 
   // ── Expanded state ───────────────────────────────────────
   return (
-    <Card>
-      {/* ── Header ── */}
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            Confirmação do Diagnóstico
-          </CardTitle>
-          <Badge variant="outline" className="gap-1 border-primary/40 text-primary text-xs">
-            <CheckCircle2 className="h-3 w-3" />
-            Confirmado por imagem
-          </Badge>
-        </div>
+    <div className="space-y-8">
+      {/* Identity header — diagnosis pills */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center text-xs bg-muted px-3 py-1.5 rounded-full text-muted-foreground font-medium">
+          {categoryLabel}
+        </span>
+        <span className="text-muted-foreground">→</span>
+        <span className="inline-flex items-center text-xs bg-primary/10 px-3 py-1.5 rounded-full text-primary font-semibold">
+          {pathologyLabel}
+        </span>
+        <Badge variant="outline" className="gap-1 border-green-500/40 text-green-600 dark:text-green-400 ml-auto">
+          <CheckCircle2 className="h-3 w-3" />
+          Confirmado por imagem
+        </Badge>
+      </div>
 
-        {/* Diagnosis identity pills */}
-        <div className="flex flex-wrap gap-2 mt-2">
-          <span className="inline-flex items-center text-xs bg-muted px-2.5 py-1 rounded-full text-muted-foreground">
-            {categoryLabel}
-          </span>
-          <span className="inline-flex items-center text-xs bg-primary/10 px-2.5 py-1 rounded-full text-primary font-medium">
-            {pathologyLabel}
-          </span>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
-
-        {/* ── Section 1: Classificação por Imagem ── */}
-        {activeModel !== "NONE" && (
-          <div className="space-y-4">
-            <SectionHeader icon={ImageIcon} title="Classificação por Imagem" />
-
-            <div className="grid sm:grid-cols-2 gap-4">
-              {/* Structural grade */}
-              <div className="space-y-1.5">
-                <Label className="text-sm">Classificação Estrutural *</Label>
-                <Select value={value.structuralGrade || ""} onValueChange={handleGradeChange} disabled={disabled}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o grau..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getGradeOptions(activeModel).map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {value.structuralGroup && (
-                  <p className="text-xs text-muted-foreground">
-                    Grupo: <span className="font-medium">{value.structuralGroup}</span>
-                  </p>
-                )}
-              </div>
-
-              {/* Imaging method */}
-              <div className="space-y-1.5">
-                <Label className="text-sm">Método de Imagem *</Label>
-                <Select
-                  value={value.imagingMethod || ""}
-                  onValueChange={(v) => onChange({ ...value, imagingMethod: v })}
-                  disabled={disabled || activeModel === "DISC_HERNIATION_TYPE"}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getImagingOptions(activeModel).map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* ── Block A: Classificação por Imagem ── */}
+      {activeModel !== "NONE" && (
+        <SubSection label="Classificação por Imagem">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Classificação Estrutural *</Label>
+              <Select value={value.structuralGrade || ""} onValueChange={handleGradeChange} disabled={disabled}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o grau..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {getGradeOptions(activeModel).map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {value.structuralGroup && (
+                <p className="text-xs text-muted-foreground">
+                  Grupo: <span className="font-medium">{value.structuralGroup}</span>
+                </p>
+              )}
             </div>
 
-            {/* Tear percentage */}
-            {showTearPercentage && (
-              <div className="space-y-1.5 max-w-[200px]">
-                <Label className="text-sm">Percentual de Ruptura (%)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={value.tearPercentage ?? ""}
-                  onChange={(e) => {
-                    const v = e.target.value ? parseInt(e.target.value, 10) : null;
-                    onChange({ ...value, tearPercentage: v });
-                  }}
-                  placeholder="1–99 (opcional)"
-                  disabled={disabled}
-                />
-              </div>
-            )}
-
-            {/* Disc-specific fields */}
-            {activeModel === "DISC_HERNIATION_TYPE" && (
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Nível do Disco *</Label>
-                  <Select
-                    value={value.discLevelEnum || ""}
-                    onValueChange={(v) => onChange({ ...value, discLevelEnum: v })}
-                    disabled={disabled}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o nível..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {discLevels.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Localização *</Label>
-                  <Select
-                    value={value.discLocationEnum || ""}
-                    onValueChange={(v) => onChange({ ...value, discLocationEnum: v })}
-                    disabled={disabled}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a localização..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DISC_LOCATIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label className="text-sm">Método de Imagem *</Label>
+              <Select
+                value={value.imagingMethod || ""}
+                onValueChange={(v) => onChange({ ...value, imagingMethod: v })}
+                disabled={disabled || activeModel === "DISC_HERNIATION_TYPE"}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {getImagingOptions(activeModel).map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        )}
 
-        {/* Characterization section (when model = NONE) */}
-        {activeModel === "NONE" && (
-          characterizationProfile && onCharacterizationChange ? (
-            <div className="space-y-4">
-              <SectionHeader icon={Stethoscope} title="Caracterização Clínica" />
-              <PathologyCharacterizationSection
-                profile={characterizationProfile}
-                values={characterizationValues}
-                onChange={onCharacterizationChange}
+          {showTearPercentage && (
+            <div className="space-y-1.5 max-w-[200px]">
+              <Label className="text-sm">Percentual de Ruptura (%)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={99}
+                value={value.tearPercentage ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value ? parseInt(e.target.value, 10) : null;
+                  onChange({ ...value, tearPercentage: v });
+                }}
+                placeholder="1–99 (opcional)"
                 disabled={disabled}
               />
             </div>
-          ) : (
-            <Alert className="border-border bg-muted/30">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                Esta patologia não requer classificação estrutural.
-              </AlertDescription>
-            </Alert>
-          )
-        )}
+          )}
 
-        <Separator />
-
-        {/* ── Section 2: Avaliação Funcional (EVA + IFN) ── */}
-        <div className="space-y-5">
-          <SectionHeader icon={Activity} title="Avaliação Funcional" />
-
-          <div className="grid sm:grid-cols-2 gap-6">
-            {/* EVA */}
-            <div className="space-y-3">
-              <div className="flex items-baseline justify-between">
-                <Label className="text-sm font-medium">Escala de Dor – EVA</Label>
-                {value.evaPain != null && (
-                  <span className="text-2xl font-bold tabular-nums text-foreground">
-                    {value.evaPain}
-                    <span className="text-sm font-normal text-muted-foreground">/10</span>
-                  </span>
-                )}
+          {activeModel === "DISC_HERNIATION_TYPE" && (
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm">Nível do Disco *</Label>
+                <Select
+                  value={value.discLevelEnum || ""}
+                  onValueChange={(v) => onChange({ ...value, discLevelEnum: v })}
+                  disabled={disabled}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione o nível..." /></SelectTrigger>
+                  <SelectContent>
+                    {discLevels.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex gap-1">
-                {Array.from({ length: 11 }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => onChange({ ...value, evaPain: i })}
-                    className={cn(
-                      "flex-1 h-9 rounded text-xs font-semibold border transition-all",
-                      value.evaPain === i
-                        ? evaColor(i)
-                        : "bg-background border-border hover:border-primary/50 text-foreground",
-                      disabled && "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    {i}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Sem dor</span>
-                <span>Pior dor imaginável</span>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Localização *</Label>
+                <Select
+                  value={value.discLocationEnum || ""}
+                  onValueChange={(v) => onChange({ ...value, discLocationEnum: v })}
+                  disabled={disabled}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione a localização..." /></SelectTrigger>
+                  <SelectContent>
+                    {DISC_LOCATIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+          )}
+        </SubSection>
+      )}
 
-            {/* IFN */}
-            <div className="space-y-3">
-              <div className="flex items-baseline justify-between">
-                <Label className="text-sm font-medium">Limitação Funcional – IFN</Label>
-                {value.ifnFunction != null && (
-                  <span className="text-2xl font-bold tabular-nums text-foreground">
-                    {value.ifnFunction}
-                    <span className="text-sm font-normal text-muted-foreground">/10</span>
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-1">
-                {Array.from({ length: 11 }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => onChange({ ...value, ifnFunction: i })}
-                    className={cn(
-                      "flex-1 h-9 rounded text-xs font-semibold border transition-all",
-                      value.ifnFunction === i
-                        ? ifnColor(i)
-                        : "bg-background border-border hover:border-primary/50 text-foreground",
-                      disabled && "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    {i}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Sem limitação</span>
-                <span>Limitação total</span>
-              </div>
-            </div>
-          </div>
+      {/* ── Block B: Caracterização Clínica ── */}
+      {activeModel === "NONE" && (
+        characterizationProfile && onCharacterizationChange ? (
+          <SubSection label="Caracterização Clínica">
+            <PathologyCharacterizationSection
+              profile={characterizationProfile}
+              values={characterizationValues}
+              onChange={onCharacterizationChange}
+              disabled={disabled}
+            />
+          </SubSection>
+        ) : (
+          <Alert className="border-border bg-muted/30">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Esta patologia não requer classificação estrutural.
+            </AlertDescription>
+          </Alert>
+        )
+      )}
 
-          {/* IFN context note */}
-          <p className="text-xs text-muted-foreground bg-muted/40 rounded px-3 py-2">
-            IFN — Em uma escala de 0 a 10, quanto esta condição limita as atividades do dia a dia?
-          </p>
-        </div>
-
-        <Separator />
-
-        {/* ── Save ── */}
-        {onSave && !disabled && (
-          <div className="flex justify-end pt-1">
-            <Button
-              onClick={onSave}
-              disabled={isSaving}
-              className={cn("gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700 border-green-600")}
-            >
-              {isSaving ? (
-                <><Loader2 className="h-4 w-4 animate-spin" />Salvando...</>
-              ) : isSaved ? (
-                <><CheckCircle2 className="h-4 w-4" />Salvo!</>
+      {/* ── Block C: Avaliação Funcional ── */}
+      <SubSection label="Avaliação Funcional">
+        <div className="grid sm:grid-cols-2 gap-8">
+          {/* EVA */}
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <Label className="text-sm font-semibold">Escala de Dor – EVA</Label>
+              {value.evaPain != null ? (
+                <span className={cn(
+                  "text-3xl font-black tabular-nums",
+                  value.evaPain <= 3 ? "text-green-500" :
+                  value.evaPain <= 5 ? "text-yellow-500" :
+                  value.evaPain <= 7 ? "text-orange-500" : "text-red-600"
+                )}>
+                  {value.evaPain}
+                  <span className="text-sm font-normal text-muted-foreground">/10</span>
+                </span>
               ) : (
-                <><Save className="h-4 w-4" />Salvar Confirmação</>
+                <span className="text-sm text-muted-foreground italic">Não avaliado</span>
               )}
-            </Button>
+            </div>
+            <div className="flex gap-1">
+              {Array.from({ length: 11 }, (_, i) => (
+                <ScaleButton
+                  key={i}
+                  value={i}
+                  index={i}
+                  selected={value.evaPain === i}
+                  colorFn={getEvaColors}
+                  disabled={disabled}
+                  onClick={() => onChange({ ...value, evaPain: i })}
+                />
+              ))}
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+              <span>Sem dor</span>
+              <span>Pior imaginável</span>
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* IFN */}
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <Label className="text-sm font-semibold">Limitação Funcional – IFN</Label>
+              {value.ifnFunction != null ? (
+                <span className={cn(
+                  "text-3xl font-black tabular-nums",
+                  value.ifnFunction <= 3 ? "text-green-500" :
+                  value.ifnFunction <= 5 ? "text-yellow-500" :
+                  value.ifnFunction <= 7 ? "text-orange-500" : "text-red-600"
+                )}>
+                  {value.ifnFunction}
+                  <span className="text-sm font-normal text-muted-foreground">/10</span>
+                </span>
+              ) : (
+                <span className="text-sm text-muted-foreground italic">Não avaliado</span>
+              )}
+            </div>
+            <div className="flex gap-1">
+              {Array.from({ length: 11 }, (_, i) => (
+                <ScaleButton
+                  key={i}
+                  value={i}
+                  index={i}
+                  selected={value.ifnFunction === i}
+                  colorFn={getIfnColors}
+                  disabled={disabled}
+                  onClick={() => onChange({ ...value, ifnFunction: i })}
+                />
+              ))}
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+              <span>Sem limitação</span>
+              <span>Limitação total</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2 mt-2">
+          IFN — Em uma escala de 0 a 10, quanto esta condição limita as atividades do dia a dia?
+        </p>
+      </SubSection>
+
+      {/* ── Save ── */}
+      {onSave && !disabled && (
+        <div className="flex justify-end pt-2 border-t border-border">
+          <Button
+            onClick={onSave}
+            disabled={isSaving}
+            className={cn("gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700 border-green-600")}
+          >
+            {isSaving ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />Salvando...</>
+            ) : isSaved ? (
+              <><CheckCircle2 className="h-4 w-4" />Salvo!</>
+            ) : (
+              <><Save className="h-4 w-4" />Salvar Confirmação</>
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

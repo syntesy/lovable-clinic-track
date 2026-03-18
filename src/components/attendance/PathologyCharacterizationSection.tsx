@@ -124,16 +124,18 @@ export function PathologyCharacterizationSection({
         </span>
       </div>
 
-      {/* All fields rendered inline — no collapsible */}
-      {profile.fields.map(field => (
-        <FieldBlock
-          key={field.key}
-          field={field}
-          values={values}
-          onChange={handleSelect}
-          disabled={disabled}
-        />
-      ))}
+      {/* Fields in 2-col grid when there are multiple */}
+      <div className={profile.fields.length > 1 ? "grid md:grid-cols-2 gap-5" : "space-y-4"}>
+        {profile.fields.map(field => (
+          <FieldBlock
+            key={field.key}
+            field={field}
+            values={values}
+            onChange={handleSelect}
+            disabled={disabled}
+          />
+        ))}
+      </div>
     </div>
   );
 }
