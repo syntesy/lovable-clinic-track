@@ -19,7 +19,7 @@ type Props = {
 };
 
 export function ClinicalAssessmentInline({
-  attendanceId,
+  attendanceId: _attendanceId,
   patientId,
   clinicalRecord,
   isClosed,
@@ -27,7 +27,6 @@ export function ClinicalAssessmentInline({
   onEnsureRecord,
   onSaved,
 }: Props) {
-  const [isEditing, setIsEditing] = useState(false);
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [anamnesis, setAnamnesis] = useState("");
   const [physicalExam, setPhysicalExam] = useState("");
@@ -35,37 +34,23 @@ export function ClinicalAssessmentInline({
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Track if we've already auto-opened to prevent loops
-  const [hasAutoOpened, setHasAutoOpened] = useState(false);
-
-  // Sync form when record changes
+  // Sync fields when record loads
   useEffect(() => {
     if (!clinicalRecord) return;
-
     setChiefComplaint(clinicalRecord.chief_complaint ?? "");
     setAnamnesis(clinicalRecord.anamnesis ?? "");
     setPhysicalExam(clinicalRecord.physical_exam ?? "");
     setClinicalDiagnosis(clinicalRecord.clinical_diagnosis ?? "");
+  }, [clinicalRecord]);
 
-    // Auto-open editor for brand new/empty record (runs once)
-    if (!hasAutoOpened && !isClosed) {
-      const hasAny =
-        !!clinicalRecord.chief_complaint?.trim() ||
-        !!clinicalRecord.anamnesis?.trim() ||
-        !!clinicalRecord.physical_exam?.trim() ||
-        !!clinicalRecord.clinical_diagnosis?.trim();
-
-      if (!hasAny) {
-        setIsEditing(true);
-        setHasAutoOpened(true);
-      }
-    }
-  }, [clinicalRecord, isClosed, hasAutoOpened]);
+  // Auto-create record if missing
+  useEffect(() => {
+    if (clinicalRecord || isClosed || isBusy) return;
+    onEnsureRecord();
+  }, [clinicalRecord, isClosed, isBusy, onEnsureRecord]);
 
   const handleSave = async () => {
-    if (!clinicalRecord) return;
-    if (isClosed) return;
-
+    if (!clinicalRecord || isClosed) return;
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -85,111 +70,110 @@ export function ClinicalAssessmentInline({
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
       await onSaved();
-      setIsEditing(false);
-    } catch (e) {
+    } catch {
       toast.error("Erro ao salvar avaliação clínica");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // If no record yet, auto-create immediately (don't wait for user click)
-  useEffect(() => {
-    if (clinicalRecord) {
-      console.log("[ClinicalAssessmentInline] Record exists:", clinicalRecord.id);
-      return; // already have it
-    }
-    if (isClosed) {
-      console.log("[ClinicalAssessmentInline] Closed, skipping create");
-      return;
-    }
-    if (isBusy) {
-      console.log("[ClinicalAssessmentInline] Already busy creating...");
-      return; // already creating
-    }
-
-    // Trigger creation automatically
-    console.log("[ClinicalAssessmentInline] Triggering auto-create...");
-    onEnsureRecord();
-  }, [clinicalRecord, isClosed, isBusy, onEnsureRecord]);
-
   if (!clinicalRecord) {
-    // Show loading state while creating/fetching
     return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm">Preparando avaliação clínica...</span>
-        </div>
+      <div className="flex items-center gap-2 py-4 text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm">Preparando avaliação clínica...</span>
       </div>
     );
   }
 
-  if (isClosed || !isEditing) {
+  // Read-only view when closed
+  if (isClosed) {
     return (
-      <div className="space-y-4">
-        <div>
-          <Label className="text-sm text-muted-foreground">Queixa Principal</Label>
-          <p className="mt-1">{clinicalRecord.chief_complaint || "Não informado"}</p>
+      <div className="space-y-5">
+        <div className="grid sm:grid-cols-2 gap-5">
+          <FieldView label="Queixa Principal" value={clinicalRecord.chief_complaint} />
+          <FieldView label="Diagnóstico Clínico" value={clinicalRecord.clinical_diagnosis} />
         </div>
-        <div>
-          <Label className="text-sm text-muted-foreground">Anamnese</Label>
-          <p className="mt-1 whitespace-pre-wrap">{clinicalRecord.anamnesis || "Não informado"}</p>
-        </div>
-        <div>
-          <Label className="text-sm text-muted-foreground">Exame Físico</Label>
-          <p className="mt-1 whitespace-pre-wrap">{clinicalRecord.physical_exam || "Não informado"}</p>
-        </div>
-        <div>
-          <Label className="text-sm text-muted-foreground">Diagnóstico Clínico</Label>
-          <p className="mt-1">{clinicalRecord.clinical_diagnosis || "Não informado"}</p>
-        </div>
-
-        {!isClosed && (
-          <Button variant="outline" onClick={() => setIsEditing(true)}>
-            Editar Avaliação Clínica
-          </Button>
-        )}
+        <FieldView label="Anamnese" value={clinicalRecord.anamnesis} multiline />
+        <FieldView label="Exame Físico" value={clinicalRecord.physical_exam} multiline />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Queixa Principal</Label>
-        <Textarea value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} className="min-h-[70px]" />
-      </div>
-      <div className="space-y-2">
-        <Label>Anamnese</Label>
-        <Textarea value={anamnesis} onChange={(e) => setAnamnesis(e.target.value)} className="min-h-[140px]" />
-      </div>
-      <div className="space-y-2">
-        <Label>Exame Físico</Label>
-        <Textarea value={physicalExam} onChange={(e) => setPhysicalExam(e.target.value)} className="min-h-[120px]" />
-      </div>
-      <div className="space-y-2">
-        <Label>Diagnóstico Clínico</Label>
-        <Textarea value={clinicalDiagnosis} onChange={(e) => setClinicalDiagnosis(e.target.value)} className="min-h-[80px]" />
+    <div className="space-y-5">
+      {/* Row 1: Queixa + Diagnóstico Clínico (shorter fields) */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">
+            Queixa Principal
+          </Label>
+          <Textarea
+            value={chiefComplaint}
+            onChange={(e) => setChiefComplaint(e.target.value)}
+            placeholder="Descreva a queixa principal do paciente..."
+            className="min-h-[80px] resize-none"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Diagnóstico Clínico</Label>
+          <Textarea
+            value={clinicalDiagnosis}
+            onChange={(e) => setClinicalDiagnosis(e.target.value)}
+            placeholder="Impressão diagnóstica clínica..."
+            className="min-h-[80px] resize-none"
+          />
+        </div>
       </div>
 
-      <div className="flex gap-2">
-        <Button onClick={handleSave} disabled={isSaving} className={cn("gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700 border-green-600")}>
+      {/* Row 2: Anamnese (long) */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">Anamnese</Label>
+        <Textarea
+          value={anamnesis}
+          onChange={(e) => setAnamnesis(e.target.value)}
+          placeholder="História clínica detalhada, início dos sintomas, fatores agravantes e atenuantes, medicamentos em uso..."
+          className="min-h-[120px] resize-y"
+        />
+      </div>
+
+      {/* Row 3: Exame Físico */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">Exame Físico</Label>
+        <Textarea
+          value={physicalExam}
+          onChange={(e) => setPhysicalExam(e.target.value)}
+          placeholder="Achados ao exame físico, testes ortopédicos, mobilidade, dor à palpação..."
+          className="min-h-[100px] resize-y"
+        />
+      </div>
+
+      {/* Save */}
+      <div className="flex items-center gap-3 pt-1">
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          className={cn("gap-2 transition-colors", isSaved && "bg-green-600 hover:bg-green-700")}
+        >
           {isSaving ? (
             <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</>
           ) : isSaved ? (
             <><CheckCircle2 className="w-4 h-4" />Salvo!</>
           ) : (
-            <><Save className="w-4 h-4" />Salvar</>
+            <><Save className="w-4 h-4" />Salvar Avaliação</>
           )}
         </Button>
-        <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
-          Cancelar
-        </Button>
       </div>
+    </div>
+  );
+}
 
-      <p className="text-xs text-muted-foreground">
-        Atendimento: {attendanceId}
+function FieldView({ label, value, multiline }: { label: string; value: string | null | undefined; multiline?: boolean }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className={cn("text-sm text-foreground", multiline && "whitespace-pre-wrap")}>
+        {value?.trim() || <span className="text-muted-foreground italic">Não informado</span>}
       </p>
     </div>
   );

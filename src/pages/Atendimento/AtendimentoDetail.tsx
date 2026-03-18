@@ -1,9 +1,10 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock, Stethoscope, ClipboardList, Plus } from "lucide-react";
+import { Loader2, AlertCircle, FlaskConical, Lock, FileText, Clock, Stethoscope, ClipboardList, Plus, Lightbulb, ShieldCheck, TestTube, Activity, Pill, BookOpen } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -59,6 +60,27 @@ import { ClinicalStandardCard } from "@/components/clinical-standard";
 import { EvidencePanel } from "@/components/attendance/EvidencePanel";
 import { buildTopicKey } from "@/utils/topicKey";
 import { useCreateEvidenceLink } from "@/hooks/useReghenEvidence";
+
+function SectionHeader({
+  n,
+  icon: Icon,
+  title,
+}: {
+  n: number;
+  icon: React.ElementType;
+  title: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-5">
+      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0">
+        {n}
+      </span>
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
 
 const AtendimentoDetail = () => {
   const { attendanceId } = useParams<{ attendanceId: string }>();
@@ -848,118 +870,164 @@ const AtendimentoDetail = () => {
     );
 
     switch (currentStep) {
-      case "clinical":
+      case "clinical": {
+        const clinicalNavItems = [
+          { n: 1, id: "sec-clinical",    label: "Avaliação Clínica",         icon: Stethoscope },
+          { n: 2, id: "sec-hypothesis",  label: "Hipótese Diagnóstica",      icon: Lightbulb },
+          { n: 3, id: "sec-diagnosis",   label: "Confirmação Diagnóstica",   icon: ShieldCheck },
+          { n: 4, id: "sec-blood",       label: "Exames de Sangue",          icon: TestTube },
+          { n: 5, id: "sec-aptitude",    label: "Score REGHEN",              icon: Activity },
+          { n: 6, id: "sec-treatments",  label: "Tratamentos Prévios",       icon: Pill },
+          { n: 7, id: "sec-evidence",    label: "Evidência Científica",      icon: BookOpen },
+        ];
         return (
-          <div className="space-y-6">
-            {/* Clinical Assessment Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Stethoscope className="w-5 h-5" />
-                  Avaliação Clínica
-                </CardTitle>
-                <CardDescription>
-                  Registre queixa, anamnese, exame físico e diagnóstico
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isClosed && renderClosedAlert()}
-
-                <div className="space-y-4">
-                  <ClinicalAssessmentInline
-                    attendanceId={attendanceId!}
-                    patientId={attendance.patient_id}
-                    clinicalRecord={clinicalRecord as ClinicalRecordBasic | null}
-                    isClosed={isClosed}
-                    isBusy={isCreatingRecord}
-                    onEnsureRecord={handleEnsureClinicalAssessment}
-                    onSaved={async () => {
-                      await queryClient.invalidateQueries({
-                        queryKey: ["clinical-records-attendance", attendanceId],
-                      });
+          <div className="flex gap-8 items-start">
+            {/* Left sticky nav */}
+            <aside className="hidden lg:flex w-44 shrink-0 flex-col sticky top-4 self-start">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">
+                Seções
+              </p>
+              <nav className="space-y-0.5">
+                {clinicalNavItems.map(({ n, id, label, icon: Icon }) => (
+                  <a
+                    key={id}
+                    href={`#${id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
                     }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors group"
+                  >
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center text-[11px] font-bold text-muted-foreground group-hover:text-primary transition-colors">
+                      {n}
+                    </span>
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate text-xs leading-snug">{label}</span>
+                  </a>
+                ))}
+              </nav>
+            </aside>
 
-            {/* Hipótese Diagnóstica Inicial */}
-            <DiagnosticHypothesisCard
-              value={hypothesisState}
-              onChange={setHypothesisState}
-              onSave={handleSaveHypothesis}
-              disabled={isClosed}
-              isSaving={isSavingPathology}
-              isSaved={isSavedHypothesis}
-            />
+            {/* Main content */}
+            <div className="flex-1 min-w-0 space-y-10">
+              {/* 1. Avaliação Clínica */}
+              <section id="sec-clinical" className="scroll-mt-6">
+                <SectionHeader n={1} icon={Stethoscope} title="Avaliação Clínica" />
+                {isClosed && renderClosedAlert()}
+                <ClinicalAssessmentInline
+                  attendanceId={attendanceId!}
+                  patientId={attendance.patient_id}
+                  clinicalRecord={clinicalRecord as ClinicalRecordBasic | null}
+                  isClosed={isClosed}
+                  isBusy={isCreatingRecord}
+                  onEnsureRecord={handleEnsureClinicalAssessment}
+                  onSaved={async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["clinical-records-attendance", attendanceId],
+                    });
+                  }}
+                />
+              </section>
 
-            {/* Confirmação do Diagnóstico */}
-            <ConfirmedDiagnosisCard
-              value={pathologyState}
-              onChange={setPathologyState}
-              onSave={handleSavePathology}
-              disabled={isClosed}
-              isSaving={isSavingPathology}
-              isSaved={isSavedDiagnosis}
-              isVisible={isConfirmedDiagnosisVisible}
-              onRequestOpen={() => setIsConfirmedDiagnosisVisible(true)}
-              hypothesisCategoryId={hypothesisState.categoryId}
-              hypothesisPathologyId={hypothesisState.pathologyId}
-              hypothesisCustomLabel={hypothesisState.customLabel}
-              characterizationValues={characterizationValues}
-              onCharacterizationChange={setCharacterizationValues}
-              onProfileChange={setCharacterizationProfile}
-            />
-
-            {/* Exames de Sangue + Score REGHEN (visível quando diagnóstico está aberto) */}
-            {isConfirmedDiagnosisVisible && attendanceId && (
-              <>
-                <BloodTestsManualCard
-                  attendanceId={attendanceId}
-                  nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+              {/* 2. Hipótese Diagnóstica */}
+              <section id="sec-hypothesis" className="scroll-mt-6">
+                <SectionHeader n={2} icon={Lightbulb} title="Hipótese Diagnóstica" />
+                <DiagnosticHypothesisCard
+                  value={hypothesisState}
+                  onChange={setHypothesisState}
+                  onSave={handleSaveHypothesis}
                   disabled={isClosed}
+                  isSaving={isSavingPathology}
+                  isSaved={isSavedHypothesis}
                 />
-                <OrtobiologicAptitudeCard
-                  attendanceId={attendanceId}
-                  nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+              </section>
+
+              {/* 3. Confirmação do Diagnóstico */}
+              <section id="sec-diagnosis" className="scroll-mt-6">
+                <SectionHeader n={3} icon={ShieldCheck} title="Confirmação do Diagnóstico" />
+                <ConfirmedDiagnosisCard
+                  value={pathologyState}
+                  onChange={setPathologyState}
+                  onSave={handleSavePathology}
+                  disabled={isClosed}
+                  isSaving={isSavingPathology}
+                  isSaved={isSavedDiagnosis}
+                  isVisible={isConfirmedDiagnosisVisible}
+                  onRequestOpen={() => setIsConfirmedDiagnosisVisible(true)}
+                  hypothesisCategoryId={hypothesisState.categoryId}
+                  hypothesisPathologyId={hypothesisState.pathologyId}
+                  hypothesisCustomLabel={hypothesisState.customLabel}
+                  characterizationValues={characterizationValues}
+                  onCharacterizationChange={setCharacterizationValues}
+                  onProfileChange={setCharacterizationProfile}
                 />
-              </>
-            )}
+              </section>
 
-            {/* Previous Treatments Card */}
-            <PreviousTreatmentsCard
-              value={previousTreatments}
-              onChange={(v) => {
-                setPreviousTreatments(v);
-                setTreatmentsValidationError(null);
-                setShockwaveValidationError(null);
-                setLaserValidationError(null);
-                setOrthobiologicPrevValidationError(null);
-                setOrthobiologicPrevOtherValidationError(null);
-                setNsaidTimeBucketValidationError(null);
-              }}
-              onSave={handleSavePreviousTreatments}
-              disabled={isClosed}
-              isSaving={isSavingTreatments}
-              isSaved={isSavedTreatments}
-              validationError={treatmentsValidationError}
-              shockwaveValidationError={shockwaveValidationError}
-              laserValidationError={laserValidationError}
-              orthobiologicPrevValidationError={orthobiologicPrevValidationError}
-              orthobiologicPrevOtherValidationError={orthobiologicPrevOtherValidationError}
-              nsaidTimeBucketValidationError={nsaidTimeBucketValidationError}
-            />
+              {/* 4. Exames de Sangue — visível quando diagnóstico aberto */}
+              {isConfirmedDiagnosisVisible && attendanceId && (
+                <>
+                  <section id="sec-blood" className="scroll-mt-6">
+                    <SectionHeader n={4} icon={TestTube} title="Exames de Sangue — Pré-PRP" />
+                    <BloodTestsManualCard
+                      attendanceId={attendanceId}
+                      nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+                      disabled={isClosed}
+                    />
+                  </section>
 
-            {/* Evidence Panel (Reghen Evidence Method™) */}
-            {attendanceId && (
-              <EvidencePanel
-                attendanceId={attendanceId}
-                topicKey={topicKey}
-                isClosed={isClosed}
-              />
-            )}
+                  {/* 5. Score REGHEN / Aptidão Ortobiológica */}
+                  <section id="sec-aptitude" className="scroll-mt-6">
+                    <SectionHeader n={5} icon={Activity} title="Score REGHEN — Aptidão Ortobiológica" />
+                    <OrtobiologicAptitudeCard
+                      attendanceId={attendanceId}
+                      nsaidTimeBucket={previousTreatments.nsaidTimeBucket}
+                    />
+                  </section>
+                </>
+              )}
+
+              {/* 6. Tratamentos Prévios */}
+              <section id="sec-treatments" className="scroll-mt-6">
+                <SectionHeader n={6} icon={Pill} title="Tratamentos Prévios" />
+                <PreviousTreatmentsCard
+                  value={previousTreatments}
+                  onChange={(v) => {
+                    setPreviousTreatments(v);
+                    setTreatmentsValidationError(null);
+                    setShockwaveValidationError(null);
+                    setLaserValidationError(null);
+                    setOrthobiologicPrevValidationError(null);
+                    setOrthobiologicPrevOtherValidationError(null);
+                    setNsaidTimeBucketValidationError(null);
+                  }}
+                  onSave={handleSavePreviousTreatments}
+                  disabled={isClosed}
+                  isSaving={isSavingTreatments}
+                  isSaved={isSavedTreatments}
+                  validationError={treatmentsValidationError}
+                  shockwaveValidationError={shockwaveValidationError}
+                  laserValidationError={laserValidationError}
+                  orthobiologicPrevValidationError={orthobiologicPrevValidationError}
+                  orthobiologicPrevOtherValidationError={orthobiologicPrevOtherValidationError}
+                  nsaidTimeBucketValidationError={nsaidTimeBucketValidationError}
+                />
+              </section>
+
+              {/* 7. Evidência Científica */}
+              {attendanceId && (
+                <section id="sec-evidence" className="scroll-mt-6">
+                  <SectionHeader n={7} icon={BookOpen} title="Evidência Científica" />
+                  <EvidencePanel
+                    attendanceId={attendanceId}
+                    topicKey={topicKey}
+                    isClosed={isClosed}
+                  />
+                </section>
+              )}
+            </div>
           </div>
         );
+      }
 
       case "triage":
         return (
