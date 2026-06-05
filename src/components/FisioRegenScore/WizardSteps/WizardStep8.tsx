@@ -22,6 +22,7 @@ import { FisioRegenFormData } from "@/types/fisioregen-score";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
+import { computeCaseStatus } from "@/types/regen-case-status";
 
 interface WizardStep8Props {
   patientId?: string;
@@ -110,6 +111,7 @@ export function WizardStep8({
           .from("prp_screenings")
           .update({
             questionnaire_responses: mergedResponses as unknown as Json,
+            regen_case_status: computeCaseStatus({ regen_engine_outputs: outputs }),
             updated_at: new Date().toISOString(),
           })
           .eq("id", screeningId);
