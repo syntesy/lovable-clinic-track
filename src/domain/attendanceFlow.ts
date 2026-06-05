@@ -186,7 +186,7 @@ export function validateStepForAttendance(
     return normalized;
   }
   
-  // If triage was requested but not allowed, go to attachments (plan precedes triage)
+  // If triage was requested but not allowed, skip it and land on attachments (the step after triage in the full flow)
   if (normalized === 'triage') {
     return 'attachments';
   }
