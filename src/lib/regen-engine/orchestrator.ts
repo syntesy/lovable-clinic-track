@@ -189,7 +189,7 @@ export function extractEngineOutputs(
  * 2. TESTE NSAID RECENT
  *    - Input: medications.nsaid_recent_14d = "yes"
  *    - Expected: PRP eligibility !== "Recommended"
- *    - reason_code inclui "NSAID_RECENT_7D"
+ *    - BRS reason_code: "NSAID_RECENT_14D" / PEE gate: "NSAID_RECENT"
  * 
  * 3. TESTE LABS EXPIRADOS
  *    - Input: labs.hemoglobin.collected_date > 90 dias atrás
