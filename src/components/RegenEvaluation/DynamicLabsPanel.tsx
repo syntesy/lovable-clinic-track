@@ -54,6 +54,7 @@ import {
   getCriticalExams
 } from "@/types/triage-exams";
 import { ExamGroup } from "@/types/screening";
+import { computeCaseStatus } from "@/types/regen-case-status";
 
 interface DynamicLabsPanelProps {
   screeningId: string;
@@ -384,18 +385,36 @@ export function DynamicLabsPanel({
       );
       const allCriticalValid = areAllCriticalExamsValid(updatedExams);
       
+      // Buscar dados clínicos atuais para derivar status via computeCaseStatus.
+      // NOTA: computeCaseStatus usa REQUIRED_CRITICAL_LABS (6 fixos do PRD).
+      // A lógica anterior usava areAllCriticalExamsValid (exames críticos da triagem).
+      // Se a triagem sempre solicitar os 6 labs obrigatórios, o comportamento é idêntico.
+      const { data: currentRecord } = await supabase
+        .from("prp_screenings")
+        .select("clinical_chief_complaint, clinical_anamnesis, clinical_physical_exam, clinical_diagnosis, questionnaire_responses")
+        .eq("id", screeningId)
+        .single();
+
+      const derivedStatus = computeCaseStatus({
+        clinical_chief_complaint: currentRecord?.clinical_chief_complaint,
+        clinical_anamnesis: currentRecord?.clinical_anamnesis,
+        clinical_physical_exam: currentRecord?.clinical_physical_exam,
+        clinical_diagnosis: currentRecord?.clinical_diagnosis,
+        labs_validated: newValidation,
+        regen_engine_outputs: (currentRecord?.questionnaire_responses as Record<string, unknown>)?.regen_engine_outputs,
+      });
+
+      await supabase
+        .from("prp_screenings")
+        .update({ regen_case_status: derivedStatus })
+        .eq("id", screeningId);
+
       if (allCriticalValid) {
-        // Atualizar para S2
-        await supabase
-          .from("prp_screenings")
-          .update({ regen_case_status: "S2" })
-          .eq("id", screeningId);
-        
         toast.success("Exames validados! Pronto para gerar Score Definitivo.");
       } else {
         toast.success("Exames salvos. Alguns precisam ser repetidos ou solicitados.");
       }
-      
+
       onSave?.();
     } catch (error) {
       console.error("Error saving labs:", error);

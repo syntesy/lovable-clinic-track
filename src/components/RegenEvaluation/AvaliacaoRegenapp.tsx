@@ -35,9 +35,10 @@ import { RegenResultView } from "@/components/RegenResult";
 import { ObservationalRegistryCard } from "@/components/registry/ObservationalRegistryCard";
 import { RegenCanonical } from "@/types/regen-canonical";
 import { RegenEngineOutputs } from "@/types/regen-engine";
-import { 
-  RegenCaseStatus, 
+import {
+  RegenCaseStatus,
   isClinicalAssessmentComplete,
+  computeCaseStatus,
 } from "@/types/regen-case-status";
 import { runRegenEngine } from "@/lib/regen-engine";
 import { buildRegenCanonicalFromTriagem } from "@/lib/regen-canonical-adapter";
@@ -247,7 +248,7 @@ export function AvaliacaoRegenapp({
         .from("prp_screenings")
         .update({
           questionnaire_responses: mergedResponses as unknown as Json,
-          regen_case_status: "S3",
+          regen_case_status: computeCaseStatus({ regen_engine_outputs: outputs }),
           engine_computed_at: new Date().toISOString(),
           canonical_hash: canonicalHash,
           updated_at: new Date().toISOString()
@@ -320,6 +321,7 @@ export function AvaliacaoRegenapp({
         .from("prp_screenings")
         .update({
           questionnaire_responses: mergedResponses as unknown as Json,
+          regen_case_status: computeCaseStatus({ regen_engine_outputs: outputs }),
           engine_computed_at: new Date().toISOString(),
           canonical_hash: canonicalHash,
           updated_at: new Date().toISOString()

@@ -15,7 +15,8 @@ import {
   REQUIRED_CRITICAL_LABS,
   CRITICAL_LAB_LABELS,
   RequiredCriticalLab,
-  ValidatedLabData
+  ValidatedLabData,
+  computeCaseStatus,
 } from "@/types/regen-case-status";
 import { computeDIE } from "@/lib/regen-engine";
 import { RegenCanonical, RegenLabValue, defaultLabValue } from "@/types/regen-canonical";
@@ -215,18 +216,33 @@ export function LabsPanel({
                labData?.date !== "";
       });
       
+      // Buscar dados clínicos atuais para derivar status via computeCaseStatus
+      const { data: currentRecord } = await supabase
+        .from("prp_screenings")
+        .select("clinical_chief_complaint, clinical_anamnesis, clinical_physical_exam, clinical_diagnosis, questionnaire_responses")
+        .eq("id", screeningId)
+        .single();
+
+      const derivedStatus = computeCaseStatus({
+        clinical_chief_complaint: currentRecord?.clinical_chief_complaint,
+        clinical_anamnesis: currentRecord?.clinical_anamnesis,
+        clinical_physical_exam: currentRecord?.clinical_physical_exam,
+        clinical_diagnosis: currentRecord?.clinical_diagnosis,
+        labs_validated: newValidation,
+        regen_engine_outputs: (currentRecord?.questionnaire_responses as Record<string, unknown>)?.regen_engine_outputs,
+      });
+
+      await supabase
+        .from("prp_screenings")
+        .update({ regen_case_status: derivedStatus })
+        .eq("id", screeningId);
+
       if (allValid) {
-        // Atualizar para S2
-        await supabase
-          .from("prp_screenings")
-          .update({ regen_case_status: "S2" })
-          .eq("id", screeningId);
-        
         toast.success("Exames validados! Pronto para gerar Score Definitivo.");
       } else {
         toast.success("Exames salvos. Alguns precisam ser repetidos ou solicitados.");
       }
-      
+
       onSave?.();
     } catch (error) {
       console.error("Error saving labs:", error);
