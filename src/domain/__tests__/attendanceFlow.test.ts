@@ -1,11 +1,15 @@
 /**
  * Attendance Flow Domain Contract Tests
- * 
+ *
  * Sentinel tests to prevent regressions in:
  * - Step order and visibility
  * - Triage optional logic
  * - Navigation guards
- * 
+ *
+ * Current flow:
+ *   clinical → biological → plan → [triage*] → attachments → report
+ *   (*) triage only when involves_orthobiologics === true
+ *
  * Run: npx vitest run src/domain/__tests__/attendanceFlow.test.ts
  */
 
@@ -30,15 +34,18 @@ describe('Attendance Flow Domain Contract', () => {
       expect(INITIAL_STEP).toBe('clinical');
     });
     
-    it('BASE_STEPS should NOT include triage', () => {
+    it('BASE_STEPS should NOT include triage but should include biological', () => {
       expect(BASE_STEPS).not.toContain('triage');
-      expect(BASE_STEPS).toEqual(['clinical', 'plan', 'attachments', 'report']);
+      expect(BASE_STEPS).toContain('biological');
+      expect(BASE_STEPS).toEqual(['clinical', 'biological', 'plan', 'attachments', 'report']);
     });
-    
-    it('FULL_STEPS should include triage after clinical', () => {
+
+    it('FULL_STEPS should include triage after plan', () => {
       expect(FULL_STEPS).toContain('triage');
-      expect(FULL_STEPS).toEqual(['clinical', 'triage', 'plan', 'attachments', 'report']);
-      expect(FULL_STEPS.indexOf('triage')).toBe(1); // After clinical
+      expect(FULL_STEPS).toEqual(['clinical', 'biological', 'plan', 'triage', 'attachments', 'report']);
+      // triage comes after plan, not immediately after clinical
+      const planIdx = FULL_STEPS.indexOf('plan');
+      expect(FULL_STEPS.indexOf('triage')).toBe(planIdx + 1);
     });
   });
   
@@ -77,14 +84,14 @@ describe('Attendance Flow Domain Contract', () => {
         expect(steps).toEqual(FULL_STEPS);
       });
       
-      it('triage appears after clinical', () => {
+      it('triage appears after plan', () => {
         const attendance: AttendanceForFlow = { involves_orthobiologics: true };
         const steps = getStepsForAttendance(attendance);
-        
-        const clinicalIdx = steps.indexOf('clinical');
+
+        const planIdx = steps.indexOf('plan');
         const triageIdx = steps.indexOf('triage');
-        
-        expect(triageIdx).toBe(clinicalIdx + 1);
+
+        expect(triageIdx).toBe(planIdx + 1);
       });
     });
   });
@@ -92,8 +99,8 @@ describe('Attendance Flow Domain Contract', () => {
   describe('isValidStep', () => {
     
     it('returns true for all valid step IDs', () => {
-      const validSteps: AttendanceStepId[] = ['clinical', 'triage', 'plan', 'attachments', 'report'];
-      
+      const validSteps: AttendanceStepId[] = ['clinical', 'biological', 'triage', 'plan', 'attachments', 'report'];
+
       validSteps.forEach(step => {
         expect(isValidStep(step)).toBe(true);
       });
@@ -181,10 +188,11 @@ describe('Attendance Flow Domain Contract', () => {
       expect(validateStepForAttendance('plan', attendance)).toBe('plan');
     });
     
-    it('returns "plan" when triage requested but not accessible', () => {
+    it('returns "attachments" when triage requested but not accessible', () => {
       const attendance: AttendanceForFlow = { involves_orthobiologics: false };
-      
-      expect(validateStepForAttendance('triage', attendance)).toBe('plan');
+
+      // When triage is blocked, the domain skips it and falls through to 'attachments'.
+      expect(validateStepForAttendance('triage', attendance)).toBe('attachments');
     });
     
     it('returns INITIAL_STEP for invalid step', () => {
@@ -199,8 +207,9 @@ describe('Attendance Flow Domain Contract', () => {
   describe('Regression Guards', () => {
     
     it('step order is consistent with clinical flow', () => {
-      // Clinical flow: Avaliação Clínica → Triagem (opcional) → Plano → Anexos → Relatório
-      const expectedOrder = ['clinical', 'triage', 'plan', 'attachments', 'report'];
+      // Flow: Avaliação Clínica → Solo Biológico → Plano → Triagem* → Anexos → Relatório
+      // (*) triage only for orthobiologic attendances
+      const expectedOrder = ['clinical', 'biological', 'plan', 'triage', 'attachments', 'report'];
       expect(FULL_STEPS).toEqual(expectedOrder);
     });
     
