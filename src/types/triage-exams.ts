@@ -8,12 +8,10 @@
 import { ExamGroup } from "./screening";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { differenceInDays } from "date-fns";
+import { LAB_VALIDITY_DAYS, DEFAULT_VALIDITY_DAYS } from "@/config/examValidity";
 
 /** Timezone padrão para Brasil */
 const SAO_PAULO_TZ = "America/Sao_Paulo";
-
-/** Validade padrão de exames em dias */
-const DEFAULT_VALIDITY_DAYS = 90;
 
 /**
  * Estrutura mínima de um exame para renderização na avaliação
@@ -260,7 +258,8 @@ export function extractExamsFromTriage(
  * Atualiza status dos exames baseado nos resultados validados
  * 
  * REGRA DE STATUS "desatualizado":
- * - collected_at existe E diferença entre hoje e collected_at > 90 dias
+ * - collected_at existe E diferença entre hoje e collected_at > validade do exame
+ * - Validade por exame: src/config/examValidity.ts (LAB_VALIDITY_DAYS)
  * - Usa timezone America/Sao_Paulo
  */
 export function updateExamsWithValidation(
@@ -280,8 +279,8 @@ export function updateExamsWithValidation(
     
     const hasValue = validation.value !== null && validation.value !== undefined;
     
-    // Verificar se está desatualizado (> 90 dias)
-    if (effectiveDate && isExamExpired(effectiveDate)) {
+    // Verificar se está desatualizado — validade por exame definida em src/config/examValidity.ts
+    if (effectiveDate && isExamExpired(effectiveDate, LAB_VALIDITY_DAYS[exam.code] ?? DEFAULT_VALIDITY_DAYS)) {
       return { 
         ...exam, 
         status: "desatualizado" as const, 

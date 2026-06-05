@@ -43,12 +43,20 @@ describe("computeDIE — sem valor raw → REQUEST", () => {
     expect(hb.reason_code).toBe("ESSENTIAL_LAB_MISSING");
   });
 
-  it("crp sem raw_value → REQUEST, LAB_MISSING (não essencial)", () => {
+  it("crp sem raw_value → REQUEST, ESSENTIAL_LAB_MISSING (crp agora é essencial — M3)", () => {
     const c = withLab("crp", { raw_value: null }, null);
     const result = computeDIE(c);
     const crp = result.lab_recommendations.find((r) => r.lab_code === "crp")!;
     expect(crp.status).toBe("REQUEST");
-    expect(crp.reason_code).toBe("LAB_MISSING");
+    expect(crp.reason_code).toBe("ESSENTIAL_LAB_MISSING");
+  });
+
+  it("glucose sem raw_value → REQUEST, LAB_MISSING (não é exame crítico)", () => {
+    const c = withLab("glucose", { raw_value: null }, null);
+    const result = computeDIE(c);
+    const gluc = result.lab_recommendations.find((r) => r.lab_code === "glucose")!;
+    expect(gluc.status).toBe("REQUEST");
+    expect(gluc.reason_code).toBe("LAB_MISSING");
   });
 });
 
@@ -145,11 +153,11 @@ describe("computeDIE — validade ferritina/hba1c (180 dias)", () => {
     expect(ferr.validity).toBe("EXPIRED");
   });
 
-  it("ferritina coletada há 120 dias (válida, <180) → USE, VALID", () => {
+  it("ferritina coletada há 60 dias (válida, <90) → USE, VALID", () => {
     const c = withLab(
       "ferritin",
       { raw_value: "50", parsed_ok: true, parsed_value: 50 },
-      isoDateDaysAgo(120)
+      isoDateDaysAgo(60)
     );
     const result = computeDIE(c);
     const ferr = result.lab_recommendations.find((r) => r.lab_code === "ferritin")!;

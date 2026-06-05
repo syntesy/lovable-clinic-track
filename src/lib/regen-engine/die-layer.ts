@@ -8,18 +8,7 @@
 
 import { RegenCanonical, RegenLabValue } from "@/types/regen-canonical";
 import { DIEOutput, LabRecommendation } from "@/types/regen-engine";
-
-// Configuração de validade dos exames (em dias)
-const LAB_VALIDITY_DAYS: Record<string, number> = {
-  hemoglobin: 90,
-  hematocrit: 90,
-  leukocytes: 90,
-  platelets: 90,
-  crp: 30,
-  ferritin: 180,
-  glucose: 90,
-  hba1c: 180,
-};
+import { LAB_VALIDITY_DAYS, CRITICAL_LAB_CODES } from "@/config/examValidity";
 
 // Nomes amigáveis dos exames
 const LAB_NAMES: Record<string, string> = {
@@ -33,8 +22,8 @@ const LAB_NAMES: Record<string, string> = {
   hba1c: "Hemoglobina Glicada (HbA1c)",
 };
 
-// Exames essenciais para ortobiológicos
-const ESSENTIAL_LABS = ["hemoglobin", "platelets", "leukocytes"];
+// Exames essenciais para ortobiológicos — fonte: src/config/examValidity.ts
+const ESSENTIAL_LABS: readonly string[] = CRITICAL_LAB_CODES;
 
 export function computeDIE(canonical: RegenCanonical): DIEOutput {
   const { labs } = canonical;

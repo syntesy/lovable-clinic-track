@@ -7,6 +7,8 @@
  * S3: Score Definitivo Gerado
  */
 
+import { CRITICAL_LAB_CODES, type CriticalLabCode } from "@/config/examValidity";
+
 export type RegenCaseStatus = "S0" | "S1" | "S2" | "S3";
 
 export interface RegenCaseStatusInfo {
@@ -48,17 +50,9 @@ export const REGEN_CASE_STATUS_MAP: Record<RegenCaseStatus, RegenCaseStatusInfo>
   }
 };
 
-// Exames críticos obrigatórios (campos exatos do canonical)
-export const REQUIRED_CRITICAL_LABS = [
-  "hemoglobin",
-  "leukocytes",
-  "platelets",
-  "crp",
-  "hba1c",
-  "ferritin"
-] as const;
-
-export type RequiredCriticalLab = typeof REQUIRED_CRITICAL_LABS[number];
+// Exames críticos obrigatórios — fonte única: src/config/examValidity.ts
+export const REQUIRED_CRITICAL_LABS = CRITICAL_LAB_CODES;
+export type RequiredCriticalLab = CriticalLabCode;
 
 // Labels para exames em português
 export const CRITICAL_LAB_LABELS: Record<RequiredCriticalLab, string> = {
