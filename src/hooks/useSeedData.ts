@@ -17,6 +17,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { evaluateClinicalStandard, type EvaluationInput } from "@/lib/clinical-standard-evaluator";
 import { toast } from "sonner";
+import { areQAToolsEnabled } from "@/config/environment";
 
 // Clinical profile presets for outcomes generation
 export type ClinicalProfile = 'conservative' | 'good' | 'excellent';
@@ -314,11 +315,7 @@ export function useSeedData() {
 
     const profileConfig = CLINICAL_PROFILES[clinicalProfile];
 
-    // Check if in production
-    const hostname = window.location.hostname;
-    const isProduction = hostname.includes('lovable.app') && !hostname.includes('preview');
-    
-    if (isProduction) {
+    if (!areQAToolsEnabled()) {
       toast.error('Geração de dados sintéticos bloqueada em produção');
       return { success: false, message: 'Blocked in production' };
     }

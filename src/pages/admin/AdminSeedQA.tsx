@@ -41,6 +41,7 @@ import {
 import { useSeedData, type SeedConfig, type ClinicalProfile, CLINICAL_PROFILES } from "@/hooks/useSeedData";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { isProductionEnv } from "@/config/environment";
 
 export default function AdminSeedQA() {
   const { 
@@ -78,9 +79,7 @@ export default function AdminSeedQA() {
     ? Math.round((progress.current / progress.total) * 100) 
     : 0;
 
-  // Check if in production
-  const hostname = window.location.hostname;
-  const isProduction = hostname.includes('lovable.app') && !hostname.includes('preview');
+  const isProduction = isProductionEnv();
 
   const hasSyntheticData = metadata.totalSyntheticPatients > 0 || metadata.totalSyntheticAttendances > 0;
 

@@ -9,15 +9,14 @@ import { useState, useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { isProductionEnv } from "@/config/environment";
 
 export function QAModeBanner() {
   const [hasSyntheticData, setHasSyntheticData] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [syntheticCount, setSyntheticCount] = useState(0);
 
-  // Check if in production
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isProduction = hostname.includes('lovable.app') && !hostname.includes('preview');
+  const isProduction = isProductionEnv();
 
   useEffect(() => {
     // Don't check in production
