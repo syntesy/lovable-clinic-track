@@ -3,7 +3,7 @@ import { PreviousTreatmentsSummary } from "@/components/attendance/PreviousTreat
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Mail, AlertTriangle, FileText, Plus } from "lucide-react";
+import { ArrowLeft, Printer, Mail, AlertTriangle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
@@ -16,36 +16,21 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getClinicalRecordById, listClinicalRecords, ClinicalRecord } from "@/lib/clinical-record-helpers";
+import { getClinicalRecordById, ClinicalRecord } from "@/lib/clinical-record-helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const VisualizarRelatorio = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState("");
 
-  // Pegar recordId da query string (se fornecido)
+  // Guard: recordId é obrigatório. Sem ele, esta página não carrega dados clínicos.
   const recordIdFromQuery = searchParams.get("recordId");
-
-  // Se não tiver recordId, buscar lista de prontuários para seleção
-  const { data: recordsList, isLoading: loadingRecordsList } = useQuery({
-    queryKey: ["clinical-record", "list", id],
-    queryFn: () => listClinicalRecords(id!),
-    enabled: !!id && !recordIdFromQuery,
-  });
 
   // Se tiver recordId, buscar o relatório completo
   const { data: patientReport, isLoading: loadingReport, error } = useQuery({
@@ -208,38 +193,7 @@ const VisualizarRelatorio = () => {
     setRecipientEmail("");
   };
 
-  const handleSelectRecord = (recordId: string) => {
-    setSearchParams({ recordId });
-  };
-
-  const handleCreateNewRecord = async () => {
-    if (!id) return;
-    
-    try {
-      const { data: newRecord, error } = await supabase
-        .from("clinical_records")
-        .insert({
-          patient_id: id,
-          status: "draft",
-          chief_complaint: "",
-          anamnesis: "",
-          physical_exam: "",
-          clinical_diagnosis: "",
-        })
-        .select("id")
-        .single();
-      
-      if (error) throw error;
-      
-      toast.success("Prontuário criado");
-      navigate(`/patients/${id}/records/${newRecord.id}`);
-    } catch (err) {
-      console.error("Error creating record:", err);
-      toast.error("Erro ao criar prontuário");
-    }
-  };
-
-  const isLoading = loadingRecordsList || loadingReport;
+  const isLoading = loadingReport;
 
   if (isLoading) {
     return (
@@ -249,11 +203,11 @@ const VisualizarRelatorio = () => {
     );
   }
 
-  // Se não tiver recordId: mostrar seletor de prontuários
+  // Guard: relatório requer um prontuário específico — sem recordId, redirecionar à lista.
   if (!recordIdFromQuery) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="print:hidden sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+        <div className="print:hidden sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
           <Button
             variant="ghost"
             size="sm"
@@ -264,61 +218,19 @@ const VisualizarRelatorio = () => {
             Voltar ao Paciente
           </Button>
         </div>
-
-        <div className="max-w-2xl mx-auto p-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Selecione um Prontuário
-              </CardTitle>
-              <CardDescription>
-                Escolha qual prontuário deseja visualizar no relatório
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recordsList && recordsList.length > 0 ? (
-                <>
-                  <Select onValueChange={handleSelectRecord}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um prontuário..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {recordsList.map((record) => (
-                        <SelectItem key={record.id} value={record.id}>
-                          <div className="flex items-center gap-2">
-                            <span>
-                              {format(new Date(record.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                            </span>
-                            <Badge variant={record.status === "final" ? "default" : "secondary"}>
-                              {record.status === "final" ? "Finalizado" : "Rascunho"}
-                            </Badge>
-                            {record.clinical_diagnosis && (
-                              <span className="text-muted-foreground text-xs truncate max-w-[200px]">
-                                — {record.clinical_diagnosis}
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <div className="text-sm text-muted-foreground">
-                    {recordsList.length} prontuário(s) encontrado(s)
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8 space-y-4">
-                  <p className="text-muted-foreground">Nenhum prontuário encontrado</p>
-                  <Button onClick={handleCreateNewRecord} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Novo Prontuário
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <div className="max-w-2xl mx-auto p-8 space-y-4">
+          <Alert>
+            <FileText className="h-4 w-4" />
+            <AlertDescription>
+              Selecione um prontuário no histórico para gerar o relatório.
+            </AlertDescription>
+          </Alert>
+          <div className="text-center">
+            <Button onClick={() => navigate(`/patients/${id}/records`)} className="gap-2">
+              <FileText className="h-4 w-4" />
+              Ir para histórico de prontuários
+            </Button>
+          </div>
         </div>
       </div>
     );
