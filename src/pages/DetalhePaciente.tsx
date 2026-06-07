@@ -406,7 +406,7 @@ const DetalhePaciente = () => {
                           </CardTitle>
                           {latestClinicalRecord && (
                             <Badge variant="outline" className="text-[10px] font-normal w-fit">
-                              Prontuário: {format(new Date(latestClinicalRecord.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                              Baseado no último prontuário ({format(new Date(latestClinicalRecord.created_at), "dd/MM/yyyy", { locale: ptBR })})
                             </Badge>
                           )}
                         </div>
