@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { pct } from "@/utils/format";
 import { useNavigate } from "react-router-dom";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,10 +24,6 @@ import { InstitutionalScoreCard, type ScoreDimension } from "@/components/admin/
 import { computeInstitutionalScore, buildScoreInput } from "@/lib/institutional-score";
 import { DateRange } from "react-day-picker";
 
-function pct(num: number, den: number): string {
-  if (den === 0) return "0%";
-  return `${Math.round((num / den) * 100)}%`;
-}
 
 interface ProfessionalViewProps {
   dateRange: DateRange;

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { pct } from "@/utils/format";
 import { useNavigate } from "react-router-dom";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,11 +29,6 @@ import { cn } from "@/lib/utils";
 import { useConformityMetrics, type ConformityFilters } from "@/hooks/useConformityMetrics";
 import { ProfessionalConformityView } from "@/components/governance/ProfessionalConformityView";
 import { DateRange } from "react-day-picker";
-
-function pct(num: number, den: number): string {
-  if (den === 0) return "0%";
-  return `${Math.round((num / den) * 100)}%`;
-}
 
 export default function ConformidadeDashboard() {
   const navigate = useNavigate();
