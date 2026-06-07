@@ -59,6 +59,9 @@ export interface DashboardFilters {
 }
 
 // Toggle de visualização
+// VALORES CANÔNICOS: 'by_time' e 'by_stage' (produção, localStorage dos usuários).
+// Nota: documentação externa (PRD) usa 'time'/'stage' mas o código e o localStorage
+// sempre usaram 'by_time'/'by_stage'. NÃO migrar — resetaria preferências salvas.
 export type ViewMode = 'by_time' | 'by_stage';
 
 // Stage labels e cores
