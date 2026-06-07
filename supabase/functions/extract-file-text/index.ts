@@ -130,8 +130,28 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth temporarily relaxed for validation — verify_jwt=false in config.toml
-    // In production, user auth is handled by the frontend via supabase.functions.invoke()
+    // Verify authentication — all callers must present a valid session token.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ ok: false, error_code: "UNAUTHORIZED", message: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: { user }, error: userError } = await createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    ).auth.getUser();
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ ok: false, error_code: "UNAUTHORIZED", message: "Invalid or expired session" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("[extract:request] received request");
 
     const body = await req.json();
