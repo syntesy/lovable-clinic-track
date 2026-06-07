@@ -1,127 +1,209 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
-
-// Componente de redirect para rota legada do prontuário
-const ProntuarioRedirect = () => {
-  const { id } = useParams();
-  return <Navigate to={`/patients/${id}/records`} replace />;
-};
-
-// Import select environment page
-import SelectEnvironmentPage from "./pages/SelectEnvironmentPage";
-
-// Import new clinical records pages
-import ClinicalRecordsList from "./pages/ClinicalRecordsList";
-import ClinicalRecordEditor from "./pages/ClinicalRecordEditor";
-import ClinicalRecordPrint from "./pages/ClinicalRecordPrint";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RequireAdminRole } from "./components/RequireAdminRole";
 import { RequireGovernanceRole } from "./components/RequireGovernanceRole";
 import { PatientAuthProvider } from "./contexts/PatientAuthContext";
 import { PatientProtectedRoute } from "./components/patient/PatientProtectedRoute";
-import Auth from "./pages/Auth";
-import Checkout from "./pages/Checkout";
-import Pacientes from "./pages/Pacientes";
-import NovoPaciente from "./pages/NovoPaciente";
-import DetalhePaciente from "./pages/DetalhePaciente";
-import ProntuarioClinico from "./pages/ProntuarioClinico";
-import RegistrarEvolucao from "./pages/RegistrarEvolucao";
-import ProtocolosMenu from "./pages/ProtocolosMenu";
-import ProtocolosMAC from "./pages/ProtocolosMAC";
-import ProtocolosEPI from "./pages/ProtocolosEPI";
-import ProtocolosOrtobiologicos from "./pages/ProtocolosOrtobiologicos";
-import ProtocolosOndasChoque from "./pages/ProtocolosOndasChoque";
-import Relatorios from "./pages/Relatorios";
-import VisualizarRelatorio from "./pages/VisualizarRelatorio";
-import ProtocoloMAC from "./pages/ProtocoloMAC";
-import AgenteMAC from "./pages/AgenteMAC";
-import TriagemBiologica from "./pages/TriagemBiologica";
-import FisioRegenScore from "./pages/FisioRegenScore";
-import CuradoriaClinica from "./pages/CuradoriaClinica";
-import CuradoriaDetalhe from "./pages/CuradoriaDetalhe";
-import CuradoriaOriginal from "./pages/CuradoriaOriginal";
-import Partners from "./pages/Partners";
-import Subscription from "./pages/Subscription";
-import PatientsManage from "./pages/PatientsManage";
-import AdminCuradoria from "./pages/admin/AdminCuradoria";
-import AdminCuradoriaEditor from "./pages/admin/AdminCuradoriaEditor";
-import AdminArtigos from "./pages/admin/AdminArtigos";
-import AdminArtigoForm from "./pages/admin/AdminArtigoForm";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminRegistryDashboard from "./pages/admin/AdminRegistryDashboard";
-import RegistryGovernance from "./pages/admin/RegistryGovernance";
-import AdminResearchExport from "./pages/admin/AdminResearchExport";
-import AdminScoreFluxoDoc from "./pages/admin/AdminScoreFluxoDoc";
-import AdminScoreQA from "./pages/admin/AdminScoreQA";
-import AdminSeedQA from "./pages/admin/AdminSeedQA";
-import LandingPage from "./pages/LandingPage";
-import LandingPreview from "./pages/LandingPreview";
-import NotFound from "./pages/NotFound";
-import ProblemaPage from "./pages/landing/ProblemaPage";
-import ArquiteturaPage from "./pages/landing/ArquiteturaPage";
-import CienciaPage from "./pages/landing/CienciaPage";
-import GovernancaLandingPage from "./pages/landing/GovernancaLandingPage";
-import EcossistemaPage from "./pages/landing/EcossistemaPage";
-import IntegracaoPage from "./pages/landing/IntegracaoPage";
-import EstruturaClinicaPage from "./pages/landing/EstruturaClinicaPage";
-import ScorePage from "./pages/landing/ScorePage";
-import ResultadosPage from "./pages/landing/ResultadosPage";
-import EvidenciaPage from "./pages/landing/EvidenciaPage";
-import SegurancaPage from "./pages/landing/SegurancaPage";
-import FollowUpPage from "./pages/landing/FollowUpPage";
-import AcademyLandingPage from "./pages/landing/AcademyLandingPage";
-import FollowupPanel from "./pages/FollowupPanel";
-import { RegistryDashboard, RegistryExport } from "./pages/Registry";
-import { EvidenceDashboard, EvidenceDimensions, EvidenceDimensionDetail } from "./pages/Evidence";
-import { CareerDashboard } from "./pages/Career";
-import { DiligenceDashboard, DiligenceCaseDetail } from "./pages/Diligence";
-import DailyDashboard from "./pages/DailyDashboard";
-import AnaliseResultados from "./pages/AnaliseResultados";
-import { AtendimentosList, AtendimentoDetail, NovoAtendimento } from "./pages/Atendimento";
-import { CollectiveDashboard, PerformanceDashboard, ClinicalDashboard } from "./pages/Insights";
-// Patient Portal Pages - Single Function (Followup only)
-import PatientLogin from "./pages/patient/PatientLogin";
-import PatientHome from "./pages/patient/PatientHome";
-import PatientFollowup from "./pages/patient/PatientFollowup";
-// Education Pages
 import { ModeProvider } from "./contexts/ModeContext";
 import { EduLayout } from "./components/edu/EduLayout";
 import { RequireEduMembership } from "./components/edu";
-import {
-  EduHome, EduDashboard, EduCohorts, EduCohortDetail, EduModuleDetail,
-  EduCaseDetail, EduLearningObjectDetail, EduDecisionLabDetail, EduCheckpointDetail, EduProgress,
-  EduTeacherDashboard, EduTeacherCases, EduTeacherLearningObjects, EduTeacherLearningObjectForm, EduTeacherCheckpoints, EduTeacherDecisionLab, EduTeacherAnalytics,
-  EduTeacherModules, EduTeacherCohorts,
-  EduDirectorConsole,
-  EduAdminMembers, EduAdminEnrollments, EduAdminSettings
-} from "./pages/edu";
-import {
-  AcademyHome, ApprovalsPage, MentorshipsPage, MentorshipDetailPage, MentorsPage, MentorDetailPage,
-  MyMentorshipsPage, MyJourneyPage, AppliedSciencePage, ModoAvancado,
-  MentorApplicationPage, MentorOnboardingPage, MentorApprovalsPage,
-  TeacherApplicationPage, TeacherApprovalsPage,
-  TeacherDashboard, ProductCreatePage, ProductEditPage, AdminProductsPage,
-  MarketplacePage, MarketplaceDetailPage,
-  MyPurchasesPage, CoursePlayerPage,
-  AcademyFinancialAdmin, AcademyTermsPage, AcademyPrivacyPage, AcademyRefundPolicyPage,
-  AcademyLibraryPage, AcademyLibraryAdminPage, AcademyPapersAdminPage,
-  AcademyFeedPage, AcademyCollectionsPage, AcademyCollectionDetailPage, AcademyNotificationsPage,
-  EvidenceCentralPage, AcademyAiTestsPage, AcademyWatchlistsPage, AcademyPdfHealthPage,
-  AcademyTrilhasPage, AcademyMigrationsPage, ReghenEvidenceMethodPage, AcademyPipelineHealthPage,
-  AcademyReviewQueuePage, AcademyPaperDetailPage, CuratorPanel, CuratedArticleDetailPage,
-} from "./pages/academy";
-import AcademyPipelineMetricsPage from "./pages/academy/AcademyPipelineMetricsPage";
 import { MentorOnboardingGate } from "./components/academy/MentorOnboardingGate";
 import { QAModeBanner } from "./components/QAModeBanner";
-import { ProtocolsList, ProtocolDetail, ProtocolEdit, ProtocolCreate, ConformidadeDashboard } from "./pages/governance";
 import { RequireGovernanceAccess } from "./components/governance/RequireGovernanceAccess";
-import DevRlsTest from "./pages/DevRlsTest";
-import EvidenceDashboardPage from "./pages/reghen/EvidenceDashboardPage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+
+// Inline redirect — must be synchronous (uses useParams before routes resolve)
+const ProntuarioRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/patients/${id}/records`} replace />;
+};
+
+// ─── Static: always in initial bundle ────────────────────────────────────────
+// These are either public entry points or tiny enough to not matter.
+import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/LandingPage";
+import Checkout from "./pages/Checkout";
+import SelectEnvironmentPage from "./pages/SelectEnvironmentPage";
+import PatientLogin from "./pages/patient/PatientLogin";
+import PatientHome from "./pages/patient/PatientHome";
+import PatientFollowup from "./pages/patient/PatientFollowup";
+
+// ─── Lazy: landing sub-pages (chunk: landing) ─────────────────────────────────
+const ProblemaPage        = lazy(() => import("./pages/landing/ProblemaPage"));
+const ArquiteturaPage     = lazy(() => import("./pages/landing/ArquiteturaPage"));
+const CienciaPage         = lazy(() => import("./pages/landing/CienciaPage"));
+const GovernancaLandingPage = lazy(() => import("./pages/landing/GovernancaLandingPage"));
+const EcossistemaPage     = lazy(() => import("./pages/landing/EcossistemaPage"));
+const IntegracaoPage      = lazy(() => import("./pages/landing/IntegracaoPage"));
+const EstruturaClinicaPage = lazy(() => import("./pages/landing/EstruturaClinicaPage"));
+const ScorePage           = lazy(() => import("./pages/landing/ScorePage"));
+const ResultadosPage      = lazy(() => import("./pages/landing/ResultadosPage"));
+const EvidenciaPage       = lazy(() => import("./pages/landing/EvidenciaPage"));
+const SegurancaPage       = lazy(() => import("./pages/landing/SegurancaPage"));
+const FollowUpPage        = lazy(() => import("./pages/landing/FollowUpPage"));
+const AcademyLandingPage  = lazy(() => import("./pages/landing/AcademyLandingPage"));
+const LandingPreview      = lazy(() => import("./pages/LandingPreview"));
+
+// ─── Lazy: core clinical app (chunk: clinical) ────────────────────────────────
+const Pacientes               = lazy(() => import("./pages/Pacientes"));
+const NovoPaciente            = lazy(() => import("./pages/NovoPaciente"));
+const DetalhePaciente         = lazy(() => import("./pages/DetalhePaciente"));
+const ProntuarioClinico       = lazy(() => import("./pages/ProntuarioClinico"));
+const RegistrarEvolucao       = lazy(() => import("./pages/RegistrarEvolucao"));
+const ClinicalRecordsList     = lazy(() => import("./pages/ClinicalRecordsList"));
+const ClinicalRecordEditor    = lazy(() => import("./pages/ClinicalRecordEditor"));
+const ClinicalRecordPrint     = lazy(() => import("./pages/ClinicalRecordPrint"));
+const DailyDashboard          = lazy(() => import("./pages/DailyDashboard"));
+const ProtocolosMenu          = lazy(() => import("./pages/ProtocolosMenu"));
+const ProtocolosMAC           = lazy(() => import("./pages/ProtocolosMAC"));
+const ProtocolosEPI           = lazy(() => import("./pages/ProtocolosEPI"));
+const ProtocolosOrtobiologicos = lazy(() => import("./pages/ProtocolosOrtobiologicos"));
+const ProtocolosOndasChoque   = lazy(() => import("./pages/ProtocolosOndasChoque"));
+const ProtocoloMAC            = lazy(() => import("./pages/ProtocoloMAC"));
+const AgenteMAC               = lazy(() => import("./pages/AgenteMAC"));
+const TriagemBiologica        = lazy(() => import("./pages/TriagemBiologica"));
+const FisioRegenScore         = lazy(() => import("./pages/FisioRegenScore"));
+const Relatorios              = lazy(() => import("./pages/Relatorios"));
+const VisualizarRelatorio     = lazy(() => import("./pages/VisualizarRelatorio"));
+const FollowupPanel           = lazy(() => import("./pages/FollowupPanel"));
+const CuradoriaClinica        = lazy(() => import("./pages/CuradoriaClinica"));
+const CuradoriaDetalhe        = lazy(() => import("./pages/CuradoriaDetalhe"));
+const CuradoriaOriginal       = lazy(() => import("./pages/CuradoriaOriginal"));
+const Partners                = lazy(() => import("./pages/Partners"));
+const Subscription            = lazy(() => import("./pages/Subscription"));
+const PatientsManage          = lazy(() => import("./pages/PatientsManage"));
+const AnaliseResultados       = lazy(() => import("./pages/AnaliseResultados"));
+const DevRlsTest              = lazy(() => import("./pages/DevRlsTest"));
+
+// ─── Lazy: atendimentos (chunk: atendimentos) ─────────────────────────────────
+const AtendimentosList  = lazy(() => import("./pages/Atendimento").then(m => ({ default: m.AtendimentosList })));
+const AtendimentoDetail = lazy(() => import("./pages/Atendimento").then(m => ({ default: m.AtendimentoDetail })));
+const NovoAtendimento   = lazy(() => import("./pages/Atendimento").then(m => ({ default: m.NovoAtendimento })));
+
+// ─── Lazy: admin panel (chunk: admin) ─────────────────────────────────────────
+const AdminCuradoria        = lazy(() => import("./pages/admin/AdminCuradoria"));
+const AdminCuradoriaEditor  = lazy(() => import("./pages/admin/AdminCuradoriaEditor"));
+const AdminArtigos          = lazy(() => import("./pages/admin/AdminArtigos"));
+const AdminArtigoForm       = lazy(() => import("./pages/admin/AdminArtigoForm"));
+const AdminDashboard        = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminRegistryDashboard = lazy(() => import("./pages/admin/AdminRegistryDashboard"));
+const RegistryGovernance    = lazy(() => import("./pages/admin/RegistryGovernance"));
+const AdminResearchExport   = lazy(() => import("./pages/admin/AdminResearchExport"));
+const AdminScoreFluxoDoc    = lazy(() => import("./pages/admin/AdminScoreFluxoDoc"));
+const AdminScoreQA          = lazy(() => import("./pages/admin/AdminScoreQA"));
+const AdminSeedQA           = lazy(() => import("./pages/admin/AdminSeedQA"));
+
+// ─── Lazy: governance (chunk: governance) ─────────────────────────────────────
+const ProtocolsList       = lazy(() => import("./pages/governance").then(m => ({ default: m.ProtocolsList })));
+const ProtocolDetail      = lazy(() => import("./pages/governance").then(m => ({ default: m.ProtocolDetail })));
+const ProtocolEdit        = lazy(() => import("./pages/governance").then(m => ({ default: m.ProtocolEdit })));
+const ProtocolCreate      = lazy(() => import("./pages/governance").then(m => ({ default: m.ProtocolCreate })));
+const ConformidadeDashboard = lazy(() => import("./pages/governance").then(m => ({ default: m.ConformidadeDashboard })));
+
+// ─── Lazy: registry & evidence (chunk: registry) ─────────────────────────────
+const RegistryDashboard     = lazy(() => import("./pages/Registry").then(m => ({ default: m.RegistryDashboard })));
+const RegistryExport        = lazy(() => import("./pages/Registry").then(m => ({ default: m.RegistryExport })));
+const EvidenceDashboard     = lazy(() => import("./pages/Evidence").then(m => ({ default: m.EvidenceDashboard })));
+const EvidenceDimensions    = lazy(() => import("./pages/Evidence").then(m => ({ default: m.EvidenceDimensions })));
+const EvidenceDimensionDetail = lazy(() => import("./pages/Evidence").then(m => ({ default: m.EvidenceDimensionDetail })));
+const EvidenceDashboardPage = lazy(() => import("./pages/reghen/EvidenceDashboardPage"));
+
+// ─── Lazy: insights & career (chunk: insights) ────────────────────────────────
+const CollectiveDashboard  = lazy(() => import("./pages/Insights").then(m => ({ default: m.CollectiveDashboard })));
+const PerformanceDashboard = lazy(() => import("./pages/Insights").then(m => ({ default: m.PerformanceDashboard })));
+const ClinicalDashboard    = lazy(() => import("./pages/Insights").then(m => ({ default: m.ClinicalDashboard })));
+const CareerDashboard      = lazy(() => import("./pages/Career").then(m => ({ default: m.CareerDashboard })));
+const DiligenceDashboard   = lazy(() => import("./pages/Diligence").then(m => ({ default: m.DiligenceDashboard })));
+const DiligenceCaseDetail  = lazy(() => import("./pages/Diligence").then(m => ({ default: m.DiligenceCaseDetail })));
+
+// ─── Lazy: academy (chunk: academy) ───────────────────────────────────────────
+const AcademyHome             = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyHome })));
+const ApprovalsPage           = lazy(() => import("./pages/academy").then(m => ({ default: m.ApprovalsPage })));
+const MentorshipsPage         = lazy(() => import("./pages/academy").then(m => ({ default: m.MentorshipsPage })));
+const MentorshipDetailPage    = lazy(() => import("./pages/academy").then(m => ({ default: m.MentorshipDetailPage })));
+const MentorsPage             = lazy(() => import("./pages/academy").then(m => ({ default: m.MentorsPage })));
+const MentorDetailPage        = lazy(() => import("./pages/academy").then(m => ({ default: m.MentorDetailPage })));
+const MyMentorshipsPage       = lazy(() => import("./pages/academy").then(m => ({ default: m.MyMentorshipsPage })));
+const MyJourneyPage           = lazy(() => import("./pages/academy").then(m => ({ default: m.MyJourneyPage })));
+const AppliedSciencePage      = lazy(() => import("./pages/academy").then(m => ({ default: m.AppliedSciencePage })));
+const ModoAvancado            = lazy(() => import("./pages/academy").then(m => ({ default: m.ModoAvancado })));
+const MentorApplicationPage   = lazy(() => import("./pages/academy").then(m => ({ default: m.MentorApplicationPage })));
+const MentorOnboardingPage    = lazy(() => import("./pages/academy").then(m => ({ default: m.MentorOnboardingPage })));
+const MentorApprovalsPage     = lazy(() => import("./pages/academy").then(m => ({ default: m.MentorApprovalsPage })));
+const TeacherApplicationPage  = lazy(() => import("./pages/academy").then(m => ({ default: m.TeacherApplicationPage })));
+const TeacherApprovalsPage    = lazy(() => import("./pages/academy").then(m => ({ default: m.TeacherApprovalsPage })));
+const TeacherDashboard        = lazy(() => import("./pages/academy").then(m => ({ default: m.TeacherDashboard })));
+const ProductCreatePage       = lazy(() => import("./pages/academy").then(m => ({ default: m.ProductCreatePage })));
+const ProductEditPage         = lazy(() => import("./pages/academy").then(m => ({ default: m.ProductEditPage })));
+const AdminProductsPage       = lazy(() => import("./pages/academy").then(m => ({ default: m.AdminProductsPage })));
+const MarketplacePage         = lazy(() => import("./pages/academy").then(m => ({ default: m.MarketplacePage })));
+const MarketplaceDetailPage   = lazy(() => import("./pages/academy").then(m => ({ default: m.MarketplaceDetailPage })));
+const MyPurchasesPage         = lazy(() => import("./pages/academy").then(m => ({ default: m.MyPurchasesPage })));
+const CoursePlayerPage        = lazy(() => import("./pages/academy").then(m => ({ default: m.CoursePlayerPage })));
+const AcademyFinancialAdmin   = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyFinancialAdmin })));
+const AcademyTermsPage        = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyTermsPage })));
+const AcademyPrivacyPage      = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyPrivacyPage })));
+const AcademyRefundPolicyPage = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyRefundPolicyPage })));
+const AcademyLibraryPage      = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyLibraryPage })));
+const AcademyLibraryAdminPage = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyLibraryAdminPage })));
+const AcademyPapersAdminPage  = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyPapersAdminPage })));
+const AcademyFeedPage         = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyFeedPage })));
+const AcademyCollectionsPage  = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyCollectionsPage })));
+const AcademyCollectionDetailPage = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyCollectionDetailPage })));
+const AcademyNotificationsPage = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyNotificationsPage })));
+const EvidenceCentralPage     = lazy(() => import("./pages/academy").then(m => ({ default: m.EvidenceCentralPage })));
+const AcademyAiTestsPage      = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyAiTestsPage })));
+const AcademyWatchlistsPage   = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyWatchlistsPage })));
+const AcademyPdfHealthPage    = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyPdfHealthPage })));
+const AcademyTrilhasPage      = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyTrilhasPage })));
+const AcademyMigrationsPage   = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyMigrationsPage })));
+const ReghenEvidenceMethodPage = lazy(() => import("./pages/academy").then(m => ({ default: m.ReghenEvidenceMethodPage })));
+const AcademyPipelineHealthPage = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyPipelineHealthPage })));
+const AcademyReviewQueuePage  = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyReviewQueuePage })));
+const AcademyPaperDetailPage  = lazy(() => import("./pages/academy").then(m => ({ default: m.AcademyPaperDetailPage })));
+const CuratorPanel            = lazy(() => import("./pages/academy").then(m => ({ default: m.CuratorPanel })));
+const CuratedArticleDetailPage = lazy(() => import("./pages/academy").then(m => ({ default: m.CuratedArticleDetailPage })));
+const AcademyPipelineMetricsPage = lazy(() => import("./pages/academy/AcademyPipelineMetricsPage"));
+
+// ─── Lazy: edu (chunk: edu) ───────────────────────────────────────────────────
+const EduHome                   = lazy(() => import("./pages/edu").then(m => ({ default: m.EduHome })));
+const EduDashboard              = lazy(() => import("./pages/edu").then(m => ({ default: m.EduDashboard })));
+const EduCohorts                = lazy(() => import("./pages/edu").then(m => ({ default: m.EduCohorts })));
+const EduCohortDetail           = lazy(() => import("./pages/edu").then(m => ({ default: m.EduCohortDetail })));
+const EduModuleDetail           = lazy(() => import("./pages/edu").then(m => ({ default: m.EduModuleDetail })));
+const EduCaseDetail             = lazy(() => import("./pages/edu").then(m => ({ default: m.EduCaseDetail })));
+const EduLearningObjectDetail   = lazy(() => import("./pages/edu").then(m => ({ default: m.EduLearningObjectDetail })));
+const EduDecisionLabDetail      = lazy(() => import("./pages/edu").then(m => ({ default: m.EduDecisionLabDetail })));
+const EduCheckpointDetail       = lazy(() => import("./pages/edu").then(m => ({ default: m.EduCheckpointDetail })));
+const EduProgress               = lazy(() => import("./pages/edu").then(m => ({ default: m.EduProgress })));
+const EduTeacherDashboard       = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherDashboard })));
+const EduTeacherCases           = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherCases })));
+const EduTeacherLearningObjects = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherLearningObjects })));
+const EduTeacherLearningObjectForm = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherLearningObjectForm })));
+const EduTeacherCheckpoints     = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherCheckpoints })));
+const EduTeacherDecisionLab     = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherDecisionLab })));
+const EduTeacherAnalytics       = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherAnalytics })));
+const EduTeacherModules         = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherModules })));
+const EduTeacherCohorts         = lazy(() => import("./pages/edu").then(m => ({ default: m.EduTeacherCohorts })));
+const EduDirectorConsole        = lazy(() => import("./pages/edu").then(m => ({ default: m.EduDirectorConsole })));
+const EduAdminMembers           = lazy(() => import("./pages/edu").then(m => ({ default: m.EduAdminMembers })));
+const EduAdminEnrollments       = lazy(() => import("./pages/edu").then(m => ({ default: m.EduAdminEnrollments })));
+const EduAdminSettings          = lazy(() => import("./pages/edu").then(m => ({ default: m.EduAdminSettings })));
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -146,6 +228,7 @@ const App = () => (
         <QAModeBanner />
         <BrowserRouter>
         <ModeProvider>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/select-environment" element={<ProtectedRoute><SelectEnvironmentPage /></ProtectedRoute>} />
@@ -166,7 +249,7 @@ const App = () => (
             <Route path="/follow-up" element={<FollowUpPage />} />
             <Route path="/academy-info" element={<AcademyLandingPage />} />
             <Route path="/landing-preview" element={<LandingPreview />} />
-            
+
             {/* Patient Portal Routes - Single Function */}
             <Route path="/patient/login" element={<PatientLogin />} />
             <Route path="/patient/home" element={<PatientProtectedRoute><PatientHome /></PatientProtectedRoute>} />
@@ -175,13 +258,13 @@ const App = () => (
             <Route path="/patient/reports" element={<Navigate to="/patient/home" replace />} />
             <Route path="/patient/prescriptions" element={<Navigate to="/patient/home" replace />} />
             <Route path="/patient/partners" element={<Navigate to="/patient/home" replace />} />
-          
+
           {/* Atendimentos Routes */}
           <Route path="/atendimentos" element={<ProtectedRoute><Layout><AtendimentosList /></Layout></ProtectedRoute>} />
           <Route path="/atendimentos/novo" element={<ProtectedRoute><Layout><NovoAtendimento /></Layout></ProtectedRoute>} />
           <Route path="/atendimentos/:attendanceId" element={<ProtectedRoute><Layout><AtendimentoDetail /></Layout></ProtectedRoute>} />
           <Route path="/reghen/evidence-dashboard" element={<ProtectedRoute><Layout><EvidenceDashboardPage /></Layout></ProtectedRoute>} />
-          
+
           {/* Daily Clinical Dashboard */}
           <Route
             path="/agenda"
@@ -782,6 +865,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
         </ModeProvider>
       </BrowserRouter>
       </PatientAuthProvider>
