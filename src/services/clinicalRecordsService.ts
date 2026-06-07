@@ -141,34 +141,3 @@ export function hasClinicalRecordMinimumData(record: ClinicalRecordBasic | null)
   
   return conjuntoA || conjuntoB || conjuntoC;
 }
-
-// ============ Legacy/Analytics functions (for backwards compatibility) ============
-
-/**
- * @deprecated Use getClinicalRecordByAttendanceId instead.
- * Get the clinical record created within an attendance's time window.
- * Only use this for analytics or migration purposes, NOT for main lookup.
- */
-export async function getClinicalRecordByAttendanceTimeWindow(
-  patientId: string,
-  attendanceStartAt: string,
-  attendanceEndAt: string | null
-): Promise<ClinicalRecordBasic | null> {
-  let query = supabase
-    .from("clinical_records")
-    .select("id, patient_id, attendance_id, status, created_at, chief_complaint, anamnesis, physical_exam, clinical_diagnosis")
-    .eq("patient_id", patientId)
-    .gte("created_at", attendanceStartAt);
-
-  if (attendanceEndAt) {
-    query = query.lte("created_at", attendanceEndAt);
-  }
-
-  const { data, error } = await query
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data as ClinicalRecordBasic | null;
-}
