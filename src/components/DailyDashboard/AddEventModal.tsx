@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { ClinicalStage, STAGE_CONFIG } from '@/types/daily-dashboard';
+import { ClinicalStage, STAGE_CONFIG, STAGE_ORDER } from '@/types/daily-dashboard';
 import { format } from 'date-fns';
 import { UserPlus, Search } from 'lucide-react';
 import { NewPatientModal } from './NewPatientModal';
@@ -295,9 +295,9 @@ export function AddEventModal({ open, onOpenChange, selectedDate, onSubmit }: Ad
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(STAGE_CONFIG).map(([key, config]) => (
+                {STAGE_ORDER.map((key) => (
                   <SelectItem key={key} value={key}>
-                    {config.label}
+                    {STAGE_CONFIG[key].label}
                   </SelectItem>
                 ))}
               </SelectContent>
