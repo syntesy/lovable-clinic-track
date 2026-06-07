@@ -49,7 +49,6 @@ const EvidenciaPage       = lazy(() => import("./pages/landing/EvidenciaPage"));
 const SegurancaPage       = lazy(() => import("./pages/landing/SegurancaPage"));
 const FollowUpPage        = lazy(() => import("./pages/landing/FollowUpPage"));
 const AcademyLandingPage  = lazy(() => import("./pages/landing/AcademyLandingPage"));
-const LandingPreview      = lazy(() => import("./pages/LandingPreview"));
 
 // ─── Lazy: core clinical app (chunk: clinical) ────────────────────────────────
 const Pacientes               = lazy(() => import("./pages/Pacientes"));
@@ -66,7 +65,6 @@ const ProtocolosMAC           = lazy(() => import("./pages/ProtocolosMAC"));
 const ProtocolosEPI           = lazy(() => import("./pages/ProtocolosEPI"));
 const ProtocolosOrtobiologicos = lazy(() => import("./pages/ProtocolosOrtobiologicos"));
 const ProtocolosOndasChoque   = lazy(() => import("./pages/ProtocolosOndasChoque"));
-const ProtocoloMAC            = lazy(() => import("./pages/ProtocoloMAC"));
 const AgenteMAC               = lazy(() => import("./pages/AgenteMAC"));
 const TriagemBiologica        = lazy(() => import("./pages/TriagemBiologica"));
 const FisioRegenScore         = lazy(() => import("./pages/FisioRegenScore"));
@@ -75,7 +73,6 @@ const VisualizarRelatorio     = lazy(() => import("./pages/VisualizarRelatorio")
 const FollowupPanel           = lazy(() => import("./pages/FollowupPanel"));
 const CuradoriaClinica        = lazy(() => import("./pages/CuradoriaClinica"));
 const CuradoriaDetalhe        = lazy(() => import("./pages/CuradoriaDetalhe"));
-const CuradoriaOriginal       = lazy(() => import("./pages/CuradoriaOriginal"));
 const Partners                = lazy(() => import("./pages/Partners"));
 const Subscription            = lazy(() => import("./pages/Subscription"));
 const PatientsManage          = lazy(() => import("./pages/PatientsManage"));
@@ -248,7 +245,6 @@ const App = () => (
             <Route path="/seguranca" element={<SegurancaPage />} />
             <Route path="/follow-up" element={<FollowUpPage />} />
             <Route path="/academy-info" element={<AcademyLandingPage />} />
-            <Route path="/landing-preview" element={<LandingPreview />} />
 
             {/* Patient Portal Routes - Single Function */}
             <Route path="/patient/login" element={<PatientLogin />} />
@@ -403,16 +399,6 @@ const App = () => (
             }
           />
           <Route
-            path="/protocolo-mac/:id"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <ProtocoloMAC />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/relatorios"
             element={
               <ProtectedRoute>
@@ -482,16 +468,6 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <CuradoriaDetalhe />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/curadoria/:id/original"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <CuradoriaOriginal />
                 </Layout>
               </ProtectedRoute>
             }
