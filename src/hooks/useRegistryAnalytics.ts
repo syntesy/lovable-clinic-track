@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  RegistryCaseSummary, 
-  RegistryFilters, 
+import {
+  RegistryCaseSummary,
+  RegistryFilters,
   RegistryMetrics,
-  PainCurvePoint 
+  PainCurvePoint
 } from '@/types/registry-analytics';
+import { K_MIN } from '@/types/evidence-engine';
+import { useToast } from '@/hooks/use-toast';
 
 export function useRegistryAnalytics(filters?: RegistryFilters) {
   const [cases, setCases] = useState<RegistryCaseSummary[]>([]);
@@ -168,11 +170,24 @@ export function useRegistryAnalytics(filters?: RegistryFilters) {
 
 export function useRegistryExport() {
   const [exporting, setExporting] = useState(false);
+  const { toast } = useToast();
 
   const exportToCSV = useCallback(async (
     cases: RegistryCaseSummary[],
     filters: RegistryFilters
   ): Promise<boolean> => {
+    // k-anonymity floor: recusa export com menos de K_MIN casos.
+    // Mesmo com clinician_id hasheado, combinações raras de atributos
+    // (diagnóstico + procedimento + tecido) podem re-identificar pacientes.
+    if (cases.length < K_MIN) {
+      toast({
+        title: 'Exportação bloqueada',
+        description: `São necessários pelo menos ${K_MIN} casos para preservar o anonimato. Ajuste os filtros.`,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
     try {
       setExporting(true);
 
