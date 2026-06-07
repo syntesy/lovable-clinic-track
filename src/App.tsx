@@ -502,9 +502,9 @@ const App = () => (
           <Route path="/analise-resultados" element={<ProtectedRoute><RequireGovernanceAccess><Layout><AnaliseResultados /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
           {/* Governance Routes */}
           <Route path="/governanca/protocolos" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolsList /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
-          <Route path="/governanca/protocolos/novo" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolCreate /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
+          <Route path="/governanca/protocolos/novo" element={<ProtectedRoute><RequireAdminRole><Layout><ProtocolCreate /></Layout></RequireAdminRole></ProtectedRoute>} />
           <Route path="/governanca/protocolos/:protocolId" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolDetail /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
-          <Route path="/governanca/protocolos/:protocolId/editar" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ProtocolEdit /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
+          <Route path="/governanca/protocolos/:protocolId/editar" element={<ProtectedRoute><RequireAdminRole><Layout><ProtocolEdit /></Layout></RequireAdminRole></ProtectedRoute>} />
            <Route path="/governanca/conformidade" element={<ProtectedRoute><RequireGovernanceAccess><Layout><ConformidadeDashboard /></Layout></RequireGovernanceAccess></ProtectedRoute>} />
 
           {/* DEV — temporary RLS test page */}

@@ -1,16 +1,27 @@
 /**
- * RequireGovernanceAccess - Blocks SECRETARY role from governance routes.
- * NURSE_TECH can view (read-only), PROFESSIONAL/ADMIN have full access.
+ * RequireGovernanceAccess — guarda para rotas de governança (protocolos, conformidade).
+ *
+ * Política de acesso EXPLÍCITA:
+ *   professional   → acesso total (visualizar + ações no próprio escopo)
+ *   nurse_tech     → acesso de leitura (mesma rota, conteúdo sem ações destrutivas)
+ *   admin          → acesso total (inclui visão cross-professional)
+ *   secretary      → BLOQUEADO (sem contexto clínico para protocolos)
+ *   outros/unknown → BLOQUEADO por segurança (fail-closed)
+ *
+ * Para criação/edição de protocolos, use RequireAdminRole em vez deste guard.
  */
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ShieldX } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
   children: React.ReactNode;
 }
+
+// Roles com permissão explícita de acesso às rotas de governança
+const GOVERNANCE_ALLOWED_ROLES = new Set(["professional", "nurse_tech", "admin"]);
 
 export function RequireGovernanceAccess({ children }: Props) {
   const [role, setRole] = useState<string | null>(null);
@@ -52,8 +63,8 @@ export function RequireGovernanceAccess({ children }: Props) {
 
   if (!role) return <Navigate to="/auth" replace />;
 
-  if (role === "secretary") {
-    toast.error("Acesso restrito. Secretárias não podem acessar a área de governança.");
+  if (!GOVERNANCE_ALLOWED_ROLES.has(role)) {
+    toast.error("Acesso restrito. Seu perfil não tem permissão para acessar a área de governança.");
     return <Navigate to="/pacientes" replace />;
   }
 
