@@ -9,6 +9,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { areQAToolsEnabled } from "@/config/environment";
 
 export interface ClinicalRecord {
   id: string;
@@ -52,7 +53,7 @@ export async function getClinicalRecordById(
     throw new Error(`Prontuário não encontrado: ${error.message}`);
   }
 
-  console.log("[getClinicalRecordById] Loaded record:", recordId);
+  if (areQAToolsEnabled()) console.log("[getClinicalRecordById] Loaded record:", recordId);
   return data as ClinicalRecord;
 }
 
@@ -87,9 +88,9 @@ export async function getLatestClinicalRecord(
   const record = data && data.length > 0 ? data[0] : null;
   
   if (record) {
-    console.log("[getLatestClinicalRecord] Found latest record:", record.id, "for patient:", patientId);
+    if (areQAToolsEnabled()) console.log("[getLatestClinicalRecord] Found latest record:", record.id, "for patient:", patientId);
   } else {
-    console.log("[getLatestClinicalRecord] No records found for patient:", patientId);
+    if (areQAToolsEnabled()) console.log("[getLatestClinicalRecord] No records found for patient:", patientId);
   }
 
   return record as ClinicalRecord | null;
@@ -115,6 +116,6 @@ export async function listClinicalRecords(
     throw error;
   }
 
-  console.log("[listClinicalRecords] Found", data?.length || 0, "records for patient:", patientId);
+  if (areQAToolsEnabled()) console.log("[listClinicalRecords] Found", data?.length || 0, "records for patient:", patientId);
   return (data || []) as ClinicalRecord[];
 }
