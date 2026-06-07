@@ -196,8 +196,16 @@ export function useRegistryExport() {
         throw new Error('Usuário não autenticado');
       }
 
-      // Generate anonymized data
-      const salt = 'registry_v1_1_salt_' + new Date().toISOString().slice(0, 10);
+      // Salt aleatório por export — Opção A (máxima privacidade).
+      // Cada export produz hashes de clinician_id completamente distintos,
+      // impedindo correlação entre arquivos mesmo do mesmo dia.
+      //
+      // Trade-off: não é possível agrupar por "mesmo clínico" entre dois exports.
+      // Se no futuro houver necessidade de análises colaborativas com contagem
+      // de clínicos distintos entre exports, migrar para Opção B:
+      //   const salt = 'registry_v1_1_salt_' + YYYY-MM  (rotação mensal)
+      // O default permanece Opção A enquanto o uso colaborativo não for definido.
+      const salt = crypto.randomUUID();
       const rows: string[] = [];
       
       // Header
