@@ -13,8 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Search } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Search } from "lucide-react";
 import { PatientPhotoUpload } from "@/components/PatientPhotoUpload";
+import LGPDConsentForm, { CONSENT_TEXT } from "@/components/LGPDConsentForm";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 // ─── Helpers de máscara ───────────────────────────────────────────────────────
 
@@ -124,8 +126,23 @@ function BirthDatePicker({
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
+type Stage = "consent" | "form";
+
 const NovoPaciente = () => {
   const navigate = useNavigate();
+  const { logConsentAccepted } = useAuditLog();
+
+  // ── Fluxo de consentimento LGPD (Step 1) ───────────────────────────────────
+  const [stage, setStage] = useState<Stage>("consent");
+  const [pendingConsents, setPendingConsents] = useState<Record<string, boolean>>({});
+
+  function handleConsentCollected(items: Record<string, boolean>) {
+    setPendingConsents(items);
+  }
+
+  function handleConsentAccepted() {
+    setStage("form");
+  }
 
   // Dados básicos
   const [fullName, setFullName] = useState("");
@@ -210,21 +227,61 @@ const NovoPaciente = () => {
 
       const age = calcAge(birthDate);
 
-      const { error } = await supabase.from("patients").insert([
-        {
-          full_name: fullName.trim(),
-          age,
-          gender: gender || null,
-          birth_date: birthDate || null,
-          phone: phone || null,
-          email: email || null,
-          cpf: cpf || null,
-          address: addressParts || null,
-          photo_url: photoUrl,
-        },
-      ]);
+      // 1. Criar paciente e obter o ID gerado
+      const { data: patientData, error } = await supabase
+        .from("patients")
+        .insert([
+          {
+            full_name: fullName.trim(),
+            age,
+            gender: gender || null,
+            birth_date: birthDate || null,
+            phone: phone || null,
+            email: email || null,
+            cpf: cpf || null,
+            address: addressParts || null,
+            photo_url: photoUrl,
+          },
+        ])
+        .select("id")
+        .single();
 
       if (error) throw error;
+
+      const patientId = patientData.id;
+
+      // 2. Gravar consentimentos LGPD coletados na Etapa 1
+      const { data: { user } } = await supabase.auth.getUser();
+      const consentsToInsert = Object.entries(pendingConsents)
+        .filter(([, accepted]) => accepted)
+        .map(([itemId]) => ({
+          patient_id: patientId,
+          consent_type: itemId,
+          consent_text: CONSENT_TEXT,
+          accepted: true,
+          accepted_at: new Date().toISOString(),
+          user_agent: navigator.userAgent,
+          witness_user_id: user?.id,
+        }));
+
+      const { error: consentError } = await supabase
+        .from("patient_consents")
+        .insert(consentsToInsert);
+
+      if (consentError) {
+        // ALERTA GRITANTE — paciente existe mas sem consentimento gravado.
+        // O toast persistente garante que ninguém ignore o gap.
+        toast.error(
+          "Paciente cadastrado, mas o consentimento LGPD NÃO foi salvo. " +
+          "Registre o consentimento novamente antes de prosseguir.",
+          { duration: Infinity }
+        );
+        navigate("/pacientes");
+        return;
+      }
+
+      // 3. Registrar log de auditoria do consentimento
+      await logConsentAccepted(patientId, "LGPD_FULL_CONSENT");
 
       toast.success("Paciente cadastrado com sucesso!");
       navigate("/pacientes");
@@ -236,6 +293,18 @@ const NovoPaciente = () => {
     }
   };
 
+  // ── Etapa 1: Consentimento LGPD (gate antes dos dados do paciente) ──────────
+  if (stage === "consent") {
+    return (
+      <LGPDConsentForm
+        onConsentAccepted={handleConsentAccepted}
+        onConsentCollected={handleConsentCollected}
+        onCancel={() => navigate("/pacientes")}
+      />
+    );
+  }
+
+  // ── Etapa 2: Dados do Paciente ──────────────────────────────────────────────
   return (
     <div className="space-y-4 md:space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-2 md:gap-4">
@@ -254,6 +323,19 @@ const NovoPaciente = () => {
           <p className="text-sm md:text-base text-muted-foreground">
             Cadastro de dados demográficos
           </p>
+        </div>
+      </div>
+
+      {/* Indicador de progresso */}
+      <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-1.5 text-green-500">
+          <CheckCircle2 className="h-4 w-4" />
+          <span className="font-medium">Consentimento LGPD</span>
+        </div>
+        <div className="h-px flex-1 bg-border" />
+        <div className="flex items-center gap-1.5 text-primary font-medium">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">2</span>
+          <span>Dados do Paciente</span>
         </div>
       </div>
 

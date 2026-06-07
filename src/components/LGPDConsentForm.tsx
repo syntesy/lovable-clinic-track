@@ -10,13 +10,18 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import { Loader2, FileText, Shield, Eye, Trash2, Share2 } from "lucide-react";
 
 interface ConsentFormProps {
-  patientId: string;
-  patientName: string;
+  /** Omit for deferred mode: consent choices are returned via onConsentCollected
+   *  and the DB write is handled by the parent after patient creation. */
+  patientId?: string;
+  /** Shown in the header when known; omit before patient is created. */
+  patientName?: string;
   onConsentAccepted: () => void;
+  /** Called in deferred mode (no patientId) with the accepted items map. */
+  onConsentCollected?: (items: Record<string, boolean>) => void;
   onCancel?: () => void;
 }
 
-const CONSENT_TEXT = `
+export const CONSENT_TEXT = `
 TERMO DE CONSENTIMENTO PARA TRATAMENTO DE DADOS PESSOAIS
 (Em conformidade com a Lei Geral de Proteção de Dados - LGPD, Lei nº 13.709/2018)
 
@@ -116,6 +121,7 @@ export default function LGPDConsentForm({
   patientId,
   patientName,
   onConsentAccepted,
+  onConsentCollected,
   onCancel,
 }: ConsentFormProps) {
   const { logConsentAccepted } = useAuditLog();
@@ -136,31 +142,28 @@ export default function LGPDConsentForm({
 
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // Registrar cada consentimento aceito
-      const consentsToInsert = Object.entries(acceptedItems)
-        .filter(([, accepted]) => accepted)
-        .map(([itemId]) => ({
-          patient_id: patientId,
-          consent_type: itemId,
-          consent_text: CONSENT_TEXT,
-          accepted: true,
-          accepted_at: new Date().toISOString(),
-          user_agent: navigator.userAgent,
-          witness_user_id: user?.id,
-        }));
-
-      const { error } = await supabase
-        .from("patient_consents")
-        .insert(consentsToInsert);
-
-      if (error) throw error;
-
-      // Registrar log de auditoria
-      await logConsentAccepted(patientId, "LGPD_FULL_CONSENT");
-
-      toast.success("Termo de consentimento registrado com sucesso!");
+      if (patientId) {
+        // Direct mode: patient already exists — write consent to DB immediately.
+        const { data: { user } } = await supabase.auth.getUser();
+        const consentsToInsert = Object.entries(acceptedItems)
+          .filter(([, accepted]) => accepted)
+          .map(([itemId]) => ({
+            patient_id: patientId,
+            consent_type: itemId,
+            consent_text: CONSENT_TEXT,
+            accepted: true,
+            accepted_at: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            witness_user_id: user?.id,
+          }));
+        const { error } = await supabase.from("patient_consents").insert(consentsToInsert);
+        if (error) throw error;
+        await logConsentAccepted(patientId, "LGPD_FULL_CONSENT");
+        toast.success("Termo de consentimento registrado com sucesso!");
+      } else {
+        // Deferred mode: return accepted items to parent; DB write happens after patient creation.
+        onConsentCollected?.(acceptedItems);
+      }
       onConsentAccepted();
     } catch (error) {
       console.error("Erro ao registrar consentimento:", error);
@@ -178,9 +181,11 @@ export default function LGPDConsentForm({
             <Shield className="h-5 w-5 text-primary" />
             Termo de Consentimento LGPD
           </CardTitle>
-          <CardDescription>
-            Paciente: <span className="font-medium text-foreground">{patientName}</span>
-          </CardDescription>
+          {patientName && (
+            <CardDescription>
+              Paciente: <span className="font-medium text-foreground">{patientName}</span>
+            </CardDescription>
+          )}
         </CardHeader>
 
         <CardContent className="flex-1 overflow-hidden flex flex-col p-0">
