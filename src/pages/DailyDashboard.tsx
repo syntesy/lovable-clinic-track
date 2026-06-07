@@ -24,7 +24,7 @@ import {
  * Secondary: created_at (ascending, older first)
  * Tertiary: id (alphabetic fallback for absolute stability)
  */
-function sortEventsWithTieBreaker(events: EventCardType[]): EventCardType[] {
+export function sortEventsWithTieBreaker(events: EventCardType[]): EventCardType[] {
   return [...events].sort((a, b) => {
     // Primary: time_start
     const timeCompare = a.time_start.localeCompare(b.time_start);
