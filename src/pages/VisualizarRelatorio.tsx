@@ -218,7 +218,14 @@ const VisualizarRelatorio = () => {
     try {
       const { data: newRecord, error } = await supabase
         .from("clinical_records")
-        .insert({ patient_id: id })
+        .insert({
+          patient_id: id,
+          status: "draft",
+          chief_complaint: "",
+          anamnesis: "",
+          physical_exam: "",
+          clinical_diagnosis: "",
+        })
         .select("id")
         .single();
       
