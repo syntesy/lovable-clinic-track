@@ -710,13 +710,25 @@ const App = () => (
           <Route path="/academy/aprovacoes/mentores" element={<RequireAdminRole><EduLayout><MentorApprovalsPage /></EduLayout></RequireAdminRole>} />
           {/* Teacher Routes */}
           <Route path="/academy/professor/candidatar" element={<ProtectedRoute><EduLayout><TeacherApplicationPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/professores" element={<ProtectedRoute><EduLayout><TeacherApprovalsPage /></EduLayout></ProtectedRoute>} />
+          {/* Academy Admin Routes — RequireAdminRole (14 rotas) */}
+          <Route path="/academy/admin/professores" element={<RequireAdminRole><EduLayout><TeacherApprovalsPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/produtos" element={<RequireAdminRole><EduLayout><AdminProductsPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/financeiro" element={<RequireAdminRole><EduLayout><AcademyFinancialAdmin /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/biblioteca" element={<RequireAdminRole><EduLayout><AcademyLibraryAdminPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/papers" element={<RequireAdminRole><EduLayout><AcademyPapersAdminPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/ai-tests" element={<RequireAdminRole><EduLayout><AcademyAiTestsPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/watchlists" element={<RequireAdminRole><EduLayout><AcademyWatchlistsPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/pdf-health" element={<RequireAdminRole><EduLayout><AcademyPdfHealthPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/pipeline-health" element={<RequireAdminRole><EduLayout><AcademyPipelineHealthPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/review-queue" element={<RequireAdminRole><EduLayout><AcademyReviewQueuePage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/paper/:paperId" element={<RequireAdminRole><EduLayout><AcademyPaperDetailPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/metrics" element={<RequireAdminRole><EduLayout><AcademyPipelineMetricsPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/migrations" element={<RequireAdminRole><EduLayout><AcademyMigrationsPage /></EduLayout></RequireAdminRole>} />
+          <Route path="/academy/admin/curador" element={<RequireAdminRole><EduLayout><CuratorPanel /></EduLayout></RequireAdminRole>} />
           {/* Teacher Dashboard & Products */}
           <Route path="/academy/professor/dashboard" element={<ProtectedRoute><EduLayout><TeacherDashboard /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/professor/produtos/novo" element={<ProtectedRoute><EduLayout><ProductCreatePage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/professor/produtos/:id/editar" element={<ProtectedRoute><EduLayout><ProductEditPage /></EduLayout></ProtectedRoute>} />
-          {/* Admin Products */}
-          <Route path="/academy/admin/produtos" element={<ProtectedRoute><EduLayout><AdminProductsPage /></EduLayout></ProtectedRoute>} />
           {/* Marketplace */}
           <Route path="/academy/marketplace" element={<ProtectedRoute><EduLayout><MarketplacePage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/marketplace/:id" element={<ProtectedRoute><EduLayout><MarketplaceDetailPage /></EduLayout></ProtectedRoute>} />
@@ -724,8 +736,6 @@ const App = () => (
           <Route path="/academy/minhas-compras" element={<ProtectedRoute><EduLayout><MyPurchasesPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/curso/:productId" element={<ProtectedRoute><EduLayout><CoursePlayerPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/curso/:productId/aula/:lessonId" element={<ProtectedRoute><EduLayout><CoursePlayerPage /></EduLayout></ProtectedRoute>} />
-          {/* Admin Financial */}
-          <Route path="/academy/admin/financeiro" element={<ProtectedRoute><EduLayout><AcademyFinancialAdmin /></EduLayout></ProtectedRoute>} />
           {/* Legal Pages */}
           <Route path="/academy/termos" element={<EduLayout><AcademyTermsPage /></EduLayout>} />
           <Route path="/academy/privacidade" element={<EduLayout><AcademyPrivacyPage /></EduLayout>} />
@@ -736,18 +746,6 @@ const App = () => (
           <Route path="/academy/biblioteca" element={<Navigate to="/academy/evidencia?tab=explorar" replace />} />
           <Route path="/academy/feed" element={<Navigate to="/academy/evidencia?tab=feed" replace />} />
           <Route path="/academy/colecoes" element={<Navigate to="/academy/evidencia?tab=colecoes" replace />} />
-          {/* Keep these as standalone */}
-          <Route path="/academy/admin/biblioteca" element={<ProtectedRoute><EduLayout><AcademyLibraryAdminPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/papers" element={<ProtectedRoute><EduLayout><AcademyPapersAdminPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/ai-tests" element={<ProtectedRoute><EduLayout><AcademyAiTestsPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/watchlists" element={<ProtectedRoute><EduLayout><AcademyWatchlistsPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/pdf-health" element={<ProtectedRoute><EduLayout><AcademyPdfHealthPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/pipeline-health" element={<ProtectedRoute><EduLayout><AcademyPipelineHealthPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/review-queue" element={<ProtectedRoute><EduLayout><AcademyReviewQueuePage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/paper/:paperId" element={<ProtectedRoute><EduLayout><AcademyPaperDetailPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/metrics" element={<ProtectedRoute><EduLayout><AcademyPipelineMetricsPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/migrations" element={<ProtectedRoute><EduLayout><AcademyMigrationsPage /></EduLayout></ProtectedRoute>} />
-          <Route path="/academy/admin/curador" element={<ProtectedRoute><EduLayout><CuratorPanel /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/artigo/:articleId" element={<ProtectedRoute><EduLayout><CuratedArticleDetailPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/about/reghen-evidence-method" element={<ProtectedRoute><EduLayout><ReghenEvidenceMethodPage /></EduLayout></ProtectedRoute>} />
           <Route path="/academy/trilhas" element={<ProtectedRoute><EduLayout><AcademyTrilhasPage /></EduLayout></ProtectedRoute>} />
